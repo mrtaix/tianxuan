@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="iteration_error_bootstrap">初始化迭代工作区失败，请检查网络与存储后重试</string>
+    <string name="iteration_error_bootstrap">Khởi tạo không gian làm việc lặp thất bại, vui lòng kiểm tra mạng và bộ nhớ rồi thử lại</string>
 </resources>

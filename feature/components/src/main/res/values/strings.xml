@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="components_nav_home">星图</string>
-    <string name="components_nav_agent">天枢</string>
-    <string name="components_nav_workspace">天璇</string>
-    <string name="components_nav_settings">摇光</string>
-    <string name="components_back">返回</string>
-    <string name="components_tianxuan_logo">天玄 Logo</string>
-    <string name="components_close">关闭</string>
-    <string name="components_guide_confirm">知道了</string>
-    <!-- 底部导航副标题 -->
-    <string name="components_nav_subtitle_home">总览</string>
-    <string name="components_nav_subtitle_agent">智枢</string>
-    <string name="components_nav_subtitle_workspace">智坊</string>
-    <string name="components_nav_subtitle_settings">设置</string>
-    <!-- Markdown 渲染组件 -->
-    <string name="components_md_web_content">网络图片</string>
-    <string name="components_md_image_preview">图片预览</string>
-    <string name="components_md_image_load_failed">图片加载失败</string>
-    <string name="components_md_image_saved">图片已保存到相册</string>
-    <string name="components_md_image_save_failed">保存图片失败</string>
-    <string name="components_md_save_image">保存图片</string>
-    <string name="components_md_code_clipboard_label">代码</string>
-    <string name="components_md_code_copied">代码已复制到剪贴板</string>
-    <string name="components_md_code_badge">代码</string>
-    <string name="components_md_copy">复制</string>
+    <string name="components_nav_home">Tinh Đồ</string>
+    <string name="components_nav_agent">Thiên Khu</string>
+    <string name="components_nav_workspace">Thiên Tuyền</string>
+    <string name="components_nav_settings">Dao Quang</string>
+    <string name="components_back">Quay lại</string>
+    <string name="components_tianxuan_logo">Logo Thiên Huyền</string>
+    <string name="components_close">Đóng</string>
+    <string name="components_guide_confirm">Đã hiểu</string>
+    <!-- Phụ đề điều hướng dưới cùng -->
+    <string name="components_nav_subtitle_home">Tổng quan</string>
+    <string name="components_nav_subtitle_agent">Trí Khu</string>
+    <string name="components_nav_subtitle_workspace">Trí Phường</string>
+    <string name="components_nav_subtitle_settings">Cài đặt</string>
+    <!-- Thành phần render Markdown -->
+    <string name="components_md_web_content">Hình ảnh mạng</string>
+    <string name="components_md_image_preview">Xem trước hình ảnh</string>
+    <string name="components_md_image_load_failed">Tải hình ảnh thất bại</string>
+    <string name="components_md_image_saved">Đã lưu hình ảnh vào thư viện</string>
+    <string name="components_md_image_save_failed">Lưu hình ảnh thất bại</string>
+    <string name="components_md_save_image">Lưu hình ảnh</string>
+    <string name="components_md_code_clipboard_label">Code</string>
+    <string name="components_md_code_copied">Đã sao chép code vào clipboard</string>
+    <string name="components_md_code_badge">Code</string>
+    <string name="components_md_copy">Sao chép</string>
 </resources>
