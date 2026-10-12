@@ -13,7 +13,7 @@ import top.wkbin.tianxuan.harness.session.SessionTreeStore
 
 /**
  * 分支摘要（对齐 pi branch-summarization.ts）：切换分支时把被放弃的分支段
- * 生成摘要注入新位置，保留"换方案前的关键结论"，避免树导航丢失上下文。
+ * 生成摘要注入新位置，保留"Kết luận then chốt trước khi đổi phương án"，避免树导航丢失上下文。
  *
  * 摘要优先走 LLM（复用 [CompactionSummarizer] 的结构化格式），失败回退机械摘要；
  * 被放弃段太短（< [MIN_MESSAGES] 条消息）不值得一次 LLM 调用，直接跳过。
@@ -68,12 +68,12 @@ class BranchSummarizer(
         return try {
             repository.appendToLane(sessionId, laneName, entry)
             logger.i(
-                "分支摘要已注入会话 $sessionId：折叠被放弃分支 ${abandoned.size} 条消息" +
+                "Tóm tắt nhánh đã tiêm vào phiên $sessionId: gộp ${abandoned.size} tin nhắn của nhánh bị bỏ" +
                     "（${if (model != null && summarizer != null) "LLM 结构化" else "机械回退"}）",
             )
             true
         } catch (throwable: Throwable) {
-            logger.e("写入分支摘要失败：${throwable.message}", throwable)
+            logger.e("Ghi tóm tắt nhánh thất bại: ${throwable.message}", throwable)
             false
         }
     }
@@ -100,14 +100,14 @@ class BranchSummarizer(
     }
 
     private suspend fun generateSummaryText(abandoned: List<HarnessMessage>, model: ModelConfig?): String {
-        val header = "[分支摘要] 切换分支时保留的上一条分支上下文：\n"
+        val header = "[Tóm tắt nhánh] Ngữ cảnh nhánh trước được giữ lại khi chuyển nhánh:\n"
         if (model != null && summarizer != null) {
             val llm = try {
                 summarizer.generateSummary(model, abandoned)
             } catch (cancellation: kotlinx.coroutines.CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
-                logger.w("LLM 分支摘要失败，回退机械摘要：${throwable.message}")
+                logger.w("Tóm tắt nhánh LLM thất bại, lùi về tóm tắt cơ học: ${throwable.message}")
                 null
             }
             if (llm != null) return header + llm

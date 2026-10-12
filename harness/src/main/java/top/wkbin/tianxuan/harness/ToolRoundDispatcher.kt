@@ -19,7 +19,7 @@ import kotlinx.coroutines.sync.withPermit
  *   次重试，若做成跨会话全局单例，一个工作区的长构建会挡住所有其他工作区的普通写入；
  *   审批恢复（resolveApproval）执行被批准的变更工具也经 [withMutationLock] 走同一把锁；
  * - 任一工具触发审批暂停（[Pause.abort]）后，尚未开始的工具不再启动，在途工具自然跑完，
- *   与原串行"中途暂停、后续调用不执行"的语义保持一致；
+ *   与原串行"Tạm dừng giữa chừng, các lần gọi sau không thực thi"的语义保持一致；
  * - 取消沿结构化并发传播：外层 Job 被取消时，所有在途工具被打断并向上抛出
  *   CancellationException，由 HarnessLoop 的悬空调用修复逻辑收尾。
  */

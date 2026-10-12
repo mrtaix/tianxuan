@@ -868,7 +868,7 @@ internal fun ThinkingBlock(
                                         } else {
                                             Toast.makeText(
                                                 context,
-                                                result.exceptionOrNull()?.message ?: "离线翻译失败",
+                                                result.exceptionOrNull()?.message ?: "Dịch ngoại tuyến thất bại",
                                                 Toast.LENGTH_SHORT,
                                             ).show()
                                         }
@@ -878,7 +878,7 @@ internal fun ThinkingBlock(
                             }
                         },
                         modifier = Modifier.size(22.dp),
-                        contentDescription = if (showTranslation) "查看英文原文" else "离线翻译思考",
+                        contentDescription = if (showTranslation) "Xem bản gốc tiếng Anh" else "Dịch ngoại tuyến suy nghĩ",
                     ) {
                         if (isTranslating) {
                             CircularProgressIndicator(
@@ -950,7 +950,7 @@ internal fun ThinkingBlock(
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                             Text(
-                                text = "中文译文 (ML Kit 离线生成)",
+                                text = "Bản dịch tiếng Trung (ML Kit tạo ngoại tuyến)",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 10.5.sp,
                                     fontWeight = FontWeight.Medium,
@@ -975,7 +975,7 @@ internal fun ThinkingBlock(
                             color = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "正在离线翻译思考内容...",
+                            text = "Đang dịch offline nội dung suy nghĩ...",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 11.5.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1013,16 +1013,16 @@ internal fun ThinkingBlock(
             onDismissRequest = { showMissingModelDialog = false },
             title = {
                 Text(
-                    text = if (isDownloading) "离线翻译模型下载中" else "未下载离线翻译语种包",
+                    text = if (isDownloading) "Đang tải model dịch offline" else "Chưa tải gói ngôn ngữ dịch offline",
                     style = MaterialTheme.typography.titleMedium,
                 )
             },
             text = {
                 Text(
                     text = if (isDownloading && downloadingStatus != null) {
-                        "离线翻译语种模型正在后台下载中（${downloadingStatus.stepName}，${downloadingStatus.detailText}）。\n\n下载完成后将自动就绪支持离线翻译，您可前往「智能体设置」查看详细进度。"
+                        "Mô hình ngôn ngữ dịch ngoại tuyến đang tải xuống ở nền (${downloadingStatus.stepName}, ${downloadingStatus.detailText}).\n\nSau khi tải xong sẽ tự động sẵn sàng hỗ trợ dịch ngoại tuyến, bạn có thể vào 「Cài đặt Agent」 để xem tiến độ chi tiết."
                     } else {
-                        "本地英语-中文翻译模型（约 60MB）尚未下载。请前往「Agent 设置」完成语种模型下载后方可离线翻译思考流内容。"
+                        "Model dịch Anh-Trung cục bộ (khoảng 60MB) chưa tải. Hãy vào 「Cài đặt Agent」hoàn tất tải model ngôn ngữ rồi mới có thể dịch offline nội dung luồng tư duy."
                     },
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -1038,12 +1038,12 @@ internal fun ThinkingBlock(
                         }
                     }
                 ) {
-                    Text(if (isDownloading) "查看下载进度" else "前往设置")
+                    Text(if (isDownloading) "Xem tiến độ tải" else "Đi tới cài đặt")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showMissingModelDialog = false }) {
-                    Text(if (isDownloading) "后台继续" else "取消")
+                    Text(if (isDownloading) "Tiếp tục ở nền" else "取消")
                 }
             },
         )
@@ -1081,7 +1081,7 @@ internal fun SkillSuggestionCard(
                     tint = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    if (isUpdate) "技能进化建议 · 修复既有技能" else "技能进化建议 · 沉淀为新技能",
+                    if (isUpdate) "Gợi ý tiến hóa skill · Sửa skill hiện có" else "Gợi ý tiến hóa kỹ năng · Đúc kết thành kỹ năng mới",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -1105,7 +1105,7 @@ internal fun SkillSuggestionCard(
             }
             if (suggestion.reason.isNotBlank()) {
                 Text(
-                    "依据：" + suggestion.reason,
+                    "Căn cứ:" + suggestion.reason,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
@@ -1123,7 +1123,7 @@ internal fun SkillSuggestionCard(
                         modifier = Modifier.height(32.dp),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                     ) {
-                        Text("更新技能", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+                        Text("Cập nhật skill", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
                     }
                 }
                 Button(
@@ -1131,14 +1131,14 @@ internal fun SkillSuggestionCard(
                     modifier = Modifier.height(32.dp),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                 ) {
-                    Text(if (isUpdate) "另存为新技能" else "创建技能", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+                    Text(if (isUpdate) "Lưu thành skill mới" else "Tạo kỹ năng", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
                 }
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.height(32.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                 ) {
-                    Text("忽略", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                    Text("Bỏ qua", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
                 }
             }
         }

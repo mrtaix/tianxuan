@@ -209,7 +209,7 @@ class CdpDebugController(
     }
 
     private fun requirePaused(what: String) {
-        check(_paused.value != null) { "tab $tabId not paused (cannot $what)；请先 browser.debug_set_breakpoint 触发暂停" }
+        check(_paused.value != null) { "tab $tabId chưa tạm dừng (không thể $what); hãy dùng browser.debug_set_breakpoint để kích hoạt tạm dừng trước" }
     }
 
     private suspend fun propertyNames(objectId: String): List<String> {

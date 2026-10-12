@@ -540,7 +540,7 @@ private fun LiquidGlassBottomBar(
                         // 不做垂直方向的压缩（scaleY 减小）。
                         // 原因：scaleY 缩减会使指示器玻璃高度低于 Layer 1 图标高度，
                         // 导致图标顶部/底部超出玻璃覆盖范围，暴露出未染色的原色图标，
-                        // 形成"着色图标 + 未着色图标分层"的视觉问题。
+                        // 形成"Icon tô màu + icon chưa tô màu phân tầng"的视觉问题。
                         scaleX /= 1f - (velocity * 0.75f).fastCoerceIn(-0.2f, 0.2f)
                         // scaleY 只保留来自 press 动画的缩放，不叠加 velocity 压缩
                     },

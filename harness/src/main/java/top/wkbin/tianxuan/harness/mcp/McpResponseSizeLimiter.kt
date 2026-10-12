@@ -54,13 +54,13 @@ object McpResponseSizeLimiter {
             val previewText: String,
         ) : Payload {
             fun formatForToolResult(): String = buildString {
-                append("[MCP 响应数据量较大（")
+                append("[Lượng dữ liệu phản hồi MCP khá lớn (")
                 append(totalBytes / 1024)
-                append(" KB），为保护移动端内存已自动流式转存至文件: ")
+                append(" KB), để bảo vệ bộ nhớ di động đã tự động chuyển lưu dạng luồng vào tệp: ")
                 append(file.absolutePath)
-                append("]\n\n[内容预览]：\n")
+                append("]\n\n[Xem trước nội dung]:\n")
                 append(previewText)
-                append("\n\n【提示】：请根据上方内容预览分析结果，或在后续工具调用中增加过滤条件/缩小请求范围。")
+                append("\n\n【Gợi ý】: hãy xem trước kết quả phân tích theo nội dung phía trên, hoặc thêm điều kiện lọc/thu hẹp phạm vi yêu cầu trong các lần gọi công cụ sau.")
             }
         }
 
@@ -70,7 +70,7 @@ object McpResponseSizeLimiter {
             val bytesObserved: Long,
         ) : Payload {
             fun formatErrorMessage(): String =
-                "[MCP 响应熔断拦截：$reason（已观测 $bytesObserved 字节），已强制中断流式传输以保护应用内存]"
+                "[MCP phản hồi ngắt bảo vệ: $reason (đã quan sát $bytesObserved byte), đã buộc ngắt truyền phát để bảo vệ bộ nhớ ứng dụng]"
         }
 
         /**
@@ -83,7 +83,7 @@ object McpResponseSizeLimiter {
             val bytesObserved: Long,
         ) : Payload {
             fun formatErrorMessage(): String =
-                "[MCP 响应转存失败：$reason（已观测 $bytesObserved 字节）。这是本机落盘环境问题而非响应过大，重试无法恢复，请检查 MCP 传输的落盘目录配置]"
+                "[Chuyển lưu phản hồi MCP thất bại: $reason (đã quan sát $bytesObserved byte). Đây là vấn đề môi trường ghi đĩa cục bộ chứ không phải phản hồi quá lớn, thử lại không khôi phục được, hãy kiểm tra cấu hình thư mục ghi đĩa của truyền tải MCP]"
         }
     }
 
@@ -130,12 +130,12 @@ object McpResponseSizeLimiter {
 
         val targetDir = resolveSpillDirectory(spillDirectory)
             ?: return Payload.SpillUnavailable(
-                reason = "无可用的落盘转存目录（未注入 spillDirectory 且系统临时目录不可写）",
+                reason = "Không có thư mục chuyển lưu khả dụng (chưa tiêm spillDirectory và thư mục tạm hệ thống không ghi được)",
                 bytesObserved = totalBytesRead,
             )
         if (!targetDir.isDirectory && !targetDir.mkdirs()) {
             return Payload.SpillUnavailable(
-                reason = "落盘转存目录创建失败: ${targetDir.absolutePath}",
+                reason = "Tạo thư mục lưu đĩa thất bại: ${targetDir.absolutePath}",
                 bytesObserved = totalBytesRead,
             )
         }
@@ -144,7 +144,7 @@ object McpResponseSizeLimiter {
             File.createTempFile(spillFilePrefix, ".txt", targetDir)
         } catch (_: Throwable) {
             return Payload.SpillUnavailable(
-                reason = "落盘转存文件创建失败: ${targetDir.absolutePath}",
+                reason = "Tạo tệp chuyển lưu ghi đĩa thất bại: ${targetDir.absolutePath}",
                 bytesObserved = totalBytesRead,
             )
         }
@@ -164,7 +164,7 @@ object McpResponseSizeLimiter {
                     if (totalBytesRead > maxSpillBytes) {
                         // 超过最大允许上限：触发硬熔断，清理不完整的残余文件
                         return Payload.CircuitBroken(
-                            reason = "输出超过单次安全上限 ${maxSpillBytes / 1024}KB",
+                            reason = "Đầu ra vượt quá giới hạn an toàn mỗi lần ${maxSpillBytes / 1024}KB",
                             bytesObserved = totalBytesRead,
                         )
                     }
@@ -234,7 +234,7 @@ object McpResponseSizeLimiter {
         val contentLength = response.body.contentLength()
         if (contentLength > maxSpillBytes) {
             return Payload.CircuitBroken(
-                reason = "Content-Length ($contentLength 字节) 超过单次安全上限 ${maxSpillBytes / 1024}KB",
+                reason = "Content-Length ($contentLength byte) vượt giới hạn an toàn một lần ${maxSpillBytes / 1024}KB",
                 bytesObserved = contentLength,
             )
         }

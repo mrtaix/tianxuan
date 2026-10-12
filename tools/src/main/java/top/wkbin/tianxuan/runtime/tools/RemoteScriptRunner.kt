@@ -22,18 +22,18 @@ class RemoteScriptRunner(
         environment: Map<String, String> = emptyMap(),
     ): CommandResult {
         val uri = runCatching { URI(spec.url) }.getOrElse {
-            throw IllegalArgumentException("官方安装脚本 URL 无效", it)
+            throw IllegalArgumentException("URL script cài đặt chính thức không hợp lệ", it)
         }
         require(uri.scheme.equals("https", ignoreCase = true)) {
-            "官方安装脚本必须使用 HTTPS"
+            "Script cài đặt chính thức phải dùng HTTPS"
         }
         require(uri.userInfo == null && uri.fragment == null && (uri.port == -1 || uri.port == 443)) {
-            "官方安装脚本 URL 不允许用户信息、片段或非标准端口"
+            "URL script cài đặt chính thức không cho phép thông tin người dùng, fragment hoặc cổng phi tiêu chuẩn"
         }
         require(uri.host.orEmpty().lowercase() in ALLOWED_HOSTS) {
-            "不允许执行未登记的安装脚本来源：${uri.host.orEmpty()}"
+            "Không cho phép thực thi nguồn script cài đặt chưa đăng ký: ${uri.host.orEmpty()}"
         }
-        require(SAFE_NAME.matches(spec.name)) { "安装脚本名称无效" }
+        require(SAFE_NAME.matches(spec.name)) { "Tên script cài đặt không hợp lệ" }
 
         // 安装脚本内含大体积下载（如 Hermes 236MB 的 git 浅克隆），移动网络/代理
         // 截断属于偶发故障；官方脚本对中断克隆有清理逻辑，重试是安全的。
@@ -64,7 +64,7 @@ class RemoteScriptRunner(
             append("curl -fsSL --connect-timeout 10 --max-time 60 --max-redirs 0 --proto '=https' --tlsv1.2 $quotedUrl -o \"\$script_path\"; ")
             append("test -s \"\$script_path\"; chmod 700 \"\$script_path\"; ")
             spec.sha256?.let { checksum ->
-                require(SHA256.matches(checksum)) { "安装脚本 SHA-256 格式无效" }
+                require(SHA256.matches(checksum)) { "Định dạng SHA-256 của script cài đặt không hợp lệ" }
                 append("printf '%s  %s\\n' ${shellQuote(checksum)} \"\$script_path\" | sha256sum -c -; ")
             }
             append("bash \"\$script_path\"")

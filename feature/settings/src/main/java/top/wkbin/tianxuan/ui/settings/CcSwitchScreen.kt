@@ -89,8 +89,8 @@ fun CcSwitchScreen(
     Scaffold(
         topBar = {
             RuntimeTopBar(
-                title = "智能体中枢 (CC-Switch)",
-                statusText = if (state.isDaemonRunning) "中枢运行中 · 19870" else "中枢未启动",
+                title = "Trung tâm Agent (CC-Switch)",
+                statusText = if (state.isDaemonRunning) "Trung khu đang chạy · 19870" else "Trung khu chưa khởi động",
                 onBack = onBack,
                 actions = {
                     RuntimeIconButton(
@@ -133,7 +133,7 @@ fun CcSwitchScreen(
                             ) {
                                 RuntimeIcon(name = RuntimeIconName.Terminal, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("查看并复制完整报错日志", style = MaterialTheme.typography.labelSmall)
+                                Text("Xem và sao chép toàn bộ log báo lỗi", style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
@@ -180,13 +180,13 @@ fun CcSwitchScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "本地环境检查",
+                        text = "Kiểm tra môi trường cục bộ",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = if (state.isDaemonRunning) "由 CC-Switch 纳管各 CLI 与 Agent 运行环境" else "启动中枢后自动检查环境与版本",
+                        text = if (state.isDaemonRunning) "Do CC-Switch quản lý môi trường chạy của các CLI và Agent" else "Tự động kiểm tra môi trường và phiên bản sau khi khởi động trung khu",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -202,7 +202,7 @@ fun CcSwitchScreen(
                         ) {
                             RuntimeIcon(name = RuntimeIconName.Terminal, modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("安装日志", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+                            Text("Nhật ký cài đặt", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
                         }
                     }
                     if (state.isDaemonRunning) {
@@ -214,11 +214,11 @@ fun CcSwitchScreen(
                             if (state.isCheckingEnvironment) {
                                 RuntimeCircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 1.5.dp)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("检测中...", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+                                Text("Đang phát hiện...", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
                             } else {
                                 RuntimeIcon(name = RuntimeIconName.Refresh, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("刷新检测", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+                                Text("Làm mới dò", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
                             }
                         }
                     }
@@ -284,7 +284,7 @@ fun CcSwitchScreen(
             onDismiss = { viewModel.dismissInstallLogs() },
             onClear = { viewModel.clearInstallLogs() },
             onCopy = { logsText ->
-                copyToClipboard(context, logsText, "安装日志", "已复制完整安装日志 (${state.installLogs.size} 行)")
+                copyToClipboard(context, logsText, "Nhật ký cài đặt", "Đã sao chép toàn bộ log cài đặt (${state.installLogs.size} dòng)")
             },
         )
     }
@@ -323,7 +323,7 @@ private fun DaemonServiceCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (state.isDaemonRunning) "CC-Switch 运行中" else "CC-Switch 未启动",
+                    text = if (state.isDaemonRunning) "CC-Switch đang chạy" else "CC-Switch chưa khởi động",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -333,7 +333,7 @@ private fun DaemonServiceCard(
             }
             Spacer(modifier = Modifier.width(8.dp))
             StatusBadge(
-                text = "端口 ${state.servicePort}",
+                text = "Cổng ${state.servicePort}",
                 color = if (state.isDaemonRunning) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline,
             )
         }
@@ -341,9 +341,9 @@ private fun DaemonServiceCard(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = if (state.isDaemonRunning) {
-                "CC-Switch 正在监听本地端口与沙箱环境，负责反向代理、流式协议转换与各 CLI 多模型统一切源。"
+                "CC-Switch đang lắng nghe cổng cục bộ và môi trường sandbox, phụ trách reverse proxy, chuyển đổi giao thức streaming và chuyển nguồn đa model thống nhất cho các CLI."
             } else {
-                "中枢尚未运行。启动后将自动对沙箱环境进行实时检测，获取已安装 CLI、最新版本及模型源状态。"
+                "Trung khu chưa chạy. Sau khi khởi động sẽ tự động dò môi trường sandbox theo thời gian thực, lấy trạng thái CLI đã cài, phiên bản mới nhất và nguồn model."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -352,7 +352,7 @@ private fun DaemonServiceCard(
         if (state.isDaemonRunning) {
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "本地代理地址: http://127.0.0.1:${state.servicePort}${state.deviceLanIp?.let { " · 局域网: http://$it:${state.servicePort}" } ?: ""}",
+                text = "Địa chỉ proxy cục bộ: http://127.0.0.1:${state.servicePort}${state.deviceLanIp?.let { " · 局域网: http://$it:${state.servicePort}" } ?: ""}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -369,7 +369,7 @@ private fun DaemonServiceCard(
             )
 
             Text(
-                text = "💡 外部浏览器访问提示登录时输入上方账号密码即可",
+                text = "💡 Khi trình duyệt ngoài nhắc đăng nhập, chỉ cần nhập tài khoản mật khẩu phía trên",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
             )
@@ -390,7 +390,7 @@ private fun DaemonServiceCard(
                     RuntimeIcon(name = RuntimeIconName.Refresh, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
-                        text = "重启",
+                        text = "Khởi động lại",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                         maxLines = 1,
                         softWrap = false,
@@ -414,7 +414,7 @@ private fun DaemonServiceCard(
                 RuntimeButton(
                     onClick = {
                         val creds = "${state.webUsername} / ${state.webPassword}"
-                        copyToClipboard(context, creds, "CC-Switch 凭据", "已复制登录凭据")
+                        copyToClipboard(context, creds, "Thông tin truy cập CC-Switch", "Đã sao chép thông tin đăng nhập")
                         onOpenWebConsole()
                     },
                     modifier = Modifier.weight(1f),
@@ -423,7 +423,7 @@ private fun DaemonServiceCard(
                     RuntimeIcon(name = RuntimeIconName.OpenInNew, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
-                        text = "控制台",
+                        text = "Console",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                         maxLines = 1,
                         softWrap = false,
@@ -443,7 +443,7 @@ private fun DaemonServiceCard(
                     RuntimeIcon(name = RuntimeIconName.Play, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text("启动中枢服务 (端口 ${state.servicePort})")
+                Text("Khởi động dịch vụ trung tâm (cổng ${state.servicePort})")
             }
         }
     }
@@ -463,12 +463,12 @@ private fun TokenUsageCard(daemon: top.wkbin.tianxuan.core.model.CcSwitchDaemonS
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "今日反代 Token 记账",
+                text = "Ghi sổ Token reverse proxy hôm nay",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "${daemon.todayTokens.requestCount} 次请求",
+                text = "${daemon.todayTokens.requestCount} yêu cầu",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -479,15 +479,15 @@ private fun TokenUsageCard(daemon: top.wkbin.tianxuan.core.model.CcSwitchDaemonS
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column {
-                Text("输入 Token", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Nhập Token", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("${daemon.todayTokens.promptTokens}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
             Column {
-                Text("输出 Token", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Đầu ra Token", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("${daemon.todayTokens.completionTokens}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
             Column {
-                Text("总消耗 Tokens", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Tổng tiêu thụ Tokens", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("${daemon.todayTokens.totalTokens}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         }
@@ -587,7 +587,7 @@ private fun AgentCard(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // 右侧状态徽章与操作按钮（已完全去掉"一键切源"按钮）
+            // 右侧状态徽章与操作按钮（已完全去掉"Chuyển nguồn một chạm"按钮）
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -639,7 +639,7 @@ private fun AgentCard(
                         ) {
                             RuntimeIcon(name = RuntimeIconName.ArrowUp, modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("升级", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+                            Text("Nâng cấp", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
                         }
                     }
                     else -> {
@@ -669,15 +669,15 @@ private fun AgentCard(
                 modifier = Modifier.weight(1f, fill = false),
             ) {
                 Text(
-                    text = "版本:",
+                    text = "Phiên bản:",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
                     text = when {
                         !isDaemonRunning -> "--"
-                        agent.isChecking -> "检测中..."
-                        agent.installed -> agent.currentVersion ?: "已安装"
+                        agent.isChecking -> "Đang phát hiện..."
+                        agent.installed -> agent.currentVersion ?: "Đã cài đặt"
                         else -> "未安装"
                     },
                     style = MaterialTheme.typography.labelSmall.copy(
@@ -695,7 +695,7 @@ private fun AgentCard(
 
                 if (agent.installed && agent.hasUpdate) {
                     Text(
-                        text = "(最新: ${agent.latestVersion ?: agent.type.defaultLatestVersion})",
+                        text = "(mới nhất: ${agent.latestVersion ?: agent.type.defaultLatestVersion})",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         color = Color(0xFFFF9800),
                         maxLines = 1,
@@ -715,12 +715,12 @@ private fun AgentCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
-                        text = "模型源:",
+                        text = "Nguồn model:",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = agent.activeProviderName ?: if (agent.installed) "默认网关" else "未绑定",
+                        text = agent.activeProviderName ?: if (agent.installed) "Gateway mặc định" else "Chưa liên kết",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                         color = if (agent.activeProviderName != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -756,18 +756,18 @@ private fun AdvancedSyncCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "与天玄模型库深度互通",
+                text = "Liên thông sâu với kho model Thien Huyen",
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
             )
             StatusBadge(
-                text = "${tianXuanModels.size} 个可用源",
+                text = "${tianXuanModels.size} nguồn khả dụng",
                 color = MaterialTheme.colorScheme.primary,
             )
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "点击可将天玄已配置的模型服务商一键导入为 CC-Switch 的纳管 Provider，无需重复填写 Key 与 Base URL：",
+            text = "Nhấp để nhập một chạm các nhà cung cấp model đã cấu hình của Thien Huyen thành Provider quản lý của CC-Switch, không cần điền lại Key và Base URL:",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -824,7 +824,7 @@ private fun SwitchProviderDialog(
 ) {
     RuntimeAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("为 ${agent.type.displayName} 切换模型源") },
+        title = { Text("Chuyển nguồn model cho ${agent.type.displayName}") },
         text = {
             Column(
                 modifier = Modifier
@@ -833,14 +833,14 @@ private fun SwitchProviderDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "已配置的 CC-Switch 预设源：",
+                    text = "Nguồn preset CC-Switch đã cấu hình：",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
 
                 if (providers.isEmpty()) {
                     Text(
-                        text = "暂未配置独立的 Provider，可直接从下方天玄模型库选择一键导入并绑定。",
+                        text = "Chưa cấu hình Provider độc lập, có thể chọn trực tiếp từ kho model Thiên Huyền bên dưới để nhập và liên kết một chạm.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -874,7 +874,7 @@ private fun SwitchProviderDialog(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "从天玄已存模型一键绑定：",
+                    text = "Gắn một chạm từ model đã lưu trong Thiên Huyền:",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -897,7 +897,7 @@ private fun SwitchProviderDialog(
                             Text("${model.provider} · ${model.model}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         RuntimeTextButton(onClick = { onImportAndSelect(model) }) {
-                            Text("同步并切换")
+                            Text("Đồng bộ và chuyển đổi")
                         }
                     }
                 }
@@ -921,7 +921,7 @@ private fun UpgradeVersionDialog(
 
     RuntimeAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (agent.installed) "升级 ${agent.type.displayName}" else "安装 ${agent.type.displayName}") },
+        title = { Text(if (agent.installed) "Nâng cấp ${agent.type.displayName}" else "Cài đặt ${agent.type.displayName}") },
         text = {
             Column(
                 modifier = Modifier
@@ -929,19 +929,19 @@ private fun UpgradeVersionDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                InfoRow(label = "当前版本", value = agent.currentVersion ?: "未安装")
-                InfoRow(label = "推荐版本", value = agent.latestVersion ?: agent.type.defaultLatestVersion.ifBlank { "latest" })
+                InfoRow(label = "Phiên bản hiện tại", value = agent.currentVersion ?: "未安装")
+                InfoRow(label = "Phiên bản khuyến nghị", value = agent.latestVersion ?: agent.type.defaultLatestVersion.ifBlank { "latest" })
 
                 OutlinedTextField(
                     value = versionInput,
                     onValueChange = { versionInput = it },
-                    label = { Text("目标版本 (如 1.0.0，留空即最新)") },
+                    label = { Text("Phiên bản mục tiêu (ví dụ 1.0.0, để trống là mới nhất)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
                 Text(
-                    text = "确认后将在沙箱内通过包管理器执行相应版本部署与配置。",
+                    text = "Sau khi xác nhận sẽ thực thi triển khai và cấu hình phiên bản tương ứng qua trình quản lý gói trong sandbox.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -951,7 +951,7 @@ private fun UpgradeVersionDialog(
             RuntimeButton(
                 onClick = { onConfirmUpgrade(versionInput.trim()) },
             ) {
-                Text(if (agent.installed) "确认升级" else "确认安装")
+                Text(if (agent.installed) "Xác nhận nâng cấp" else "Xác nhận cài đặt")
             }
         },
         dismissButton = {
@@ -996,7 +996,7 @@ private fun InstallLogDialog(
                 ) {
                     RuntimeIcon(RuntimeIconName.Terminal, modifier = Modifier.size(18.dp))
                     Text(
-                        text = "$agentName 日志",
+                        text = "Log $agentName",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -1009,14 +1009,14 @@ private fun InstallLogDialog(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RuntimeCircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 1.5.dp)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("执行中", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                            Text("Đang thực thi", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                     isError -> {
-                        StatusBadge(text = "异常/失败", color = MaterialTheme.colorScheme.error)
+                        StatusBadge(text = "Bất thường/thất bại", color = MaterialTheme.colorScheme.error)
                     }
                     logs.isNotEmpty() -> {
-                        StatusBadge(text = "已完成", color = Color(0xFF4CAF50))
+                        StatusBadge(text = "Đã hoàn thành", color = Color(0xFF4CAF50))
                     }
                 }
             }
@@ -1033,7 +1033,7 @@ private fun InstallLogDialog(
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (logs.isEmpty()) {
                             Text(
-                                text = "暂无命令输出日志。点击安装或升级后，将在沙箱内实时捕获并输出详细构建过程...",
+                                text = "Chưa có log đầu ra lệnh. Sau khi nhấp cài đặt hoặc nâng cấp, quá trình build chi tiết sẽ được bắt và xuất ra theo thời gian thực trong sandbox...",
                                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                                 color = Color(0xFF888888),
                                 modifier = Modifier.padding(12.dp),
@@ -1086,7 +1086,7 @@ private fun InstallLogDialog(
                     ) {
                         RuntimeIcon(name = RuntimeIconName.Copy, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("复制全部日志", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Text("Sao chép tất cả log", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                     }
                 } else {
                     RuntimeButton(onClick = onDismiss) {

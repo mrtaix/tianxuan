@@ -29,7 +29,7 @@ interface LiveMessagePort {
  * 实时消息投影器：维护每个会话的内存态消息流（含异步历史合并），
  * 并把前台聚焦会话的列表镜像到全局 [foregroundMessages] 流。
  *
- * 持久化本身由 [SessionTreeStore] 负责；本类只做"已提交内容的发布 + 流式上屏"。
+ * 持久化本身由 [SessionTreeStore] 负责；本类只做"Phát hành nội dung đã commit + stream lên màn hình"。
  */
 class SessionMessageProjector(
     private val store: SessionTreeStore,

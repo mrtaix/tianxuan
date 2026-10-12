@@ -44,7 +44,7 @@ class AiProfileBackupCodec(
     /** 兼容 Bundle / 单档案 / 档案数组三种 JSON 形态 */
     fun parseProfiles(rawJson: String): Result<List<AiModelProfileExport>> {
         val trimmed = rawJson.trim()
-        if (trimmed.isBlank()) return Result.failure(IllegalArgumentException("导入内容为空"))
+        if (trimmed.isBlank()) return Result.failure(IllegalArgumentException("Nội dung nhập trống"))
         return runCatching {
             when {
                 trimmed.startsWith("{") -> {
@@ -57,7 +57,7 @@ class AiProfileBackupCodec(
                     }
                 }
                 trimmed.startsWith("[") -> json.decodeFromString<List<AiModelProfileExport>>(trimmed)
-                else -> throw IllegalArgumentException("JSON 格式无效，内容必须以 { 或 [ 开头")
+                else -> throw IllegalArgumentException("Định dạng JSON không hợp lệ, nội dung phải bắt đầu bằng { hoặc [")
             }
         }
     }
@@ -65,9 +65,9 @@ class AiProfileBackupCodec(
     /** 逐条入库并返回成功导入的数量 */
     suspend fun importProfiles(rawJson: String): Result<Int> {
         val parseResult = parseProfiles(rawJson)
-        if (parseResult.isFailure) return Result.failure(parseResult.exceptionOrNull() ?: RuntimeException("JSON 解析失败"))
+        if (parseResult.isFailure) return Result.failure(parseResult.exceptionOrNull() ?: RuntimeException("Phân giải JSON thất bại"))
         val profiles = parseResult.getOrThrow()
-        if (profiles.isEmpty()) return Result.failure(IllegalArgumentException("未检测到有效的模型档案配置"))
+        if (profiles.isEmpty()) return Result.failure(IllegalArgumentException("Không phát hiện cấu hình hồ sơ model hợp lệ"))
 
         val existing = aiModelDao.observeAll().first()
         val importedIds = mutableListOf<String>()
@@ -120,7 +120,7 @@ class AiProfileBackupCodec(
         }
 
         return if (importedIds.isNotEmpty()) Result.success(importedIds.size)
-        else Result.failure(IllegalArgumentException("未解析到任何有效模型"))
+        else Result.failure(IllegalArgumentException("Không phân giải được model hợp lệ nào"))
     }
 
     private suspend fun readKeys(entity: top.wkbin.tianxuan.core.database.AiModelEntity, includeApiKeys: Boolean): List<String> {

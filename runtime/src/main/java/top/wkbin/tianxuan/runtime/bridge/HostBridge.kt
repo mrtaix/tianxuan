@@ -252,7 +252,7 @@ class HostBridge(
             } else null
 
             if (fallback != null) {
-                logger.i("HostBridge: APK 在 '$hostPath' 未找到，通过工作区扫描智能匹配到 '${fallback.absolutePath}'")
+                logger.i("HostBridge: không tìm thấy APK ở '$hostPath', đã quét vùng làm việc và khớp thông minh tới '${fallback.absolutePath}'")
                 apkFile = fallback
             } else {
                 return HttpResponse(404, errorJson("APK file not found: $apkPath (resolved: $hostPath)"))
@@ -270,7 +270,7 @@ class HostBridge(
                 logger.i("HostBridge: APK installed via wireless ADB for $apkPath")
                 return HttpResponse(200, buildJsonObject {
                     put("success", true)
-                    put("message", "APK 已通过无线 ADB 静默安装成功")
+                    put("message", "APK đã cài đặt im lặng thành công qua ADB không dây")
                     put("package", apkFile.name)
                     put("channel", "wireless-adb")
                 }.toString())
@@ -303,7 +303,7 @@ class HostBridge(
             logger.i("HostBridge: APK install triggered for $apkPath")
             return HttpResponse(200, buildJsonObject {
                 put("success", true)
-                put("message", "安装请求已发送，请在系统弹窗中确认安装")
+                put("message", "Yêu cầu cài đặt đã được gửi, vui lòng xác nhận cài đặt trong cửa sổ bật lên của hệ thống")
                 put("package", apkFile.name)
                 put("channel", "system-intent")
             }.toString())

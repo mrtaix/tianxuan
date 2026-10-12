@@ -108,11 +108,11 @@ class DeveloperViewModel(
         if (_adbBusy.value) return
         viewModelScope.launch {
             _adbBusy.value = true
-            _adbMessage.value = if (pairingPort != null) "正在使用指定配对端口 $pairingPort 进行安全配对…" else "正在使用自动发现的配对端口进行安全配对…"
+            _adbMessage.value = if (pairingPort != null) "Đang dùng cổng ghép đôi chỉ định $pairingPort để ghép đôi an toàn…" else "Đang ghép nối an toàn bằng cổng ghép nối tự phát hiện…"
             val result = embeddedAdbManager.pair(pairingPort, code.trim())
             _adbMessage.value = result.fold(
-                onSuccess = { "配对并连接成功；密钥已安全保存，后续将自动发现端口并重连。" },
-                onFailure = { it.message ?: "无线 ADB 配对失败" },
+                onSuccess = { "Ghép đôi và kết nối thành công; khóa đã được lưu an toàn, sau này sẽ tự động phát hiện cổng và kết nối lại." },
+                onFailure = { it.message ?: "Ghép đôi ADB không dây thất bại" },
             )
             _adbBusy.value = false
         }
@@ -122,11 +122,11 @@ class DeveloperViewModel(
         if (_adbBusy.value) return
         viewModelScope.launch {
             _adbBusy.value = true
-            _adbMessage.value = if (explicitPort != null) "正在连接指定端口 $explicitPort…" else "正在连接自动发现的无线调试端口…"
+            _adbMessage.value = if (explicitPort != null) "Đang kết nối cổng chỉ định $explicitPort…" else "Đang kết nối cổng gỡ lỗi không dây tự phát hiện…"
             val result = embeddedAdbManager.connect(explicitPort)
             _adbMessage.value = result.fold(
-                onSuccess = { "无线 ADB 已连接。" },
-                onFailure = { it.message ?: "无线 ADB 连接失败" },
+                onSuccess = { "ADB không dây đã kết nối." },
+                onFailure = { it.message ?: "Kết nối ADB không dây thất bại" },
             )
             _adbBusy.value = false
         }
@@ -134,23 +134,23 @@ class DeveloperViewModel(
 
     fun restartAdbDiscovery() {
         embeddedAdbManager.restartDiscovery()
-        _adbMessage.value = "已重新启动 mDNS 端口探测。"
+        _adbMessage.value = "Đã khởi động lại dò cổng mDNS."
     }
 
     fun captureLogcat(packageName: String, tag: String, priority: Char, keyword: String, lines: Int) {
         if (_adbBusy.value) return
         viewModelScope.launch {
             _adbBusy.value = true
-            _adbMessage.value = "正在抓取日志…"
+            _adbMessage.value = "Đang lấy log…"
             runCatching {
                 embeddedAdbManager.captureLogcat(
                     EmbeddedAdbManager.LogcatRequest(packageName.trim(), tag.trim(), priority, keyword, lines),
                 )
             }.onSuccess { result ->
                 _logcatOutput.value = result.output
-                _adbMessage.value = if (result.success) "日志抓取完成。" else result.output
+                _adbMessage.value = if (result.success) "Thu thập log hoàn tất." else result.output
             }.onFailure { error ->
-                _adbMessage.value = error.message ?: "日志抓取失败"
+                _adbMessage.value = error.message ?: "Lấy log thất bại"
             }
             _adbBusy.value = false
         }
@@ -162,7 +162,7 @@ class DeveloperViewModel(
             _adbBusy.value = true
             val result = embeddedAdbManager.clearLogcat()
             if (result.success) _logcatOutput.value = ""
-            _adbMessage.value = if (result.success) "设备 Logcat 缓冲区已清空。" else result.output
+            _adbMessage.value = if (result.success) "Bộ đệm Logcat của thiết bị đã được xóa." else result.output
             _adbBusy.value = false
         }
     }
@@ -230,10 +230,10 @@ class DeveloperViewModel(
             val result = toolRegistry.updateSigned(request)
             if (result.isSuccess) {
                 toolManager.syncRegistry()
-                setRegistryStatus("工具清单已更新：${result.getOrNull()} 个工具。")
+                setRegistryStatus("Danh sách công cụ đã cập nhật: ${result.getOrNull()} công cụ.")
             } else {
                 logger.e("Registry update failed: ${result.errorOrNull()?.message}")
-                setRegistryStatus("工具清单更新失败，请检查清单地址、签名与公钥配置", isError = true)
+                setRegistryStatus("Cập nhật danh sách công cụ thất bại, hãy kiểm tra địa chỉ danh sách, chữ ký và cấu hình public key", isError = true)
             }
         }
     }
@@ -259,7 +259,7 @@ class DeveloperViewModel(
                     is AppResult.Success -> setMessage("初始化完成。")
                     is AppResult.Failure -> {
                         logger.e("Runtime initialize failed: ${result.error.message}")
-                        setMessage("初始化失败，请检查网络与存储空间后重试", isError = true)
+                        setMessage("Khởi tạo thất bại, hãy kiểm tra mạng và dung lượng lưu trữ rồi thử lại", isError = true)
                     }
                 }
             } finally {
@@ -285,13 +285,13 @@ class DeveloperViewModel(
                         setMessage("RootFS 更新完成，用户数据已保留。")
                     } else {
                         logger.e("RootFS update failed: ${result.errorOrNull()?.message}")
-                        setMessage("RootFS 更新失败，已自动恢复旧版本；请稍后重试", isError = true)
+                        setMessage("Cập nhật RootFS thất bại, đã tự động khôi phục phiên bản cũ; hãy thử lại sau", isError = true)
                     }
                     refreshRootfsVersion()
                 }
                 .onFailure { throwable ->
                     logger.e("RootFS update failed", throwable)
-                    setMessage("RootFS 更新失败，请检查网络后重试", isError = true)
+                    setMessage("Cập nhật RootFS thất bại, vui lòng kiểm tra mạng rồi thử lại", isError = true)
                 }
             _busy.value = false
         }
@@ -314,12 +314,12 @@ class DeveloperViewModel(
                         }
                     } else {
                         logger.e("RootFS update check failed: ${result.errorOrNull()?.message}")
-                        setMessage("RootFS 更新检查失败，请检查网络后重试", isError = true)
+                        setMessage("Kiểm tra cập nhật RootFS thất bại, vui lòng kiểm tra mạng rồi thử lại", isError = true)
                     }
                 }
                 .onFailure { throwable ->
                     logger.e("RootFS update check failed", throwable)
-                    setMessage("RootFS 更新检查失败，请检查网络后重试", isError = true)
+                    setMessage("Kiểm tra cập nhật RootFS thất bại, vui lòng kiểm tra mạng rồi thử lại", isError = true)
                 }
             _busy.value = false
         }
@@ -334,7 +334,7 @@ class DeveloperViewModel(
                 .onSuccess { _health.value = it }
                 .onFailure {
                     logger.e("Health check failed", it)
-                    setMessage("健康检查失败，请确认运行时已就绪后重试", isError = true)
+                    setMessage("Kiểm tra sức khỏe thất bại, hãy xác nhận runtime đã sẵn sàng rồi thử lại", isError = true)
                 }
             _busy.value = false
         }
@@ -355,10 +355,10 @@ class DeveloperViewModel(
             _message.value = null
             runCatching { runtimeManager.cleanup(runtimeId) }
                 .onSuccess { result ->
-                    if (result.isSuccess) setMessage("共享 Runtime 已清理。") else setMessage("清理失败，请稍后重试", isError = true)
+                    if (result.isSuccess) setMessage("共享 Runtime 已清理。") else setMessage("Dọn thất bại, hãy thử lại sau", isError = true)
                     refreshUnusedRuntimes()
                 }
-                .onFailure { logger.e("Runtime cleanup failed", it); setMessage("清理失败，请稍后重试", isError = true) }
+                .onFailure { logger.e("Runtime cleanup failed", it); setMessage("Dọn thất bại, hãy thử lại sau", isError = true) }
             _busy.value = false
         }
     }
@@ -378,7 +378,7 @@ class DeveloperViewModel(
         viewModelScope.launch {
             runCatching { linuxRuntime.stopBackground(processId) }
                 .onSuccess { refreshProcesses() }
-                .onFailure { logger.e("Stop process failed", it); setMessage("停止进程失败，请稍后重试", isError = true) }
+                .onFailure { logger.e("Stop process failed", it); setMessage("Dừng tiến trình thất bại, hãy thử lại sau", isError = true) }
         }
     }
 
@@ -406,10 +406,10 @@ class DeveloperViewModel(
                         setMessage("Linux 环境已恢复初始状态，工作区工程未删除。")
                     } else {
                         logger.e("Linux reset failed: ${result.errorOrNull()?.message}")
-                        setMessage("重置失败，请稍后重试", isError = true)
+                        setMessage("Đặt lại thất bại, vui lòng thử lại sau", isError = true)
                     }
                 }
-                .onFailure { logger.e("Linux reset failed", it); setMessage("重置失败，请稍后重试", isError = true) }
+                .onFailure { logger.e("Linux reset failed", it); setMessage("Đặt lại thất bại, vui lòng thử lại sau", isError = true) }
             _busy.value = false
         }
     }
@@ -431,7 +431,7 @@ class DeveloperViewModel(
             }.onFailure {
                 logger.e("Command execution failed", it)
                 _commandResult.value = null
-                setMessage("命令执行失败，请检查命令语法与运行时状态", isError = true)
+                setMessage("Thực thi lệnh thất bại, hãy kiểm tra cú pháp lệnh và trạng thái runtime", isError = true)
             }
             _busy.value = false
         }

@@ -135,7 +135,7 @@ fun DistroManagementScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "已安装沙箱 (${installedDistros.size})",
+                        text = "Sandbox đã cài (${installedDistros.size})",
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -260,19 +260,19 @@ private fun ResetDistroConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "重置 ${distro.displayName} 沙箱？",
+                text = "Reset sandbox ${distro.displayName}?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "• 将清除自行安装的软件包与系统修改",
+                    text = "• Sẽ xóa các gói phần mềm tự cài và sửa đổi hệ thống",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "• 不会删除 /workspace 中的项目代码",
+                    text = "• Sẽ không xóa mã dự án trong /workspace",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -288,7 +288,7 @@ private fun ResetDistroConfirmDialog(
                 ),
             ) {
                 Text(
-                    text = if (countdown > 0) "确认重置 (${countdown}s)" else "确认重置",
+                    text = if (countdown > 0) "Xác nhận reset (${countdown}s)" else "确认重置",
                     color = if (countdown == 0) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onError.copy(alpha = 0.6f),
                 )
             }
@@ -320,19 +320,19 @@ private fun DeleteDistroConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "删除 ${distro.displayName} 系统？",
+                text = "Xóa hệ thống ${distro.displayName}?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "• 将彻底清除该 Linux 发行版与已安装软件",
+                    text = "• Sẽ xóa hoàn toàn bản phân phối Linux này và phần mềm đã cài",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "• 不会删除 /workspace 中的项目代码",
+                    text = "• Sẽ không xóa mã dự án trong /workspace",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -348,7 +348,7 @@ private fun DeleteDistroConfirmDialog(
                 ),
             ) {
                 Text(
-                    text = if (countdown > 0) "确认删除 (${countdown}s)" else "确认删除",
+                    text = if (countdown > 0) "Xác nhận xóa (${countdown}s)" else "Xác nhận xóa",
                     color = if (countdown == 0) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onError.copy(alpha = 0.6f),
                 )
             }
@@ -413,7 +413,7 @@ private fun DistroItemCard(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = "标识: ${distro.id} · 包管理: ${distro.packageManager} · 占用: ${formatSize(distro.sizeBytes)}",
+                            text = "Định danh: ${distro.id} · Trình quản lý gói: ${distro.packageManager} · Dung lượng: ${formatSize(distro.sizeBytes)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -466,9 +466,9 @@ private fun DistroItemCard(
                             color = MaterialTheme.colorScheme.primary,
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "正在还原...", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Text(text = "Đang khôi phục...", style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     } else {
-                        Text(text = "重置沙箱", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Text(text = "Đặt lại sandbox", style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     }
                 }
 
@@ -496,10 +496,10 @@ private fun DistroItemCard(
                             color = MaterialTheme.colorScheme.error,
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "正在删除...", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Text(text = "Đang xóa...", style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     } else {
                         Text(
-                            text = "删除系统",
+                            text = "Xóa hệ thống",
                             style = MaterialTheme.typography.labelSmall,
                             maxLines = 1,
                         )
@@ -510,7 +510,7 @@ private fun DistroItemCard(
             // 单系统时「设为主系统」按钮会置灰，补充解释避免用户困惑
             if (!isActive && !canOperateMulti) {
                 Text(
-                    text = "当前仅有一套系统，无需切换主系统",
+                    text = "Hiện chỉ có một hệ thống, không cần chuyển hệ thống chính",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

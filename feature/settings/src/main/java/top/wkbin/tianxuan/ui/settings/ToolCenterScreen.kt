@@ -122,8 +122,8 @@ fun ToolCenterScreen(
     val categories = listOf(
         "ALL" to "全部生态",
         "BUNDLES" to "全栈开发套件",
-        "SOURCE_LOCAL" to "本地插件",
-        "SOURCE_REMOTE" to "在线插件",
+        "SOURCE_LOCAL" to "Plugin cục bộ",
+        "SOURCE_REMOTE" to "Plugin trực tuyến",
         "CODING_AGENT" to "编程助手",
         "AI_AGENT" to "智能体生态",
     )
@@ -147,13 +147,13 @@ fun ToolCenterScreen(
         topBar = {
             RuntimeTopBar(
                 title = "插件与工具中心",
-                statusText = "已集成 ${tools.count { it.state == ToolState.INSTALLED.name }} 个已就绪工具",
+                statusText = "Đã tích hợp ${tools.count { it.state == ToolState.INSTALLED.name }} công cụ đã sẵn sàng",
                 onBack = onBack,
                 actions = {
                     IconButton(
                         onClick = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
                         modifier = Modifier.spotlightAnchor(importAnchor),
-                        contentDescription = "导入离线插件包",
+                        contentDescription = "Nhập gói plugin offline",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.FolderOpen,
@@ -167,7 +167,7 @@ fun ToolCenterScreen(
                             viewModel.refreshInstalledStatus()
                         },
                         enabled = !isSyncing,
-                        contentDescription = if (isSyncing) "正在刷新插件目录" else "刷新插件目录",
+                        contentDescription = if (isSyncing) "Đang làm mới thư mục plugin" else "Làm mới thư mục plugin",
                     ) {
                         if (isSyncing) {
                             RuntimeCircularProgressIndicator(
@@ -272,12 +272,12 @@ fun ToolCenterScreen(
                                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         Text(
                                             text = when (state) {
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Reading -> "正在读取本地插件信息"
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.PendingConfirmation -> "等待确认安装本地插件"
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Importing -> "正在安装本地插件"
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Succeeded -> "本地插件安装完成"
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.AlreadyImported -> "插件已导入"
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Failed -> "本地插件安装失败"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Reading -> "Đang đọc thông tin plugin cục bộ"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.PendingConfirmation -> "Chờ xác nhận cài plugin cục bộ"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Importing -> "Đang cài plugin cục bộ"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Succeeded -> "Cài đặt plugin cục bộ hoàn tất"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.AlreadyImported -> "Plugin đã nhập"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Failed -> "Cài plugin cục bộ thất bại"
                                                 top.wkbin.tianxuan.core.tools.LocalPluginImportState.Idle -> ""
                                             },
                                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
@@ -285,14 +285,14 @@ fun ToolCenterScreen(
                                         )
                                         Text(
                                             text = when (state) {
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Reading -> "${state.fileName}：正在读取 manifest.json，尚未复制或解压插件资源"
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.PendingConfirmation -> "${state.fileName} 已读取清单，请在弹窗中确认安装"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Reading -> "${state.fileName}: đang đọc manifest.json, chưa sao chép hoặc giải nén tài nguyên plugin"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.PendingConfirmation -> "${state.fileName} đã đọc danh sách, hãy xác nhận cài đặt trong hộp thoại"
                                                 is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Importing -> {
                                                     val percent = state.progress?.let { " ${(it * 100).toInt()}%" }.orEmpty()
-                                                    "${state.fileName}$percent · ${state.currentEntry ?: "正在解包插件资源"}，大型 ARM64 插件可能需要几分钟，请保持应用打开"
+                                                    "${state.fileName}$percent · ${state.currentEntry ?: "正在解包插件资源"}, plugin ARM64 lớn có thể cần vài phút, hãy giữ ứng dụng mở"
                                                 }
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Succeeded -> "${state.pluginName} v${state.version} 已解压、安装并完成验证"
-                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.AlreadyImported -> "${state.pluginName} v${state.version} 已存在，无需重复导入；可在下方插件列表中安装或重试"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Succeeded -> "${state.pluginName} v${state.version} đã giải nén, cài đặt và hoàn tất xác minh"
+                                                is top.wkbin.tianxuan.core.tools.LocalPluginImportState.AlreadyImported -> "${state.pluginName} v${state.version} đã tồn tại, không cần nhập lại; có thể cài hoặc thử lại trong danh sách plugin bên dưới"
                                                 is top.wkbin.tianxuan.core.tools.LocalPluginImportState.Failed -> state.message
                                                 top.wkbin.tianxuan.core.tools.LocalPluginImportState.Idle -> ""
                                             },
@@ -455,7 +455,7 @@ fun ToolCenterScreen(
                                                 modifier = Modifier.wrapContentWidth(),
                                             ) {
                                                 Text(
-                                                    text = if (isCoreReady) "已就绪 ($installedCount/${bundle.components.size})" else "未装配 ($installedCount/${bundle.components.size})",
+                                                    text = if (isCoreReady) "Đã sẵn sàng ($installedCount/${bundle.components.size})" else "Chưa lắp ráp ($installedCount/${bundle.components.size})",
                                                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                                     color = if (isCoreReady) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -496,7 +496,7 @@ fun ToolCenterScreen(
                                                     RuntimeIcon(RuntimeIconName.Shield, Modifier.size(10.dp), tint = MaterialTheme.colorScheme.primary)
                                                 }
                                                 Text(
-                                                    text = if (comp.isRequired) "${comp.name} (必选)" else comp.name,
+                                                    text = if (comp.isRequired) "${comp.name} (bắt buộc)" else comp.name,
                                                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                                     color = if (isInstalled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )
@@ -618,19 +618,19 @@ fun ToolCenterScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         RuntimeIcon(RuntimeIconName.Extension, Modifier.size(22.dp), MaterialTheme.colorScheme.primary)
-                        Text("确认安装本地插件", fontWeight = FontWeight.Bold)
+                        Text("Xác nhận cài plugin cục bộ", fontWeight = FontWeight.Bold)
                     }
                 },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(manifest.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(manifest.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        InfoRow("版本", manifest.version, isCode = false)
-                        InfoRow("来源", "本地插件", isCode = false)
+                        InfoRow("Phiên bản", manifest.version, isCode = false)
+                        InfoRow("Nguồn gốc", "Plugin cục bộ", isCode = false)
                         InfoRow("架构", manifest.architectures.joinToString(", "), isCode = false)
-                        InfoRow("包大小", pending.archiveSizeBytes?.let { formatBytes(it) } ?: "未知", isCode = false)
-                        InfoRow("离线模式", if (manifest.offlineOnly) "是（不拉取在线依赖）" else "否", isCode = false)
-                        Text("点击安装后才会解压资源并执行安装脚本；取消不会修改插件目录。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        InfoRow("Kích thước gói", pending.archiveSizeBytes?.let { formatBytes(it) } ?: "Không xác định", isCode = false)
+                        InfoRow("Chế độ ngoại tuyến", if (manifest.offlineOnly) "Có (không kéo phụ thuộc trực tuyến)" else "否", isCode = false)
+                        Text("Chỉ sau khi nhấn cài mới giải nén tài nguyên và chạy script cài; hủy sẽ không sửa thư mục plugin.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                     }
                 },
                 dismissButton = {
@@ -651,7 +651,7 @@ fun ToolCenterScreen(
 
             RuntimeAlertDialog(
                 onDismissRequest = { viewModel.viewLogs(null) },
-                title = { Text("工具执行日志 ($toolName)") },
+                title = { Text("Log thực thi công cụ ($toolName)") },
                 text = {
                     Surface(
                         modifier = Modifier
@@ -828,7 +828,7 @@ fun ToolCenterScreen(
                             modifier = Modifier.size(22.dp),
                             tint = MaterialTheme.colorScheme.primary,
                         )
-                        Text("装配 ${bundle.name}", fontWeight = FontWeight.Bold)
+                        Text("Lắp đặt ${bundle.name}", fontWeight = FontWeight.Bold)
                     }
                 },
                 text = {
@@ -869,7 +869,7 @@ fun ToolCenterScreen(
                         // 1. 待装配组件分组 (Uninstalled Components)
                         if (uninstalledComponents.isNotEmpty()) {
                             Text(
-                                "待装配组件 (${uninstalledComponents.size})：",
+                                "Thành phần chờ lắp ráp (${uninstalledComponents.size}):",
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(top = 4.dp),
@@ -932,7 +932,7 @@ fun ToolCenterScreen(
                         // 2. 已装配就绪分组 (Installed Components)
                         if (installedComponentsList.isNotEmpty()) {
                             Text(
-                                "已装配就绪 (${installedComponentsList.size})：",
+                                "Đã lắp đặt sẵn sàng (${installedComponentsList.size}): ",
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                 color = successStatusColor(),
                                 modifier = Modifier.padding(top = 6.dp),
@@ -998,7 +998,7 @@ fun ToolCenterScreen(
                             onClick = viewModel::installActiveBundleComponents,
                             enabled = !isInstallingComponents && selectedComponents.isNotEmpty(),
                         ) {
-                            Text(if (selectedComponents.isEmpty()) "请勾选待装配组件" else "开始装配 (${selectedComponents.size})")
+                            Text(if (selectedComponents.isEmpty()) "请勾选待装配组件" else "Bắt đầu lắp ráp (${selectedComponents.size})")
                         }
                     }
                 },
@@ -1015,9 +1015,9 @@ fun ToolCenterScreen(
     if (!importGuideShown) {
         SpotlightGuideOverlay(
             anchor = importAnchor,
-            title = "导入离线插件包",
-            message = "已从 QQ 群下载好全量离线插件包？点击右上角的文件夹图标，选择 zip 文件即可导入，" +
-                "一次装齐 Android、Flutter、反编译环境，全程无需联网。",
+            title = "Nhập gói plugin offline",
+            message = "Đã tải xong gói plugin ngoại tuyến đầy đủ từ nhóm QQ? Nhấn biểu tượng thư mục ở góc trên bên phải, chọn tệp zip là có thể nhập," +
+                "Lắp đủ một lần môi trường Android, Flutter, dịch ngược, toàn trình không cần mạng.",
             icon = RuntimeIconName.FolderOpen,
             onDismiss = viewModel::markImportGuideShown,
         )
@@ -1200,7 +1200,7 @@ private fun ToolCard(
                                 shape = RoundedCornerShape(6.dp),
                             ) {
                                 Text(
-                                    text = if (source == "LOCAL") "本地插件" else "在线插件",
+                                    text = if (source == "LOCAL") "Plugin cục bộ" else "Plugin trực tuyến",
                                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                     color = if (source == "LOCAL") {
                                         MaterialTheme.colorScheme.onTertiaryContainer
@@ -1216,9 +1216,9 @@ private fun ToolCard(
 
                         Text(
                             text = "${tool.publisher} · ${when (tool.category) {
-                                "CODING_AGENT" -> "编程智能体"
-                                "AI_AGENT" -> "AI 智能体"
-                                "DEVELOPER_TOOL" -> "开发加速包"
+                                "CODING_AGENT" -> "Agent lập trình"
+                                "AI_AGENT" -> "Agent AI"
+                                "DEVELOPER_TOOL" -> "Gói tăng tốc phát triển"
                                 else -> tool.category
                             }}",
                             style = MaterialTheme.typography.labelSmall,
@@ -1299,7 +1299,7 @@ private fun ToolCard(
 
             // Verification info (if any)
             if (verification != null && !verification.healthy) {
-                NoticeBanner(text = "自检异常: ${verification.detail}", isError = true)
+                NoticeBanner(text = "Tự kiểm tra bất thường: ${verification.detail}", isError = true)
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.7f))

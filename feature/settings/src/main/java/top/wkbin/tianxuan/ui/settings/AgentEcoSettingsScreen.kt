@@ -63,7 +63,7 @@ fun AgentEcoSettingsScreen(
                         icon = RuntimeIconName.Model,
                         title = "模型档案管理",
                         subtitle = "配置 OpenAI / DeepSeek / Claude / 本地大模型密钥与端点",
-                        value = if (models.isEmpty()) "未配置" else "${models.size} 个模型",
+                        value = if (models.isEmpty()) "未配置" else "${models.size} model",
                         onClick = onOpenModelProfiles,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -76,16 +76,16 @@ fun AgentEcoSettingsScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Chat,
-                        title = "快捷短语与常用指令",
-                        subtitle = "自定义智枢空白页快捷开始卡片与高频提示词模板",
-                        value = "${phrases.count { it.isEnabled }} 条已启用",
+                        title = "Cụm từ nhanh và lệnh thường dùng",
+                        subtitle = "Thẻ bắt đầu nhanh trang trắng Tri Khu tùy chỉnh và mẫu prompt tần suất cao",
+                        value = "${phrases.count { it.isEnabled }} mục đã bật",
                         onClick = onOpenQuickPhrases,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Speed,
-                        title = "数据统计与用量分析",
-                        subtitle = "Token 消耗、活跃度热力图、模型与话题排行",
+                        title = "Thống kê dữ liệu và phân tích mức dùng",
+                        subtitle = "Tiêu thụ Token, heatmap mức độ hoạt động, bảng xếp hạng model và chủ đề",
                         onClick = onOpenStats,
                     )
                 }
@@ -101,23 +101,23 @@ fun AgentEcoSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Wrench,
-                        title = "插件与底层工具中心",
-                        subtitle = "安装 llama.cpp、QEMU 与底层开发环境",
+                        title = "Trung tâm plugin và công cụ tầng nền",
+                        subtitle = "Cài đặt llama.cpp, QEMU và môi trường phát triển tầng thấp",
                         onClick = onOpenToolCenter,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Sparkles,
-                        title = "智能体中枢 (CC-Switch)",
-                        subtitle = "统一管理 Claude Code、OpenClaw、Hermes 版本与模型多源热切",
+                        title = "Trung tâm Agent (CC-Switch)",
+                        subtitle = "Quản lý thống nhất phiên bản Claude Code, OpenClaw, Hermes và chuyển nguồn model nóng đa nguồn",
                         onClick = onOpenCcSwitch,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    SettingsRow(icon = RuntimeIconName.Bot, title = "Agent 执行与上下文", subtitle = "思考流、上下文压缩、工具调用限制与系统提示词", onClick = onOpenAgentSettings)
+                    SettingsRow(icon = RuntimeIconName.Bot, title = "Thực thi Agent và ngữ cảnh", subtitle = "Luồng suy nghĩ, nén context, giới hạn gọi công cụ và prompt hệ thống", onClick = onOpenAgentSettings)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    SettingsRow(icon = RuntimeIconName.Bot, title = "子智能体角色", subtitle = "自动委派策略与可用的子智能体角色", onClick = onOpenSubagentSettings)
+                    SettingsRow(icon = RuntimeIconName.Bot, title = "Vai trò Agent con", subtitle = "Chính sách ủy thác tự động và các vai trò Agent con khả dụng", onClick = onOpenSubagentSettings)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    SettingsRow(icon = RuntimeIconName.Sparkles, title = "Skills 与插件", subtitle = "管理 Skill 提示词、脚本包与运行时插件", value = "${skills.count { it.isEnabled }} 个技能", onClick = onOpenSkillSettings)
+                    SettingsRow(icon = RuntimeIconName.Sparkles, title = "Skills và plugin", subtitle = "Quản lý prompt Skill, gói script và plugin runtime", value = "${skills.count { it.isEnabled }} skill", onClick = onOpenSkillSettings)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Network,

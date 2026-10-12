@@ -136,7 +136,7 @@ fun ToolDetailScreen(
                     // 工具列表尚未加载完成：显示加载中而非「未找到」
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         CircularProgressIndicator(modifier = Modifier.size(32.dp), strokeWidth = 3.dp)
-                        Text("正在加载工具信息…", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                        Text("Đang tải thông tin công cụ…", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                 } else {
                     Text("工具未找到", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -412,9 +412,9 @@ private fun ToolOverviewCard(
                         Text(
                             text = "${tool.publisher} · ${
                                 when (tool.category) {
-                                    "CODING_AGENT" -> "编程智能体"
-                                    "AI_AGENT" -> "AI 智能体"
-                                    "DEVELOPER_TOOL" -> "开发加速包"
+                                    "CODING_AGENT" -> "Agent lập trình"
+                                    "AI_AGENT" -> "Agent AI"
+                                    "DEVELOPER_TOOL" -> "Gói tăng tốc phát triển"
                                     else -> tool.category
                                 }
                             }",
@@ -538,7 +538,7 @@ private fun GatewayManagementCard(
                     )
                     if (port != null) {
                         Text(
-                            text = "· 端口 $port",
+                            text = "· Cổng $port",
                             style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -621,7 +621,7 @@ private fun ServiceLogsCard(
                         modifier = Modifier
                             .minimumInteractiveComponentSize()
                             .size(30.dp),
-                        contentDescription = "复制服务日志",
+                        contentDescription = "Sao chép nhật ký dịch vụ",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Copy,
@@ -634,7 +634,7 @@ private fun ServiceLogsCard(
                         modifier = Modifier
                             .minimumInteractiveComponentSize()
                             .size(30.dp),
-                        contentDescription = "清空服务日志",
+                        contentDescription = "Xóa nhật ký dịch vụ",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Trash,
@@ -746,7 +746,7 @@ private fun ModelApplyCard(
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "一键将已配置的 AI 模型（API Key、Base URL 与 Model）注入至 $toolName，插件重启后生效。",
+            text = "Một chạm tiêm model AI đã cấu hình (API Key, Base URL và Model) vào $toolName, có hiệu lực sau khi khởi động lại plugin.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -878,7 +878,7 @@ private fun AutoStartCard(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = "Linux 环境就绪后自动启动 $toolName 网关服务",
+                    text = "Tự động khởi động dịch vụ gateway $toolName sau khi môi trường Linux sẵn sàng",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -993,7 +993,7 @@ private fun AccessLinkCard(
         if (selectedMode == "LAN" && !state.deviceLanIp.isNullOrBlank()) {
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "设备局域网 IP：${state.deviceLanIp}",
+                text = "IP LAN thiết bị: ${state.deviceLanIp}",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontFamily = FontFamily.Monospace,
                     fontSize = 10.sp,
@@ -1032,7 +1032,7 @@ private fun AccessLinkCard(
                         modifier = Modifier
                             .minimumInteractiveComponentSize()
                             .size(32.dp),
-                        contentDescription = "复制访问链接",
+                        contentDescription = "Sao chép liên kết truy cập",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Copy,
@@ -1325,19 +1325,19 @@ internal fun UninstallToolConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "卸载 $toolName？",
+                text = "Gỡ cài đặt $toolName?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "• 将移除该工具及其在沙箱内的数据目录",
+                    text = "• Sẽ xóa công cụ này và thư mục dữ liệu của nó trong sandbox",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "• 卸载后可随时在工具中心重新安装",
+                    text = "• Sau khi gỡ cài có thể cài lại bất cứ lúc nào trong trung tâm công cụ",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -1353,7 +1353,7 @@ internal fun UninstallToolConfirmDialog(
                 ),
             ) {
                 Text(
-                    text = if (countdown > 0) "确认卸载 (${countdown}s)" else "确认卸载",
+                    text = if (countdown > 0) "Xác nhận gỡ cài đặt (${countdown}s)" else "确认卸载",
                     color = if (countdown == 0) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onError.copy(alpha = 0.6f),
                 )
             }

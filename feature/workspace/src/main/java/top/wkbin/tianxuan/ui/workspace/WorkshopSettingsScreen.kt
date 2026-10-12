@@ -205,8 +205,8 @@ private fun ProjectScriptBindingRow(projectName: String, projectType: ProjectTyp
 
 @Composable
 private fun ManagedScriptEditorDialog(script: BuildScriptEntity?, onDismiss: () -> Unit, onSave: (String, String, ProjectType, String) -> String?) {
-    val defaultAndroidTemplate = "#!/bin/sh\n# 天玄标准 Android 构建脚本入口\nset -eu\nPROJECT_DIR=\"\${1:-.}\"\nTASK=\"\${2:-assembleDebug}\"\nexec /bin/sh /opt/tianxuan/scripts/tianxuan-build.sh android \"\$PROJECT_DIR\" \"\$TASK\"\n"
-    val defaultFlutterTemplate = "#!/bin/sh\n# 天玄标准 Flutter 构建脚本入口\nset -eu\nPROJECT_DIR=\"\${1:-.}\"\nTARGET=\"\${2:-apk --debug --target-platform android-arm64}\"\nexec /bin/sh /opt/tianxuan/scripts/tianxuan-build.sh flutter \"\$PROJECT_DIR\" \$TARGET\n"
+    val defaultAndroidTemplate = "#!/bin/sh\n# Điểm vào script build Android chuẩn Thien Huyen\nset -eu\nPROJECT_DIR=\"\${1:-.}\"\nTASK=\"\${2:-assembleDebug}\"\nexec /bin/sh /opt/tianxuan/scripts/tianxuan-build.sh android \"\$PROJECT_DIR\" \"\$TASK\"\n"
+    val defaultFlutterTemplate = "#!/bin/sh\n# Entry script build Flutter chuẩn Thien Huyen\nset -eu\nPROJECT_DIR=\"\${1:-.}\"\nTARGET=\"\${2:-apk --debug --target-platform android-arm64}\"\nexec /bin/sh /opt/tianxuan/scripts/tianxuan-build.sh flutter \"\$PROJECT_DIR\" \$TARGET\n"
     var name by remember(script) { mutableStateOf(script?.name.orEmpty()) }
     var description by remember(script) { mutableStateOf(script?.description.orEmpty()) }
     var type by remember(script) { mutableStateOf(runCatching { ProjectType.valueOf(script?.projectType ?: ProjectType.ANDROID.name) }.getOrDefault(ProjectType.ANDROID)) }
@@ -298,9 +298,9 @@ fun WorkshopEnvironmentSettingsScreen(onBack: () -> Unit, viewModel: WorkshopSet
                         PathField("Flutter SDK", draft.flutterSdkPath) { viewModel.update(draft.copy(flutterSdkPath = it)) }
                         PathField("CMake", draft.cmakePath) { viewModel.update(draft.copy(cmakePath = it)) }
                         PathField("Ninja", draft.ninjaPath) { viewModel.update(draft.copy(ninjaPath = it)) }
-                        PathField("Gradle 缓存", draft.gradleUserHome) { viewModel.update(draft.copy(gradleUserHome = it)) }
-                        PathField("Flutter Pub 缓存", draft.pubCache) { viewModel.update(draft.copy(pubCache = it)) }
-                        PathField("Android 工具目录 / ADB", draft.toolDir) { viewModel.update(draft.copy(toolDir = it)) }
+                        PathField("Cache Gradle", draft.gradleUserHome) { viewModel.update(draft.copy(gradleUserHome = it)) }
+                        PathField("Cache Pub Flutter", draft.pubCache) { viewModel.update(draft.copy(pubCache = it)) }
+                        PathField("Thư mục công cụ Android / ADB", draft.toolDir) { viewModel.update(draft.copy(toolDir = it)) }
                     }
                 }
             }

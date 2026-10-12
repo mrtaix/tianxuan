@@ -56,7 +56,7 @@ class CdpTargetMatcher(
         val pages = listTargets().filter { it.type == "page" && it.webSocketDebuggerUrl.isNotEmpty() }
         return when {
             pages.isEmpty() -> TargetMatch.NotFound(
-                "devtools /json 中没有 page target（页面可能尚未加载完成）",
+                "Không có page target trong devtools /json (trang có thể chưa tải xong)",
                 emptyList(),
             )
             pages.size == 1 -> TargetMatch.Matched(pages[0])
@@ -75,7 +75,7 @@ class CdpTargetMatcher(
         val probed = pages.firstOrNull { probeMarker(it) == tabId }
         if (probed != null) return TargetMatch.Matched(probed)
         return TargetMatch.NotFound(
-            "多个 page target 且无法定位 tab $tabId（URL/marker 均未命中；" +
+            "Nhiều page target và không thể định vị tab $tabId (URL/marker đều không trúng;" +
                 "tabUrl=${tabUrl ?: "unknown"}）",
             pages,
         )

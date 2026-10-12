@@ -57,8 +57,8 @@ data class WorkshopEnvironmentDraft(
 )
 
 enum class WorkshopScriptType(val title: String, val defaultPath: String, val customPath: String) {
-    ANDROID("Android 打包脚本", "/opt/tianxuan/scripts/build_android.sh", "/opt/tianxuan/scripts/workshop-build-android.sh"),
-    FLUTTER("Flutter 打包脚本", "/opt/tianxuan/scripts/build_flutter.sh", "/opt/tianxuan/scripts/workshop-build-flutter.sh"),
+    ANDROID("Script đóng gói Android", "/opt/tianxuan/scripts/build_android.sh", "/opt/tianxuan/scripts/workshop-build-android.sh"),
+    FLUTTER("Script đóng gói Flutter", "/opt/tianxuan/scripts/build_flutter.sh", "/opt/tianxuan/scripts/workshop-build-flutter.sh"),
 }
 
 class WorkshopSettingsViewModel(
@@ -169,11 +169,11 @@ class WorkshopSettingsViewModel(
                     if (ver != null) "Gradle $ver" else path
                 },
                 javaOptions = toOptions(detectedJava) { path ->
-                    if (path.contains("tianxuan/toolchains/android/jdk")) "Adoptium OpenJDK 17 (内置)"
+                    if (path.contains("tianxuan/toolchains/android/jdk")) "Adoptium OpenJDK 17 (tích hợp)"
                     else "JDK ${path.substringAfterLast('/')}"
                 },
                 ndkOptions = toOptions(detectedNdk) { path ->
-                    if (path.contains("tianxuan/toolchains/android/ndk")) "固定 ARM64 NDK r29 (内置)"
+                    if (path.contains("tianxuan/toolchains/android/ndk")) "ARM64 NDK r29 cố định (tích hợp)"
                     else "NDK ${path.substringAfterLast('/')}"
                 },
                 aapt2Options = toOptions(detectedAapt2) { path ->
@@ -245,11 +245,11 @@ class WorkshopSettingsViewModel(
                 if (ver != null) "Gradle $ver" else path
             },
             javaOptions = toOptions(javaPaths) { path ->
-                if (path.contains("tianxuan/toolchains/android/jdk")) "Adoptium OpenJDK 17 (内置)"
+                if (path.contains("tianxuan/toolchains/android/jdk")) "Adoptium OpenJDK 17 (tích hợp)"
                 else "JDK ${path.substringAfterLast('/')}"
             },
             ndkOptions = toOptions(ndkPaths) { path ->
-                if (path.contains("tianxuan/toolchains/android/ndk")) "固定 ARM64 NDK r29 (内置)"
+                if (path.contains("tianxuan/toolchains/android/ndk")) "ARM64 NDK r29 cố định (tích hợp)"
                 else "NDK ${path.substringAfterLast('/')}"
             },
             aapt2Options = toOptions(aapt2Paths) { path ->
@@ -275,9 +275,9 @@ class WorkshopSettingsViewModel(
         projectType: ProjectType,
         content: String,
     ): String? {
-        if (name.isBlank()) return "脚本名称不能为空"
-        if (content.isBlank()) return "脚本内容不能为空"
-        if (content.length > 200_000) return "脚本不能超过 200 KB"
+        if (name.isBlank()) return "Tên script không được rỗng"
+        if (content.isBlank()) return "Nội dung script không được rỗng"
+        if (content.length > 200_000) return "Script không được vượt quá 200 KB"
         viewModelScope.launch {
             val old = id?.let { buildScripts.findScript(it) }
             val now = System.currentTimeMillis()
@@ -299,7 +299,7 @@ class WorkshopSettingsViewModel(
 
     fun cloneScript(script: BuildScriptEntity) = viewModelScope.launch {
         val now = System.currentTimeMillis()
-        buildScripts.upsertScript(script.copy(id = UUID.randomUUID().toString(), name = "${script.name} 副本", isBuiltin = false, createdAt = now, updatedAt = now))
+        buildScripts.upsertScript(script.copy(id = UUID.randomUUID().toString(), name = "${script.name} bản sao", isBuiltin = false, createdAt = now, updatedAt = now))
     }
 
     fun deleteManagedScript(id: String) = viewModelScope.launch { buildScripts.deleteScript(id) }
@@ -423,14 +423,14 @@ class WorkshopSettingsViewModel(
                 d.toolDir.takeIf(String::isNotBlank)?.let { put("TIANXUAN_TOOL_DIR", it) }
             }
             val result = linuxRuntime.execute(ShellCommand(command, environment = env, forcePty = true, timeoutMs = 1_800_000L, onOutput = ::appendOutput))
-            appendOutput("\n\n退出码: ${result.exitCode}\n${result.stderr}")
+            appendOutput("\n\nMã thoát: ${result.exitCode}\n${result.stderr}")
             _running.value = false
         }
     }
 
     private fun appendOutput(chunk: String) {
         val combined = _output.value + chunk
-        _output.value = if (combined.length <= 60_000) combined else "…前面日志已截断…\n" + combined.takeLast(60_000)
+        _output.value = if (combined.length <= 60_000) combined else "…log phía trước đã bị cắt…\n" + combined.takeLast(60_000)
     }
 
     private fun readDefaultScript(name: String): String = runCatching {

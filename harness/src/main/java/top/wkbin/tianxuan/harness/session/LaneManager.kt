@@ -89,19 +89,19 @@ class LaneManager(
             val roleName = namedLane?.name.orEmpty()
                 .removePrefix(SUBAGENT_PREFIX)
                 .substringBefore(':')
-                .ifBlank { "子智能体" }
+                .ifBlank { "Agent con" }
             val displayName = when (kind) {
-                ConversationBranchKind.MAIN -> "主线"
+                ConversationBranchKind.MAIN -> "Nhánh chính"
                 ConversationBranchKind.BRANCH -> namedLane?.name.orEmpty()
                     .removePrefix(BRANCH_PREFIX)
-                    .substringAfter(':', "分支 ${index + 1}")
+                    .substringAfter(':', "Nhánh ${index + 1}")
                     .replace('-', ' ')
                 ConversationBranchKind.SUBAGENT -> {
                     val taskName = scopedMessages.filterIsInstance<UserMessage>().firstOrNull()
                         ?.text?.let(::subagentTaskTitle)
                     if (taskName.isNullOrBlank()) roleName else "$taskName · $roleName"
                 }
-                ConversationBranchKind.HISTORY -> "历史分支 ${index + 1}"
+                ConversationBranchKind.HISTORY -> "Nhánh lịch sử ${index + 1}"
             }
             val preview = scopedMessages.asReversed().asSequence()
                 .firstNotNullOfOrNull { message ->
@@ -179,7 +179,7 @@ internal fun branchPreviewText(text: String, maxLength: Int = 240): String {
         val prefixEnd = minOf(mediaStart, cursor + (maxLength - out.length))
         out.append(text, cursor, prefixEnd)
         if (out.isNotEmpty() && !out.last().isWhitespace()) out.append(' ')
-        out.append("[图片]")
+        out.append("[Hình ảnh]")
 
         val markdownEnd = text.indexOf(')', dataStart).takeIf { it >= 0 }
         val htmlEnd = text.indexOfAny(charArrayOf('"', '\'', '>', ' ', '\n', '\r', '\t'), dataStart)
@@ -190,7 +190,7 @@ internal fun branchPreviewText(text: String, maxLength: Int = 240): String {
         .replace(Regex("\\s+"), " ")
         .trim()
         .take(maxLength)
-        .ifBlank { "[图片]" }
+        .ifBlank { "[Hình ảnh]" }
 }
 
 internal fun subagentTaskTitle(prompt: String): String? = prompt.lineSequence()

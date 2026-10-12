@@ -184,14 +184,14 @@ internal class ResponsesApi(
                         }
                         "response.failed" -> {
                             val error = (event["response"] as? JsonObject)?.get("error") as? JsonObject
-                            val message = error?.get("message")?.jsonPrimitive?.contentOrNull ?: "响应处理失败"
-                            throw IllegalStateException("Responses 请求失败：$message")
+                            val message = error?.get("message")?.jsonPrimitive?.contentOrNull ?: "Xử lý phản hồi thất bại"
+                            throw IllegalStateException("Yêu cầu Responses thất bại: $message")
                         }
                         "error" -> {
-                            val message = event["message"]?.jsonPrimitive?.contentOrNull ?: "未知错误"
+                            val message = event["message"]?.jsonPrimitive?.contentOrNull ?: "Lỗi không rõ"
                             val code = event["code"]?.jsonPrimitive?.contentOrNull
                             throw IllegalStateException(
-                                "Responses 请求失败：$message" + (code?.let { " (code=$it)" } ?: ""),
+                                "Yêu cầu Responses thất bại: $message" + (code?.let { " (code=$it)" } ?: ""),
                             )
                         }
                         else -> Unit // response.created / in_progress / content_part.* 等无需处理
@@ -213,7 +213,7 @@ internal class ResponsesApi(
         } catch (io: IOException) {
             if (firstEventState.get() == ProviderClient.FIRST_EVENT_TIMED_OUT) {
                 throw SocketTimeoutException(
-                    "等待模型首个响应超过 ${firstEventTimeoutMs / 1000}s",
+                    "Chờ phản hồi đầu tiên của model quá ${firstEventTimeoutMs / 1000}s",
                 ).apply { initCause(io) }
             }
             throw io
@@ -349,7 +349,7 @@ internal class ResponsesApi(
         val dynamicTools = if (model.pureChatMode) emptyList() else ProviderClient.buildDynamicTools()
         // JSON_TEXT 模式：工具定义写进 instructions，模型用文本输出工具调用
         if (!model.pureChatMode && model.toolCallMode == ToolCallMode.JSON_TEXT && dynamicTools.isNotEmpty()) {
-            systemPrompt.append("\n\n## 可用工具 JSON 定义（必须严格按此 name 与参数输出）\n")
+            systemPrompt.append("\n\n## Định nghĩa JSON công cụ khả dụng (phải xuất đúng name và tham số này)\n")
                 .append(ProviderClient.buildToolsTextDescription(dynamicTools))
         }
         // NATIVE 模式下 tools 数组独立于 input，输出预算必须显式扣掉 schema
@@ -471,7 +471,7 @@ internal class ResponsesApi(
     /** 非 429/5xx 的 HTTP 错误：413 与上下文超限文案走可自愈类型，供引擎紧急压缩后重试。 */
     private fun httpError(code: Int, body: String): Exception {
         val detail = extractError(body)
-        val message = "Responses 请求失败 HTTP $code：$detail"
+        val message = "Yêu cầu Responses thất bại HTTP $code: $detail"
         return when (ProviderClient.contextOverflowException(code, body)) {
             is LlmContextOverflowException -> LlmContextOverflowException(message)
             is LlmInvalidOutputTokensException -> LlmInvalidOutputTokensException(message)

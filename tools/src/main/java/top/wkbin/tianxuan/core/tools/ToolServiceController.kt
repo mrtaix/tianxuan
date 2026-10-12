@@ -51,7 +51,7 @@ class ToolServiceController(
                 delay(150)
             }
         }
-        val process = requireNotNull(adapter.startService()) { "工具不提供后台服务：$toolId" }
+        val process = requireNotNull(adapter.startService()) { "Công cụ không cung cấp dịch vụ nền：$toolId" }
         if (spec != null) awaitPortOrThrow(toolId, process, spec)
         return process
     }
@@ -77,7 +77,7 @@ class ToolServiceController(
                     .joinToString("\n")
                 linuxRuntime.stopBackground(process.id)
                 val detail = if (logs.isNotBlank()) "：\n$logs" else ""
-                throw IllegalStateException("网关进程启动后立即退出，服务日志$detail")
+                throw IllegalStateException("Tiến trình gateway thoát ngay sau khi khởi động, log dịch vụ$detail")
             }
             if (isPortOpen(spec.port)) return
             if (System.currentTimeMillis() > deadline) break
@@ -90,7 +90,7 @@ class ToolServiceController(
         linuxRuntime.stopBackground(process.id)
         val timeoutDetail = if (timeoutLogs.isNotBlank()) "：\n$timeoutLogs" else ""
         throw IllegalStateException(
-            "网关未在 ${spec.startupTimeoutMs / 1000} 秒内就绪（端口 ${spec.port} 未监听），已自动停止$timeoutDetail",
+            "Gateway chưa sẵn sàng trong ${spec.startupTimeoutMs / 1000} giây (cổng ${spec.port} chưa lắng nghe), đã tự động dừng$timeoutDetail",
         )
     }
 

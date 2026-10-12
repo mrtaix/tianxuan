@@ -1,11 +1,11 @@
-## PRoot 运行环境约束
+## Ràng buộc môi trường chạy PRoot
 
-本环境是 Android 上的 PRoot 仿真层，不是内核级 root，务必遵守：
+Môi trường này là lớp mô phỏng PRoot trên Android, không phải root cấp nhân, nhất định phải tuân thủ:
 
-- 伪 Root：chown/chgrp 属主、mount、insmod、sysctl、Linux capabilities、setuid 等内核级操作会被静默忽略或报错，不要依赖。
-- 硬链接：解包或安装依赖（Perl/Python 等）遇硬链接 ownership 报错，改用符号链接（ln -s）。
-- setuid 降级：setuid 无法生效且残留会导致 dpkg 升级卡死；遇权限异常优先清理 *.dpkg-tmp 并 chmod 降级。
-- 无 systemd：服务不会自启，systemctl 不可用。常驻进程必须用 process 工具托管并保持前台运行；base 中的 nohup / setsid / & 无法跨 PRoot 会话存活。
-- ADB 守护进程：PRoot 沙箱内无持久 init/systemd，后台 adb daemon (fork-server) 每次调用后都会随子进程退出而重启；命令行 ADB 操作需在同一命令内完成 connect + 目标操作（/opt/tianxuan/bin/adb 封装脚本已内置自动 connect），或直接使用 logcat-grabber / host(action="logcat") 经由宿主持久桥接。
-- Git：已全局配置 safe.directory = *，可在任意挂载目录执行 git。
-- 算力：移动设备 CPU/IO 较弱，大包安装与编译耗时长，注意超时；长日志用 grep/head/tail 分片读取。
+- Giả Root: các thao tác cấp nhân như chown/chgrp đổi chủ sở hữu, mount, insmod, sysctl, Linux capabilities, setuid... sẽ bị bỏ qua trong im lặng hoặc báo lỗi, đừng dựa vào.
+- Hard link: giải nén hoặc cài phụ thuộc (Perl/Python...) gặp lỗi ownership của hard link thì chuyển sang symbolic link (ln -s).
+- Hạ cấp setuid: setuid không có hiệu lực và phần dư còn lại sẽ khiến dpkg nâng cấp bị treo; gặp quyền hạn bất thường thì ưu tiên dọn dẹp *.dpkg-tmp và chmod hạ cấp.
+- Không có systemd: dịch vụ sẽ không tự khởi động, systemctl không dùng được. Tiến trình thường trú bắt buộc phải dùng công cụ process để quản lý và giữ chạy foreground; nohup / setsid / & trong base không thể sống sót qua các phiên PRoot.
+- Tiến trình nền ADB: trong sandbox PRoot không có init/systemd bền vững, adb daemon (fork-server) nền sẽ khởi động lại sau mỗi lần gọi khi tiến trình con thoát; thao tác ADB dòng lệnh cần hoàn thành connect + thao tác mục tiêu trong cùng một lệnh (script đóng gói /opt/tianxuan/bin/adb đã tích hợp sẵn tự động connect), hoặc trực tiếp dùng logcat-grabber / host(action="logcat") qua cầu nối bền vững của host.
+- Git: đã cấu hình toàn cục safe.directory = *, có thể chạy git ở bất kỳ thư mục mount nào.
+- Năng lực tính toán: CPU/IO của thiết bị di động khá yếu, cài gói lớn và biên dịch tốn thời gian, chú ý timeout; log dài thì dùng grep/head/tail đọc phân mảnh.

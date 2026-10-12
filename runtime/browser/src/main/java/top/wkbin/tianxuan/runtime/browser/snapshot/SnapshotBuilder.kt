@@ -26,7 +26,7 @@ private fun JsonPrimitive.textOrNull(): String? =
  * 在 WebView 中注入可见交互元素扫描脚本，结果反序列化为 [PageSnapshot] 推到 [BrowserEventBus]。
  *
  * 注入脚本扫描：`<a> / <button> / <input> / <select> / <textarea>` 以及带 `role` / `tabindex` / `onclick` 的元素。
- * 模型只见 ref，由内部 selector 表承担"ref → 真实 selector"的回查。
+ * 模型只见 ref，由内部 selector 表承担"ref → selector thật"的回查。
  */
 class SnapshotBuilder(
     private val token: BrowserSessionToken,

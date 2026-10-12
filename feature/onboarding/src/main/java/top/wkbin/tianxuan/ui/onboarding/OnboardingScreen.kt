@@ -314,7 +314,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
                     RuntimeIconButton(
                         onClick = { showImportDialog = true },
                         modifier = Modifier.size(36.dp),
-                        contentDescription = "从 JSON 导入配置",
+                        contentDescription = "Nhập cấu hình từ JSON",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Download,
@@ -368,7 +368,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("切换", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
+                                Text("Chuyển đổi", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
                                 RuntimeIcon(RuntimeIconName.ChevronDown, Modifier.size(14.dp))
                             }
                         }
@@ -409,7 +409,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "接口地址 (Base URL)",
+                        text = "Địa chỉ giao diện (Base URL)",
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -454,13 +454,13 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "API Key 凭据",
+                            text = "Thông tin xác thực API Key",
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         if (apiKey.isNotBlank()) {
                             Text(
-                                text = "已填写",
+                                text = "Đã điền",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -504,7 +504,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = "选择模型 (Model ID)",
+                        text = "Chọn model (Model ID)",
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -513,7 +513,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
                         value = model,
                         onValueChange = viewModel::setModelId,
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("例如：gpt-4o / deepseek-chat", style = MaterialTheme.typography.bodySmall) },
+                        placeholder = { Text("Ví dụ: gpt-4o / deepseek-chat", style = MaterialTheme.typography.bodySmall) },
                         textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                         shape = compactFieldShape,
                         colors = compactFieldColors,
@@ -522,7 +522,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
 
                     if (candidateModels.isNotEmpty()) {
                         Text(
-                            text = "候选模型标签（点击一键填入）：",
+                            text = "Nhãn model ứng viên (bấm để điền một chạm):",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -618,11 +618,11 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
                 val result = viewModel.importProfileFromJson(jsonStr)
                 result.fold(
                     onSuccess = { profile ->
-                        Toast.makeText(context, "成功载入模型配置「${profile.name.ifBlank { profile.model }}」", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Nạp thành công cấu hình model \"${profile.name.ifBlank { profile.model }}\"", Toast.LENGTH_SHORT).show()
                         showImportDialog = false
                     },
                     onFailure = { err ->
-                        Toast.makeText(context, "解析失败: ${err.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Phân giải thất bại: ${err.message}", Toast.LENGTH_LONG).show()
                     },
                 )
             },
@@ -714,10 +714,10 @@ private fun OnboardingModelImportDialog(
                 if (!fileContent.isNullOrBlank()) {
                     jsonText = fileContent
                     selectedTab = 0
-                    Toast.makeText(context, "已载入文件内容", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Đã nạp nội dung tệp", Toast.LENGTH_SHORT).show()
                 }
             }.onFailure {
-                Toast.makeText(context, "读取文件失败: ${it.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Đọc tệp thất bại: ${it.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -727,7 +727,7 @@ private fun OnboardingModelImportDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RuntimeIcon(RuntimeIconName.Download, Modifier.size(20.dp), MaterialTheme.colorScheme.primary)
-                Text("导入模型配置", fontWeight = FontWeight.Bold)
+                Text("Nhập cấu hình model", fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -744,7 +744,7 @@ private fun OnboardingModelImportDialog(
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        text = { Text("剪贴板粘贴") },
+                        text = { Text("Dán clipboard") },
                     )
                     Tab(
                         selected = selectedTab == 1,
@@ -752,7 +752,7 @@ private fun OnboardingModelImportDialog(
                             selectedTab = 1
                             filePickerLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
                         },
-                        text = { Text("选择本地文件") },
+                        text = { Text("Chọn tệp cục bộ") },
                     )
                 }
 
@@ -761,7 +761,7 @@ private fun OnboardingModelImportDialog(
                         value = jsonText,
                         onValueChange = { jsonText = it },
                         modifier = Modifier.fillMaxWidth().height(160.dp),
-                        placeholder = { Text("粘贴导出的 JSON 模型配置（单个或 bundle 均支持）") },
+                        placeholder = { Text("Dán cấu hình model JSON đã xuất (hỗ trợ cả đơn lẻ hoặc bundle)") },
                         textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                         shape = RoundedCornerShape(10.dp),
                     )
@@ -773,13 +773,13 @@ private fun OnboardingModelImportDialog(
                             if (clipText.isNotBlank()) {
                                 jsonText = clipText
                             } else {
-                                Toast.makeText(context, "剪贴板为空", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Clipboard trống", Toast.LENGTH_SHORT).show()
                             }
                         },
                         modifier = Modifier.fillMaxWidth().height(36.dp),
                         shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text("一键粘贴剪贴板内容")
+                        Text("Dán nội dung clipboard một chạm")
                     }
                 } else {
                     Column(
@@ -794,12 +794,12 @@ private fun OnboardingModelImportDialog(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 RuntimeIcon(RuntimeIconName.File, Modifier.size(16.dp))
-                                Text("选择本地 JSON 文件")
+                                Text("Chọn tệp JSON cục bộ")
                             }
                         }
                         if (jsonText.isNotBlank()) {
                             Text(
-                                text = "已载入 ${jsonText.length} 字符",
+                                text = "Đã nạp ${jsonText.length} ký tự",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -813,7 +813,7 @@ private fun OnboardingModelImportDialog(
                 onClick = { onImportJson(jsonText) },
                 enabled = jsonText.isNotBlank(),
             ) {
-                Text("载入配置")
+                Text("Nạp cấu hình")
             }
         },
         dismissButton = {

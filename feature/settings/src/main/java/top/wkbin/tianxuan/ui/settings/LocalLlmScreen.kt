@@ -65,8 +65,8 @@ fun LocalLlmScreen(
     val mobileModelPresets = viewModel.mobileModelPresets
     val topBarStatus = when (val state = serviceState) {
         LocalLlmServiceState.Stopped -> "服务未启动"
-        is LocalLlmServiceState.Starting -> "正在启动 · ${state.fileName}"
-        is LocalLlmServiceState.Running -> "运行中 · ${state.fileName}"
+        is LocalLlmServiceState.Starting -> "Đang khởi động · ${state.fileName}"
+        is LocalLlmServiceState.Running -> "Đang chạy · ${state.fileName}"
         is LocalLlmServiceState.Failed -> "启动失败"
     }
 
@@ -260,7 +260,7 @@ fun LocalLlmScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("手机小模型推荐", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "本机内存 ${formatBytes(deviceRamBytes)} · 默认推荐 Q4_K_M，兼顾体积、速度和效果",
+                        "RAM máy ${formatBytes(deviceRamBytes)} · Mặc định khuyến nghị Q4_K_M, cân bằng dung lượng, tốc độ và hiệu quả",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -381,7 +381,7 @@ private fun MobileModelPresetCard(
                         ModelSpecChip(formatBytes(preset.downloadBytes))
                     }
                     Text(
-                        "建议设备内存 ${formatRam(preset.minimumDeviceRamBytes)} 以上",
+                        "Khuyến nghị bộ nhớ thiết bị trên ${formatRam(preset.minimumDeviceRamBytes)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -441,8 +441,8 @@ private fun ServiceStatusCard(
                 Text(
                     when (serviceState) {
                         LocalLlmServiceState.Stopped -> "未运行"
-                        is LocalLlmServiceState.Starting -> "正在启动 · ${serviceState.fileName}"
-                        is LocalLlmServiceState.Running -> "运行中 · ${serviceState.fileName}"
+                        is LocalLlmServiceState.Starting -> "Đang khởi động · ${serviceState.fileName}"
+                        is LocalLlmServiceState.Running -> "Đang chạy · ${serviceState.fileName}"
                         is LocalLlmServiceState.Failed -> "启动失败"
                     },
                     style = MaterialTheme.typography.titleMedium,
@@ -551,7 +551,7 @@ private fun DownloadModelDialog(
                     isError = url.isNotBlank() && !urlValid,
                     supportingText = {
                         if (url.isNotBlank() && !urlValid) {
-                            Text("请输入以 http(s):// 开头且指向 .gguf 文件的直链")
+                            Text("Hãy nhập liên kết trực tiếp bắt đầu bằng http(s):// và trỏ tới tệp .gguf")
                         }
                     },
                     singleLine = false,
@@ -598,7 +598,7 @@ private fun ImportPathDialog(
                     isError = path.isNotBlank() && !pathValid,
                     supportingText = {
                         if (path.isNotBlank() && !pathValid) {
-                            Text("路径需指向 .gguf 模型文件")
+                            Text("Đường dẫn phải trỏ đến tệp model .gguf")
                         }
                     },
                     singleLine = false,
@@ -633,19 +633,19 @@ private fun DeleteModelConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "删除模型 $fileName？",
+                text = "Xóa model $fileName?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "• 将从沙箱中删除该 GGUF 模型文件，释放对应存储空间",
+                    text = "• Sẽ xóa tệp model GGUF đó khỏi sandbox, giải phóng dung lượng lưu trữ tương ứng",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "• 删除后需要重新下载或导入才能再次使用",
+                    text = "• Sau khi xóa cần tải lại hoặc nhập lại mới dùng được",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -661,7 +661,7 @@ private fun DeleteModelConfirmDialog(
                 ),
             ) {
                 Text(
-                    text = if (countdown > 0) "确认删除 (" + countdown + "s)" else "确认删除",
+                    text = if (countdown > 0) "Xác nhận xóa (" + countdown + "s)" else "Xác nhận xóa",
                     color = if (countdown == 0) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onError.copy(alpha = 0.6f),
                 )
             }

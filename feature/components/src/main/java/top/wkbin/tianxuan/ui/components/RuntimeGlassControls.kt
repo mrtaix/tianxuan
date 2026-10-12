@@ -996,7 +996,7 @@ fun RuntimeSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "搜索...",
+    placeholder: String = "Tìm kiếm...",
     leadingIcon: (@Composable () -> Unit)? = null,
     onSearch: ((String) -> Unit)? = null,
     onClear: (() -> Unit)? = null,

@@ -254,7 +254,7 @@ fun ToolActivityPill(
     }
 
     if (showDetailSheet && activeToolCall != null) {
-        // 参数默认折叠截断，避免原始 JSON 直出刷屏；点击"查看原始参数"展开全文
+        // 参数默认折叠截断，避免原始 JSON 直出刷屏；点击"Xem tham số gốc"展开全文
         var showRawArgs by remember(activeToolCall.id) { mutableStateOf(false) }
         val runningStatusText = stringResource(R.string.chat_tool_detail_running, formatDuration(elapsedMillis))
         val readyStatusText = stringResource(R.string.chat_tool_detail_ready)

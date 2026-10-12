@@ -102,52 +102,52 @@ class PromptRouter(
 
         /** load_rule 工具描述（规则清单由枚举生成）。 */
         val LOAD_RULE_DESCRIPTION: String =
-            "按需加载系统提示词的详细规则块（${RuleBlock.entries.joinToString(" / ") { it.loadName }}）。" +
-                "当当前任务需要某块规则但系统提示词中未注入时调用；只读，无副作用。"
+            "Nạp theo nhu cầu khối quy tắc chi tiết của system prompt (${RuleBlock.entries.joinToString(" / ") { it.loadName }}）。" +
+                "Gọi khi nhiệm vụ hiện tại cần một khối quy tắc nào đó nhưng system prompt chưa chèn; chỉ đọc, không có tác dụng phụ."
 
         /** load_rule 工具的 JSON Schema。 */
         val LOAD_RULE_SCHEMA: String =
             """{"type":"object","properties":{"rule":{"type":"string","enum":[$RULE_NAMES_JSON],"description":"要加载的规则块名称"}},"required":["rule"]}"""
 
         private val CODE_SIGNALS = listOf(
-            "重构", "调用链", "调用方", "被调用", "callee", "caller", "影响面", "符号",
-            "函数", "方法", "类定义", "接口定义", "定义在哪", "代码分析", "架构", "源码",
-            "编译失败", "编译报错", "崩溃", "crash", "stacktrace", "堆栈", "异常",
+            "Tái cấu trúc", "Chuỗi gọi", "Bên gọi", "Được gọi", "callee", "caller", "Phạm vi ảnh hưởng", "Ký hiệu",
+            "Hàm", "Phương thức", "Định nghĩa lớp", "Định nghĩa giao diện", "Định nghĩa ở đâu", "Phân tích mã", "架构", "Mã nguồn",
+            "Biên dịch thất bại", "Lỗi biên dịch", "Sự cố", "crash", "stacktrace", "Ngăn xếp", "异常",
             "retrofit", "room", "compose", "activity", "fragment", "gradle", "codegraph",
             "refactor", "where is", "call chain", "implementation of",
         )
 
         private val WORKFLOW_SIGNALS = listOf(
-            "排错", "排查", "调试", "debug", "报错", "错误", "失败", "崩溃", "crash",
-            "异常", "exception", "stacktrace", "堆栈", "逆向", "反编译", "重构",
-            "构建失败", "编译失败", "安装并", "配置并", "部署", "为什么不", "不工作",
+            "Gỡ lỗi", "Điều tra", "Gỡ lỗi", "debug", "Báo lỗi", "错误", "失败", "Sự cố", "crash",
+            "异常", "exception", "stacktrace", "Ngăn xếp", "Dịch ngược", "Dịch ngược", "Tái cấu trúc",
+            "Build thất bại", "Biên dịch thất bại", "Cài đặt và", "Cấu hình và", "Triển khai", "Vì sao không", "Không hoạt động",
             "doesn't work", "does not work", "not working", "troubleshoot", "fix",
-            "一步步", "多步", "复杂", "规划", "计划", "plan",
-            "实现", "开发", "编写", "创建", "构建", "设计", "新增", "添加",
-            "爬虫", "爬取", "批量", "调研", "方案", "迁移", "集成", "重写", "改造", "优化",
+            "Từng bước một", "Nhiều bước", "Phức tạp", "Quy hoạch", "Kế hoạch", "plan",
+            "Triển khai", "Phát triển", "Biên soạn", "Tạo", "Xây dựng", "Thiết kế", "Thêm mới", "添加",
+            "Trình thu thập", "Thu thập", "Hàng loạt", "Khảo sát", "Phương án", "Di trú", "Tích hợp", "Viết lại", "Cải tạo", "Tối ưu",
             "implement", "develop", "create", "build", "design", "crawler", "scrape", "batch", "migrate", "integrate",
         )
 
         private val SECURITY_SIGNALS = listOf(
-            "删除", "删掉", "清空", "清除", "卸载", "移除", "格式化", "重置", "冻结",
+            "删除", "Xóa đi", "清空", "Xóa bỏ", "卸载", "Gỡ bỏ", "Định dạng hóa", "Đặt lại", "Đóng băng",
             "rm -rf", "wipe", "uninstall", "format", "delete all", "drop table",
         )
 
         private val MEMORY_SIGNALS = listOf(
-            "记住", "记一下", "以后都", "以后默认", "我的偏好", "这是规范",
+            "Ghi nhớ", "Ghi lại", "Về sau đều", "Mặc định về sau", "Sở thích của tôi", "Đây là quy chuẩn",
             "remember", "my preference",
         )
 
         private val IMAGE_DELIVERY_SIGNALS = listOf(
-            "图片", "照片", "壁纸", "头像", "海报", "封面", "配图", "发我", "发张", "来张",
-            "保存到本地", "下载到本地", "留存", "美图", "表情包",
+            "Hình ảnh", "Ảnh", "Hình nền", "Ảnh đại diện", "Poster", "Ảnh bìa", "Ảnh minh họa", "Gửi cho tôi", "Gửi ảnh", "Chụp một tấm",
+            "Lưu về cục bộ", "Tải về cục bộ", "Lưu giữ", "Ảnh đẹp", "Gói nhãn dán",
             "image", "picture", "photo", "pic",
         )
 
         private val BROWSER_REVERSE_SIGNALS = listOf(
-            "逆向", "反编译", "抓包", "抓接口", "hook", "断点", "加密", "签名",
-            "mock", "拦截", "worker", "爬虫", "爬取",
-            "网页", "页面", "网站", "浏览器", "网址",
+            "Dịch ngược", "Dịch ngược", "Bắt gói", "Bắt giao diện", "hook", "Điểm dừng", "Mã hóa", "Chữ ký",
+            "mock", "Chặn", "worker", "Trình thu thập", "Thu thập",
+            "Trang web", "Trang", "Trang web", "Trình duyệt", "Địa chỉ web",
             "browser", "web page", "debug",
         )
     }

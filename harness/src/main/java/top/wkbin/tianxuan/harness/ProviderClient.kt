@@ -57,9 +57,9 @@ class LlmContextOverflowException(message: String) : IOException(message)
 class LlmInvalidOutputTokensException(message: String) : IOException(message)
 
 /**
- * 上游以 HTTP 200 返回了"什么都没有"的一轮（无正文、无推理、无工具调用）。
+ * 上游以 HTTP 200 返回了"Không có gì cả"的一轮（无正文、无推理、无工具调用）。
  *
- * 这类响应若不显式识别，会被上层当成"模型答完了"正常收尾，前台表现为
+ * 这类响应若不显式识别，会被上层当成"Model trả lời xong rồi"正常收尾，前台表现为
  * 「消息发出去没有任何回复」——既不报错也没有内容，正是最无从定位的一种形态。
  */
 class LlmEmptyResponseException(message: String) : IOException(message)
@@ -139,7 +139,7 @@ internal class ChatApi(
         val call = okHttpClient.newCall(buildRequest(model, messages, stream = true, includeUsage = includeUsage))
         // 关键：阻塞式 readUtf8Line() 不感知协程取消。用户点"停止"时必须主动 call.cancel()
         // 关闭底层 socket，阻塞读才会立刻抛出 IOException 退出——否则要等读超时，
-        // 表现为"停止按钮没反应"。
+        // 表现为"Nút dừng không phản hồi"。
         val cancelHandle = coroutineContext[Job]?.invokeOnCompletion(onCancelling = true) { call.cancel() }
         // source.timeout() 只有收到 HTTP 响应头后才生效。看门狗覆盖 DNS、连接、请求体上传、
         // 等待响应头以及首个 SSE 事件的完整阶段，避免大请求仍静默等满 callTimeout。
@@ -175,11 +175,11 @@ internal class ChatApi(
                 var lastActiveSlot: Int? = null
                 var usage = ChatUsage()
                 // 空响应诊断首部：只缓冲到出现首个 data: 行为止（或到上限），
-                // 既不把整段流式正文留在内存，又能在"什么都没收到"时把上游真实返回写进错误。
+                // 既不把整段流式正文留在内存，又能在"Không nhận được gì cả"时把上游真实返回写进错误。
                 val rawHead = StringBuilder()
                 var sawSseData = false
                 // 非 SSE 响应体：部分 OpenAI 兼容网关忽略 stream:true，直接返回整段 JSON 补全。
-                // 此前这种 body 因"没有 data: 行"被逐行丢弃，最终表现为空回复。
+                // 此前这种 body 因"Không có dòng data:"被逐行丢弃，最终表现为空回复。
                 var nonSseBody: String? = null
                 while (true) {
                     val line = source.readUtf8Line() ?: break
@@ -287,7 +287,7 @@ internal class ChatApi(
                     usage = usage,
                 ).let { streamed ->
                     // HTTP 200 却什么都没产出：先按非流式 JSON 兜底解析，仍拿不到内容就明确报错。
-                    // 绝不允许空响应继续往下走——它会一路"无工具调用 → 收尾 → Outcome=completed"，
+                    // 绝不允许空响应继续往下走——它会一路"Không gọi công cụ → thu lại → Outcome=completed"，
                     // 前台看不到任何内容也没有任何错误，即用户反馈的「发消息没有回复」。
                     if (streamed.isBlankResponse) {
                         resolveBlankStreamResult(nonSseBody, rawHead.toString())
@@ -299,7 +299,7 @@ internal class ChatApi(
         } catch (io: IOException) {
             if (firstEventState.get() == ProviderClient.FIRST_EVENT_TIMED_OUT) {
                 throw SocketTimeoutException(
-                    "等待模型首个响应超过 ${firstEventTimeoutMs / 1000}s",
+                    "Chờ phản hồi đầu tiên của model quá ${firstEventTimeoutMs / 1000}s",
                 ).apply { initCause(io) }
             }
             throw io
@@ -334,9 +334,9 @@ internal class ChatApi(
      * 流式请求拿到了完全空的一轮（HTTP 200，但无正文/推理/工具调用）。
      *
      * 先按非流式 JSON 补全兜底解析：[nonSseBody] 非空说明响应体根本不是 SSE
-     * （网关忽略了 `stream: true`），此前这种 body 会被逐行丢弃、最终表现为"空回复"。
+     * （网关忽略了 `stream: true`），此前这种 body 会被逐行丢弃、最终表现为"Phản hồi rỗng"。
      * 兜底仍无内容时抛 [LlmEmptyResponseException]，并附上原始响应首部——
-     * 把一次"什么都没有"变成可定位、可重试的失败。
+     * 把一次"Không có gì cả"变成可定位、可重试的失败。
      */
     private fun resolveBlankStreamResult(nonSseBody: String?, rawHead: String): ChatResult {
         val body = nonSseBody?.trim().orEmpty()
@@ -382,7 +382,7 @@ internal class ChatApi(
             messages.map { msg ->
                 if (!injected && msg.role == "system" && !msg.content.isNullOrBlank()) {
                     injected = true
-                    msg.copy(content = msg.content + "\n\n## 可用工具 JSON 定义（必须严格按此 name 与参数输出）\n" + desc)
+                    msg.copy(content = msg.content + "\n\n## Định nghĩa JSON công cụ khả dụng (phải xuất đúng name và tham số này)\n" + desc)
                 } else {
                     msg
                 }
@@ -662,12 +662,12 @@ enum class ToolCallMode { NATIVE, JSON_TEXT, DISABLED }
 
 /**
  * 残渣级思考的长度上限（字符，trim 后）：正文与工具调用全空时，思考字段只剩低于该阈值的
- * 截断残渣（空壳 think、换行、半截标签）不算"有内容"。真实推理是成段文字，起点远高于此；
- * 而放行这类残渣会落进"无工具调用 → Complete"分支，把中转截断产生的空壳响应记成任务完成。
+ * 截断残渣（空壳 think、换行、半截标签）不算"Có nội dung"。真实推理是成段文字，起点远高于此；
+ * 而放行这类残渣会落进"Không gọi công cụ → Complete"分支，把中转截断产生的空壳响应记成任务完成。
  */
 internal const val BLANK_REASONING_RESIDUAL_CHARS = 16
 
-/** null/空白，或 trim 后低于 [BLANK_REASONING_RESIDUAL_CHARS] 的残渣级思考，均视为"没有思考内容"。 */
+/** null/空白，或 trim 后低于 [BLANK_REASONING_RESIDUAL_CHARS] 的残渣级思考，均视为"Không có nội dung suy nghĩ"。 */
 internal fun String?.isNullOrResidualReasoning(): Boolean =
     isNullOrBlank() || trim().length < BLANK_REASONING_RESIDUAL_CHARS
 
@@ -689,10 +689,10 @@ data class ChatResult(
 
     /**
      * 空的一轮：没有正文、没有（有效）推理、也没有任何工具调用。
-     * 判定覆盖两类形态：三者全空的"干净空响应"，以及正文/工具全空、思考只剩
-     * 残渣级字符（[BLANK_REASONING_RESIDUAL_CHARS] 以下）的"准空响应"——后者是
+     * 判定覆盖两类形态：三者全空的"Phản hồi rỗng sạch sẽ"，以及正文/工具全空、思考只剩
+     * 残渣级字符（[BLANK_REASONING_RESIDUAL_CHARS] 以下）的"Phản hồi gần rỗng"——后者是
      * 中转/网关在长上下文或不稳定时静默截断的典型产物，必须同样显式报错可重试，
-     * 而不是被上层"无工具调用 → Complete"记成任务完成。
+     * 而不是被上层"Không gọi công cụ → Complete"记成任务完成。
      * 真正的推理-only 轮次（成段思考 + 无正文 + 无工具）仍不算空：那是模型自主收束的合法形态。
      */
     val isBlankResponse: Boolean
@@ -766,7 +766,7 @@ internal fun sanitizeApiTranscript(messages: List<ApiMessage>): List<ApiMessage>
             out.add(
                 ApiMessage(
                     role = "tool",
-                    content = "（工具结果缺失：历史中断或被裁剪，如仍需要请重新发起该工具调用）",
+                    content = "(Thiếu kết quả công cụ: lịch sử gián đoạn hoặc bị cắt, nếu vẫn cần hãy phát lại lần gọi công cụ đó)",
                     tool_call_id = id,
                 ),
             )
@@ -791,7 +791,7 @@ internal fun sanitizeApiTranscript(messages: List<ApiMessage>): List<ApiMessage>
                     out.add(
                         ApiMessage(
                             role = "user",
-                            content = "【工具执行结果（历史顺序异常，已转写为文本）】\n${message.content.orEmpty()}",
+                            content = "【Kết quả thực thi công cụ (thứ tự lịch sử bất thường, đã chuyển thành văn bản)】\n${message.content.orEmpty()}",
                         ),
                     )
                 }
@@ -902,7 +902,7 @@ class ProviderClient(
         val active = modelDao.activeModel()
         val baseConfig = active?.toModelConfig(providerRepository)
             ?: ModelConfig(
-                name = "默认",
+                name = "Mặc định",
                 provider = providerRepository.provider.first(),
                 model = providerRepository.model.first().ifBlank { DEFAULT_MODEL },
                 baseUrl = providerRepository.baseUrl.first().ifBlank { DEFAULT_BASE_URL },
@@ -923,7 +923,7 @@ class ProviderClient(
         val active = requested ?: modelDao.activeModel()
         val providerKey = providerRepository.readApiKey().orEmpty()
         if (active == null && providerKey.isBlank()) {
-            throw IllegalStateException("未配置模型或 API Key，请先在「设置 → 模型」中添加并激活一个模型")
+            throw IllegalStateException("Chưa cấu hình model hoặc API Key, hãy thêm và kích hoạt một model trong 「Cài đặt → Model」 trước")
         }
         val baseConfig = if (active != null) {
             active.toModelConfig(providerRepository)
@@ -931,7 +931,7 @@ class ProviderClient(
             val provider = providerRepository.provider.first()
             val baseUrl = providerRepository.baseUrl.first().ifBlank { DEFAULT_BASE_URL }
             ModelConfig(
-                name = "默认",
+                name = "Mặc định",
                 provider = provider,
                 model = providerRepository.model.first().ifBlank { DEFAULT_MODEL },
                 baseUrl = baseUrl,
@@ -961,7 +961,7 @@ class ProviderClient(
             ?: return@withContext resolveConfigured(inheritedProfileId, inheritedVariant)
         val profiles = modelDao.observeAll().first()
         val target = selectRequestedModelTarget(profiles, requested) ?: throw IllegalArgumentException(
-            "未找到模型选择“$requested”。请传入已保存的模型档案 ID/名称，或档案中已配置的具体模型名。",
+            "Không tìm thấy lựa chọn model “$requested”. Hãy truyền ID/tên hồ sơ model đã lưu, hoặc tên model cụ thể đã cấu hình trong hồ sơ.",
         )
         resolveConfigured(target.profileId, target.variant)
     }
@@ -969,13 +969,13 @@ class ProviderClient(
     /** Resolve a persisted role binding strictly, including its concrete model variant. */
     suspend fun resolveSavedModelProfile(profileId: String, variant: String?): ModelConfig = withContext(Dispatchers.IO) {
         val profile = modelDao.findById(profileId) ?: throw IllegalArgumentException(
-            "子智能体绑定的模型档案“$profileId”已不存在，请在子智能体角色设置中重新选择。",
+            "Hồ sơ model “$profileId” mà Agent con gắn kết đã không còn tồn tại, hãy chọn lại trong cài đặt vai trò Agent con.",
         )
         val requestedVariant = variant?.trim()?.takeIf { it.isNotBlank() }
         val canonicalVariant = requestedVariant?.let { requested ->
             profile.model.split(',').map { it.trim() }.firstOrNull { it.equals(requested, ignoreCase = true) }
                 ?: throw IllegalArgumentException(
-                    "模型档案“${profile.name}”中已不存在模型“$requested”，请在子智能体角色设置中重新选择。",
+                    "Hồ sơ model \"${profile.name}\" không còn tồn tại model \"$requested\", hãy chọn lại trong cài đặt vai trò Agent con.",
                 )
         }
         resolveConfigured(profile.id, canonicalVariant)
@@ -983,7 +983,7 @@ class ProviderClient(
 
     /**
      * 把「全局推理深度」设置应用到未显式配置的模型上。**只对该厂商实际支持的能力生效**：
-     * - 先探测厂商能力（能否关闭 / 能否调强度），不支持的选项直接忽略，避免设置"改了却没反应"；
+     * - 先探测厂商能力（能否关闭 / 能否调强度），不支持的选项直接忽略，避免设置"Đã sửa nhưng không phản hồi"；
      * - 模型已显式关闭推理 -> 保持不动（用户意图优先）；
      * - 全局 disabled：仅当厂商 [ReasoningCapabilities.supportsDisable] 且模型 AUTO 时关闭推理；
      * - 全局 low/medium/high：仅当厂商 [ReasoningCapabilities.supportsEffort] 时按深度设置强度
@@ -1135,9 +1135,9 @@ class ProviderClient(
          * 只描述可观察现象与可执行动作，不猜测具体厂商原因。
          */
         internal const val EMPTY_RESPONSE_MESSAGE =
-            "模型返回了空响应（HTTP 200，正文与工具调用均为空，或思考字段只剩无意义的截断残渣）。" +
-                "常见原因是该模型名在服务端不可用、被网关/风控拦截、长上下文被中转截断，或上游临时异常。" +
-                "请检查模型配置，必要时压缩上下文或切换其他模型后重试。"
+            "Model trả về phản hồi rỗng (HTTP 200, phần thân và lời gọi công cụ đều rỗng, hoặc trường tư duy chỉ còn phần cặn bị cắt cụt vô nghĩa)." +
+                "Nguyên nhân thường gặp là tên model đó không khả dụng ở phía server, bị gateway/kiểm soát rủi ro chặn, ngữ cảnh dài bị trung chuyển cắt cụt, hoặc thượng nguồn tạm thời bất thường." +
+                "Hãy kiểm tra cấu hình model, khi cần nén context hoặc chuyển model khác rồi thử lại."
 
         /** 空响应诊断时缓冲的原始响应首部上限（字符）：只用于报错与兜底判定，不参与正文累积。 */
         internal const val RESPONSE_HEAD_CAPTURE_CHARS = 2_000
@@ -1147,7 +1147,7 @@ class ProviderClient(
 
         /**
          * 把原始响应首部压成单行诊断片段：转义换行、截断。
-         * 目的是让"上游到底回了什么"能从错误文案里直接读到，而不是只有一句"空响应"。
+         * 目的是让"Thượng nguồn rốt cuộc trả về gì"能从错误文案里直接读到，而不是只有一句"Phản hồi rỗng"。
          */
         internal fun describeResponseHead(raw: String): String {
             val compact = raw.replace('\n', ' ').replace('\r', ' ').trim()
@@ -1157,7 +1157,7 @@ class ProviderClient(
             } else {
                 compact
             }
-            return " 原始响应首部：$clipped"
+            return " Phần đầu phản hồi gốc: $clipped"
         }
 
         /** Room 实体 → 运行配置：推理参数原样透传，协议按 Base URL / 厂商名自动推断。 */
@@ -1248,7 +1248,7 @@ class ProviderClient(
          * - UTF-8 BOM (U+FEFF) 不被 Kotlin 的 [String.trimStart] 当作空白，
          *   但确实会让 JSON 解析器从 offset 1 开始而误判；这里先剔除。
          * - "<!doctype html"、"<html"、纯文本错误页（Cloudflare / Nginx /
-         *   代理登录页）是最常见的"假装 JSON"响应。
+         *   代理登录页）是最常见的"Giả JSON"响应。
          */
         internal fun looksLikeJsonResponse(body: String): Boolean {
             val stripped = if (body.isNotEmpty() && body[0] == '\uFEFF') body.substring(1) else body
@@ -1263,13 +1263,13 @@ class ProviderClient(
             // 避免直接把 <html>... 拼到错误提示里刷屏。
             if (!looksLikeJsonResponse(trimmedBody)) {
                 if (code == 413) {
-                    return "请求体过大 (HTTP 413)：反向代理或网关拒绝了本次请求（常见于 Nginx client_max_body_size）。引擎将尝试压缩历史后重试。"
+                    return "Thân yêu cầu quá lớn (HTTP 413): reverse proxy hoặc gateway đã từ chối yêu cầu này (thường gặp với Nginx client_max_body_size). Engine sẽ thử nén lịch sử rồi thử lại."
                 }
                 val kind = when {
-                    trimmedBody.trimStart().startsWith("<", ignoreCase = true) -> "网页"
-                    else -> "非 JSON 文本"
+                    trimmedBody.trimStart().startsWith("<", ignoreCase = true) -> "Trang web"
+                    else -> "Văn bản không phải JSON"
                 }
-                return "LLM 请求失败 (HTTP $code)：远端返回了$kind，可能为反向代理登录页、CDN 拦截或 Base URL 路由错误。请检查 Base URL 与网络。"
+                return "Yêu cầu LLM thất bại (HTTP $code): đầu xa trả về $kind, có thể là trang đăng nhập reverse proxy, chặn CDN hoặc lỗi định tuyến Base URL. Hãy kiểm tra Base URL và mạng."
             }
             val errorMsg = runCatching {
                 val obj = Json.parseToJsonElement(trimmedBody) as? JsonObject
@@ -1280,25 +1280,25 @@ class ProviderClient(
             val lowerMsg = errorMsg.lowercase()
             return when {
                 code == 413 ->
-                    "请求体过大 (HTTP 413)：反向代理或网关拒绝了本次请求（常见于 Nginx client_max_body_size）。引擎将尝试压缩历史后重试。"
+                    "Thân yêu cầu quá lớn (HTTP 413): reverse proxy hoặc gateway đã từ chối yêu cầu này (thường gặp với Nginx client_max_body_size). Engine sẽ thử nén lịch sử rồi thử lại."
                 code == 403 && (lowerMsg.contains("free quota") || lowerMsg.contains("quota exhausted") || lowerMsg.contains("free tier")) ->
-                    "API 免费额度已耗尽 (HTTP 403)：请前往模型服务商控制台充值、关闭免费层限制，或在天玄中切换其他可用模型。"
+                    "Hạn mức miễn phí API đã cạn (HTTP 403): vui lòng vào bảng điều khiển nhà cung cấp dịch vụ model để nạp tiền, tắt giới hạn tầng miễn phí, hoặc chuyển sang model khả dụng khác trong Thiên Huyền."
                 code == 401 || lowerMsg.contains("invalid api key") || lowerMsg.contains("unauthorized") ->
-                    "API Key 无效或未授权 (HTTP 401)：请在模型设置中检查并更新该服务商的 API Key。"
-                // 402 与直述"余额/额度"的文案：不少厂商（DeepSeek、多数中转站）用 402 而非 429
+                    "API Key không hợp lệ hoặc chưa được cấp quyền (HTTP 401): hãy kiểm tra và cập nhật API Key của nhà cung cấp đó trong cài đặt model."
+                // 402 与直述"Số dư/hạn mức"的文案：不少厂商（DeepSeek、多数中转站）用 402 而非 429
                 // 回报余额耗尽。原实现会把它并入泛化 4xx（IllegalStateException），既不重试也不给
-                // 充值引导，用户侧表现为"每次发送都瞬间失败、且不知道原因"。
+                // 充值引导，用户侧表现为"Mỗi lần gửi đều thất bại tức thì mà không rõ nguyên nhân"。
                 code == 402 || lowerMsg.contains("insufficient balance") ||
                     lowerMsg.contains("余额") || lowerMsg.contains("额度已用尽") ->
-                    "API 余额/额度已耗尽 (HTTP $code)：请前往模型服务商控制台充值，或在天玄中切换其他可用模型。$errorMsg"
+                    "Số dư/hạn mức API đã cạn (HTTP $code): hãy vào bảng điều khiển nhà cung cấp model để nạp thêm, hoặc chuyển sang model khả dụng khác trong Thiên Huyền. $errorMsg"
                 code == 429 || lowerMsg.contains("rate limit") || lowerMsg.contains("insufficient_quota") || lowerMsg.contains("quota") ->
-                    "API 额度已用尽或请求频率超限 (HTTP $code)：$errorMsg"
+                    "Hạn mức API đã cạn hoặc tần suất yêu cầu vượt giới hạn (HTTP $code): $errorMsg"
                 code == 404 ->
-                    "模型名称或 API 地址不存在 (HTTP 404)：请检查模型名称是否拼写正确。"
+                    "Tên model hoặc địa chỉ API không tồn tại (HTTP 404): vui lòng kiểm tra tên model có viết đúng chính tả không."
                 errorMsg.isNotBlank() ->
-                    "LLM 请求失败 (HTTP $code)：$errorMsg"
+                    "Yêu cầu LLM thất bại (HTTP $code): $errorMsg"
                 else ->
-                    "LLM 请求失败 (HTTP $code)"
+                    "Yêu cầu LLM thất bại (HTTP $code)"
             }
         }
 
@@ -1378,9 +1378,9 @@ class ProviderClient(
             "context token limit",
             "request entity too large",
             "payload too large",
-            "上下文超限",
-            "超出上下文",
-            "上下文长度",
+            "Context vượt giới hạn",
+            "Vượt quá context",
+            "Độ dài ngữ cảnh",
         )
 
         internal const val READ_TIMEOUT_MS = 5 * 60 * 1000L
@@ -1391,7 +1391,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "kb_search",
-                    description = "在 RAG 知识库中检索与查询相关的文档片段（语义向量检索，嵌入失败时回退关键词匹配）。query 为自然语言问题或关键词；topK 默认 3 最多 10。只读。",
+                    description = "Truy xuất đoạn tài liệu liên quan tới truy vấn trong kho tri thức RAG (truy xuất vector ngữ nghĩa, khi nhúng thất bại thì lùi về khớp từ khóa). query là câu hỏi ngôn ngữ tự nhiên hoặc từ khóa; topK mặc định 3 tối đa 10. Chỉ đọc.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"query":{"type":"string","description":"检索问题或关键词"},"top_k":{"type":"integer","minimum":1,"maximum":10,"description":"最多返回片段数，默认 3"}},"required":["query"]}""",
                     ).jsonObject,
@@ -1400,7 +1400,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "kb_add",
-                    description = "把一段知识文本写入 RAG 知识库（自动分块并嵌入向量，嵌入失败时保留为关键词检索）。name 为文档名（手动引用 @kb:name 用）；content 为完整文本。写入后不可直接删除（用 kb_list 确认存在性）。",
+                    description = "Ghi một đoạn văn bản tri thức vào kho tri thức RAG (tự động phân khối và nhúng vector, khi nhúng thất bại giữ lại dạng truy xuất từ khóa). name là tên tài liệu (dùng để tham chiếu thủ công @kb:name); content là văn bản đầy đủ. Sau khi ghi không thể xóa trực tiếp (dùng kb_list để xác nhận tồn tại).",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"name":{"type":"string","description":"文档名（用于手动 @kb:name 引用）"},"content":{"type":"string","description":"完整知识文本内容"}},"required":["name","content"]}""",
                     ).jsonObject,
@@ -1409,7 +1409,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "kb_list",
-                    description = "列出 RAG 知识库中的所有文档（名称、来源、分块数、嵌入状态）。用于确认文档是否已入库。只读。",
+                    description = "Liệt kê tất cả tài liệu trong kho tri thức RAG (tên, nguồn, số phân khối, trạng thái nhúng). Dùng để xác nhận tài liệu đã vào kho chưa. Chỉ đọc.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{}}""",
                     ).jsonObject,
@@ -1418,7 +1418,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "build_script",
-                    description = "管理智坊构建脚本并挂载到项目。新旧依赖不兼容时，先检查项目 Gradle/Flutter 配置，再 create 脚本并 bind 当前项目。脚本接口：第 1 个参数是项目目录；Android 第 2 个参数是 Gradle task；Flutter 第 2 个参数是完整 build 参数。支持 list/get/create/update/delete/bind/unbind。",
+                    description = "Quản lý script build Tri Phuong và gắn vào dự án. Khi phụ thuộc cũ/mới không tương thích, trước tiên kiểm tra cấu hình Gradle/Flutter của dự án, rồi create script và bind dự án hiện tại. Giao diện script: tham số thứ 1 là thư mục dự án; tham số thứ 2 của Android là Gradle task; tham số thứ 2 của Flutter là tham số build đầy đủ. Hỗ trợ list/get/create/update/delete/bind/unbind.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"action":{"type":"string","enum":["list","get","create","update","delete","bind","unbind"]},"id":{"type":"string","description":"脚本 ID；get/update/delete/bind 必需"},"name":{"type":"string","description":"脚本名称"},"description":{"type":"string","description":"适用依赖版本与用途"},"project_type":{"type":"string","enum":["android","flutter"]},"content":{"type":"string","description":"完整 POSIX shell 脚本，最大 200 KB"},"project":{"type":"string","description":"项目名称；省略时使用当前工作区"}},"required":["action"]}""",
                     ).jsonObject,
@@ -1427,7 +1427,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "history_search",
-                    description = "在当前会话的完整历史中按关键词检索旧消息。结果中的 index 是活动分支的 0 起始消息索引，包含工具消息，可直接传给 history_read；message_id 更稳定。只读，不修改历史。",
+                    description = "Tìm kiếm tin nhắn cũ theo từ khóa trong toàn bộ lịch sử của phiên hiện tại. index trong kết quả là chỉ mục tin nhắn bắt đầu từ 0 của nhánh đang hoạt động, bao gồm cả tin nhắn công cụ, có thể truyền trực tiếp cho history_read; message_id ổn định hơn. Chỉ đọc, không sửa lịch sử.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"query":{"type":"string","description":"要检索的关键词、文件名、错误信息或约束"},"limit":{"type":"integer","minimum":1,"maximum":20,"description":"最多返回命中条数，默认 8"}},"required":["query"]}""",
                     ).jsonObject,
@@ -1436,7 +1436,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "history_read",
-                    description = "读取当前会话某条历史消息的原文。必须提供 history_search 返回的 message_id 或活动分支的 0 起始 index（包含工具消息），至少提供一个；两者都提供时优先使用 message_id。单条返回有大小上限。只读。",
+                    description = "Đọc nguyên văn một tin nhắn lịch sử của phiên hiện tại. Phải cung cấp message_id do history_search trả về hoặc index bắt đầu từ 0 của nhánh đang hoạt động (bao gồm cả tin nhắn công cụ), ít nhất một trong hai; khi cung cấp cả hai thì ưu tiên dùng message_id. Mỗi lần trả về có giới hạn kích thước. Chỉ đọc.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"message_id":{"type":"string","description":"history_search 返回的消息 ID；与 index 至少提供一个"},"index":{"type":"integer","minimum":0,"description":"历史消息的 0 起始索引；与 message_id 至少提供一个"}}}""",
                     ).jsonObject,
@@ -1445,7 +1445,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "read",
-                    description = "读取文件内容（UTF-8，单文件上限 1MB）。路径可用相对路径或以 /workspace/ 开头。优先用它检查文件内容，而不是用 cat/sed。大文件用 offset（1 起始行号）和 limit（行数）分页读取，返回头部会标注总行数与当前窗口。若文件不存在或读取失败，用 base 的 ls/find 定位。",
+                    description = "Đọc nội dung tệp (UTF-8, giới hạn 1MB mỗi tệp). Đường dẫn có thể là tương đối hoặc bắt đầu bằng /workspace/. Ưu tiên dùng nó để kiểm tra nội dung tệp thay vì cat/sed. Tệp lớn thì dùng offset (số dòng bắt đầu từ 1) và limit (số dòng) để đọc phân trang, phần đầu trả về sẽ ghi rõ tổng số dòng và cửa sổ hiện tại. Nếu tệp không tồn tại hoặc đọc thất bại, dùng ls/find của base để định vị.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"path":{"type":"string","description":"文件路径"},"offset":{"type":"integer","description":"起始行号（1 起始），可选"},"limit":{"type":"integer","description":"读取的最大行数，可选"}},"required":["path"]}""",
                     ).jsonObject,
@@ -1454,7 +1454,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "write",
-                    description = "创建或完全覆盖文件内容，自动创建父目录。只用于新文件或完整重写；若只想修改局部内容，请改用 edit。",
+                    description = "Tạo hoặc ghi đè hoàn toàn nội dung tệp, tự động tạo thư mục cha. Chỉ dùng cho tệp mới hoặc ghi lại toàn bộ; nếu chỉ muốn sửa cục bộ, hãy chuyển dùng edit.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"path":{"type":"string"},"content":{"type":"string"}},"required":["path","content"]}""",
                     ).jsonObject,
@@ -1463,7 +1463,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "edit",
-                    description = "在文件中做精确文本替换。oldText 必须与原文逐字匹配且唯一，一次可传多个替换，但每个不能重叠或嵌套。oldText 重复或匹配多处会失败——先 read 确认内容再改。",
+                    description = "Thực hiện thay thế văn bản chính xác trong tệp. oldText phải khớp từng chữ với bản gốc và duy nhất, một lần có thể truyền nhiều thay thế, nhưng mỗi cái không được chồng chéo hoặc lồng nhau. oldText trùng lặp hoặc khớp nhiều chỗ sẽ thất bại—hãy read xác nhận nội dung trước khi sửa.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"path":{"type":"string"},"oldText":{"type":"string"},"newText":{"type":"string"}},"required":["path","oldText","newText"]}""",
                     ).jsonObject,
@@ -1472,7 +1472,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "base",
-                    description = "在 Debian Linux 沙箱中执行前台 shell 命令，返回退出码/stdout/stderr。用于安装软件、运行脚本、检查状态和执行构建。默认超时由用户在 Agent 设置中配置；可用 timeout_seconds 为单次调用指定 1-900 秒。常驻服务不要使用 nohup 或 &，应改用 process 工具。",
+                    description = "Thực thi lệnh shell foreground trong sandbox Debian Linux, trả về exit code/stdout/stderr. Dùng để cài phần mềm, chạy script, kiểm tra trạng thái và thực thi build. Timeout mặc định do người dùng cấu hình trong cài đặt Agent; có thể dùng timeout_seconds để chỉ định 1-900 giây cho một lần gọi. Dịch vụ thường trú không dùng nohup hoặc &, hãy chuyển sang dùng công cụ process.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"command":{"type":"string","description":"要执行的 shell 命令"},"cwd":{"type":"string","description":"工作目录；关联工作区时默认使用工作区，否则为 /root"},"timeout_seconds":{"type":"integer","minimum":1,"maximum":900,"description":"可选的单次超时秒数；省略时使用用户设置的默认值"}},"required":["command"]}""",
                     ).jsonObject,
@@ -1481,7 +1481,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "process",
-                    description = "管理需要跨工具调用持续运行的 PRoot 后台进程。start 的命令必须以前台模式运行，由 TianXuan 托管生命周期；不要使用 nohup、& 或自行 daemonize。使用 status/logs/list/stop 查询和停止。",
+                    description = "Dùng trình tải HTTPS tích hợp để lưu tệp từ xa vào workspace. Hỗ trợ tiếp tục tải HTTP Range, tự động thử lại, giới hạn kích thước tệp tối đa và kiểm tra SHA-256 tuỳ chọn; hiện tại là tiếp tục tải một kết nối, không phải phân mảnh đa luồng. destination phải nằm trong workspace hiện tại, không điền đường dẫn tuyệt đối của máy chủ.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"action":{"type":"string","enum":["start","status","logs","list","stop"]},"id":{"type":"string","pattern":"^[a-z0-9][a-z0-9._-]{0,63}$","description":"稳定的进程标识；list 不需要"},"command":{"type":"string","description":"start 时必需，需以前台模式持续运行"},"cwd":{"type":"string","description":"start 的工作目录"},"tail_lines":{"type":"integer","minimum":1,"maximum":500,"description":"logs 返回的末尾行数，默认 120"}},"required":["action"]}""",
                     ).jsonObject,
@@ -1490,7 +1490,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "host",
-                    description = "在 Android 宿主侧执行系统设置、应用管理、Logcat 或屏幕 GUI 自动化。抓取日志（logcat）首选内置无线 ADB（无需 Shizuku/Root 授权，支持可选指定 port），其余特权操作需 Shizuku 或 Root。GUI 原语（screen_click/double_click/long_press/swipe/scroll/input_text/key）走 HostGuiToolkit：无障碍全局手势 → cmd input → bin input 自动降级；中文输入走剪贴板粘贴。虚拟屏系列（virtual_screen_*）在一块独立的 Shower 虚拟屏上隔离启动并操控第三方应用（需 Shizuku 或 Root），完全不影响主屏：先 virtual_screen_ensure 建屏，再 virtual_screen_launch 启动目标应用，用 virtual_screen_screenshot 截图识图后按虚拟屏坐标系操作，virtual_screen_show/hide 可为用户显示/隐藏该虚拟屏的实时视频悬浮窗（可手动触摸干预），完成后 virtual_screen_close 释放。",
+                    description = "Thực thi cài đặt hệ thống, quản lý ứng dụng, Logcat hoặc tự động hóa GUI màn hình ở phía máy chủ Android. Thu thập log (logcat) ưu tiên dùng ADB không dây tích hợp (không cần cấp quyền Shizuku/Root, hỗ trợ tùy chọn chỉ định port), các thao tác đặc quyền còn lại cần Shizuku hoặc Root. Nguyên thủy GUI (screen_click/double_click/long_press/swipe/scroll/input_text/key) đi qua HostGuiToolkit: thao tác toàn cục trợ năng → cmd input → bin input tự động hạ cấp; nhập tiếng Trung đi qua dán clipboard. Dòng màn hình ảo (virtual_screen_*) khởi chạy cách ly và điều khiển ứng dụng bên thứ ba trên một màn hình ảo Shower độc lập (cần Shizuku hoặc Root), hoàn toàn không ảnh hưởng màn hình chính: trước tiên virtual_screen_ensure tạo màn hình, rồi virtual_screen_launch khởi chạy ứng dụng mục tiêu, dùng virtual_screen_screenshot chụp ảnh nhận diện rồi thao tác theo hệ tọa độ màn hình ảo, virtual_screen_show/hide có thể hiển thị/ẩn cửa sổ nổi video trực tiếp của màn hình ảo đó cho người dùng (có thể can thiệp chạm thủ công), sau khi xong virtual_screen_close giải phóng.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"action":{"type":"string","enum":["status","exec","settings_get","settings_put","package_list","package_disable","package_enable","package_uninstall_user","app_list","app_freeze","app_unfreeze","app_grant_permission","logcat","device_status","screen_observe","screen_click","screen_double_click","screen_long_press","screen_swipe","screen_scroll","screen_input_text","paste_text","screen_key","app_launch","screen_capture","virtual_screen_ensure","virtual_screen_launch","virtual_screen_screenshot","virtual_screen_click","virtual_screen_double_click","virtual_screen_long_press","virtual_screen_swipe","virtual_screen_scroll","virtual_screen_key","virtual_screen_close","virtual_screen_show","virtual_screen_hide"]},"command":{"type":"string","description":"仅 exec 使用的原始宿主命令"},"namespace":{"type":"string","enum":["system","secure","global"],"description":"settings_get/settings_put 的设置命名空间"},"key":{"type":"string","description":"系统设置键名，或 screen_key 的按键名(back/home/recents/enter/delete/paste/power)"},"value":{"type":"string","description":"settings_put 的值"},"text":{"type":"string","description":"screen_input_text/paste_text 要粘贴的文本"},"x":{"type":"integer","description":"screen_click/double_click/long_press 的点击 X 坐标"},"y":{"type":"integer","description":"screen_click/double_click/long_press 的点击 Y 坐标"},"x1":{"type":"integer","description":"screen_swipe 起点 X 坐标"},"y1":{"type":"integer","description":"screen_swipe 起点 Y 坐标"},"x2":{"type":"integer","description":"screen_swipe 终点 X 坐标"},"y2":{"type":"integer","description":"screen_swipe 终点 Y 坐标"},"duration_ms":{"type":"integer","description":"swipe/long_press/scroll 持续时间毫秒"},"direction":{"type":"string","enum":["up","down","left","right"],"description":"screen_scroll 方向"},"distance_ratio":{"type":"number","description":"screen_scroll 幅度 0.15-0.8"},"package":{"type":"string","description":"应用操作或 logcat PID 过滤的 Android 包名（如 com.tencent.mm）"},"path":{"type":"string","description":"screen_capture 保存截图的目标绝对路径"},"permission":{"type":"string","description":"app_grant_permission 的 Android 权限名"},"query":{"type":"string","description":"app_list 的包名或应用名搜索词"},"include_system":{"type":"boolean","description":"app_list 是否显示系统应用，默认 false"},"limit":{"type":"integer","minimum":1,"maximum":200,"description":"app_list 返回数量，默认 50"},"user":{"type":"integer","minimum":0,"maximum":999,"description":"Android 用户 ID，默认 0"},"filter":{"type":"string","description":"package_list 的可选字面量过滤词"},"tail_lines":{"type":"integer","minimum":1,"maximum":2000,"description":"logcat 返回行数，默认 200"},"tag":{"type":"string","description":"logcat 的可选 tag"},"priority":{"type":"string","enum":["V","D","I","W","E","F"],"description":"logcat 最低优先级，默认 V"},"keyword":{"type":"string","description":"logcat 可选关键词（忽略大小写）"},"port":{"type":"integer","minimum":1,"maximum":65535,"description":"无线 ADB 端口（如 12345），logcat 时可选显式指定"},"session":{"type":"string","description":"virtual_screen_* 使用的会话 ID，默认 default；不同会话对应相互独立的虚拟屏，可并行操控多个应用"}},"required":["action"]}""",
                     ).jsonObject,
@@ -1499,7 +1499,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "download",
-                    description = "使用内置 HTTPS 下载器把远程文件保存到工作区。支持 HTTP Range 断点续传、自动重试、最大文件大小限制和可选 SHA-256 校验；当前为单连接续传，不是多线程分片。destination 必须位于当前工作区内，不要填写宿主机绝对路径。",
+                    description = "Dùng trình tải HTTPS tích hợp để lưu tệp từ xa vào workspace. Hỗ trợ tiếp tục tải HTTP Range, tự động thử lại, giới hạn kích thước tệp tối đa và kiểm tra SHA-256 tuỳ chọn; hiện tại là tiếp tục tải một kết nối, không phải phân mảnh đa luồng. destination phải nằm trong workspace hiện tại, không điền đường dẫn tuyệt đối của máy chủ.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"url":{"type":"string","description":"HTTPS 下载地址"},"destination":{"type":"string","description":"工作区内目标路径，例如 dist/tool.tar.gz"},"sha256":{"type":"string","description":"可选 SHA-256 十六进制摘要"},"max_attempts":{"type":"integer","description":"可选最大尝试次数，1-10，默认 3"},"max_bytes":{"type":"integer","description":"可选最大文件大小（字节），默认 1 GiB，最大 4 GiB"}},"required":["url","destination"]}""",
                     ).jsonObject,
@@ -1508,7 +1508,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "memory",
-                    description = "长期语义与事实记忆管理：持久化记录用户的长期偏好、项目架构规范、稳定事实。支持 action: save, query, list, delete。scope: global, project, session。kind: preference, rule, fact, project_info。",
+                    description = "Quản lý bộ nhớ ngữ nghĩa và sự kiện dài hạn: ghi bền vững sở thích lâu dài, quy chuẩn kiến trúc dự án, sự kiện ổn định của người dùng. Hỗ trợ action: save, query, list, delete. scope: global, project, session. kind: preference, rule, fact, project_info.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"action":{"type":"string","enum":["save","query","list","delete"],"description":"操作动作"},"key":{"type":"string","description":"记忆键名"},"value":{"type":"string","description":"记忆内容（save 必需）"},"kind":{"type":"string","enum":["preference","rule","fact","project_info"],"description":"记忆类型"},"scope":{"type":"string","enum":["global","project","session"],"description":"记忆作用域"}},"required":["action"]}""",
                     ).jsonObject,
@@ -1517,7 +1517,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "plan",
-                    description = "结构化多步骤任务规划管理：拆解长任务子步骤并持续跟踪推进进度。当任务预计需要 3 次以上工具调用、存在多个相互依赖的执行阶段、失败后需要分支排查，或会修改多个文件/系统状态时，第一轮工具调用先 replace_active 建立规划，每步完成后 advance；简单单步或双步任务不要建 plan。详细规则见 workflow 规则块（未注入时可用 load_rule 获取）。支持 action: replace_active, get_active, advance, clear_active。",
+                    description = "Quản lý lập kế hoạch nhiệm vụ đa bước có cấu trúc: tách nhỏ các bước con của nhiệm vụ dài và liên tục theo dõi tiến độ. Khi nhiệm vụ dự kiến cần hơn 3 lần gọi công cụ, tồn tại nhiều giai đoạn thực thi phụ thuộc lẫn nhau, sau thất bại cần phân nhánh điều tra, hoặc sẽ sửa nhiều tệp/trạng thái hệ thống, thì lần gọi công cụ đầu tiên hãy replace_active để lập kế hoạch, mỗi bước hoàn thành thì advance; nhiệm vụ đơn bước hoặc hai bước đơn giản thì đừng tạo plan. Quy tắc chi tiết xem khối quy tắc workflow (khi chưa được chèn có thể dùng load_rule để lấy). Hỗ trợ action: replace_active, get_active, advance, clear_active.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"action":{"type":"string","enum":["replace_active","get_active","advance","clear_active"],"description":"规划操作动作"},"goal":{"type":"string","description":"任务总体目标"},"steps":{"type":"array","description":"规划步骤列表（每个步骤包含 id, title, status: pending|in_progress|completed|failed）","items":{"type":"object","properties":{"id":{"type":"string"},"title":{"type":"string"},"status":{"type":"string"}},"required":["id","title","status"]}},"status":{"type":"string","enum":["active","completed","cancelled"],"description":"可选：计划整体生命周期状态（仅限 active/completed/cancelled，步骤进度请写在 steps[].status）"}},"required":["action"]}""",
                     ).jsonObject,
@@ -1526,7 +1526,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "scratchpad",
-                    description = "任务/会话局部工作草稿便签：临时记录排查假说、分析草稿、当前子目标与阻塞点（Blockers）。支持 action: save, get, list, delete, clear。",
+                    description = "Ghi chú nháp công việc cục bộ của nhiệm vụ/phiên: ghi tạm giả thuyết điều tra, bản nháp phân tích, mục tiêu con hiện tại và điểm chặn (Blockers). Hỗ trợ action: save, get, list, delete, clear.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"action":{"type":"string","enum":["save","get","list","delete","clear"],"description":"草稿操作动作"},"key":{"type":"string","description":"草稿键名"},"value":{"type":"string","description":"草稿内容（save 必需）"}},"required":["action"]}""",
                     ).jsonObject,
@@ -1535,16 +1535,16 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "invoke_subagent",
-                    description = "按研发部门和简短专业关键词从本地索引解析角色，并发派发隔离子智能体。用户枚举多个独立子任务时，必须在同一次调用的 subagents 数组中完整提交，禁止逐个派发；结果保持数组顺序。writePaths=[] 表示只读并行，精确路径表示局部写租约，[\"*\"] 表示整工作区独占写入。写租约对 write/edit/download 是强制闸门：writePaths=[] 的子任务调用这些工具会被直接拦截，越界路径同样拦截，需要落盘必须先声明具体路径；base 的 shell 写不受闸门约束，写租约也只在同一次调用内协调。子任务需要审批类操作（后台 Lane 无法暂停审批）时会作为待办上交，必须由你在主会话重新发起。候选目录不会进入主对话。summary 中每个子任务都带有 task_id，把未完结子任务的 task_id 连同新指令再次提交（task_id 字段）可在同一子会话上续跑，而不是从零开始。",
+                    description = "Phân giải vai trò từ chỉ mục cục bộ theo bộ phận R&D và từ khóa chuyên môn ngắn gọn, rồi phái đi Agent con cách ly song song. Khi người dùng liệt kê nhiều nhiệm vụ con độc lập, phải gửi đầy đủ trong mảng subagents của cùng một lần gọi, cấm phái từng cái một; kết quả giữ nguyên thứ tự mảng. writePaths=[] nghĩa là chỉ đọc song song, đường dẫn chính xác nghĩa là write lease cục bộ, [\"*\"] nghĩa là ghi độc quyền toàn workspace. Write lease là cổng cưỡng chế đối với write/edit/download: nhiệm vụ con có writePaths=[] gọi các công cụ này sẽ bị chặn trực tiếp, đường dẫn vượt phạm vi cũng bị chặn, cần ghi đĩa phải khai báo đường dẫn cụ thể trước; shell của base không bị ràng buộc bởi cổng, write lease cũng chỉ phối hợp trong cùng một lần gọi. Khi nhiệm vụ con cần thao tác loại phê duyệt (Lane nền không thể tạm dừng phê duyệt) sẽ được nộp lên dưới dạng việc cần làm, phải do bạn khởi tạo lại ở phiên chính. Thư mục ứng viên sẽ không vào hội thoại chính. Mỗi nhiệm vụ con trong summary đều có task_id, gửi lại task_id của nhiệm vụ con chưa hoàn tất kèm chỉ dẫn mới (trường task_id) có thể chạy tiếp trên cùng phiên con, thay vì bắt đầu lại từ đầu.",
                     parameters = Json.parseToJsonElement(
-                        """{"type":"object","properties":{"subagents":{"type":"array","description":"一次性提交的完整独立子任务列表；用户枚举 N 项时必须包含全部 N 项","minItems":1,"maxItems":6,"items":{"type":"object","properties":{"taskName":{"type":"string","description":"简短子任务名称"},"department":{"type":"string","enum":["engineering","design","product","project-management","testing","security","game-development","spatial-computing","specialized"],"description":"先选研发部门，匹配严格限制在该部门"},"agentQuery":{"type":"string","minLength":2,"maxLength":80,"description":"2-5 个简短英文专业关键词，如 frontend react、mobile android、test automation；不要复制完整任务"},"role":{"type":"string","description":"可选：仅兼容已知 profile id/name 的精确覆盖；存在时优先于索引匹配"},"prompt":{"type":"string","description":"详细任务指令与交付要求；填写 task_id 时为本轮续跑指令"},"writePaths":{"type":"array","description":"必须声明。纯调研/分析填空数组 []；修改文件时列出精确相对路径；只有整工作区独占写入才填 [\"*\"]","items":{"type":"string"}},"model":{"type":"string","description":"可选：已保存模型档案的 ID/名称，或档案中已配置的具体模型名；优先于角色默认模型。传 inherit 强制继承父会话模型；不填则使用角色默认模型，角色未配置时继承父会话"},"task_id":{"type":"string","description":"可选：续跑已有子任务时填入上次汇总中的 task_id（原样复制），本次在该子会话已有上下文上继续；此时 role/department/agentQuery 会被忽略"}},"required":["taskName","department","agentQuery","prompt","writePaths"]}}},"required":["subagents"]}""",
+                        """{"type":"object","properties":{"subagents":{"type":"array","description":"一次性提交的完整独立子任务列表；用户枚举 N 项时必须包含全部 N 项","minItems":1,"maxItems":6,"items":{"type":"object","properties":{"taskName":{"type":"string","description":"简短子任务名称"},"department":{"type":"string","enum":["engineering","design","product","project-management","testing","security","game-development","spatial-computing","specialized"],"description":"先选研发部门，匹配严格限制在该部门"},"agentQuery":{"type":"string","minLength":2,"maxLength":80,"description":"2-5 个简短英文专业关键词，如 frontend react、mobile android、test automation；不要复制完整任务"},"role":{"type":"string","description":"可选：仅兼容已知 profile id/name 的精确覆盖；存在时优先于索引匹配"},"prompt":{"type":"string","description":"详细任务指令与交付要求；填写 task_id 时为本轮续跑指令"},"writePaths":{"type":"array","description":"必须声明。纯调研/分析填空数组 []；修改文件时列出精确相对路径；只有整工作区独占写入才填 [\"*\"]","items":{"type":"string"}},"model":{"type":"string","description":"Tùy chọn: ID/tên hồ sơ model đã lưu, hoặc tên model cụ thể đã cấu hình trong hồ sơ; ưu tiên hơn model mặc định của vai trò. Truyền inherit để buộc kế thừa model của phiên cha; không điền thì dùng model mặc định của vai trò, vai trò chưa cấu hình thì kế thừa phiên cha"},"task_id":{"type":"string","description":"Tùy chọn: khi tiếp chạy nhiệm vụ con đã có thì điền task_id trong bản tổng hợp lần trước (sao chép nguyên văn), lần này tiếp tục trên ngữ cảnh đã có của phiên con đó; khi đó role/department/agentQuery sẽ bị bỏ qua"}},"required":["taskName","department","agentQuery","prompt","writePaths"]}}},"required":["subagents"]}""",
                     ).jsonObject,
                 ),
             ),
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "invoke_dual_agent",
-                    description = "用物理隔离的 Planner/Executor 双智能体执行复杂多步骤任务。Planner 只规划验收，Executor 按 DAG 依赖并行使用工具；适合需要多阶段实施与验证的任务。",
+                    description = "Dùng cặp Agent Planner/Executor cách ly vật lý để thực thi nhiệm vụ phức tạp nhiều bước. Planner chỉ lập kế hoạch và nghiệm thu, Executor dùng công cụ song song theo phụ thuộc DAG; phù hợp với nhiệm vụ cần triển khai và xác minh nhiều giai đoạn.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"prompt":{"type":"string","description":"需要双智能体完成的完整任务与验收标准"},"planner_model":{"type":"string","description":"可选：Planner 使用的已保存模型档案 ID/名称，或档案中已配置的具体模型名；省略则继承当前会话"},"executor_model":{"type":"string","description":"可选：Executor 使用的已保存模型档案 ID/名称，或档案中已配置的具体模型名；省略则继承当前会话"},"max_steps":{"type":"integer","minimum":1,"maximum":30,"description":"最大规划轮数，默认 10"}},"required":["prompt"]}""",
                     ).jsonObject,
@@ -1554,10 +1554,10 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "load_skill",
-                    description = "按需加载技能（Skill）的完整说明或子资源。系统提示末尾的「可用技能」目录只列出名称与适用场景；" +
-                        "当用户请求与某个技能的描述匹配时，先用本工具加载其完整指导规则与资源路径，再按说明执行。" +
-                        "传入 path 时按技能目录内相对路径读取附属文件（如 references/spec.md、scripts/run.sh）；" +
-                        "省略 path 时读取根 SKILL.md 正文（已剔除 YAML frontmatter）。用户已 @提及 的技能会自动生效，无需重复加载。只读。",
+                    description = "Nạp theo nhu cầu hướng dẫn đầy đủ hoặc tài nguyên con của Skill. Danh mục «Skill khả dụng» ở cuối system prompt chỉ liệt kê tên và tình huống áp dụng; " +
+                        "Khi yêu cầu người dùng khớp mô tả của một kỹ năng nào đó, hãy dùng công cụ này tải quy tắc chỉ dẫn đầy đủ và đường dẫn tài nguyên của nó trước, rồi thực thi theo hướng dẫn." +
+                        "Khi truyền path thì đọc tệp phụ theo đường dẫn tương đối trong thư mục skill (như references/spec.md, scripts/run.sh); " +
+                        "Khi lược bỏ path thì đọc phần thân SKILL.md gốc (đã loại bỏ YAML frontmatter). Skill mà người dùng đã @nhắc sẽ tự động có hiệu lực, không cần nạp lại. Chỉ đọc.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"name":{"type":"string","description":"技能名称或触发命令（不含 / 前缀），须与目录中列出的一致"},"path":{"type":"string","description":"可选：技能目录内相对资源路径（如 references/foo.md 或 scripts/bar.sh）；省略时读取根 SKILL.md 正文"}},"required":["name"]}""",
                     ).jsonObject,
@@ -1573,7 +1573,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "ask_user",
-                    description = "在关键决策点向用户提出结构化问题（选择题或自由输入）。当多个合理方案难以自行取舍、或缺失会显著影响结果的关键信息时使用；不要用它确认显而易见的步骤，也不要频繁调用打断用户。",
+                    description = "Lệnh base không phải truy xuất chỉ đọc: chế độ quy hoạch chỉ đọc chỉ cho phép các lệnh xem như ls / cat / rg / grep / find / git status, không cho phép cài đặt, build, test hay ghi tệp.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"questions":{"type":"array","minItems":1,"maxItems":4,"items":{"type":"object","properties":{"question":{"type":"string","description":"问题正文，具体、可直接回答"},"header":{"type":"string","description":"短标签（≤12 字），用于卡片分组"},"options":{"type":"array","minItems":0,"maxItems":6,"items":{"type":"object","properties":{"label":{"type":"string","description":"选项短文本"},"description":{"type":"string","description":"选项补充说明，可省略"}},"required":["label"]},"description":"候选项；省略或为空表示自由文本问题"},"allow_custom":{"type":"boolean","description":"除候选项外是否允许用户自定义输入；有 options 时默认 true"}},"required":["question"]}}},"required":["questions"]}""",
                     ).jsonObject,
@@ -1582,7 +1582,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "compress",
-                    description = "把较早的会话历史压缩为结构化摘要以释放上下文空间；被折叠的原文仍可通过 history_read 按需回读。仅在用户明确要求压缩上下文/节省空间时调用，不要自行决定使用。",
+                    description = "Đặt câu hỏi có cấu trúc cho người dùng tại các điểm quyết định then chốt (câu hỏi lựa chọn hoặc nhập tự do). Dùng khi nhiều phương án hợp lý khó tự quyết, hoặc thiếu thông tin then chốt ảnh hưởng đáng kể đến kết quả; đừng dùng nó để xác nhận các bước hiển nhiên, cũng đừng gọi thường xuyên làm gián đoạn người dùng.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"mode":{"type":"string","enum":["before","after"],"description":"before=压缩锚点轮之前的全部历史，保留锚点轮及之后；after=压缩除当前进行中轮次外的全部已完成历史"},"anchor":{"type":"string","description":"某条用户消息中一段原样、唯一的文字摘录（至少 8 字符），用于定位压缩边界；匹配到多条时会被拒绝"}},"required":["mode","anchor"]}""",
                     ).jsonObject,
@@ -1591,7 +1591,7 @@ class ProviderClient(
             ApiToolDefinition(
                 function = ApiFunctionDefinition(
                     name = "use_capability",
-                    description = "MCP 能力的统一代理入口：发现并调用已启用的 MCP 服务工具（内置浏览器/搜索等 + 用户添加的服务）。action=list 列出服务（不启动任何进程）；action=inspect + server 查看工具清单与参数；action=call + server + tool + arguments 执行（未连接的服务自动启动）；action=decline + server + tool 表示放弃该能力。",
+                    description = "Cổng proxy thống nhất cho năng lực MCP: phát hiện và gọi công cụ của dịch vụ MCP đã bật (trình duyệt/tìm kiếm tích hợp v.v. + dịch vụ do người dùng thêm). action=list liệt kê dịch vụ (không khởi động tiến trình nào); action=inspect + server xem danh sách công cụ và tham số; action=call + server + tool + arguments thực thi (dịch vụ chưa kết nối sẽ tự khởi động); action=decline + server + tool nghĩa là từ bỏ năng lực đó.",
                     parameters = Json.parseToJsonElement(
                         """{"type":"object","properties":{"action":{"type":"string","enum":["list","inspect","call","decline"],"description":"list=列出服务；inspect=查看某服务的工具清单；call=调用工具；decline=放弃某能力"},"server":{"type":"string","description":"MCP 服务 id（list 时省略；inspect/call/decline 必填）"},"tool":{"type":"string","description":"目标工具名（call/decline 必填；inspect 省略则列出该服务全部工具）"},"arguments":{"type":"object","description":"call 时传给目标工具的参数对象，结构与 inspect 输出的参数 schema 一致"}},"required":["action"]}""",
                     ).jsonObject,
@@ -1611,12 +1611,12 @@ class ProviderClient(
          * 每个工具一行 JSON，格式与 OpenAI function calling 一致，模型按 name/parameters 输出调用。
          */
         fun buildToolsTextDescription(tools: List<ApiToolDefinition>): String {
-            if (tools.isEmpty()) return "（无可用工具）"
+            if (tools.isEmpty()) return "(Không có công cụ khả dụng)"
             return tools.joinToString("\n") { tool ->
                 val fn = tool.function
                 buildString {
                     append("- ").append(fn.name).append(": ").append(fn.description)
-                    append("\n  参数 JSON Schema: ").append(fn.parameters.toString())
+                    append("\n  JSON Schema tham số: ").append(fn.parameters.toString())
                 }
             }
         }
@@ -1768,7 +1768,7 @@ internal class ThinkTagStreamDemuxer(
 
         if (detectRepetitionLoop(fullReasoning, str)) {
             reasoningMutedDueToLoop = true
-            val notice = "\n[天玄提示：检测到思维链重复自旋死循环，已自动截断冗余思考内容并继续执行]\n"
+            val notice = "\n[Thiên Huyền nhắc: Phát hiện vòng lặp chết tự xoay lặp lại của chuỗi suy nghĩ, đã tự động cắt nội dung suy nghĩ dư thừa và tiếp tục thực thi]\n"
             if (fullReasoning.length + notice.length <= maxReasoningChars) {
                 fullReasoning.append(notice)
             }

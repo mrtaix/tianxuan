@@ -47,12 +47,12 @@ class WorkflowGuiPilot(
             return NodeExecutionOutput(
                 status = NodeRunStatus.FAILED,
                 exitCode = 13,
-                error = "GUI 试飞需要 Shizuku 或 Root 已授权",
+                error = "GUI thử nghiệm cần Shizuku hoặc Root đã được cấp quyền",
             )
         }
         val trimmedGoal = goal.trim()
         if (trimmedGoal.isBlank()) {
-            return NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 2, error = "GUI_GOAL 为空")
+            return NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 2, error = "GUI_GOAL rỗng")
         }
 
         val log = StringBuilder()
@@ -61,11 +61,11 @@ class WorkflowGuiPilot(
             Log.i(TAG, line)
         }
 
-        appendLog("目标：$trimmedGoal")
+        appendLog("Mục tiêu：$trimmedGoal")
         if (!targetPackage.isNullOrBlank()) {
-            onProgress("打开 $targetPackage")
+            onProgress("Mở $targetPackage")
             gui.launchApp(targetPackage).onFailure {
-                appendLog("启动失败：${it.message}")
+                appendLog("Khởi động thất bại: ${it.message}")
             }.onSuccess {
                 appendLog(it)
             }
@@ -75,7 +75,7 @@ class WorkflowGuiPilot(
 
         val model = providerClient.resolveConfigured(modelId, modelVariant)
             .copy(pureChatMode = true, dynamicMcpTools = emptyList())
-        appendLog("模型：${model.name} / ${model.model}（纯决策 JSON，不走工具协议）")
+        appendLog("Model: ${model.name} / ${model.model} (JSON thuần quyết định, không đi theo giao thức công cụ)")
 
         var doneReason: String? = null
         var failedReason: String? = null
@@ -84,19 +84,19 @@ class WorkflowGuiPilot(
         for (step in 1..maxSteps.coerceIn(1, 40)) {
             coroutineContext.ensureActive()
             if (hud.isStopRequested()) {
-                throw CancellationException("用户停止 GUI 试飞")
+                throw CancellationException("Người dùng dừng chạy thử GUI")
             }
             steps = step
-            onProgress("第 $step 步：感知屏幕…")
-            hud.thinking("第 $step 步：感知屏幕…")
+            onProgress("Bước $step: cảm nhận màn hình…")
+            hud.thinking("Bước $step: cảm nhận màn hình…")
             val observation = gui.observeScreen(onlyInteractive = true).getOrElse { err ->
-                appendLog("感知失败：${err.message}")
-                failedReason = "screen_observe 失败：${err.message}"
+                appendLog("Cảm nhận thất bại: ${err.message}")
+                failedReason = "screen_observe thất bại: ${err.message}"
                 break
             }
-            appendLog("前台=${observation.packageName} 节点=${observation.nodes.size}")
-            onProgress("第 $step 步：请模型决策…")
-            hud.thinking("第 $step 步：模型决策中…", "节点 ${observation.nodes.size} 个")
+            appendLog("Tiền cảnh=${observation.packageName} nút=${observation.nodes.size}")
+            onProgress("Bước $step: để model quyết định…")
+            hud.thinking("Bước $step：model đang ra quyết định…", "${observation.nodes.size} nút")
 
             val decisionText = runCatching {
                 providerClient.chat(
@@ -110,50 +110,50 @@ class WorkflowGuiPilot(
                     ),
                 ).content.orEmpty()
             }.getOrElse { err ->
-                appendLog("模型调用失败：${err.message}")
-                failedReason = "模型调用失败：${err.message}"
+                appendLog("Gọi model thất bại: ${err.message}")
+                failedReason = "Gọi model thất bại: ${err.message}"
                 break
             }
 
             if (hud.isStopRequested()) {
-                throw CancellationException("用户停止 GUI 试飞")
+                throw CancellationException("Người dùng dừng chạy thử GUI")
             }
 
             val action = parseAction(decisionText)
             if (action == null) {
-                appendLog("无法解析决策：${decisionText.take(400)}")
-                onProgress("第 $step 步：决策解析失败，重试")
-                hud.thinking("第 $step 步：决策解析失败，重试")
+                appendLog("Không thể phân giải quyết định: ${decisionText.take(400)}")
+                onProgress("Bước $step: phân giải quyết định thất bại, thử lại")
+                hud.thinking("Bước $step: phân giải quyết định thất bại, thử lại")
                 delay(600)
                 continue
             }
 
             val kind = action.string("action")?.lowercase().orEmpty()
             val reason = action.string("reason").orEmpty()
-            appendLog("决策=$kind reason=$reason")
-            onProgress("第 $step 步：执行 $kind")
-            hud.thinking("第 $step 步：执行 $kind", reason)
+            appendLog("Quyết định=$kind reason=$reason")
+            onProgress("Bước $step: thực thi $kind")
+            hud.thinking("Bước $step: thực thi $kind", reason)
 
             when (kind) {
                 "done" -> {
-                    doneReason = reason.ifBlank { "模型宣布完成" }
+                    doneReason = reason.ifBlank { "Model tuyên bố hoàn thành" }
                     break
                 }
                 "fail" -> {
-                    failedReason = reason.ifBlank { "模型宣布失败" }
+                    failedReason = reason.ifBlank { "Model tuyên bố thất bại" }
                     break
                 }
                 "click_text" -> {
                     val needle = action.string("text").orEmpty()
                     if (needle.isBlank()) {
-                        appendLog("click_text 缺 text")
+                        appendLog("click_text thiếu text")
                         continue
                     }
                     // 禁止把「待发送文案」当成屏幕按钮去点
                     if (needle.length >= 4 && trimmedGoal.contains(needle) &&
                         observation.nodes.none { it.text.contains(needle) || it.contentDesc.contains(needle) }
                     ) {
-                        appendLog("「$needle」不像屏幕控件（更像待发送文案），请改用 screen_input_text")
+                        appendLog("«$needle» không giống control màn hình (giống văn bản chờ gửi hơn), hãy chuyển dùng screen_input_text")
                         continue
                     }
                     val hit = observation.nodes
@@ -168,7 +168,7 @@ class WorkflowGuiPilot(
                         )
                         .firstOrNull()
                     if (hit == null) {
-                        appendLog("未找到文案「$needle」")
+                        appendLog("Không tìm thấy văn án 「$needle」")
                         continue
                     }
                     // 聊天场景：标题栏「返回」容易把流程抖回去，除非目标就是返回
@@ -176,24 +176,24 @@ class WorkflowGuiPilot(
                         !trimmedGoal.contains("返回") &&
                         observation.nodes.any { it.editable || it.className.contains("EditText", true) }
                     ) {
-                        appendLog("忽略「返回」（当前已有输入框，应留在聊天页）")
+                        appendLog("Bỏ qua 「Quay lại」(hiện đã có ô nhập, nên ở lại trang chat)")
                         continue
                     }
                     gui.click(hit.centerX, hit.centerY).fold(
                         onSuccess = { appendLog("$it ← 「$needle」") },
-                        onFailure = { appendLog("点击失败：${it.message}") },
+                        onFailure = { appendLog("Nhấp thất bại: ${it.message}") },
                     )
                 }
                 "screen_click" -> {
                     val x = action.int("x")
                     val y = action.int("y")
                     if (x == null || y == null) {
-                        appendLog("screen_click 缺坐标")
+                        appendLog("screen_click thiếu tọa độ")
                         continue
                     }
                     gui.click(x, y).fold(
                         onSuccess = { appendLog(it) },
-                        onFailure = { appendLog("点击失败：${it.message}") },
+                        onFailure = { appendLog("Nhấp thất bại: ${it.message}") },
                     )
                 }
                 "screen_swipe" -> {
@@ -202,18 +202,18 @@ class WorkflowGuiPilot(
                     val x2 = action.int("x2")
                     val y2 = action.int("y2")
                     if (listOf(x1, y1, x2, y2).any { it == null }) {
-                        appendLog("screen_swipe 缺坐标")
+                        appendLog("screen_swipe thiếu tọa độ")
                         continue
                     }
                     gui.swipe(x1!!, y1!!, x2!!, y2!!, action.int("duration_ms")?.toLong() ?: 300L).fold(
                         onSuccess = { appendLog(it) },
-                        onFailure = { appendLog("滑动失败：${it.message}") },
+                        onFailure = { appendLog("Vuốt thất bại: ${it.message}") },
                     )
                 }
                 "screen_input_text" -> {
                     val text = action.string("text").orEmpty()
                     if (text.isBlank()) {
-                        appendLog("screen_input_text 缺 text")
+                        appendLog("screen_input_text thiếu text")
                         continue
                     }
                     // 先点到可编辑框，再剪贴板粘贴（中文不能走 input text）
@@ -225,13 +225,13 @@ class WorkflowGuiPilot(
                         }
                     if (editable != null) {
                         gui.click(editable.centerX, editable.centerY).onSuccess {
-                            appendLog("先聚焦输入框 center=(${editable.centerX},${editable.centerY})")
+                            appendLog("Trước tiên lấy nét khung nhập center=(${editable.centerX},${editable.centerY})")
                         }
                         delay(250)
                     }
                     gui.inputText(text).fold(
                         onSuccess = { appendLog(it) },
-                        onFailure = { appendLog("输入失败：${it.message}") },
+                        onFailure = { appendLog("Nhập thất bại: ${it.message}") },
                     )
                 }
                 "screen_scroll" -> {
@@ -241,62 +241,62 @@ class WorkflowGuiPilot(
                         "left" -> ScrollDirection.LEFT
                         "right" -> ScrollDirection.RIGHT
                         else -> {
-                            appendLog("screen_scroll 缺合法 direction")
+                            appendLog("screen_scroll thiếu direction hợp lệ")
                             continue
                         }
                     }
                     gui.scroll(dir).fold(
                         onSuccess = { appendLog(it) },
-                        onFailure = { appendLog("滚动失败：${it.message}") },
+                        onFailure = { appendLog("Cuộn thất bại: ${it.message}") },
                     )
                 }
                 "screen_double_click" -> {
                     val x = action.int("x")
                     val y = action.int("y")
                     if (x == null || y == null) {
-                        appendLog("screen_double_click 缺坐标")
+                        appendLog("screen_double_click thiếu tọa độ")
                         continue
                     }
                     gui.doubleClick(x, y).fold(
                         onSuccess = { appendLog(it) },
-                        onFailure = { appendLog("双击失败：${it.message}") },
+                        onFailure = { appendLog("Nhấn đúp thất bại: ${it.message}") },
                     )
                 }
                 "screen_long_press" -> {
                     val x = action.int("x")
                     val y = action.int("y")
                     if (x == null || y == null) {
-                        appendLog("screen_long_press 缺坐标")
+                        appendLog("screen_long_press thiếu tọa độ")
                         continue
                     }
                     gui.longPress(x, y, action.int("duration_ms")?.toLong() ?: 800L).fold(
                         onSuccess = { appendLog(it) },
-                        onFailure = { appendLog("长按失败：${it.message}") },
+                        onFailure = { appendLog("Nhấn giữ thất bại: ${it.message}") },
                     )
                 }
                 "screen_key" -> {
                     val key = action.string("key").orEmpty()
                     if (key.isBlank()) {
-                        appendLog("screen_key 缺 key")
+                        appendLog("screen_key thiếu key")
                         continue
                     }
                     gui.sendKey(key).fold(
                         onSuccess = { appendLog(it) },
-                        onFailure = { appendLog("按键失败：${it.message}") },
+                        onFailure = { appendLog("Nhấn phím thất bại: ${it.message}") },
                     )
                 }
                 "app_launch" -> {
                     val pkg = action.string("package").orEmpty().ifBlank { targetPackage.orEmpty() }
                     if (pkg.isBlank()) {
-                        appendLog("app_launch 缺 package")
+                        appendLog("app_launch thiếu package")
                         continue
                     }
                     gui.launchApp(pkg).fold(
                         onSuccess = { appendLog(it) },
-                        onFailure = { appendLog("启动失败：${it.message}") },
+                        onFailure = { appendLog("Khởi động thất bại: ${it.message}") },
                     )
                 }
-                else -> appendLog("未知动作：$kind")
+                else -> appendLog("Hành động không xác định: $kind")
             }
             // 不再固定等待：无障碍服务可用时按窗口变化事件判断界面是否已稳定，无服务则回退 900ms
             gui.awaitUiSettled()
@@ -307,14 +307,14 @@ class WorkflowGuiPilot(
         val stepBudget = maxSteps.coerceIn(1, 40)
         val exhausted = failedReason == null && doneReason == null && steps >= stepBudget
         val effectiveFailure = failedReason
-            ?: if (exhausted) "步数耗尽未达成目标（${stepBudget} 步内模型未宣布完成）" else null
+            ?: if (exhausted) "Cạn số bước mà chưa đạt mục tiêu (model chưa tuyên bố hoàn thành trong ${stepBudget} bước)" else null
         val success = effectiveFailure == null
         val summary = buildString {
-            appendLine(if (doneReason != null) "✔ $doneReason" else if (effectiveFailure != null) "✘ $effectiveFailure" else "达到最大步数 $maxSteps")
+            appendLine(if (doneReason != null) "✔ $doneReason" else if (effectiveFailure != null) "✘ $effectiveFailure" else "Đạt số bước tối đa $maxSteps")
             appendLine()
             append(log.toString().trimEnd())
         }
-        onProgress(if (success) "GUI 试飞结束" else "GUI 试飞未完成")
+        onProgress(if (success) "Kết thúc chạy thử GUI" else "Chạy thử GUI chưa hoàn thành")
         return NodeExecutionOutput(
             status = if (success) NodeRunStatus.SUCCESS else NodeRunStatus.FAILED,
             exitCode = if (success) 0 else 1,
@@ -350,15 +350,15 @@ class WorkflowGuiPilot(
         step: Int,
         maxSteps: Int,
     ): String = buildString {
-        appendLine("## 目标")
+        appendLine("## Mục tiêu")
         appendLine(goal)
-        if (!targetPackage.isNullOrBlank()) appendLine("目标包名：$targetPackage")
-        appendLine("进度：第 $step / $maxSteps 步")
+        if (!targetPackage.isNullOrBlank()) appendLine("Tên gói mục tiêu: $targetPackage")
+        appendLine("Tiến độ: bước $step / $maxSteps")
         appendLine()
-        appendLine("## 当前屏幕")
+        appendLine("## Màn hình hiện tại")
         append(observation.toAgentSummary(maxNodes = 60))
         appendLine()
-        appendLine("只输出一个 JSON 对象。发中文消息：先聚焦输入框，再 screen_input_text（系统会自动剪贴板粘贴）；然后 click_text「发送」。不要点「返回」来回抖。")
+        appendLine("Chỉ xuất ra một đối tượng JSON. Gửi tin nhắn tiếng Trung: trước tiên lấy nét khung nhập, rồi screen_input_text (hệ thống sẽ tự động dán clipboard); sau đó click_text 「Gửi」. Đừng nhấn 「Quay lại」 qua lại lung tung.")
     }
 
     private companion object {

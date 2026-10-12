@@ -16,10 +16,10 @@ import top.wkbin.tianxuan.runtime.StorageManager
 import top.wkbin.tianxuan.runtime.StorageUsage
 
 enum class StorageFilter(val label: String) {
-    ALL("全部"),
-    SAFE("归档日志"),
-    CAUTION("谨慎清理"),
-    SYSTEM_AND_SOURCE("保留与管理"),
+    ALL("Tất cả"),
+    SAFE("Log lưu trữ"),
+    CAUTION("Dọn thận trọng"),
+    SYSTEM_AND_SOURCE("Giữ lại và quản lý"),
 }
 
 sealed interface CleanupDialogTarget {
@@ -89,7 +89,7 @@ class StorageUsageViewModel(
                         it.copy(
                             refreshing = false,
                             messageIsError = true,
-                            message = "读取存储占用失败，请点击刷新重试",
+                            message = "Đọc dung lượng lưu trữ thất bại, vui lòng nhấn làm mới để thử lại",
                         )
                     }
                 }
@@ -108,13 +108,13 @@ class StorageUsageViewModel(
             val msg = if (result.isSuccess) {
                 val released = result.getOrNull() ?: 0L
                 if (released > 0) {
-                    "归档日志清理完成，已删除 ${released.formatSize()}"
+                    "Dọn log lưu trữ hoàn tất, đã xóa ${released.formatSize()}"
                 } else {
-                    "暂无符合条件的过期归档日志"
+                    "Hiện chưa có log lưu trữ hết hạn nào thỏa điều kiện"
                 }
             } else {
                 android.util.Log.e("StorageUsage", "Quick safe clean failed: ${result.errorOrNull()?.message}")
-                result.errorOrNull()?.message ?: "清理失败，请刷新后重试"
+                result.errorOrNull()?.message ?: "Dọn thất bại, hãy làm mới rồi thử lại"
             }
             val newUsage = runCatching { storageManager.inspect() }.onFailure { if (it is CancellationException) throw it }.getOrNull() ?: _uiState.value.usage
             _uiState.update {
@@ -141,13 +141,13 @@ class StorageUsageViewModel(
             val msg = if (result.isSuccess) {
                 val released = result.getOrNull() ?: 0L
                 if (projectName != null) {
-                    "已清理项目 $projectName 的缓存，删除 ${released.formatSize()}"
+                    "Đã dọn cache của dự án $projectName, xóa ${released.formatSize()}"
                 } else {
-                    "已清理已识别项目的缓存，删除 ${released.formatSize()}"
+                    "Đã dọn cache của dự án đã nhận diện, xóa ${released.formatSize()}"
                 }
             } else {
                 android.util.Log.e("StorageUsage", "Clean project build failed: ${result.errorOrNull()?.message}")
-                result.errorOrNull()?.message ?: "清理项目缓存失败，请刷新后重试"
+                result.errorOrNull()?.message ?: "Dọn cache dự án thất bại, hãy làm mới rồi thử lại"
             }
             val newUsage = runCatching { storageManager.inspect() }.onFailure { if (it is CancellationException) throw it }.getOrNull() ?: _uiState.value.usage
             _uiState.update {
@@ -171,10 +171,10 @@ class StorageUsageViewModel(
             val result = storageManager.clearCategory(categoryId)
             val isError = result.isFailure
             val msg = if (result.isSuccess) {
-                "分类清理完成"
+                "Dọn phân loại hoàn tất"
             } else {
                 android.util.Log.e("StorageUsage", "Clear category failed: ${result.errorOrNull()?.message}")
-                result.errorOrNull()?.message ?: "分类清理失败，请刷新后重试"
+                result.errorOrNull()?.message ?: "Dọn theo phân loại thất bại, vui lòng làm mới rồi thử lại"
             }
             val newUsage = runCatching { storageManager.inspect() }.onFailure { if (it is CancellationException) throw it }.getOrNull() ?: _uiState.value.usage
             _uiState.update {
@@ -198,10 +198,10 @@ class StorageUsageViewModel(
             val result = storageManager.clearEntry(categoryId, entryId)
             val isError = result.isFailure
             val msg = if (result.isSuccess) {
-                "已清理 $entryName"
+                "Đã dọn dẹp $entryName"
             } else {
                 android.util.Log.e("StorageUsage", "Clear entry failed: ${result.errorOrNull()?.message}")
-                result.errorOrNull()?.message ?: "清理 $entryName 失败，请刷新后重试"
+                result.errorOrNull()?.message ?: "Dọn $entryName thất bại, vui lòng làm mới rồi thử lại"
             }
             val newUsage = runCatching { storageManager.inspect() }.onFailure { if (it is CancellationException) throw it }.getOrNull() ?: _uiState.value.usage
             _uiState.update {
@@ -225,10 +225,10 @@ class StorageUsageViewModel(
             val result = storageManager.clearCache()
             val isError = result.isFailure
             val msg = if (result.isSuccess) {
-                "符合条件的依赖缓存已清理"
+                "Cache phụ thuộc thỏa điều kiện đã được dọn"
             } else {
                 android.util.Log.e("StorageUsage", "Clear cache failed: ${result.errorOrNull()?.message}")
-                result.errorOrNull()?.message ?: "清理缓存失败，请刷新后重试"
+                result.errorOrNull()?.message ?: "Dọn dẹp cache thất bại, vui lòng làm mới rồi thử lại"
             }
             val newUsage = runCatching { storageManager.inspect() }.onFailure { if (it is CancellationException) throw it }.getOrNull() ?: _uiState.value.usage
             _uiState.update {

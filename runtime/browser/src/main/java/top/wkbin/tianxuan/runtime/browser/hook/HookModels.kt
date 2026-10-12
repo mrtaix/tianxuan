@@ -143,10 +143,10 @@ data class HookRulesPayload(
 
 /** 按类型校验规则；返回错误消息（null = 合法）。错误原文透传给 agent。 */
 fun HookRule.validate(): String? {
-    if (id.isBlank()) return "hook id 不能为空"
-    if (target.isBlank()) return "target 不能为空"
-    if (target.length > 512) return "target 过长（>512 字符）"
-    if (maxHits !in 1..100_000) return "maxHits 必须在 1..100000"
+    if (id.isBlank()) return "hook id không được rỗng"
+    if (target.isBlank()) return "target không được rỗng"
+    if (target.length > 512) return "target quá dài (>512 ký tự)"
+    if (maxHits !in 1..100_000) return "maxHits phải nằm trong 1..100000"
     val isNet = type == HookType.FETCH || type == HookType.XHR
     actions.forEach { action ->
         val bad = when (action) {
@@ -157,13 +157,13 @@ fun HookRule.validate(): String? {
             is HookAction.FakeValue -> type != HookType.PROPERTY
             else -> false
         }
-        if (bad) return "动作 ${action::class.simpleName} 不适用于 type=$type"
+        if (bad) return "Động tác ${action::class.simpleName} không áp dụng cho type=$type"
     }
     if (type == HookType.FETCH || type == HookType.XHR || type == HookType.WEBSOCKET) {
-        if (!isValidGlob(target)) return "target 不是合法 URL glob：$target（仅允许 * 与 ? 通配）"
+        if (!isValidGlob(target)) return "target không phải URL glob hợp lệ: $target (chỉ cho phép ký tự đại diện * và ?)"
     }
     if (type == HookType.FUNCTION || type == HookType.METHOD || type == HookType.PROPERTY) {
-        if (!isValidPath(target)) return "target 不是合法对象路径：$target（如 JSON.parse / document.cookie）"
+        if (!isValidPath(target)) return "target không phải đường dẫn đối tượng hợp lệ: $target (như JSON.parse / document.cookie)"
     }
     return null
 }

@@ -76,7 +76,7 @@ object VirtualDisplayHud {
     @Synchronized
     fun show(context: Context, sessionId: String, coordinator: VirtualDisplayCoordinator) {
         if (showingSessionId == sessionId && rootView != null) {
-            ShowerLog.d(TAG, "show: 悬浮窗已在展示 session=$sessionId")
+            ShowerLog.d(TAG, "show: Cửa sổ nổi đang hiển thị session=$sessionId")
             return
         }
         hide()
@@ -84,11 +84,11 @@ object VirtualDisplayHud {
         val appContext = context.applicationContext
         mainHandler.post {
             if (generation.get() != gen) {
-                ShowerLog.d(TAG, "show: 丢弃迟到的挂载请求（已被 hide 或新一轮 show 取代）")
+                ShowerLog.d(TAG, "show: loại bỏ yêu cầu mount đến muộn (đã bị hide hoặc một lượt show mới thay thế)")
                 return@post
             }
             runCatching { attach(appContext, sessionId, controller = coordinator.controller(sessionId)) }
-                .onFailure { ShowerLog.e(TAG, "show: 悬浮窗挂载失败", it) }
+                .onFailure { ShowerLog.e(TAG, "show: gắn cửa sổ nổi thất bại", it) }
         }
     }
 
@@ -104,7 +104,7 @@ object VirtualDisplayHud {
         mainHandler.post {
             runCatching {
                 windowManager?.removeView(view)
-            }.onFailure { ShowerLog.w(TAG, "hide: 移除悬浮窗失败（可能已随窗口销毁）: ${it.message}") }
+            }.onFailure { ShowerLog.w(TAG, "hide: gỡ cửa sổ nổi thất bại (có thể đã bị hủy cùng cửa sổ): ${it.message}") }
             windowManager = null
         }
     }
@@ -133,7 +133,7 @@ object VirtualDisplayHud {
             setPadding(px(12), px(4), px(4), px(4))
         }
         val title = TextView(context).apply {
-            text = "虚拟屏 · $sessionId"
+            text = "Màn hình ảo · $sessionId"
             setTextColor(Color.WHITE)
             textSize = 12f
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
@@ -241,7 +241,7 @@ object VirtualDisplayHud {
         windowManager = wm
         rootView = root
         showingSessionId = sessionId
-        ShowerLog.d(TAG, "attach: 悬浮窗已挂载 session=$sessionId")
+        ShowerLog.d(TAG, "attach: Cửa sổ nổi đã gắn session=$sessionId")
     }
 
     /**
@@ -314,7 +314,7 @@ object VirtualDisplayHud {
                         deviceId = 0,
                         edgeFlags = 0,
                     )
-                }.onFailure { ShowerLog.w(TAG, "触摸回传失败: ${it.message}") }
+                }.onFailure { ShowerLog.w(TAG, "Phản hồi chạm thất bại: ${it.message}") }
             }
         }
     }

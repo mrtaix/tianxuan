@@ -104,7 +104,7 @@ class FtpServiceManager(
     }
 
     suspend fun setPort(port: Int) {
-        require(port in 1024..65535) { "FTP 端口必须在 1024..65535 之间" }
+        require(port in 1024..65535) { "Cổng FTP phải nằm trong khoảng 1024..65535" }
         val distroId = linuxRuntime.activeDistroId.value
         preferences.setPort(distroId, port)
         restartIfRunning(distroId)
@@ -168,7 +168,7 @@ class FtpServiceManager(
             //    留空或填任意内容即可」，但用户一旦配过 SSH 密码，FTP 实际要求的是
             //    那把 SSH 密码；照着界面操作只会一直 530，且无任何可排查线索。
             // 3. 不可观测——FtpPreferences.passwordConfigured 只看 FTP 键，
-            //    所以 UI 永远不可能提示"正在使用 SSH 密码"。
+            //    所以 UI 永远不可能提示"Đang dùng mật khẩu SSH"。
             //
             // 免密访问有且只有一个显式入口：anonymousEnabled。
             // 与 FtpSession 的认证语义（AndroidFtpServer.kt 内 handlePass 的同类注释）对齐。
@@ -205,7 +205,7 @@ class FtpServiceManager(
             acquireWakeLock()
             acquireWifiLock()
             showNotification(host, port, username, anonymous)
-            appendLog("FTP 服务启动成功，监听端口 $port，根目录：${rootDir.absolutePath}")
+            appendLog("Dịch vụ FTP khởi động thành công, lắng nghe cổng $port, thư mục gốc: ${rootDir.absolutePath}")
         } catch (cancellation: CancellationException) {
             hideNotification()
             _state.value = FtpServiceState.Stopped(distroId)
@@ -214,8 +214,8 @@ class FtpServiceManager(
             hideNotification()
             ftpServer = null
             serviceDistroId = null
-            _state.value = FtpServiceState.Failed(distroId, throwable.message ?: "FTP 服务启动失败")
-            appendLog("FTP 服务启动失败: ${throwable.message}")
+            _state.value = FtpServiceState.Failed(distroId, throwable.message ?: "Khởi động dịch vụ FTP thất bại")
+            appendLog("Khởi động dịch vụ FTP thất bại: ${throwable.message}")
             throw throwable
         }
     }
@@ -301,10 +301,10 @@ class FtpServiceManager(
             manager.createNotificationChannel(
                 NotificationChannel(
                     NOTIFICATION_CHANNEL_ID,
-                    "天玄 Linux FTP 文件服务",
+                    "Dịch vụ tệp FTP Linux Thiên Huyền",
                     NotificationManager.IMPORTANCE_LOW,
                 ).apply {
-                    description = "用于展示 Linux 沙箱 FTP 远程文件访问运行状态的常驻通知"
+                    description = "Thông báo thường trú dùng để hiển thị trạng thái chạy truy cập tệp từ xa FTP của sandbox Linux"
                     setShowBadge(false)
                 },
             )
@@ -312,8 +312,8 @@ class FtpServiceManager(
         val url = if (anonymous) "ftp://$host:$port/" else "ftp://$username@$host:$port/"
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle("Linux FTP 远程文件服务运行中")
-            .setContentText("连接地址: $url")
+            .setContentTitle("Dịch vụ tệp từ xa FTP Linux đang chạy")
+            .setContentText("Địa chỉ kết nối: $url")
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()

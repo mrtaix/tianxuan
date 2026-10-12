@@ -122,7 +122,7 @@ private fun RankBody(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "暂无统计数据",
+                text = "Chưa có dữ liệu thống kê",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                 ),

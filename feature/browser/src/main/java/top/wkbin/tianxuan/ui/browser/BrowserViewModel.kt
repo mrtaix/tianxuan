@@ -41,7 +41,7 @@ class BrowserViewModel(
     private val _canGoBack = MutableStateFlow(false)
     private val _canGoForward = MutableStateFlow(false)
 
-    // 浏览器活动信号：agent/用户导航、tab 切换时递增，供聊天页提示"浏览器有新动态"
+    // 浏览器活动信号：agent/用户导航、tab 切换时递增，供聊天页提示"Trình duyệt có động thái mới"
     private val _activityTick = MutableStateFlow(0L)
     // 面板可见性：只有浏览器面板真正被展示时才确保/补建活跃 tab，避免 app 启动即常驻 WebView
     private val _paneVisible = MutableStateFlow(false)
@@ -124,13 +124,13 @@ class BrowserViewModel(
     fun loadNetworkDetail(id: String) = viewModelScope.launch {
         _networkDetail.value = runCatching {
             registry.getDefault().networkDetail(id)
-        }.getOrNull() ?: "（无详情：引擎未就绪，或 body 未捕获）"
+        }.getOrNull() ?: "(Không chi tiết: engine chưa sẵn sàng, hoặc body chưa bắt được)"
     }
 
     /** 手动放行 CDP 暂停（断点/异常挂起）；恢复全部已暂停的 tab。 */
     fun resumeDebugger() = viewModelScope.launch {
         runCatching { registry.getDefault().debugResume(null) }
-            .onFailure { _toolMessage.value = "恢复失败：${it.message ?: "CDP 未启用"}" }
+            .onFailure { _toolMessage.value = "Khôi phục thất bại: ${it.message ?: "CDP 未启用"}" }
     }
 
     /**
@@ -164,7 +164,7 @@ class BrowserViewModel(
                 browserPreferences.coBrowsingEnabled().collect { _coBrowsingEnabled.value = it }
             }
         }
-        // 浏览器活动信号：活跃 tab URL 变化 / tab 切换时递增（聊天页据此显示"浏览器有新动态"）
+        // 浏览器活动信号：活跃 tab URL 变化 / tab 切换时递增（聊天页据此显示"Trình duyệt có động thái mới"）
         viewModelScope.launch {
             var lastUrl = ""
             eventBus.url.collect { url ->
@@ -216,7 +216,7 @@ class BrowserViewModel(
         val raw = _urlInput.value.trim()
         if (raw.isBlank()) return
         val target = normalizeUrl(raw) ?: run {
-            _toolMessage.value = "不支持的链接：仅允许 http/https（或 about:blank）"
+            _toolMessage.value = "Liên kết không được hỗ trợ: chỉ cho phép http/https (hoặc about:blank)"
             return
         }
         viewModelScope.launch {
@@ -226,8 +226,8 @@ class BrowserViewModel(
                 if (active == null) engine.openTab(target, activate = true)
                 else engine.navigate(active, target)
                 _urlInput.value = target
-                _toolMessage.value = "已打开 $target"
-            }.onFailure { _toolMessage.value = it.message ?: "导航失败" }
+                _toolMessage.value = "Đã mở $target"
+            }.onFailure { _toolMessage.value = it.message ?: "Điều hướng thất bại" }
             syncTabs()
         }
     }
@@ -305,7 +305,7 @@ class BrowserViewModel(
         runCatching {
             val engine = registry.getDefault()
             if (engine.activeTab() == null) engine.openTab(TianXuanNewTab.URL, activate = true)
-        }.onFailure { _toolMessage.value = it.message ?: "浏览器引擎尚未就绪" }
+        }.onFailure { _toolMessage.value = it.message ?: "Engine trình duyệt chưa sẵn sàng" }
         syncTabs()
     }
 
@@ -380,7 +380,7 @@ data class BrowserUiState(
     val tabs: List<BrowserTabUi>,
     val canGoBack: Boolean,
     val canGoForward: Boolean,
-    /** 浏览器活动信号（单调递增）：供聊天页在浏览器面板隐藏时提示"有新动态"。 */
+    /** 浏览器活动信号（单调递增）：供聊天页在浏览器面板隐藏时提示"Có hoạt động mới"。 */
     val activityTick: Long = 0L,
 ) {
     companion object {

@@ -42,7 +42,7 @@ class WorkflowForegroundService : Service() {
     private var collecting = false
     /** 当前向 RuntimeLifecycleSupervisor 持有的保活租约（工作流运行时持有）。 */
     private var powerLease: ProcessingPowerLease? = null
-    /** 出现过运行中状态的 executionId：用于检测"运行中 → 终态"迁移，终态通知只发一次。 */
+    /** 出现过运行中状态的 executionId：用于检测"Đang chạy → Trạng thái cuối"迁移，终态通知只发一次。 */
     private val seenRunning = mutableSetOf<String>()
     /** 进度通知节流：executionId → 上次发布时间。 */
     private val lastProgressPostAt = mutableMapOf<String, Long>()
@@ -53,20 +53,20 @@ class WorkflowForegroundService : Service() {
             val manager = getSystemService(NotificationManager::class.java)
             // 进度渠道低优先级（静默常驻）；结果渠道高优先级（完成/失败可感知）
             manager.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "工作流后台运行", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "展示工作流后台执行进度"
+                NotificationChannel(CHANNEL_ID, "Workflow chạy nền", NotificationManager.IMPORTANCE_LOW).apply {
+                    description = "Hiển thị tiến độ thực thi nền của workflow"
                     enableVibration(false)
                     setSound(null, null)
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 },
             )
             manager.createNotificationChannel(
-                NotificationChannel(RESULT_CHANNEL_ID, "工作流结果", NotificationManager.IMPORTANCE_HIGH).apply {
-                    description = "工作流运行完成、失败或被停止时的提醒"
+                NotificationChannel(RESULT_CHANNEL_ID, "Kết quả workflow", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "Nhắc nhở khi workflow chạy xong, thất bại hoặc bị dừng"
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 },
             )
-        }.onFailure { Log.w(TAG, "创建通知渠道失败", it) }
+        }.onFailure { Log.w(TAG, "Tạo kênh thông báo thất bại", it) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -82,7 +82,7 @@ class WorkflowForegroundService : Service() {
                             .filter { it.status !in WorkflowRunManager.TERMINAL }
                             .forEach { runManager.cancel(it.executionId) }
                     }
-                }.onFailure { Log.w(TAG, "取消工作流失败", it) }
+                }.onFailure { Log.w(TAG, "Hủy workflow thất bại", it) }
                 return START_NOT_STICKY
             }
             else -> {
@@ -175,8 +175,8 @@ class WorkflowForegroundService : Service() {
 
     private fun runningNotification(): Notification = NotificationCompat.Builder(this, CHANNEL_ID)
         .setSmallIcon(R.drawable.tianxuan_notification)
-        .setContentTitle("工作流运行中")
-        .setContentText("后台保活进行中")
+        .setContentTitle("Workflow đang chạy")
+        .setContentText("Giữ sống nền đang tiến hành")
         .setOngoing(true)
         .setOnlyAlertOnce(true)
         .setAutoCancel(false)
@@ -200,7 +200,7 @@ class WorkflowForegroundService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.tianxuan_notification)
-            .setContentTitle("天玄 · ${state.definition.name}")
+            .setContentTitle("Thiên Huyền · ${state.definition.name}")
             .setContentText(if (nodeTitle.isNotBlank()) "$nodeTitle · $detail" else detail)
             .setContentIntent(openRunIntent(state.executionId))
             .setOngoing(true)
@@ -220,13 +220,13 @@ class WorkflowForegroundService : Service() {
 
     private fun terminalNotification(state: top.wkbin.tianxuan.core.model.workflow.WorkflowRuntimeState): Notification {
         val (title, text) = when (state.status) {
-            WorkflowRunStatus.SUCCESS -> "工作流完成" to "${state.definition.name} 全部节点执行成功"
-            WorkflowRunStatus.FAILED -> "工作流失败" to "${state.definition.name}：${state.error ?: "执行失败"}"
-            else -> "工作流已停止" to "${state.definition.name}：${state.error ?: "已取消"}"
+            WorkflowRunStatus.SUCCESS -> "Workflow hoàn thành" to "${state.definition.name} tất cả các node thực thi thành công"
+            WorkflowRunStatus.FAILED -> "Luồng công việc thất bại" to "${state.definition.name}：${state.error ?: "执行失败"}"
+            else -> "Workflow đã dừng" to "${state.definition.name}：${state.error ?: "已取消"}"
         }
         return NotificationCompat.Builder(this, RESULT_CHANNEL_ID)
             .setSmallIcon(R.drawable.tianxuan_notification)
-            .setContentTitle("天玄 · $title")
+            .setContentTitle("Thiên Huyền · $title")
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(openRunIntent(state.executionId))
@@ -238,17 +238,17 @@ class WorkflowForegroundService : Service() {
 
     private fun safeStartForeground(id: Int, notification: Notification) {
         runCatching { startForeground(id, notification) }
-            .onFailure { Log.w(TAG, "startForeground 失败", it) }
+            .onFailure { Log.w(TAG, "startForeground thất bại", it) }
     }
 
     private fun stopForegroundSafely(flag: Int) {
         runCatching { stopForeground(flag) }
-            .onFailure { Log.w(TAG, "stopForeground 失败", it) }
+            .onFailure { Log.w(TAG, "stopForeground thất bại", it) }
     }
 
     private fun safeNotify(id: Int, notification: Notification) {
         runCatching { getSystemService(NotificationManager::class.java).notify(id, notification) }
-            .onFailure { Log.w(TAG, "发布通知失败", it) }
+            .onFailure { Log.w(TAG, "Phát thông báo thất bại", it) }
     }
 
     private fun runNotificationId(executionId: String): Int =
@@ -276,12 +276,12 @@ class WorkflowForegroundService : Service() {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
                 PackageManager.PERMISSION_GRANTED
             ) {
-                Log.w(TAG, "通知权限未授权，跳过工作流前台保活服务（运行继续）")
+                Log.w(TAG, "Quyền thông báo chưa được cấp, bỏ qua dịch vụ giữ sống tiền cảnh của workflow (chạy vẫn tiếp tục)")
                 return
             }
             runCatching {
                 context.startForegroundService(Intent(context, WorkflowForegroundService::class.java))
-            }.onFailure { Log.w(TAG, "启动工作流前台服务失败", it) }
+            }.onFailure { Log.w(TAG, "Khởi động dịch vụ tiền cảnh workflow thất bại", it) }
         }
     }
 }

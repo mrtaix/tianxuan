@@ -49,12 +49,12 @@ class AppUpdateManager(
             add(config.githubLatestApi)
         }.distinct()
 
-        var lastError: Throwable = IllegalStateException("未配置任何更新源")
+        var lastError: Throwable = IllegalStateException("Chưa cấu hình nguồn cập nhật nào")
         for (url in candidates) {
             val result = runCatching { fetchManifest(url, currentVersionName) }
             result.onSuccess { info ->
                 if (info != null) return@withContext Result.success(info)
-                lastError = IllegalStateException("清单内容不完整: $url")
+                lastError = IllegalStateException("Nội dung danh sách không đầy đủ: $url")
             }.onFailure { lastError = it }
         }
         Result.failure(lastError)
@@ -71,7 +71,7 @@ class AppUpdateManager(
 
         httpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IllegalStateException("更新源响应 HTTP ${response.code}")
+                throw IllegalStateException("Nguồn cập nhật phản hồi HTTP ${response.code}")
             }
             return UpdateManifestParser.parseLatest(
                 body = response.body.string(),
@@ -103,7 +103,7 @@ class AppUpdateManager(
             add("https://api.github.com/repos/$repo/releases/tags/$tag")
         }.distinct()
 
-        var lastError: Throwable = IllegalStateException("未配置更新源")
+        var lastError: Throwable = IllegalStateException("Chưa cấu hình nguồn cập nhật")
         for (url in candidates) {
             runCatching {
                 val request = Request.Builder()
@@ -114,10 +114,10 @@ class AppUpdateManager(
                     .build()
                 httpClient.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
-                        throw IllegalStateException("更新源响应 HTTP ${response.code}")
+                        throw IllegalStateException("Nguồn cập nhật phản hồi HTTP ${response.code}")
                     }
                     UpdateManifestParser.parseTagNotes(response.body.string())
-                        ?: throw IllegalStateException("清单无更新说明")
+                        ?: throw IllegalStateException("Danh sách không có mô tả cập nhật")
                 }
             }.onSuccess { notes ->
                 return@withContext Result.success(notes)
@@ -150,7 +150,7 @@ class AppUpdateManager(
 
             val response = httpClient.newCall(request).execute()
             if (!response.isSuccessful) {
-                throw IllegalStateException("下载失败 HTTP ${response.code}")
+                throw IllegalStateException("Tải xuống thất bại HTTP ${response.code}")
             }
 
             val body = response.body

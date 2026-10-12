@@ -63,7 +63,7 @@ fun A2uiSurfaceHost(
 ) {
     var renderError by remember(messagesJson) { mutableStateOf<String?>(null) }
     LaunchedEffect(messagesJson) {
-        renderError = if (messagesJson.isBlank()) "载荷为空" else TianXuanA2uiRenderer.processMessages(messagesJson)
+        renderError = if (messagesJson.isBlank()) "Payload rỗng" else TianXuanA2uiRenderer.processMessages(messagesJson)
     }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         title?.let {
@@ -99,7 +99,7 @@ private fun A2uiFallbackCard(renderError: String?, messagesJson: String, modifie
                 )
             }
             Text(
-                messagesJson.take(1200).ifBlank { "（空载荷）" },
+                messagesJson.take(1200).ifBlank { "(payload rỗng)" },
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp, fontFamily = FontFamily.Monospace),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 10,
@@ -178,7 +178,7 @@ fun A2uiPocScreen(modifier: Modifier = Modifier, onBack: (() -> Unit)? = null) {
 private fun sampleToolArgs(timestamp: Long) = kotlinx.serialization.json.buildJsonObject {
     val surfaceId = "demo-$timestamp"
     put("surfaceId", kotlinx.serialization.json.JsonPrimitive(surfaceId))
-    put("title", kotlinx.serialization.json.JsonPrimitive("内置示例"))
+    put("title", kotlinx.serialization.json.JsonPrimitive("Ví dụ tích hợp"))
     // createSurface 里的 surfaceId 必须与入参一致，否则卡片按入参 id 找不到已渲染的 surface
     put("messages", kotlinx.serialization.json.JsonPrimitive(A2uiSurfaceBus.sampleMessagesJson(surfaceId)))
 }

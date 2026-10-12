@@ -31,10 +31,10 @@ class McpOAuthCoordinator(
     val states: kotlinx.coroutines.flow.StateFlow<Map<String, top.wkbin.tianxuan.core.model.McpAuthState>> = _states
 
     suspend fun begin(server: McpServerConfig, now: Long = System.currentTimeMillis()): String {
-        require(server.authMode == top.wkbin.tianxuan.core.model.McpAuthMode.OAUTH) { "MCP 服务未配置 OAuth" }
-        require(server.oauthClientId.isNotBlank()) { "OAuth client_id 未配置" }
-        require(server.oauthAuthorizationEndpoint.isNotBlank()) { "OAuth authorization endpoint 未配置" }
-        require(server.oauthTokenEndpoint.isNotBlank()) { "OAuth token endpoint 未配置" }
+        require(server.authMode == top.wkbin.tianxuan.core.model.McpAuthMode.OAUTH) { "Dịch vụ MCP chưa cấu hình OAuth" }
+        require(server.oauthClientId.isNotBlank()) { "OAuth client_id chưa cấu hình" }
+        require(server.oauthAuthorizationEndpoint.isNotBlank()) { "OAuth authorization endpoint chưa cấu hình" }
+        require(server.oauthTokenEndpoint.isNotBlank()) { "OAuth token endpoint chưa được cấu hình" }
         OAuthEndpointPolicy.requireSecure(server.oauthAuthorizationEndpoint)
         OAuthEndpointPolicy.requireSecure(server.oauthTokenEndpoint)
         _states.value = _states.value + (server.id to top.wkbin.tianxuan.core.model.McpAuthState.Authorizing)
@@ -68,19 +68,19 @@ class McpOAuthCoordinator(
     }
 
     suspend fun callback(uri: Uri, now: Long = System.currentTimeMillis()): CallbackResult {
-        val state = uri.oauthState() ?: return CallbackResult.Invalid("OAuth 回调缺少 state")
+        val state = uri.oauthState() ?: return CallbackResult.Invalid("Callback OAuth thiếu state")
         val transaction = credentials.transaction(state, now)
-            ?: return CallbackResult.Invalid("OAuth state 无效、已过期或已被消费")
+            ?: return CallbackResult.Invalid("OAuth state không hợp lệ, đã hết hạn hoặc đã bị tiêu thụ")
         val redirect = Uri.parse(transaction.redirectUri)
         if (uri.scheme != redirect.scheme || uri.host != redirect.host || uri.path != redirect.path) {
-            return CallbackResult.Invalid("OAuth 回调地址不匹配")
+            return CallbackResult.Invalid("Địa chỉ callback OAuth không khớp")
         }
         val error = uri.oauthError()
         val code = uri.oauthCode()
-        if (error == null && code.isNullOrBlank()) return CallbackResult.Invalid("OAuth 回调缺少授权 code")
+        if (error == null && code.isNullOrBlank()) return CallbackResult.Invalid("OAuth callback thiếu code phân quyền")
         // URI/state/code/error 均验证完毕后才原子消费，畸形回调不能烧掉真实事务。
         if (!credentials.claimTransaction(state, now)) {
-            return CallbackResult.Invalid("OAuth state 已被消费")
+            return CallbackResult.Invalid("OAuth state đã bị tiêu thụ")
         }
         if (error != null) {
             _states.value = _states.value + (transaction.serverId to top.wkbin.tianxuan.core.model.McpAuthState.Error(error))

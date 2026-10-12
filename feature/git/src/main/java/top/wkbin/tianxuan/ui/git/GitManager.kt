@@ -81,11 +81,11 @@ class GitManager(
                     ),
                 )
                 if (result.isSuccess) {
-                    GitOpResult.Ok("已补全完整提交历史")
+                    GitOpResult.Ok("Đã bổ sung đầy đủ lịch sử commit")
                 } else {
                     val output = (result.stderr + "\n" + result.stdout).trim().takeLast(300)
                     GitOpResult.Failed(
-                        "补全历史失败：" + output.ifBlank { "请确认沙箱已安装 Git 且网络可用（私有仓库需先在终端配置凭据）" },
+                        "Bổ sung lịch sử thất bại:" + output.ifBlank { "Hãy xác nhận sandbox đã cài Git và mạng khả dụng (kho riêng tư cần cấu hình credential trong terminal trước)" },
                     )
                 }
             }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
@@ -120,7 +120,7 @@ class GitManager(
             fun put(paths: Set<String>, type: ChangeType, staged: Boolean) {
                 paths.forEach { filePath ->
                     // 同一文件可能同时出现在多个集合（如 staged modified + 又有改动），
-                    // 后加的覆盖先加的：保持"最新状态"一条
+                    // 后加的覆盖先加的：保持"Trạng thái mới nhất"一条
                     merged.removeAll { it.path == filePath }
                     merged.add(GitFileChange(filePath, type, staged))
                 }
@@ -164,11 +164,11 @@ class GitManager(
     /** 提交暂存区；message 为空则失败（不产生空信息提交） */
     suspend fun commit(hostPath: String, message: String): GitOpResult = withContext(Dispatchers.IO) {
         runCatching {
-            if (message.isBlank()) return@withContext GitOpResult.Failed("提交信息不能为空")
+            if (message.isBlank()) return@withContext GitOpResult.Failed("Thông tin commit không được rỗng")
             withGit(hostPath) { git ->
                 ensureUserIdent(git.repository)
                 val result = git.commit().setMessage(message.trim()).call()
-                GitOpResult.Ok("已提交 ${result.id.abbreviate(7).name()}：${result.shortMessage}")
+                GitOpResult.Ok("Đã commit ${result.id.abbreviate(7).name()}: ${result.shortMessage}")
             }
         }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
     }
@@ -181,24 +181,24 @@ class GitManager(
         withContext(Dispatchers.IO) {
             runCatching {
                 val changes = listChanges(hostPath)
-                if (changes.isEmpty()) return@withContext "（无改动）"
+                if (changes.isEmpty()) return@withContext "(Không thay đổi)"
                 val sb = StringBuilder()
-                sb.append("改动文件：\n")
+                sb.append("Tệp thay đổi:\n")
                 changes.forEach { c ->
                     sb.append("- [").append(
                         when (c.changeType) {
-                            ChangeType.ADDED -> "新增"
-                            ChangeType.MODIFIED -> "修改"
+                            ChangeType.ADDED -> "Thêm mới"
+                            ChangeType.MODIFIED -> "Sửa đổi"
                             ChangeType.DELETED -> "删除"
-                            ChangeType.UNTRACKED -> "未跟踪"
-                            ChangeType.CONFLICT -> "冲突"
+                            ChangeType.UNTRACKED -> "Chưa theo dõi"
+                            ChangeType.CONFLICT -> "Xung đột"
                         },
                     ).append("] ").append(c.path).append('\n')
                 }
-                sb.append("\n工作区 diff（含未暂存改动）：\n")
+                sb.append("\nDiff workspace (gồm thay đổi chưa stage):\n")
                 sb.append(formatWorkingDiff(hostPath, maxTotalChars))
                 sb.toString()
-            }.getOrDefault("（无法生成改动摘要）")
+            }.getOrDefault("(Không thể sinh tóm tắt thay đổi)")
         }
 
     /** 工作区 unified diff 文本；单文件 1500 字符截断、总量 [maxTotalChars] 截断 */
@@ -215,7 +215,7 @@ class GitManager(
                     runCatching { formatter.format(entry) }
                 }
                 var chunk = entryOut.toString("UTF-8")
-                if (chunk.length > 1500) chunk = chunk.take(1500) + "\n…（该文件 diff 已截断）\n"
+                if (chunk.length > 1500) chunk = chunk.take(1500) + "\n… (diff tệp này đã bị cắt)\n"
                 sb.append(chunk)
             }
             return sb.toString().take(maxTotalChars)
@@ -229,7 +229,7 @@ class GitManager(
             withGit(hostPath) { git ->
                 val repo = git.repository
                 val walk = RevWalk(repo)
-                val commit = walk.parseCommit(repo.resolve(hash) ?: return@withGit "提交不存在")
+                val commit = walk.parseCommit(repo.resolve(hash) ?: return@withGit "Commit không tồn tại")
                 walk.use {
                     val sb = StringBuilder()
                     sb.append("commit ").append(commit.id.name()).append('\n')
@@ -241,7 +241,7 @@ class GitManager(
                     sb.toString().take(20_000)
                 }
             }
-        }.getOrDefault("无法读取提交详情")
+        }.getOrDefault("Không thể đọc chi tiết commit")
     }
 
     private fun formatCommitDiff(walk: RevWalk, repo: Repository, commit: RevCommit): String {
@@ -264,7 +264,7 @@ class GitManager(
         return out.toString("UTF-8").take(16_000)
     }
 
-    /** 空树 ObjectId：根提交与"无父"比较时用（Git 的固定空树哈希） */
+    /** 空树 ObjectId：根提交与"Không có cha"比较时用（Git 的固定空树哈希） */
     private fun emptyTreeId(@Suppress("UNUSED_PARAMETER") repo: Repository): org.eclipse.jgit.lib.ObjectId =
         org.eclipse.jgit.lib.ObjectId.fromString("4b825dc642cb6eb9a060e54bf8d69288fbee4904")
 
@@ -273,7 +273,7 @@ class GitManager(
         runCatching {
             withGit(hostPath) { git ->
                 git.reset().call()
-                GitOpResult.Ok("已取消全部暂存")
+                GitOpResult.Ok("Đã hủy toàn bộ staging")
             }
         }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
     }
@@ -288,14 +288,14 @@ class GitManager(
             withGit(hostPath) { git ->
                 val changes = listChanges(hostPath)
                 val change = changes.firstOrNull { it.path == path }
-                    ?: return@withGit GitOpResult.Failed("文件不在改动列表：$path")
+                    ?: return@withGit GitOpResult.Failed("Tệp không nằm trong danh sách thay đổi: $path")
                 if (change.changeType == ChangeType.UNTRACKED) {
                     val target = File(File(hostPath).canonicalFile, path)
                     if (target.exists()) target.delete()
-                    GitOpResult.Ok("已删除未跟踪文件 $path")
+                    GitOpResult.Ok("Đã xóa tệp chưa theo dõi $path")
                 } else {
                     git.checkout().addPath(path).call()
-                    GitOpResult.Ok("已还原 $path")
+                    GitOpResult.Ok("Đã khôi phục $path")
                 }
             }
         }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
@@ -363,14 +363,14 @@ class GitManager(
     suspend fun createTag(hostPath: String, name: String, message: String): GitOpResult =
         withContext(Dispatchers.IO) {
             runCatching {
-                if (name.isBlank()) return@withContext GitOpResult.Failed("标签名不能为空")
+                if (name.isBlank()) return@withContext GitOpResult.Failed("Tên nhãn không được rỗng")
                 withGit(hostPath) { git ->
                     if (message.isBlank()) {
                         git.tag().setName(name.trim()).call()
                     } else {
                         git.tag().setName(name.trim()).setMessage(message.trim()).call()
                     }
-                    GitOpResult.Ok("已创建标签 ${name.trim()}")
+                    GitOpResult.Ok("Đã tạo nhãn ${name.trim()}")
                 }
             }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
         }
@@ -379,7 +379,7 @@ class GitManager(
         runCatching {
             withGit(hostPath) { git ->
                 git.tagDelete().setTags(name).call()
-                GitOpResult.Ok("已删除标签 $name")
+                GitOpResult.Ok("Đã xóa nhãn $name")
             }
         }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
     }
@@ -623,10 +623,10 @@ class GitManager(
                     repo.config.setString("branch", localName, "remote", "origin")
                     repo.config.setString("branch", localName, "merge", "refs/heads/$localName")
                     repo.config.save()
-                    GitOpResult.Ok("已切换到 $localName（跟踪 ${branch.shortName}）")
+                    GitOpResult.Ok("Đã chuyển sang $localName (theo dõi ${branch.shortName})")
                 } else {
                     git.checkout().setName(branch.shortName).call()
-                    GitOpResult.Ok("已切换到 ${branch.shortName}")
+                    GitOpResult.Ok("Đã chuyển sang ${branch.shortName}")
                 }
             }
         }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
@@ -640,7 +640,7 @@ class GitManager(
                         .setName(name)
                         .setStartPoint(if (fromCurrent) Constants.HEAD else "origin/${git.repository.branch}")
                         .call()
-                    GitOpResult.Ok("已创建分支 $name")
+                    GitOpResult.Ok("Đã tạo nhánh $name")
                 }
             }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
         }
@@ -650,9 +650,9 @@ class GitManager(
             withGit(hostPath) { git ->
                 val results = git.branchDelete().setBranchNames(branch.fullName).call()
                 if (results.isEmpty()) {
-                    GitOpResult.Failed("未能删除 ${branch.shortName}（可能包含未合并提交）")
+                    GitOpResult.Failed("Không thể xóa ${branch.shortName} (có thể chứa commit chưa gộp)")
                 } else {
-                    GitOpResult.Ok("已删除分支 ${branch.shortName}")
+                    GitOpResult.Ok("Đã xóa nhánh ${branch.shortName}")
                 }
             }
         }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
@@ -682,9 +682,9 @@ class GitManager(
                 withGit(hostPath) { git ->
                     val repo = git.repository
                     if (repo.findRef(Constants.HEAD)?.isSymbolic != true) {
-                        return@withGit GitOpResult.Failed("当前处于分离头指针状态，请先切回分支再推送")
+                        return@withGit GitOpResult.Failed("Đang ở trạng thái detached HEAD, hãy chuyển về nhánh trước rồi push")
                     }
-                    val branch = repo.branch ?: return@withGit GitOpResult.Failed("无法确定当前分支")
+                    val branch = repo.branch ?: return@withGit GitOpResult.Failed("Không thể xác định nhánh hiện tại")
                     val results = git.push()
                         .setRemote("origin")
                         .setRefSpecs(RefSpec("refs/heads/$branch:refs/heads/$branch"))
@@ -695,9 +695,9 @@ class GitManager(
                     val ok = updates.count { it.status == RemoteRefUpdate.Status.OK || it.status == RemoteRefUpdate.Status.UP_TO_DATE }
                     val rejected = updates.filter { it.status != RemoteRefUpdate.Status.OK && it.status != RemoteRefUpdate.Status.UP_TO_DATE }
                     when {
-                        updates.isEmpty() -> GitOpResult.Ok("推送完成（无变更）")
-                        rejected.isEmpty() -> GitOpResult.Ok("已推送 $branch → origin（$ok 个引用）")
-                        else -> GitOpResult.Failed("推送被拒绝：${rejected.first().status}" + rejected.firstOrNull()?.message.orEmpty().let { if (it.isBlank()) "" else " · $it" })
+                        updates.isEmpty() -> GitOpResult.Ok("Push hoàn tất (không có thay đổi)")
+                        rejected.isEmpty() -> GitOpResult.Ok("Đã push $branch → origin ($ok tham chiếu)")
+                        else -> GitOpResult.Failed("Push bị từ chối: ${rejected.first().status}" + rejected.firstOrNull()?.message.orEmpty().let { if (it.isBlank()) "" else " · $it" })
                     }
                 }
             }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
@@ -710,7 +710,7 @@ class GitManager(
                 withGit(hostPath) { git ->
                     val repo = git.repository
                     ensureUserIdent(repo)
-                    val branch = repo.branch ?: return@withGit GitOpResult.Failed("无法确定当前分支")
+                    val branch = repo.branch ?: return@withGit GitOpResult.Failed("Không thể xác định nhánh hiện tại")
                     val tracking = BranchConfig(repo.config, branch).trackingBranch
                     val cmd = git.pull().setRemote("origin")
                     if (tracking == null) cmd.setRemoteBranchName(branch)
@@ -721,14 +721,14 @@ class GitManager(
                     val merge = result.mergeResult
                     when (merge?.mergeStatus) {
                         org.eclipse.jgit.api.MergeResult.MergeStatus.ALREADY_UP_TO_DATE ->
-                            GitOpResult.Ok("已是最新，无需拉取")
+                            GitOpResult.Ok("Đã là mới nhất, không cần kéo về")
                         org.eclipse.jgit.api.MergeResult.MergeStatus.FAST_FORWARD ->
-                            GitOpResult.Ok("已拉取并快进到 ${merge.newHead?.name()?.take(7)}")
+                            GitOpResult.Ok("Đã pull và fast-forward tới ${merge.newHead?.name()?.take(7)}")
                         org.eclipse.jgit.api.MergeResult.MergeStatus.MERGED ->
-                            GitOpResult.Ok("已拉取并合并（产生合并提交）")
+                            GitOpResult.Ok("Đã kéo và gộp (tạo commit gộp)")
                         org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING ->
-                            GitOpResult.Failed("拉取完成但存在冲突（${merge.conflicts.size} 个文件），请手动解决")
-                        else -> GitOpResult.Ok("拉取完成")
+                            GitOpResult.Failed("Kéo xong nhưng có xung đột (${merge.conflicts.size} tệp), vui lòng giải quyết thủ công")
+                        else -> GitOpResult.Ok("Pull hoàn tất")
                     }
                 }
             }.getOrElse { GitOpResult.Failed(friendlyError(it)) }
@@ -769,19 +769,19 @@ class GitManager(
         fun friendlyError(e: Throwable): String = when (e) {
             is GitNotARepoException -> "NOT_A_GIT_REPO"
             is RepositoryNotFoundException -> "NOT_A_GIT_REPO"
-            is CannotDeleteCurrentBranchException -> "不能删除当前所在的分支，请先切换到其他分支"
-            is CheckoutConflictException -> "工作区有未提交改动与目标分支冲突，请先提交或暂存"
-            is RefAlreadyExistsException -> "分支已存在"
-            is InvalidRemoteException -> "未配置 origin 远程仓库，无法推送/拉取"
+            is CannotDeleteCurrentBranchException -> "Không thể xóa nhánh đang ở hiện tại, hãy chuyển sang nhánh khác trước"
+            is CheckoutConflictException -> "Workspace có thay đổi chưa commit xung đột với nhánh mục tiêu, hãy commit hoặc stash trước"
+            is RefAlreadyExistsException -> "Nhánh đã tồn tại"
+            is InvalidRemoteException -> "Chưa cấu hình kho từ xa origin, không thể push/pull"
             is TransportException -> {
                 val message = e.message.orEmpty()
                 when {
                     message.contains("not authorized", true) || message.contains("Authentication", true) ->
-                        "认证失败：请在凭据设置中配置该仓库 host 的 用户名 + Personal Access Token"
+                        "Xác thực thất bại: hãy cấu hình tên người dùng + Personal Access Token của host repo đó trong cài đặt thông tin đăng nhập"
                     message.contains("Support for password authentication was removed", true) ->
-                        "GitHub 已停用密码认证：请使用 Personal Access Token 作为密码"
+                        "GitHub đã ngừng xác thực mật khẩu: hãy dùng Personal Access Token làm mật khẩu"
                     message.contains("not found", true) ->
-                        "远程仓库不存在或无访问权限（私有仓库需配置 Token）"
+                        "Kho từ xa không tồn tại hoặc không có quyền truy cập (kho riêng cần cấu hình Token)"
                     else -> message.ifBlank { e.toString() }
                 }
             }

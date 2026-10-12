@@ -37,17 +37,17 @@ class ConditionNodeExecutor() : NodeExecutor {
         val expression = node.config["expression"]?.takeIf { it.isNotBlank() }
             ?: node.config["condition"]?.takeIf { it.isNotBlank() }
             ?: "exitCode == 0"
-        onProgress(NodeRunStatus.RUNNING, "求值条件：$expression")
+        onProgress(NodeRunStatus.RUNNING, "Tính giá trị điều kiện: $expression")
         val result = WorkflowConditionEvaluator.evaluate(expression, context, upstream)
         val matched = result.matched
         return NodeExecutionOutput(
             status = NodeRunStatus.SUCCESS,
             exitCode = if (matched) 0 else 1,
             textOutput = buildString {
-                append(if (matched) "✔ 条件成立" else "✘ 条件不成立")
+                append(if (matched) "✔ Điều kiện thỏa" else "✘ Điều kiện không thỏa")
                 append('\n').append(result.detail)
                 upstream?.textOutput?.takeIf { it.isNotBlank() }?.let {
-                    append("\n\n—— 上游输出 ——\n").append(it.take(8_000))
+                    append("\n\n—— Đầu ra thượng nguồn ——\n").append(it.take(8_000))
                 }
             },
             variables = mapOf(
@@ -69,11 +69,11 @@ class DelayNodeExecutor() : NodeExecutor {
         val seconds = interpolate(node.config["seconds"] ?: node.config["delaySeconds"] ?: "1", context)
             .trim().toDoubleOrNull()?.coerceIn(0.0, 600.0) ?: 1.0
         val millis = (seconds * 1000).toLong().coerceAtLeast(0L)
-        onProgress(NodeRunStatus.RUNNING, "等待 ${seconds}s…")
+        onProgress(NodeRunStatus.RUNNING, "Chờ ${seconds}s…")
         delay(millis)
         return NodeExecutionOutput(
             status = NodeRunStatus.SUCCESS,
-            textOutput = "已等待 ${seconds}s",
+            textOutput = "Đã chờ ${seconds}s",
             variables = mapOf("DELAY_SECONDS" to seconds.toString()),
             durationMs = millis,
         )
@@ -94,22 +94,22 @@ class SetVariableNodeExecutor() : NodeExecutor {
             .filter { it.isNotEmpty() && !it.startsWith("#") }
             .forEach { line ->
                 val idx = line.indexOf('=')
-                require(idx > 0) { "变量赋值格式应为 KEY=value：$line" }
+                require(idx > 0) { "Định dạng gán biến phải là KEY=value: $line" }
                 val key = line.substring(0, idx).trim()
                 val value = interpolate(line.substring(idx + 1).trim(), context)
-                require(KEY.matches(key)) { "变量名不合法：$key" }
+                require(KEY.matches(key)) { "Tên biến không hợp lệ: $key" }
                 assignments[key] = value
             }
         // Also accept single key/value fields for simple editor forms.
         val singleKey = node.config["key"]?.trim().orEmpty()
         if (singleKey.isNotEmpty()) {
-            require(KEY.matches(singleKey)) { "变量名不合法：$singleKey" }
+            require(KEY.matches(singleKey)) { "Tên biến không hợp lệ: $singleKey" }
             assignments[singleKey] = interpolate(node.config["value"].orEmpty(), context)
         }
         if (assignments.isEmpty()) {
-            return NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 2, error = "未配置任何变量赋值")
+            return NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 2, error = "Chưa cấu hình phép gán biến nào")
         }
-        onProgress(NodeRunStatus.RUNNING, "写入 ${assignments.size} 个变量")
+        onProgress(NodeRunStatus.RUNNING, "Ghi ${assignments.size} biến")
         return NodeExecutionOutput(
             status = NodeRunStatus.SUCCESS,
             textOutput = assignments.entries.joinToString("\n") { "${it.key}=${it.value}" },
@@ -138,7 +138,7 @@ class HostActionNodeExecutor(
     ): NodeExecutionOutput = withContext(Dispatchers.IO) {
         val action = node.config["action"]?.trim().orEmpty().ifBlank { "status" }
         val def = HostWorkflowActions.find(action)
-        onProgress(NodeRunStatus.RUNNING, "宿主动作：$action")
+        onProgress(NodeRunStatus.RUNNING, "Động tác máy chủ: $action")
         if (def?.privilege == HostWorkflowPrivilege.PRIVILEGED) {
             requirePrivilege()?.let { err ->
                 return@withContext NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 13, error = err)
@@ -166,17 +166,17 @@ class HostActionNodeExecutor(
         onProgress: suspend (NodeRunStatus, String) -> Unit,
     ): NodeExecutionOutput {
         fun cfg(key: String): String = interpolate(node.config[key].orEmpty(), context).trim()
-        fun requireCfg(key: String): String = cfg(key).also { require(it.isNotBlank()) { "缺少参数：$key" } }
+        fun requireCfg(key: String): String = cfg(key).also { require(it.isNotBlank()) { "Thiếu tham số: $key" } }
 
         return when (action) {
             "status" -> {
                 val info = privilegeManager.getPrivilegeInfo()
                 ok(
                     buildString {
-                        append("当前生效模式：").append(info.mode.title)
-                        append("\n权限状态：").append(if (info.modeActive) "已授权" else "未授权")
-                        append("\nShizuku：").append(if (info.shizukuAvailable) "可用" else "不可用")
-                        append("\nRoot：").append(if (info.rootAvailable) "可用" else "不可用或未选择")
+                        append("Chế độ đang có hiệu lực:").append(info.mode.title)
+                        append("\nTrạng thái quyền:").append(if (info.modeActive) "Đã cấp quyền" else "Chưa ủy quyền")
+                        append("\nShizuku：").append(if (info.shizukuAvailable) "Khả dụng" else "Không khả dụng")
+                        append("\nRoot：").append(if (info.rootAvailable) "Khả dụng" else "Không khả dụng hoặc chưa chọn")
                     },
                     mapOf(
                         "HOST_MODE" to info.mode.name,
@@ -189,7 +189,7 @@ class HostActionNodeExecutor(
                 val artifact = node.config["artifactFrom"]?.let { context.nodeOutputs[it]?.artifacts?.lastOrNull() }
                     ?: context.globalVariables["APK_PATH"]?.takeIf { it.isNotBlank() }
                     ?: cfg("path").takeIf { it.isNotBlank() }
-                    ?: error("未找到 APK：请配置 artifactFrom、path 或变量 APK_PATH")
+                    ?: error("Không tìm thấy APK: hãy cấu hình artifactFrom, path hoặc biến APK_PATH")
                 shellViaBridge("tianxuan-host install-apk ${posixQuote(artifact)}", context, artifacts = listOf(artifact))
             }
             "device_status" -> privileged(
@@ -281,7 +281,7 @@ class HostActionNodeExecutor(
             }
             "volume_set" -> {
                 val value = requireCfg("value").toIntOrNull()?.coerceIn(0, 100)
-                    ?: error("volume_set.value 必须是整数")
+                    ?: error("volume_set.value phải là số nguyên")
                 privileged("/system/bin/media volume --show --stream 3 --set $value")
             }
             "screen_observe" -> {
@@ -294,7 +294,7 @@ class HostActionNodeExecutor(
                             mapOf("FOREGROUND_PKG" to pkg, "FOREGROUND_ACTIVITY" to act),
                         )
                     },
-                    onFailure = { error(it.message ?: "感知屏幕失败") },
+                    onFailure = { error(it.message ?: "Cảm nhận màn hình thất bại") },
                 )
             }
             "screen_click" -> gui.click(requireInt(cfg("x"), "x"), requireInt(cfg("y"), "y")).toOutput()
@@ -317,7 +317,7 @@ class HostActionNodeExecutor(
                     "down" -> top.wkbin.tianxuan.runtime.gui.ScrollDirection.DOWN
                     "left" -> top.wkbin.tianxuan.runtime.gui.ScrollDirection.LEFT
                     "right" -> top.wkbin.tianxuan.runtime.gui.ScrollDirection.RIGHT
-                    else -> error("direction 仅支持 up/down/left/right")
+                    else -> error("direction chỉ hỗ trợ up/down/left/right")
                 }
                 val ratio = cfg("distanceRatio").toFloatOrNull()?.coerceIn(0.15f, 0.8f) ?: 0.45f
                 val dur = cfg("durationMs").toLongOrNull()?.coerceIn(50L, 5_000L) ?: 350L
@@ -345,8 +345,8 @@ class HostActionNodeExecutor(
             "vibrate" -> gui.vibrate(cfg("durationMs").toLongOrNull() ?: 200L).toOutput()
             "clipboard_set" -> gui.clipboardSet(requireCfg("text")).toOutput()
             "clipboard_get" -> gui.clipboardGet().fold(
-                onSuccess = { text -> ok(text.ifBlank { "(空)" }, mapOf("CLIPBOARD" to text)) },
-                onFailure = { error(it.message ?: "读取剪贴板失败") },
+                onSuccess = { text -> ok(text.ifBlank { "(Trống)" }, mapOf("CLIPBOARD" to text)) },
+                onFailure = { error(it.message ?: "Đọc clipboard thất bại") },
             )
             "notification" -> postNotification(requireCfg("title"), requireCfg("text"))
             "shell" -> privileged(requireCfg("command"))
@@ -357,7 +357,7 @@ class HostActionNodeExecutor(
             }
             else -> {
                 // Escape hatch: treat unknown action as host shell command template.
-                val command = cfg("command").ifBlank { error("未知宿主动作：$action；请在编辑器中选择支持的动作，或提供 command") }
+                val command = cfg("command").ifBlank { error("Thao tác host không xác định: $action; hãy chọn thao tác được hỗ trợ trong editor, hoặc cung cấp command") }
                 requirePrivilege()?.let { err -> error(err) }
                 privileged(command)
             }
@@ -366,7 +366,7 @@ class HostActionNodeExecutor(
 
     private suspend fun sendBroadcast(node: WorkflowNode, context: WorkflowRuntimeContext): NodeExecutionOutput {
         fun cfg(key: String) = interpolate(node.config[key].orEmpty(), context).trim()
-        val action = cfg("intentAction").ifBlank { error("缺少 intentAction") }
+        val action = cfg("intentAction").ifBlank { error("Thiếu intentAction") }
         val pkg = cfg("package").ifBlank { null }
         val component = cfg("component").ifBlank { null }
         val extras = parseExtras(cfg("extras"))
@@ -414,7 +414,7 @@ class HostActionNodeExecutor(
         val channelId = "tianxuan_workflow"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.createNotificationChannel(
-                NotificationChannel(channelId, "天玄工作流", NotificationManager.IMPORTANCE_DEFAULT),
+                NotificationChannel(channelId, "Luồng công việc Thiên Huyền", NotificationManager.IMPORTANCE_DEFAULT),
             )
         }
         val notification = Notification.Builder(appContext, channelId)
@@ -426,7 +426,7 @@ class HostActionNodeExecutor(
             .build()
         val id = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
         manager.notify(id, notification)
-        return ok("已发送通知：$title", mapOf("NOTIFICATION_ID" to id.toString()))
+        return ok("Đã gửi thông báo: $title", mapOf("NOTIFICATION_ID" to id.toString()))
     }
 
     private suspend fun privileged(command: String): NodeExecutionOutput {
@@ -440,7 +440,7 @@ class HostActionNodeExecutor(
             textOutput = capHostOutput(
                 listOf(result.stdout, result.stderr).filter { it.isNotBlank() }.joinToString("\n").trim(),
             ),
-            error = result.stderr.takeIf { !result.success }?.ifBlank { "宿主命令失败 exit=${result.exitCode}" },
+            error = result.stderr.takeIf { !result.success }?.ifBlank { "Lệnh máy chủ thất bại exit=${result.exitCode}" },
         )
     }
 
@@ -465,7 +465,7 @@ class HostActionNodeExecutor(
     private suspend fun requirePrivilege(): String? {
         val info = privilegeManager.getPrivilegeInfo()
         return if (info.mode == ExecutionMode.PROOT || !info.modeActive) {
-            "此动作需要 Shizuku 或 Root。请到设置中授权并切换执行模式后再运行。"
+            "Thao tác này cần Shizuku hoặc Root. Vui lòng cấp quyền trong cài đặt và chuyển chế độ thực thi rồi chạy lại."
         } else null
     }
 
@@ -482,12 +482,12 @@ class HostActionNodeExecutor(
 
     private fun requireNamespace(raw: String): String {
         val ns = raw.lowercase()
-        require(ns in setOf("system", "secure", "global")) { "namespace 仅支持 system/secure/global" }
+        require(ns in setOf("system", "secure", "global")) { "namespace chỉ hỗ trợ system/secure/global" }
         return ns
     }
 
     private fun requireInt(raw: String, name: String): Int =
-        raw.toIntOrNull() ?: error("$name 必须是整数")
+        raw.toIntOrNull() ?: error("$name phải là số nguyên")
 
     private fun parseBool(raw: String): Boolean =
         raw.equals("true", true) || raw == "1" || raw.equals("on", true) || raw.equals("yes", true)

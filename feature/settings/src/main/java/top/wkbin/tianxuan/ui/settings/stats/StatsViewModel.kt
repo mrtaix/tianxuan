@@ -66,7 +66,7 @@ class StatsViewModel(
                 android.util.Log.e("StatsViewModel", "Failed to build stats snapshot: ${e.message}", e)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "统计数据加载失败，请点击重试",
+                    error = "Tải dữ liệu thống kê thất bại, hãy nhấp thử lại",
                 )
             }
         }

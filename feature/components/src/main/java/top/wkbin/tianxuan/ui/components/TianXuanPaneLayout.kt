@@ -61,7 +61,7 @@ object TianXuanPaneMetrics {
 const val PANE_DIVIDER_TEST_TAG: String = "tianxuan-pane-divider"
 
 /** 分隔条拖拽中的无障碍描述，供渲染测试与 TalkBack 定位。 */
-const val PANE_DIVIDER_DESCRIPTION: String = "调整会话栏宽度"
+const val PANE_DIVIDER_DESCRIPTION: String = "Điều chỉnh độ rộng thanh phiên"
 
 /** 当前窗口宽度是否够放下「常驻会话栏 + 对话区」两栏。 */
 fun canPinSessionsPane(availableWidthDp: Int): Boolean =

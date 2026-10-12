@@ -54,14 +54,14 @@ class TurnRunner(
         persistAssistant(normalized)
 
         // 空响应防护：上游 200 但正文/推理/工具调用全空时，绝不能落到下面的
-        // "无工具调用 → Complete" 分支——那会把"什么都没说"记成任务完成（Outcome=completed），
+        // "Không gọi công cụ → Complete" 分支——那会把"Chẳng nói gì"记成任务完成（Outcome=completed），
         // 前台既不报错也没有内容，即用户反馈的「发消息没有回复」。此处显式失败，让错误可见可重试。
         if (normalized.isBlankResponse) {
             return TurnOutcome.Failed(ProviderClient.EMPTY_RESPONSE_MESSAGE)
         }
         if (normalized.toolCalls.isEmpty() && normalized.hasUnresolvedMarkers) {
             return TurnOutcome.Failed(
-                "模型返回了无法解析的文本工具调用；已停止，避免把未执行的工具请求误判为完成",
+                "Model trả về lời gọi công cụ dạng văn bản không phân giải được; đã dừng, tránh nhận nhầm yêu cầu công cụ chưa thực thi là đã hoàn thành",
             )
         }
         if (normalized.toolCalls.isEmpty()) {

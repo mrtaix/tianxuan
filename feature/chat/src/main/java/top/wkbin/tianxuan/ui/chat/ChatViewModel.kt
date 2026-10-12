@@ -1230,7 +1230,7 @@ class ChatViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _notice.value = "模型保存失败：${e.message ?: e::class.simpleName}"
+                _notice.value = "Lưu model thất bại: ${e.message ?: e::class.simpleName}"
             }
         }
     }
@@ -1282,7 +1282,7 @@ class ChatViewModel(
                 if (current?.sessionId == sessionId && current.branch.laneName == laneName) {
                     _subagentResult.value = current.copy(
                         loading = false,
-                        error = throwable.message ?: "无法读取子智能体成果",
+                        error = throwable.message ?: "Không đọc được thành quả Agent con",
                     )
                 }
             }
@@ -1339,7 +1339,7 @@ class ChatViewModel(
                     }
                 }
                 .onFailure {
-                    Log.w(TAG, "模型发现失败 profile=$profileId", it)
+                    Log.w(TAG, "Khám phá model thất bại profile=$profileId", it)
                     _providerModelDiscoveryError.value = context.getString(R.string.chat_model_discovery_failed)
                 }
             _discoveringProviderModels.value = false

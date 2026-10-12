@@ -61,7 +61,7 @@ class CdpSession(
                 if (droppedEvents > 0) {
                     val d = droppedEvents
                     droppedEvents = 0
-                    android.util.Log.w(TAG, "CDP 事件溢出丢弃 $d 条")
+                    android.util.Log.w(TAG, "Sự kiện CDP tràn, bỏ $d mục")
                 }
             }
         }

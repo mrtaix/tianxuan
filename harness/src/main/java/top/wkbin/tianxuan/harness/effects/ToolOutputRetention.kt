@@ -53,10 +53,10 @@ internal fun foldOverlongLines(text: String, maxLineChars: Int = 2000): String {
         } else {
             buildString {
                 append(line, 0, head)
-                append("\n[单行内容过长已折叠：本行共 ")
+                append("\n[Một dòng nội dung quá dài đã bị gập: dòng này tổng cộng ")
                 append(line.length)
-                append(" 字符，疑似压缩/混淆/最小化文件，整行可读性极低。")
-                append("如需定位内容请用 grep -o 提取匹配片段、sed -n 按行号或字节段查看，不要原样输出整行。]\n")
+                append(" ký tự, nghi là tệp đã nén/làm rối/tối thiểu hóa, khả năng đọc toàn dòng cực thấp.")
+                append("Nếu cần định vị nội dung thì dùng grep -o để trích đoạn khớp, sed -n xem theo số dòng hoặc đoạn byte, đừng xuất nguyên văn cả dòng.]\n")
                 append(line.takeLast(tail))
             }
         }

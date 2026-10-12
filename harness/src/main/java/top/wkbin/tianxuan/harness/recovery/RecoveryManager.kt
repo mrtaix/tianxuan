@@ -42,8 +42,8 @@ class RecoveryManager(
             if (outcome !is RecoveryOutcome.Clean) {
                 val detail = when (outcome) {
                     is RecoveryOutcome.Suspended -> outcome.reason
-                    is RecoveryOutcome.ToolInterrupted -> "不可重放工具已写入中断结果"
-                    RecoveryOutcome.WaitingApproval -> "存在等待中的审批"
+                    is RecoveryOutcome.ToolInterrupted -> "Công cụ không thể phát lại đã ghi kết quả gián đoạn"
+                    RecoveryOutcome.WaitingApproval -> "Có phê duyệt đang chờ"
                     RecoveryOutcome.Clean -> null
                 }
                 val operationId = when (outcome) {
@@ -71,16 +71,16 @@ class RecoveryManager(
             // 审批等待期间进程死亡：审批可能已在停机期间过期/丢失。
             // pendingNow 会先清扫过期请求；无可恢复审批时终止该操作，避免 lane 永久占用。
             if (approvalRepository != null && approvalRepository.pendingNow(sessionId).isEmpty()) {
-                coordinator.finish(sessionId, "aborted", details = "等待中的审批已过期或失效", laneName = operation.laneName)
-                return RecoveryOutcome.Suspended(operation.id, "等待中的审批已过期或失效")
+                coordinator.finish(sessionId, "aborted", details = "Phê duyệt đang chờ đã hết hạn hoặc mất hiệu lực", laneName = operation.laneName)
+                return RecoveryOutcome.Suspended(operation.id, "Phê duyệt đang chờ đã hết hạn hoặc mất hiệu lực")
             }
             return RecoveryOutcome.WaitingApproval
         }
         val snapshot = runCatching {
             json.decodeFromString(OperationSnapshot.serializer(), operation.stateJson)
         }.getOrElse {
-            coordinator.suspendOperation(operation.id, "无法解码持久化运行状态")
-            return RecoveryOutcome.Suspended(operation.id, "运行状态损坏")
+            coordinator.suspendOperation(operation.id, "Không thể giải mã trạng thái chạy đã lưu bền vững")
+            return RecoveryOutcome.Suspended(operation.id, "Trạng thái chạy bị hỏng")
         }
 
         if (snapshot.phase == OperationPhase.TOOL_INTENT.id && operation.replayPolicy == ReplayPolicy.NEVER.id) {
@@ -92,18 +92,18 @@ class RecoveryManager(
                     createdAt = System.currentTimeMillis(),
                     toolCallId = toolCallId,
                     success = false,
-                    output = "工具执行期间应用进程中断。该工具声明为不可安全重放，因此未再次执行。",
+                    output = "Tiến trình ứng dụng bị gián đoạn trong khi công cụ thực thi. Công cụ này được khai báo là không thể phát lại an toàn, vì vậy không thực thi lại.",
                 ),
                 round = snapshot.round,
             )
-            coordinator.suspendOperation(operation.id, "不可重放工具已写入中断结果，等待恢复运行")
+            coordinator.suspendOperation(operation.id, "Công cụ không thể phát lại đã ghi kết quả gián đoạn, chờ khôi phục chạy")
             return RecoveryOutcome.ToolInterrupted(operation.id, toolCallId)
         }
 
         val reason = when {
-            snapshot.phase == OperationPhase.TOOL_INTENT.id -> "可安全重放的工具在执行期间中断"
-            snapshot.phase == OperationPhase.PROVIDER_INTENT.id -> "模型请求结果未落盘，是否产生费用无法确定"
-            else -> "运行在检查点之外中断"
+            snapshot.phase == OperationPhase.TOOL_INTENT.id -> "Công cụ có thể phát lại an toàn bị gián đoạn trong lúc thực thi"
+            snapshot.phase == OperationPhase.PROVIDER_INTENT.id -> "Kết quả yêu cầu model chưa lưu đĩa, không xác định được có phát sinh phí hay không"
+            else -> "Vận hành bị gián đoạn ngoài checkpoint"
         }
         coordinator.suspendOperation(operation.id, reason)
         return RecoveryOutcome.Suspended(operation.id, reason)

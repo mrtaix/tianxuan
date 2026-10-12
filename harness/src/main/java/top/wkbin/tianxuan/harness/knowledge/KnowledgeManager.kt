@@ -46,7 +46,7 @@ class KnowledgeManager(
 
         val chunks = TextChunker.chunk(content)
         if (chunks.isEmpty()) {
-            repository.updateDocumentStatus(docId, "error", 0, "文档内容为空", System.currentTimeMillis())
+            repository.updateDocumentStatus(docId, "error", 0, "Nội dung tài liệu rỗng", System.currentTimeMillis())
             return docId
         }
 
@@ -70,14 +70,14 @@ class KnowledgeManager(
             }
             val embeddedCount = withEmbedding.count { it.embedding != null }
             if (embeddedCount == 0) {
-                repository.updateDocumentStatus(docId, "error", 0, "嵌入全部失败，请检查 API 配置", System.currentTimeMillis())
+                repository.updateDocumentStatus(docId, "error", 0, "Nhúng toàn bộ thất bại, hãy kiểm tra cấu hình API", System.currentTimeMillis())
             } else {
                 repository.upsertChunks(withEmbedding)
                 repository.updateDocumentStatus(
                     docId,
                     if (embeddedCount < chunks.size) "partial" else "embedded",
                     embeddedCount,
-                    if (embeddedCount < chunks.size) "${chunks.size - embeddedCount} 块嵌入失败" else null,
+                    if (embeddedCount < chunks.size) "${chunks.size - embeddedCount} khối nhúng thất bại" else null,
                     System.currentTimeMillis(),
                 )
             }
@@ -109,7 +109,7 @@ class KnowledgeManager(
                 docId,
                 if (embeddedCount < chunks.size) "partial" else "embedded",
                 embeddedCount,
-                if (embeddedCount < chunks.size) "${chunks.size - embeddedCount} 块嵌入失败" else null,
+                if (embeddedCount < chunks.size) "${chunks.size - embeddedCount} khối nhúng thất bại" else null,
                 System.currentTimeMillis(),
             )
         } catch (e: Exception) {
@@ -141,7 +141,7 @@ class KnowledgeManager(
                         val score = cosineSimilarity(queryVector, vector.toEmbedding())
                         KnowledgeHit(
                             docId = chunk.docId,
-                            docName = docNameById[chunk.docId] ?: "未知",
+                            docName = docNameById[chunk.docId] ?: "Không xác định",
                             text = chunk.text,
                             score = score,
                         )
@@ -159,7 +159,7 @@ class KnowledgeManager(
                     val ratio = if (chunk.text.isNotEmpty()) hits.toDouble() / queryTokens.size.coerceAtLeast(1) else 0.0
                     KnowledgeHit(
                         docId = chunk.docId,
-                        docName = docNameById[chunk.docId] ?: "未知",
+                        docName = docNameById[chunk.docId] ?: "Không xác định",
                         text = chunk.text,
                         score = (ratio * 0.5).toFloat() + (hits.coerceAtLeast(0) * 0.1f),
                     )
@@ -175,9 +175,9 @@ class KnowledgeManager(
         val hits = search(query, topK)
         if (hits.isEmpty()) return null
         return buildString {
-            appendLine("以下是知识库中与当前问题相关的内容：")
+            appendLine("Dưới đây là nội dung trong kho tri thức liên quan đến vấn đề hiện tại：")
             for ((index, hit) in hits.withIndex()) {
-                appendLine("--- 片段 ${index + 1}（来源: ${hit.docName}, 相似度: ${"%.2f".format(hit.score)}）---")
+                appendLine("--- Đoạn ${index + 1} (nguồn: ${hit.docName}, độ tương tự: ${"%.2f".format(hit.score)}）---")
                 appendLine(hit.text)
                 appendLine()
             }
@@ -187,12 +187,12 @@ class KnowledgeManager(
     /**
      * 嵌入配置：优先用当前激活模型档案的 baseUrl + key（用户在模型编辑器里填的那套），
      * 回退到全局 ProviderPreferences。模型档案缺失或字段为空时回退默认值。
-     * 避免"用户配置了模型档案但嵌入走全局默认 OpenAI"导致 Socket closed。
+     * 避免"Người dùng đã cấu hình profile model nhưng nhúng đi theo OpenAI mặc định toàn cục"导致 Socket closed。
      */
     /**
      * 嵌入配置：优先用当前激活模型档案的 baseUrl + key（用户在模型编辑器里填的那套），
      * 嵌入模型名与端点后缀取知识库页自定义设置（覆盖 OpenAI 默认 text-embedding-3-small）。
-     * 避免"用户配置了模型档案但嵌入走全局默认 OpenAI"导致 Socket closed 或 404。
+     * 避免"Người dùng đã cấu hình profile model nhưng nhúng đi theo OpenAI mặc định toàn cục"导致 Socket closed 或 404。
      */
     private suspend fun providerConfig(): EmbeddingConfig {
         val active = aiModelRepository.activeModel()

@@ -30,7 +30,7 @@ class ShowerBinderReceiver : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val sentFromUid = sentFromUid
             if (sentFromUid !in setOf(ROOT_UID, SHELL_UID)) {
-                ShowerLog.w(TAG, "拒绝来源不明的 Binder 广播：sentFromUid=$sentFromUid")
+                ShowerLog.w(TAG, "Từ chối broadcast Binder không rõ nguồn gốc: sentFromUid=$sentFromUid")
                 return
             }
         }

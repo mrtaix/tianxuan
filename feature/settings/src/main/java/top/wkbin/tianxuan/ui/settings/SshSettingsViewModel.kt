@@ -29,7 +29,7 @@ data class SshSettingsUiState(
     val passwordConfigured: Boolean = false,
 ) {
     val connectionHost: String
-        get() = SshServiceManager.localIpv4Address() ?: "<设备局域网IP>"
+        get() = SshServiceManager.localIpv4Address() ?: "<IP mạng LAN của thiết bị>"
     val connectionCommand: String
         get() = "ssh -p $port root@$connectionHost"
 }
@@ -89,16 +89,16 @@ class SshSettingsViewModel(
         manager.setEnabled(enabled)
     }
 
-    fun savePort(value: String) = runOperation(successMessage = "SSH 端口已保存") {
-        val port = value.trim().toIntOrNull() ?: error("请输入有效的 SSH 端口")
+    fun savePort(value: String) = runOperation(successMessage = "Đã lưu cổng SSH") {
+        val port = value.trim().toIntOrNull() ?: error("Vui lòng nhập cổng SSH hợp lệ")
         manager.setPort(port)
     }
 
-    fun saveAuthorizedKeys(value: String) = runOperation(successMessage = "SSH 授权公钥已保存") {
+    fun saveAuthorizedKeys(value: String) = runOperation(successMessage = "Khóa công khai cấp quyền SSH đã lưu") {
         manager.setAuthorizedKeys(value)
     }
 
-    fun savePassword(value: String) = runOperation(successMessage = "SSH 登录密码已保存") {
+    fun savePassword(value: String) = runOperation(successMessage = "Mật khẩu đăng nhập SSH đã được lưu") {
         manager.setPassword(value)
     }
 
@@ -106,7 +106,7 @@ class SshSettingsViewModel(
         manager.setPasswordAuthEnabled(enabled)
     }
 
-    fun clearPassword() = runOperation(successMessage = "SSH 登录密码已清除") {
+    fun clearPassword() = runOperation(successMessage = "Mật khẩu đăng nhập SSH đã xóa") {
         manager.clearPassword()
     }
 
@@ -171,7 +171,7 @@ class SshSettingsViewModel(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
-                _message.value = throwable.message ?: "SSH 操作失败"
+                _message.value = throwable.message ?: "Thao tác SSH thất bại"
                 _messageIsError.value = true
             } finally {
                 if (showProgress) _operating.value = false

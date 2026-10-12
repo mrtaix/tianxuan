@@ -65,7 +65,7 @@ class ClawHubClient(
         // 尝试从远端获取
         val item = fetchMarketCatalog().let { res ->
             if (res is AppResult.Success) res.data.firstOrNull { it.id == skillId } else null
-        } ?: return AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(top.wkbin.tianxuan.core.common.result.ErrorCode.NETWORK, "在 ClawHub 市场中未找到技能: $skillId"))
+        } ?: return AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(top.wkbin.tianxuan.core.common.result.ErrorCode.NETWORK, "Không tìm thấy kỹ năng trong chợ ClawHub: $skillId"))
 
         return AppResult.Success(
             ClawHubMarketDetail(
@@ -93,12 +93,12 @@ class ClawHubClient(
             withContext(Dispatchers.IO) {
                 httpClient.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
-                        error("从 ClawHub 下载技能包失败，HTTP 状态码: ${response.code}")
+                        error("Tải gói skill từ ClawHub thất bại, mã trạng thái HTTP: ${response.code}")
                     }
                     val body = response.body
                     val contentLength = body.contentLength()
                     if (contentLength > SkillPackageParser.MAX_ZIP_TOTAL_BYTES) {
-                        error("远程技能包体积 (${contentLength / 1024 / 1024}MB) 超过系统上限 (${SkillPackageParser.MAX_ZIP_TOTAL_BYTES / 1024 / 1024}MB)")
+                        error("Dung lượng gói skill từ xa (${contentLength / 1024 / 1024}MB) vượt giới hạn hệ thống (${SkillPackageParser.MAX_ZIP_TOTAL_BYTES / 1024 / 1024}MB)")
                     }
                     val bos = ByteArrayOutputStream()
                     BoundedStreamCopy.copy(
@@ -111,7 +111,7 @@ class ClawHubClient(
                 }
             }
         }.getOrElse { err ->
-            AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(top.wkbin.tianxuan.core.common.result.ErrorCode.DOWNLOAD, err.message ?: "下载技能失败", err))
+            AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(top.wkbin.tianxuan.core.common.result.ErrorCode.DOWNLOAD, err.message ?: "Tải kỹ năng thất bại", err))
         }
     }
 
@@ -131,13 +131,13 @@ class ClawHubClient(
         val BUILTIN_PRESET_ITEMS: List<ClawHubMarketItem> = listOf(
             ClawHubMarketItem(
                 id = "git-workflow",
-                name = "Git 工作流与审查大师",
+                name = "Bậc thầy workflow Git và rà soát",
                 version = "1.2.0",
-                description = "遵循语义化 Conventional Commits 规范，智能分析分支状态、代码差异并撰写严谨的 Commit / PR 说明。",
+                description = "Tuân theo quy chuẩn Conventional Commits ngữ nghĩa, phân tích thông minh trạng thái nhánh, khác biệt mã nguồn và viết mô tả Commit / PR nghiêm cẩn.",
                 author = "TianXuan Core Team",
                 icon = "GitBranch",
-                tags = listOf("Git", "审查", "工作流", "DevOps"),
-                category = "开发工程",
+                tags = listOf("Git", "Rà soát", "Workflow", "DevOps"),
+                category = "Dự án phát triển",
                 downloadUrl = "builtin://git-workflow",
                 stars = 428,
                 requiredTools = listOf("git"),
@@ -145,13 +145,13 @@ class ClawHubClient(
             ),
             ClawHubMarketItem(
                 id = "code-auditor",
-                name = "代码安全与架构审查",
+                name = "Bảo mật mã và review kiến trúc",
                 version = "1.1.0",
-                description = "针对 Kotlin、Java、Rust、C++ 进行小步精细化审查，识别空指针隐患、内存泄漏与高危系统调用并提供重构建议。",
+                description = "Thực hiện rà soát tinh chỉnh từng bước nhỏ cho Kotlin, Java, Rust, C++, nhận diện nguy cơ con trỏ null, rò rỉ bộ nhớ và lời gọi hệ thống nguy hiểm cao, đồng thời đưa ra gợi ý tái cấu trúc.",
                 author = "TianXuan Core Team",
                 icon = "ShieldCheck",
-                tags = listOf("安全", "代码审查", "重构", "Architecture"),
-                category = "安全审计",
+                tags = listOf("An toàn", "Rà soát mã", "Tái cấu trúc", "Architecture"),
+                category = "Kiểm toán an toàn",
                 downloadUrl = "builtin://code-auditor",
                 stars = 389,
                 requiredTools = emptyList(),
@@ -159,13 +159,13 @@ class ClawHubClient(
             ),
             ClawHubMarketItem(
                 id = "python-pro",
-                name = "沙箱 Python 数据与科学计算",
+                name = "Dữ liệu Python sandbox và tính toán khoa học",
                 version = "2.0.1",
-                description = "利用 PRoot 沙箱内 Python3 执行数据统计、数学推导与自动化脚本调试，支持 NumPy / Pandas 离线工作流。",
+                description = "Dùng Python3 trong sandbox PRoot để thực hiện thống kê dữ liệu, suy luận toán học và gỡ lỗi script tự động hóa, hỗ trợ quy trình làm việc ngoại tuyến NumPy / Pandas.",
                 author = "Community SciPy",
                 icon = "Code",
-                tags = listOf("Python", "数据科学", "脚本", "沙箱"),
-                category = "数据算法",
+                tags = listOf("Python", "Khoa học dữ liệu", "Script", "Sandbox"),
+                category = "Thuật toán dữ liệu",
                 downloadUrl = "builtin://python-pro",
                 stars = 512,
                 requiredTools = listOf("python3"),
@@ -173,13 +173,13 @@ class ClawHubClient(
             ),
             ClawHubMarketItem(
                 id = "linux-doctor",
-                name = "PRoot 沙箱自检与诊断专家",
+                name = "Chuyên gia tự kiểm và chẩn đoán sandbox PRoot",
                 version = "1.0.5",
-                description = "深谙 Android PRoot 用户态沙箱边界，快速排查 dpkg 状态残留、挂载点读写故障、后台托管进程与网络连通性。",
+                description = "Am hiểu sâu ranh giới sandbox user-space Android PRoot, nhanh chóng điều tra tàn dư trạng thái dpkg, lỗi đọc ghi điểm mount, tiến trình quản lý nền và kết nối mạng.",
                 author = "TianXuan Runtime Lab",
                 icon = "Terminal",
-                tags = listOf("Linux", "沙箱", "诊断", "PRoot"),
-                category = "系统运维",
+                tags = listOf("Linux", "Sandbox", "Chẩn đoán", "PRoot"),
+                category = "Vận hành hệ thống",
                 downloadUrl = "builtin://linux-doctor",
                 stars = 640,
                 requiredTools = listOf("bash", "ps"),
@@ -187,13 +187,13 @@ class ClawHubClient(
             ),
             ClawHubMarketItem(
                 id = "doc-craftsman",
-                name = "技术设计与文档润色大师",
+                name = "Bậc thầy thiết kế kỹ thuật và trau chuốt tài liệu",
                 version = "1.3.0",
-                description = "采用 Google Developer / Markdown 规范，编排结构清晰的技术文档、架构 ADR、API 规范与发布日志。",
+                description = "Áp dụng quy chuẩn Google Developer / Markdown, biên soạn tài liệu kỹ thuật có cấu trúc rõ ràng, ADR kiến trúc, quy cách API và nhật ký phát hành.",
                 author = "Documentation Guild",
                 icon = "BookOpen",
-                tags = listOf("文档", "Markdown", "设计", "ADR"),
-                category = "文档写作",
+                tags = listOf("Tài liệu", "Markdown", "Thiết kế", "ADR"),
+                category = "Viết tài liệu",
                 downloadUrl = "builtin://doc-craftsman",
                 stars = 275,
                 requiredTools = emptyList(),

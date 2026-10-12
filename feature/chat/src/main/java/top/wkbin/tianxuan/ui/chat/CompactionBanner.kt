@@ -38,7 +38,7 @@ import top.wkbin.tianxuan.ui.components.RuntimeIconName
 
 /**
  * 上下文压缩透明度横幅：告知用户当前会话已折叠 N 条早期消息进入摘要，
- * 点按可原地展开摘要全文预览——模型"记得什么、忘了什么"不再黑箱。
+ * 点按可原地展开摘要全文预览——模型"Nhớ gì, quên gì"不再黑箱。
  */
 @Composable
 internal fun CompactionBanner(

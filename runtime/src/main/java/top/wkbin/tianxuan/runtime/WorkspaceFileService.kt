@@ -14,9 +14,9 @@ class WorkspaceFileService(
     private val pathManager: RuntimePathManager,
     private val workspaceRepository: WorkspaceRepository,
 ) {
-    suspend fun listFiles(projectName: String, relativePath: String = ""): AppResult<List<WorkspaceFileItem>> = ioResult("读取文件列表失败") {
+    suspend fun listFiles(projectName: String, relativePath: String = ""): AppResult<List<WorkspaceFileItem>> = ioResult("Đọc danh sách tệp thất bại") {
         val directory = resolve(projectName, relativePath)
-        check(directory.isDirectory) { "不是目录：${displayPath(projectName, relativePath)}" }
+        check(directory.isDirectory) { "Không phải thư mục: ${displayPath(projectName, relativePath)}" }
         val root = projectRoot(projectName)
         directory.listFiles().orEmpty().map { file ->
             WorkspaceFileItem(
@@ -30,21 +30,21 @@ class WorkspaceFileService(
         }.sortedWith(compareBy<WorkspaceFileItem> { !it.isDirectory }.thenBy { it.name.lowercase() })
     }
 
-    suspend fun readFile(projectName: String, relativePath: String): AppResult<String> = ioResult("读取文件失败") {
+    suspend fun readFile(projectName: String, relativePath: String): AppResult<String> = ioResult("Đọc tệp thất bại") {
         val file = resolve(projectName, relativePath)
-        check(file.isFile) { "不是文件：${displayPath(projectName, relativePath)}" }
+        check(file.isFile) { "Không phải tệp: ${displayPath(projectName, relativePath)}" }
         check(file.length() <= WorkspaceManager.MAX_FILE_READ_BYTES) {
-            "文件过大（${file.length()} 字节，上限 ${WorkspaceManager.MAX_FILE_READ_BYTES / 1024 / 1024} MB）"
+            "Tệp quá lớn (${file.length()} byte, giới hạn ${WorkspaceManager.MAX_FILE_READ_BYTES / 1024 / 1024} MB)"
         }
         file.readText(Charsets.UTF_8)
     }
 
-    suspend fun writeFile(projectName: String, relativePath: String, content: String): AppResult<Unit> = ioResult("保存文件失败") {
+    suspend fun writeFile(projectName: String, relativePath: String, content: String): AppResult<Unit> = ioResult("Lưu tệp thất bại") {
         require(content.length <= WorkspaceManager.MAX_FILE_WRITE_CHARS) {
-            "内容过长（${content.length} 字符，上限 ${WorkspaceManager.MAX_FILE_WRITE_CHARS}）"
+            "Nội dung quá dài (${content.length} ký tự, giới hạn ${WorkspaceManager.MAX_FILE_WRITE_CHARS})"
         }
         val file = resolve(projectName, relativePath, allowMissing = true)
-        require(!file.isDirectory) { "目标是目录：${displayPath(projectName, relativePath)}" }
+        require(!file.isDirectory) { "Mục tiêu là thư mục: ${displayPath(projectName, relativePath)}" }
         file.parentFile?.mkdirs()
         val temporary = File(file.parentFile, ".${file.name}.tmp-${System.nanoTime()}")
         try {
@@ -55,50 +55,50 @@ class WorkspaceFileService(
         }
     }
 
-    suspend fun createFile(projectName: String, relativePath: String): AppResult<Unit> = ioResult("创建文件失败") {
+    suspend fun createFile(projectName: String, relativePath: String): AppResult<Unit> = ioResult("Tạo tệp thất bại") {
         val file = resolve(projectName, relativePath, allowMissing = true)
-        check(!file.exists()) { "文件已存在：${file.name}" }
+        check(!file.exists()) { "Tệp đã tồn tại: ${file.name}" }
         file.parentFile?.mkdirs()
-        check(file.createNewFile()) { "无法创建文件" }
+        check(file.createNewFile()) { "Không thể tạo tệp" }
     }
 
-    suspend fun createDirectory(projectName: String, relativePath: String): AppResult<Unit> = ioResult("创建目录失败") {
+    suspend fun createDirectory(projectName: String, relativePath: String): AppResult<Unit> = ioResult("Tạo thư mục thất bại") {
         val directory = resolve(projectName, relativePath, allowMissing = true)
-        check(!directory.exists()) { "目录已存在：${directory.name}" }
-        check(directory.mkdirs()) { "无法创建目录" }
+        check(!directory.exists()) { "Thư mục đã tồn tại: ${directory.name}" }
+        check(directory.mkdirs()) { "Không thể tạo thư mục" }
     }
 
-    suspend fun renameItem(projectName: String, oldRelativePath: String, newName: String): AppResult<Unit> = ioResult("重命名失败") {
+    suspend fun renameItem(projectName: String, oldRelativePath: String, newName: String): AppResult<Unit> = ioResult("Đổi tên thất bại") {
         val safeName = newName.trim()
-        require(safeName.isNotBlank() && '/' !in safeName && '\\' !in safeName) { "新名称不合法" }
+        require(safeName.isNotBlank() && '/' !in safeName && '\\' !in safeName) { "Tên mới không hợp lệ" }
         val file = resolve(projectName, oldRelativePath)
         val target = File(file.parentFile, safeName)
-        check(!target.exists()) { "目标已存在：$safeName" }
-        check(file.renameTo(target)) { "重命名失败" }
+        check(!target.exists()) { "Mục tiêu đã tồn tại: $safeName" }
+        check(file.renameTo(target)) { "Đổi tên thất bại" }
     }
 
-    suspend fun deleteItem(projectName: String, relativePath: String): AppResult<Unit> = ioResult("删除失败") {
+    suspend fun deleteItem(projectName: String, relativePath: String): AppResult<Unit> = ioResult("Xóa thất bại") {
         val file = resolve(projectName, relativePath)
-        check(file.canonicalFile != projectRoot(projectName).canonicalFile) { "不能通过此接口删除工作区根目录" }
-        if (file.isDirectory) SafeFileTree.delete(file) else check(file.delete()) { "删除文件失败" }
+        check(file.canonicalFile != projectRoot(projectName).canonicalFile) { "Không thể xóa thư mục gốc vùng làm việc qua giao diện này" }
+        if (file.isDirectory) SafeFileTree.delete(file) else check(file.delete()) { "Xóa tệp thất bại" }
     }
 
     private suspend fun projectRoot(projectName: String): File {
         if (projectName == "sdcard") File("/storage/emulated/0").takeIf { it.exists() }?.let { return it }
-        require(isValidProjectName(projectName)) { "项目名称无效：$projectName" }
-        val entity = workspaceRepository.findByName(projectName) ?: error("项目不存在：$projectName")
-        return File(entity.path).also { check(it.isDirectory) { "关联目录不存在：$projectName" } }
+        require(isValidProjectName(projectName)) { "Tên dự án không hợp lệ: $projectName" }
+        val entity = workspaceRepository.findByName(projectName) ?: error("Dự án không tồn tại：$projectName")
+        return File(entity.path).also { check(it.isDirectory) { "Thư mục liên kết không tồn tại: $projectName" } }
     }
 
     private suspend fun resolve(projectName: String, relativePath: String, allowMissing: Boolean = false): File {
         val root = projectRoot(projectName)
         val trimmed = relativePath.trim().removePrefix("/workspace/$projectName").removePrefix("/sdcard").removePrefix("/")
         val segments = trimmed.split('/', '\\').filter { it.isNotEmpty() && it != "." }
-        require(segments.none { it == ".." }) { "路径包含越界操作符 (..)" }
+        require(segments.none { it == ".." }) { "Đường dẫn chứa toán tử vượt giới hạn (..)" }
         val candidate = segments.fold(root) { parent, segment -> File(parent, segment) }
         val canonical = candidate.canonicalFile
-        require(isInside(root.canonicalFile, canonical)) { "路径越界：$relativePath" }
-        if (!allowMissing) require(candidate.exists()) { "目标不存在：${displayPath(projectName, relativePath)}" }
+        require(isInside(root.canonicalFile, canonical)) { "Đường dẫn vượt phạm vi: $relativePath" }
+        if (!allowMissing) require(candidate.exists()) { "Mục tiêu không tồn tại: ${displayPath(projectName, relativePath)}" }
         return candidate
     }
 
@@ -113,7 +113,7 @@ class WorkspaceFileService(
         return when {
             isInside(internal, canonical) -> "/workspace/${canonical.toRelativeString(internal).replace(File.separatorChar, '/')}"
             isInside(shared, canonical) -> "/sdcard/${canonical.toRelativeString(shared).replace(File.separatorChar, '/')}"
-            else -> error("目录不在可关联空间内")
+            else -> error("Thư mục không nằm trong không gian liên kết được")
         }.trimEnd('/')
     }
 

@@ -83,9 +83,9 @@ class CapabilityEventWriter(
                 val isMounted = model.dynamicMcpTools.any { it.serverId == serverId }
                 val toolCount = model.dynamicMcpTools.count { it.serverId == serverId }
                 val desc = when {
-                    isMounted -> "MCP 工具已挂载（$toolCount 个工具，模型可按需调用）"
-                    lastError != null -> "⚠️ MCP 服务异常：$lastError"
-                    else -> "已选择 MCP 服务，正在尝试发现工具..."
+                    isMounted -> "Công cụ MCP đã gắn ($toolCount công cụ, model có thể gọi theo nhu cầu)"
+                    lastError != null -> "⚠️ Dịch vụ MCP bất thường: $lastError"
+                    else -> "Đã chọn dịch vụ MCP, đang thử phát hiện công cụ..."
                 }
                 appendEventOnce(
                     existing,

@@ -187,10 +187,10 @@ private fun CreateKeystoreDialog(
                     val displayReason = if (createError == "环境不完整" || createError?.contains("环境") == true) {
                         "环境不完整"
                     } else {
-                        createError?.replace(Regex("^(生成|创建)签名失败[：:]?\\s*"), "") ?: ""
+                        createError?.replace(Regex("^(Tạo|Tạo mới)ký thất bại[：:]?\\s*"), "") ?: ""
                     }
                     Text(
-                        text = "（创建签名失败:$displayReason）",
+                        text = "(Tạo chữ ký thất bại:$displayReason)",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.error,
                         maxLines = 1,
@@ -348,7 +348,7 @@ private fun ImportKeystoreDialog(
                 Text(stringResource(R.string.workshop_signing_import))
                 if (!importError.isNullOrBlank()) {
                     Text(
-                        text = "（导入失败：$importError）",
+                        text = "(Nhập thất bại: $importError)",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.error,
                         maxLines = 1,
@@ -398,7 +398,7 @@ private fun ImportKeystoreDialog(
                 onClick = {
                     importError = null
                     onConfirm(draft) { errMsg ->
-                        importError = errMsg.replace(Regex("^签名导入失败[：:]?\\s*"), "")
+                        importError = errMsg.replace(Regex("^Nhập chữ ký thất bại[：:]?\\s*"), "")
                     }
                 },
                 enabled = valid && !busy,
@@ -426,7 +426,7 @@ private fun SigningField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(if (optional) "$label（可选）" else label) },
+        label = { Text(if (optional) "$label (tùy chọn)" else label) },
         singleLine = true,
         isError = isError,
         supportingText = supportingText?.let { hint -> { Text(hint) } },

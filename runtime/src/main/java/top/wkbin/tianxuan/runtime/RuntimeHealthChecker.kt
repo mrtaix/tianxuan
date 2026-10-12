@@ -14,13 +14,13 @@ class RuntimeHealthChecker(
         if (!pathManager.isProotInstalled()) {
             return RuntimeHealth(
                 status = RuntimeHealthStatus.UNHEALTHY,
-                detail = "PRoot 运行组件不完整：缺少或无法读取 APK 内的 ARM64 tracee loader",
+                detail = "PRoot thành phần chạy không đầy đủ: thiếu hoặc không đọc được ARM64 tracee loader trong APK",
             )
         }
         if (!pathManager.isRootfsInstalled()) {
             return RuntimeHealth(
                 status = RuntimeHealthStatus.UNHEALTHY,
-                detail = "Linux RootFS 校验失败：Bash、/bin/sh 或其 ARM64 ELF 解释器不完整",
+                detail = "Kiểm tra Linux RootFS thất bại: Bash, /bin/sh hoặc trình thông dịch ARM64 ELF của nó không đầy đủ",
             )
         }
 
@@ -75,10 +75,10 @@ class RuntimeHealthChecker(
     ): String {
         val output = (stderr.ifBlank { stdout }).trim().replace(Regex("\\s+"), " ")
         if (output.contains("execve(") && output.contains("No such file or directory")) {
-            return "$label exit=$exitCode: PRoot tracee loader 或 Guest ELF 解释器未能启动"
+            return "$label exit=$exitCode: PRoot tracee loader hoặc trình thông dịch Guest ELF không khởi động được"
         }
         if (output.contains("the loader was not found", ignoreCase = true)) {
-            return "$label exit=$exitCode: PRoot 外置 loader 缺失或不可执行"
+            return "$label exit=$exitCode: loader ngoài của PRoot thiếu hoặc không thể thực thi"
         }
         val detail = output.take(240).ifBlank { "no diagnostic output" }
         return "$label exit=$exitCode: $detail"

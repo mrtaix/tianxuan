@@ -62,7 +62,7 @@ class SessionModelSwitcher(
         sessionDao.setModelSelection(sessionId, profile.id, resolvedVariant, System.currentTimeMillis())
 
         // 决策口径必须与 ApiContextAssembler 一致（clampedBudget，钳到 MAX_CONTEXT_BUDGET）：
-        // 否则标称窗口 > 钳制上限的档案在切换时判定"无需压缩"，下一次请求组装又按钳制预算
+        // 否则标称窗口 > 钳制上限的档案在切换时判定"Không cần nén"，下一次请求组装又按钳制预算
         // 触发压缩——压缩时机与所用模型都偏离预期。toContextTokens 仅作 UI 展示，
         // 保留标称窗口值。
         val defaultBudget = defaultBudget()
@@ -135,7 +135,7 @@ class SessionModelSwitcher(
                 } catch (throwable: Throwable) {
                     android.util.Log.w(
                         "ContextCompaction",
-                        "切换模型后压缩失败，降级为待压缩（下一次组装重试）：${throwable.message}",
+                        "Nén thất bại sau khi chuyển model, hạ cấp thành chờ nén (thử lại ở lần lắp ráp tiếp theo): ${throwable.message}",
                         throwable,
                     )
                     pending = true

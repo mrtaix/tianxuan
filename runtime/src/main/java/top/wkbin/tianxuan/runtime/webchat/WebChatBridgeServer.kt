@@ -108,10 +108,10 @@ class WebChatBridgeServer(
                     }
                 }
             }
-            logger.i("天玄智枢 Web 协作服务启动成功：http://$localIp:$port")
+            logger.i("Dịch vụ cộng tác Web Tri Khu Thien Huyen khởi động thành công: http://$localIp:$port")
             true
         } catch (exception: Exception) {
-            logger.e("天玄智枢 Web 协作服务启动失败", exception)
+            logger.e("Dịch vụ cộng tác Web Tri Khu Thien Huyen khởi động thất bại", exception)
             false
         }
     }
@@ -130,7 +130,7 @@ class WebChatBridgeServer(
             httpServer?.stop(0)
             httpServer = null
             _status.value = _status.value.copy(isRunning = false, activeConnections = 0)
-        }.onFailure { logger.e("天玄智枢 Web 协作服务停止异常", it) }
+        }.onFailure { logger.e("Dịch vụ cộng tác Web Thien Huyen Tri Khu dừng bất thường", it) }
     }
 
     fun broadcastEvent(eventName: String, dataJson: String) {
@@ -167,9 +167,9 @@ class WebChatBridgeServer(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
-                logger.e("天玄智枢 Web 请求处理失败：${exchange.requestURI.path}", throwable)
+                logger.e("Xử lý yêu cầu Web của Thiên Huyền Tri Khu thất bại: ${exchange.requestURI.path}", throwable)
                 if (!exchange.isResponseStarted) {
-                    runCatching { sendJson(exchange, 500, errorJson(throwable.message ?: "请求处理失败")) }
+                    runCatching { sendJson(exchange, 500, errorJson(throwable.message ?: "Xử lý yêu cầu thất bại")) }
                 }
             } finally {
                 runCatching { exchange.close() }
@@ -186,7 +186,7 @@ class WebChatBridgeServer(
             val assetPath = if (mime != null) "webchat/$path" else "webchat/index.html"
             val stream: InputStream = runCatching { context.assets.open(assetPath) }.getOrElse {
                 if (mime != null) {
-                    sendText(exchange, 404, "资源不存在")
+                    sendText(exchange, 404, "Tài nguyên không tồn tại")
                     return
                 }
                 context.assets.open("webchat/index.html")
@@ -201,7 +201,7 @@ class WebChatBridgeServer(
             // 与 isAuthenticated 共用恒定时间比对（见 PinVerifier），两条路径不分叉
             val token = requestJson(exchange)["token"]?.jsonPrimitive?.content
             if (PinVerifier.matches(token, _status.value.pinCode)) sendJson(exchange, 200, buildJsonObject { put("authenticated", true) })
-            else sendJson(exchange, 401, errorJson("配对码不正确"))
+            else sendJson(exchange, 401, errorJson("Mã ghép đôi không đúng"))
         }
     }
 
@@ -275,29 +275,29 @@ class WebChatBridgeServer(
                     }
                     parts.size == 1 && exchange.requestMethod == "DELETE" -> {
                         val id = parts[0]
-                        requireNotNull(sessions.findById(id)) { "会话不存在" }
+                        requireNotNull(sessions.findById(id)) { "Hội thoại không tồn tại" }
                         agentGateway.deleteSession(id)
                         sendJson(exchange, 200, buildJsonObject { put("deleted", true) })
                         broadcastEvent("conversation_deleted", buildJsonObject { put("conversationId", id) }.toString())
                     }
                     parts.size == 2 && parts[1] == "messages" && exchange.requestMethod == "GET" -> {
                         val id = parts[0]
-                        requireNotNull(sessions.findById(id)) { "会话不存在" }
+                        requireNotNull(sessions.findById(id)) { "Hội thoại không tồn tại" }
                         sendJson(exchange, 200, messageArray(agentGateway.messages(id)))
                     }
                     parts.size == 2 && parts[1] == "approvals" && exchange.requestMethod == "GET" -> {
                         val id = parts[0]
-                        requireNotNull(sessions.findById(id)) { "会话不存在" }
+                        requireNotNull(sessions.findById(id)) { "Hội thoại không tồn tại" }
                         sendJson(exchange, 200, approvalArray(agentGateway.pendingApprovals(id)))
                     }
                     parts.size == 3 && parts[1] == "approvals" && exchange.requestMethod == "POST" -> {
                         val sessionId = parts[0]
-                        requireNotNull(sessions.findById(sessionId)) { "会话不存在" }
+                        requireNotNull(sessions.findById(sessionId)) { "Hội thoại không tồn tại" }
                         val body = requestJson(exchange)
                         val approved = body["approved"]?.jsonPrimitive?.content?.toBooleanStrictOrNull()
-                            ?: throw IllegalArgumentException("缺少审批决定")
+                            ?: throw IllegalArgumentException("Thiếu quyết định phê duyệt")
                         val accepted = agentGateway.resolveApproval(sessionId, parts[2], approved)
-                        require(accepted) { "审批请求不存在、已处理或不属于当前会话" }
+                        require(accepted) { "Yêu cầu phê duyệt không tồn tại, đã xử lý hoặc không thuộc phiên hiện tại" }
                         val taskId = taskSessions.entries.firstOrNull { it.value == sessionId }?.key
                         sendJson(exchange, 200, buildJsonObject {
                             put("accepted", true)
@@ -307,22 +307,22 @@ class WebChatBridgeServer(
                     parts.size == 2 && parts[1] == "runs" && exchange.requestMethod == "POST" -> {
                         startRun(exchange, parts[0])
                     }
-                    else -> sendText(exchange, 404, "接口不存在")
+                    else -> sendText(exchange, 404, "Giao diện không tồn tại")
                 }
             } catch (throwable: Throwable) {
-                sendJson(exchange, 400, errorJson(throwable.message ?: "会话操作失败"))
+                sendJson(exchange, 400, errorJson(throwable.message ?: "Thao tác phiên thất bại"))
             }
         }
     }
 
     private suspend fun startRun(exchange: AndroidHttpExchange, sessionId: String) {
-        requireNotNull(sessions.findById(sessionId)) { "会话不存在" }
+        requireNotNull(sessions.findById(sessionId)) { "Hội thoại không tồn tại" }
         val body = requestJson(exchange)
         val text = body["userMessage"]?.jsonPrimitive?.content.orEmpty()
         val imageUrls = body["attachments"]?.jsonArray.orEmpty().mapNotNull { item ->
             item.jsonObject["dataUrl"]?.jsonPrimitive?.content?.takeIf { it.startsWith("data:image/") }
         }
-        require(text.isNotBlank() || imageUrls.isNotEmpty()) { "消息不能为空" }
+        require(text.isNotBlank() || imageUrls.isNotEmpty()) { "Tin nhắn không được rỗng" }
         val taskId = body["taskId"]?.jsonPrimitive?.content?.takeIf(String::isNotBlank)
             ?: "web-${System.currentTimeMillis()}"
         taskSessions[taskId] = sessionId
@@ -376,7 +376,7 @@ class WebChatBridgeServer(
                 if (sessionId != null) agentGateway.cancel(sessionId)
                 sendJson(exchange, 200, buildJsonObject { put("cancelled", sessionId != null) })
             } else {
-                sendText(exchange, 404, "任务接口不存在")
+                sendText(exchange, 404, "Giao diện nhiệm vụ không tồn tại")
             }
         }
     }
@@ -385,7 +385,7 @@ class WebChatBridgeServer(
         override fun handle(exchange: AndroidHttpExchange) {
             if (handlePreflight(exchange)) return
             if (!isAuthenticated(exchange)) {
-                sendJson(exchange, 401, errorJson("请先配对"))
+                sendJson(exchange, 401, errorJson("Hãy ghép đôi trước"))
                 return
             }
             exchange.responseHeaders.add("Content-Type", "text/event-stream")
@@ -410,10 +410,10 @@ class WebChatBridgeServer(
                     suffix == "file" && exchange.requestMethod == "GET" -> readWorkspaceFile(exchange)
                     suffix == "file" && exchange.requestMethod == "PUT" -> writeWorkspaceFile(exchange)
                     suffix == "download" && exchange.requestMethod == "GET" -> downloadWorkspaceFile(exchange)
-                    else -> sendText(exchange, 404, "工作区接口不存在")
+                    else -> sendText(exchange, 404, "Giao diện workspace không tồn tại")
                 }
             } catch (throwable: Throwable) {
-                sendJson(exchange, 400, errorJson(throwable.message ?: "工作区操作失败"))
+                sendJson(exchange, 400, errorJson(throwable.message ?: "Thao tác workspace thất bại"))
             }
         }
     }
@@ -471,12 +471,12 @@ class WebChatBridgeServer(
 
     private suspend fun downloadWorkspaceFile(exchange: AndroidHttpExchange) {
         val (project, relative) = parseWorkspacePath(requireNotNull(getQueryParam(exchange, "path")))
-        val entity = requireNotNull(workspaces.findByName(project)) { "工作区不存在" }
+        val entity = requireNotNull(workspaces.findByName(project)) { "Workspace không tồn tại" }
         val root = File(entity.path).canonicalFile
         val file = File(root, relative).canonicalFile
-        require(file.isFile && (file == root || file.path.startsWith(root.path + File.separator))) { "文件路径无效" }
+        require(file.isFile && (file == root || file.path.startsWith(root.path + File.separator))) { "Đường dẫn tệp không hợp lệ" }
         // 限制单文件下载大小，防止大文件 OOM（与 read/write 的 MAX_FILE_READ_BYTES 对齐）
-        require(file.length() <= MAX_DOWNLOAD_BYTES) { "文件过大（${file.length()} > $MAX_DOWNLOAD_BYTES），拒绝下载" }
+        require(file.length() <= MAX_DOWNLOAD_BYTES) { "Tệp quá lớn (${file.length()} > $MAX_DOWNLOAD_BYTES), từ chối tải" }
         // 过滤文件名中的 CRLF 控制字符，防止 Content-Disposition 头注入
         val safeName = file.name.replace(Regex("[\\r\\n\"\\\\]"), "")
         exchange.responseHeaders.add("Content-Disposition", "attachment; filename=\"$safeName\"")
@@ -533,17 +533,17 @@ class WebChatBridgeServer(
 
     private fun requireAuthenticated(exchange: AndroidHttpExchange): Boolean {
         if (isAuthenticated(exchange)) return true
-        sendJson(exchange, 401, errorJson("请先使用配对码连接"))
+        sendJson(exchange, 401, errorJson("Vui lòng kết nối bằng mã ghép nối trước"))
         return false
     }
 
     private fun parseWorkspacePath(path: String): Pair<String, String> {
         val normalized = path.replace('\\', '/').trim().removeSuffix("/")
-        require(normalized.startsWith("/workspace/")) { "仅允许访问已注册的 /workspace 工程" }
+        require(normalized.startsWith("/workspace/")) { "Chỉ cho phép truy cập dự án /workspace đã đăng ký" }
         val tail = normalized.removePrefix("/workspace/")
         val project = tail.substringBefore('/')
         val relative = tail.substringAfter('/', "")
-        require(project.isNotBlank() && relative.split('/').none { it == ".." }) { "工作区路径无效" }
+        require(project.isNotBlank() && relative.split('/').none { it == ".." }) { "Đường dẫn workspace không hợp lệ" }
         return project to relative
     }
 
@@ -619,17 +619,17 @@ class WebChatBridgeServer(
             manager.createNotificationChannel(
                 android.app.NotificationChannel(
                     NOTIFICATION_CHANNEL_ID,
-                    "天玄智枢 Web 协作台",
+                    "Bàn cộng tác Web Thiên Huyền Tri Khu",
                     android.app.NotificationManager.IMPORTANCE_LOW,
-                ).apply { description = "天玄智枢局域网协作服务"; setShowBadge(false) },
+                ).apply { description = "Dịch vụ cộng tác LAN Tri Khu Thien Huyen"; setShowBadge(false) },
             )
         }
         manager.notify(
             NOTIFICATION_ID,
             androidx.core.app.NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.stat_notify_sync)
-                .setContentTitle("天玄智枢 Web 协作台运行中")
-                .setContentText("$url（配对码：$pin）")
+                .setContentTitle("Bàn cộng tác Web Thiên Huyền Trí Khu đang chạy")
+                .setContentText("$url (mã ghép nối：$pin)")
                 .setOngoing(true)
                 .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW)
                 .build(),

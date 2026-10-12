@@ -19,10 +19,10 @@ class WorkflowApprovalReceiver : BroadcastReceiver(), KoinComponent {
         val nodeId = intent.getStringExtra(EXTRA_NODE_ID) ?: return
         val approved = intent.getBooleanExtra(EXTRA_APPROVED, false)
         val accepted = runCatching { runManager.decide(executionId, nodeId, approved) }
-            .onFailure { Log.w(TAG, "工作流审批处理失败", it) }
+            .onFailure { Log.w(TAG, "Xử lý phê duyệt workflow thất bại", it) }
             .getOrDefault(false)
         if (!accepted) {
-            Log.w(TAG, "审批提交未找到对应运行/节点：$executionId/$nodeId")
+            Log.w(TAG, "Nộp phê duyệt không tìm thấy lần chạy/nút tương ứng: $executionId/$nodeId")
         }
     }
 

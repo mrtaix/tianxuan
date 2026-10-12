@@ -31,7 +31,7 @@ data class PrivilegeState(
     val preferredMode: ExecutionMode = ExecutionMode.PROOT,
     val effectiveMode: ExecutionMode = ExecutionMode.PROOT,
     val availability: PrivilegeAvailability = PrivilegeAvailability.CHECKING,
-    val reason: String = "正在校验运行权限",
+    val reason: String = "Đang kiểm tra quyền chạy",
     val shizukuAvailable: Boolean = false,
     val rootAvailable: Boolean = false,
 ) {
@@ -64,7 +64,7 @@ class PrivilegeManager(
             preferredMode = preferred,
             effectiveMode = ExecutionMode.PROOT,
             availability = PrivilegeAvailability.CHECKING,
-            reason = "正在恢复 ${preferred.shortLabel} 权限",
+            reason = "Đang khôi phục quyền ${preferred.shortLabel}",
         )
         if (preferred == ExecutionMode.PROOT) {
             settingsDataStore.setExecutionModes(ExecutionMode.PROOT, ExecutionMode.PROOT)
@@ -72,7 +72,7 @@ class PrivilegeManager(
                 preferredMode = ExecutionMode.PROOT,
                 effectiveMode = ExecutionMode.PROOT,
                 availability = PrivilegeAvailability.ACTIVE,
-                reason = "PRoot 用户态模式无需额外授权",
+                reason = "Chế độ user-mode PRoot không cần cấp quyền thêm",
             )
             return@withContext ExecutionMode.PROOT
         }
@@ -86,7 +86,7 @@ class PrivilegeManager(
             settingsDataStore.setExecutionModes(preferred, preferred)
             applyPrivilegeOptimizations(preferred)
             refreshState(preferred, preferred, PrivilegeAvailability.ACTIVE, check.details)
-            logger.i("启动权限校验通过，恢复运行模式: ${preferred.name}")
+            logger.i("Kiểm tra quyền khởi động đã qua, khôi phục chế độ chạy: ${preferred.name}")
             preferred
         } else {
             val reason = when (check) {
@@ -97,20 +97,20 @@ class PrivilegeManager(
             // 只降级实际模式，保留用户首选；下次冷启动会自动重试。
             settingsDataStore.setExecutionModes(preferred, ExecutionMode.PROOT)
             refreshState(preferred, ExecutionMode.PROOT, PrivilegeAvailability.DEGRADED, reason)
-            logger.w("启动权限校验失败，${preferred.name} 已临时降级为 PROOT: $reason")
+            logger.w("Kiểm tra quyền khởi động thất bại, ${preferred.name} đã tạm hạ cấp xuống PROOT: $reason")
             ExecutionMode.PROOT
         }
     }
 
     private fun passiveCheck(mode: ExecutionMode): PrivilegeCheckResult = when (mode) {
-        ExecutionMode.PROOT -> PrivilegeCheckResult.Authorized(mode, "PRoot 用户态模式无需额外授权")
+        ExecutionMode.PROOT -> PrivilegeCheckResult.Authorized(mode, "Chế độ user-mode PRoot không cần cấp quyền thêm")
         ExecutionMode.ROOT -> checkRootPrivilege()
         ExecutionMode.SHIZUKU -> when {
             !runCatching { Shizuku.pingBinder() }.getOrDefault(false) ->
-                PrivilegeCheckResult.ServiceNotRunning(mode, "Shizuku 服务未运行")
+                PrivilegeCheckResult.ServiceNotRunning(mode, "Dịch vụ Shizuku chưa chạy")
             Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED ->
-                PrivilegeCheckResult.Unauthorized(mode, "Shizuku 权限未授予或已撤销")
-            else -> PrivilegeCheckResult.Authorized(mode, "Shizuku 权限已恢复")
+                PrivilegeCheckResult.Unauthorized(mode, "Quyền Shizuku chưa được cấp hoặc đã bị thu hồi")
+            else -> PrivilegeCheckResult.Authorized(mode, "Quyền Shizuku đã khôi phục")
         }
     }
 
@@ -156,7 +156,7 @@ class PrivilegeManager(
             ExecutionMode.PROOT -> {
                 PrivilegeCheckResult.Authorized(
                     mode = ExecutionMode.PROOT,
-                    details = "PRoot 用户态沙箱已就绪，无需额外系统特权。",
+                    details = "Sandbox user-space PRoot đã sẵn sàng, không cần đặc quyền hệ thống bổ sung.",
                 )
             }
 
@@ -177,7 +177,7 @@ class PrivilegeManager(
         _state.value = _state.value.copy(
             preferredMode = mode,
             availability = PrivilegeAvailability.CHECKING,
-            reason = "正在申请 ${mode.shortLabel} 权限",
+            reason = "Đang xin quyền ${mode.shortLabel}",
         )
         val check = checkAndAuthorize(mode)
         when (check) {
@@ -185,15 +185,15 @@ class PrivilegeManager(
                 settingsDataStore.setExecutionModes(mode, mode)
                 applyPrivilegeOptimizations(mode)
                 refreshState(mode, mode, PrivilegeAvailability.ACTIVE, check.details)
-                logger.i("已成功切换至运行模式: ${mode.name} (${check.details})")
+                logger.i("Đã chuyển thành công sang chế độ chạy: ${mode.name} (${check.details})")
                 AppResult.Success(check)
             }
 
             is PrivilegeCheckResult.Unauthorized -> {
                 val previousPreferred = settingsDataStore.preferredExecutionMode.first()
                 val previousEffective = settingsDataStore.effectiveExecutionMode.first()
-                refreshState(previousPreferred, previousEffective, PrivilegeAvailability.ACTIVE, "切换失败：${check.reason}")
-                logger.w("切换至 ${mode.name} 失败: ${check.reason}")
+                refreshState(previousPreferred, previousEffective, PrivilegeAvailability.ACTIVE, "Chuyển đổi thất bại: ${check.reason}")
+                logger.w("Chuyển sang ${mode.name} thất bại: ${check.reason}")
                 AppResult.Failure(
                     AppError(
                         code = ErrorCode.SECURITY,
@@ -205,8 +205,8 @@ class PrivilegeManager(
             is PrivilegeCheckResult.ServiceNotRunning -> {
                 val previousPreferred = settingsDataStore.preferredExecutionMode.first()
                 val previousEffective = settingsDataStore.effectiveExecutionMode.first()
-                refreshState(previousPreferred, previousEffective, PrivilegeAvailability.ACTIVE, "切换失败：${check.guidance}")
-                logger.w("切换至 ${mode.name} 失败: ${check.guidance}")
+                refreshState(previousPreferred, previousEffective, PrivilegeAvailability.ACTIVE, "Chuyển thất bại: ${check.guidance}")
+                logger.w("Chuyển sang ${mode.name} thất bại: ${check.guidance}")
                 AppResult.Failure(
                     AppError(
                         code = ErrorCode.UNKNOWN,
@@ -228,7 +228,7 @@ class PrivilegeManager(
                 process.destroyForcibly()
                 return PrivilegeCheckResult.Unauthorized(
                     ExecutionMode.ROOT,
-                    "请求 Root 授权超时，请在 Magisk / KernelSU / APatch 弹窗中允许授权。",
+                    "Yêu cầu ủy quyền Root hết thời gian, hãy cho phép ủy quyền trong popup Magisk / KernelSU / APatch.",
                 )
             }
 
@@ -238,19 +238,19 @@ class PrivilegeManager(
             if (exitCode == 0 && output.contains("uid=0")) {
                 PrivilegeCheckResult.Authorized(
                     ExecutionMode.ROOT,
-                    "已获得 Root 权限 (UID 0: root)，已释放原生 Linux 与内核硬件加速能力！",
+                    "Đã có quyền Root (UID 0: root), đã giải phóng năng lực tăng tốc phần cứng Linux native và kernel!",
                 )
             } else {
                 PrivilegeCheckResult.Unauthorized(
                     ExecutionMode.ROOT,
-                    "Root 授权未通过 (exit $exitCode): $output",
+                    "Cấp quyền Root không qua (exit $exitCode): $output",
                 )
             }
         } catch (e: Exception) {
-            logger.e("检查 Root 权限发生异常", e)
+            logger.e("Kiểm tra quyền Root phát sinh ngoại lệ", e)
             PrivilegeCheckResult.ServiceNotRunning(
                 ExecutionMode.ROOT,
-                "未在设备上检测到可用的 su 可执行程序。若已 Root，请检查是否在授权管理器中对天玄开启了授权。",
+                "Không phát hiện chương trình su khả dụng trên thiết bị. Nếu đã Root, hãy kiểm tra xem đã bật cấp quyền cho Thien Huyen trong trình quản lý cấp quyền chưa.",
             )
         }
     }
@@ -265,7 +265,7 @@ class PrivilegeManager(
             if (!isBinderAlive) {
                 return PrivilegeCheckResult.ServiceNotRunning(
                     ExecutionMode.SHIZUKU,
-                    "Shizuku 服务未运行。请打开 Shizuku App 确保服务状态为“已运行”（可通过无线调试或 Root 启动）。",
+                    "Dịch vụ Shizuku chưa chạy. Hãy mở Shizuku App để đảm bảo trạng thái dịch vụ là “Đang chạy” (có thể khởi động qua gỡ lỗi không dây hoặc Root).",
                 )
             }
 
@@ -275,34 +275,34 @@ class PrivilegeManager(
             if (isGranted) {
                 PrivilegeCheckResult.Authorized(
                     ExecutionMode.SHIZUKU,
-                    "Shizuku (v${Shizuku.getVersion()}) 授权成功，已解锁 ADB 级别特权及 Android 12+ 进程上限豁免能力！",
+                    "Shizuku (v${Shizuku.getVersion()}) ủy quyền thành công, đã mở khóa đặc quyền cấp ADB và năng lực miễn trừ giới hạn tiến trình Android 12+!",
                 )
             } else {
                 if (Shizuku.shouldShowRequestPermissionRationale()) {
                     PrivilegeCheckResult.Unauthorized(
                         ExecutionMode.SHIZUKU,
-                        "请在 Shizuku 弹窗中允许天玄访问 ADB 特权服务。",
+                        "Vui lòng cho phép Thien Huyen truy cập dịch vụ đặc quyền ADB trong hộp thoại Shizuku.",
                     )
                 } else {
                     val granted = requestShizukuPermission()
                     if (granted) {
                         PrivilegeCheckResult.Authorized(
                             ExecutionMode.SHIZUKU,
-                            "Shizuku (v${Shizuku.getVersion()}) 授权成功，已自动切换到 ADB 级别特权模式。",
+                            "Shizuku (v${Shizuku.getVersion()}) cấp quyền thành công, đã tự động chuyển sang chế độ đặc quyền cấp ADB.",
                         )
                     } else {
                         PrivilegeCheckResult.Unauthorized(
                             ExecutionMode.SHIZUKU,
-                            "Shizuku 授权被拒绝或等待超时，请在 Shizuku App 中检查天玄的授权状态。",
+                            "Shizuku bị từ chối cấp quyền hoặc chờ quá thời gian, hãy kiểm tra trạng thái cấp quyền của Thien Huyen trong Shizuku App.",
                         )
                     }
                 }
             }
         } catch (e: Exception) {
-            logger.e("检查 Shizuku 发生异常", e)
+            logger.e("Kiểm tra Shizuku xảy ra bất thường", e)
             PrivilegeCheckResult.ServiceNotRunning(
                 ExecutionMode.SHIZUKU,
-                "无法连接到 Shizuku 服务 (${e.message})。请检查 Shizuku 是否正常运行。",
+                "Không thể kết nối đến dịch vụ Shizuku (${e.message}). Vui lòng kiểm tra Shizuku có đang chạy bình thường không.",
             )
         }
     }
@@ -331,20 +331,20 @@ class PrivilegeManager(
             ExecutionMode.ROOT -> {
                 runCatching { executeViaRoot(PHANTOM_PROCESS_REMOVE_COMMAND, "privilege-opt-root") }
                     .onSuccess { result ->
-                        if (!result.success) logger.w("通过 Root 解除幽灵进程限制失败: ${result.stderr}")
+                        if (!result.success) logger.w("Giải phóng giới hạn tiến trình ma qua Root thất bại: ${result.stderr}")
                     }
                     .onFailure {
-                        logger.w("通过 Root 解除幽灵进程限制失败", it)
+                        logger.w("Gỡ giới hạn tiến trình ma qua Root thất bại", it)
                     }
                 selfGrantWriteSettings(mode)
             }
             ExecutionMode.SHIZUKU -> {
                 runCatching { executeViaShizuku(PHANTOM_PROCESS_REMOVE_COMMAND, "privilege-opt-shizuku") }
                     .onSuccess { result ->
-                        if (!result.success) logger.w("通过 Shizuku 解除幽灵进程限制失败: ${result.stderr}")
+                        if (!result.success) logger.w("Giải phóng giới hạn tiến trình ma qua Shizuku thất bại: ${result.stderr}")
                     }
                     .onFailure {
-                        logger.w("通过 Shizuku 解除幽灵进程限制失败", it)
+                        logger.w("Gỡ giới hạn tiến trình ẩn qua Shizuku thất bại", it)
                     }
                 selfGrantWriteSettings(mode)
             }
@@ -359,7 +359,7 @@ class PrivilegeManager(
      */
     private suspend fun selfGrantWriteSettings(mode: ExecutionMode) {
         if (Settings.System.canWrite(context)) {
-            logger.i("WRITE_SETTINGS 已授权，跳过自授权")
+            logger.i("WRITE_SETTINGS đã được cấp, bỏ qua tự cấp quyền")
             return
         }
         val pkg = context.packageName
@@ -372,12 +372,12 @@ class PrivilegeManager(
         }
         result.onSuccess { r ->
             if (r.success && Settings.System.canWrite(context)) {
-                logger.i("自授权 WRITE_SETTINGS 成功 (via ${mode.shortLabel})")
+                logger.i("Tự cấp quyền WRITE_SETTINGS thành công (via ${mode.shortLabel})")
             } else {
-                logger.w("自授权 WRITE_SETTINGS 失败: exit=${r.exitCode} stderr=${r.stderr} canWrite=${Settings.System.canWrite(context)}")
+                logger.w("Tự cấp quyền WRITE_SETTINGS thất bại: exit=${r.exitCode} stderr=${r.stderr} canWrite=${Settings.System.canWrite(context)}")
             }
         }.onFailure {
-            logger.w("自授权 WRITE_SETTINGS 异常", it)
+            logger.w("Tự cấp quyền WRITE_SETTINGS gặp lỗi", it)
         }
     }
 
@@ -389,7 +389,7 @@ class PrivilegeManager(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             return@withContext PhantomProcessLimitStatus(
                 state = PhantomProcessLimitState.UNSUPPORTED,
-                details = "Android 12 以下系统没有幽灵进程 32 个上限。",
+                details = "Hệ thống dưới Android 12 không có giới hạn 32 tiến trình ma.",
             )
         }
 
@@ -412,7 +412,7 @@ class PrivilegeManager(
             if (directStatus != null) return@withContext directStatus
             return@withContext PhantomProcessLimitStatus(
                 state = PhantomProcessLimitState.UNAVAILABLE,
-                details = result.stderr.ifBlank { "需要先启用并授权 Shizuku 或 Root 才能读取系统状态。" },
+                details = result.stderr.ifBlank { "Cần bật và cấp quyền Shizuku hoặc Root trước mới có thể đọc trạng thái hệ thống." },
             )
         }
 
@@ -446,7 +446,7 @@ class PrivilegeManager(
      * - ROOT 模式：通过 su 以 root uid 执行
      * - PROOT 模式：不支持，返回错误
      *
-     * 这是打破"循环权限依赖"的关键能力：
+     * 这是打破"Phụ thuộc quyền vòng lặp"的关键能力：
      * 沙箱内无法直接执行需要 shell/root 权限的 Android 命令（如 settings put、pm grant、appops set），
      * 但通过 HostBridge → PrivilegeManager.executeShellCommand 可以绕过沙箱限制，
      * 在宿主侧以特权身份执行。
@@ -462,9 +462,9 @@ class PrivilegeManager(
                 exitCode = -1,
                 stdout = "",
                 stderr = if (snapshot.availability == PrivilegeAvailability.CHECKING) {
-                    "宿主权限仍在启动校验中，请稍后重试。"
+                    "Quyền máy chủ vẫn đang kiểm tra khởi động, vui lòng thử lại sau."
                 } else {
-                    "当前实际生效模式为 PRoot；首选 ${snapshot.preferredMode.shortLabel} 暂不可用：${snapshot.reason}"
+                    "Chế độ đang thực sự có hiệu lực hiện tại là PRoot; ${snapshot.preferredMode.shortLabel} ưu tiên tạm thời không khả dụng: ${snapshot.reason}"
                 },
             )
         }
@@ -477,7 +477,7 @@ class PrivilegeManager(
                 success = false,
                 exitCode = -1,
                 stdout = "",
-                stderr = "当前运行模式 (PRoot) 不支持宿主 Shell 执行。请在设置中切换到 Shizuku 或 Root 模式。",
+                stderr = "Chế độ chạy hiện tại (PRoot) không hỗ trợ thực thi Shell của máy chủ. Hãy chuyển sang chế độ Shizuku hoặc Root trong cài đặt.",
             )
         }
     }
@@ -562,7 +562,7 @@ class PrivilegeManager(
                 preferred = preferred,
                 effective = ExecutionMode.PROOT,
                 availability = PrivilegeAvailability.DEGRADED,
-                reason = "${mode.shortLabel} 权限已失效，当前已安全降级为 PRoot",
+                reason = "Quyền ${mode.shortLabel} đã hết hiệu lực, hiện đã hạ cấp an toàn xuống PRoot",
             )
             ExecutionMode.PROOT
         } else {
@@ -582,17 +582,17 @@ class PrivilegeManager(
      */
     private suspend fun executeViaShizuku(command: String, operationId: String): ShellExecResult {
         if (!runCatching { Shizuku.pingBinder() }.getOrDefault(false)) {
-            return ShellExecResult(false, -1, "", "Shizuku 服务未运行。请打开 Shizuku App 并确保服务已启动。")
+            return ShellExecResult(false, -1, "", "Dịch vụ Shizuku chưa chạy. Hãy mở Shizuku App và đảm bảo dịch vụ đã khởi động.")
         }
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-            return ShellExecResult(false, -1, "", "Shizuku 未授权。请在 Shizuku App 中授予天玄访问权限。")
+            return ShellExecResult(false, -1, "", "Shizuku chưa cấp quyền. Vui lòng cấp quyền truy cập cho Thiên Huyền trong Shizuku App.")
         }
 
         return try {
             shizukuHostServiceClient.execute(operationId, command)
         } catch (e: Exception) {
             logger.e("Shizuku UserService execution failed", e)
-            ShellExecResult(false, -1, "", "Shizuku UserService 执行失败: ${e.message}")
+            ShellExecResult(false, -1, "", "Shizuku UserService thực thi thất bại: ${e.message}")
         }
     }
 
@@ -661,7 +661,7 @@ internal fun parsePhantomProcessLimit(output: String): PhantomProcessLimitStatus
             state = PhantomProcessLimitState.REMOVED,
             maxPhantomProcesses = max,
             monitoringEnabled = monitoring,
-            details = "已解除 Android 幽灵进程限制。",
+            details = "Đã gỡ bỏ giới hạn tiến trình ma của Android.",
         )
     } else {
         PhantomProcessLimitStatus(
@@ -669,9 +669,9 @@ internal fun parsePhantomProcessLimit(output: String): PhantomProcessLimitStatus
             maxPhantomProcesses = max,
             monitoringEnabled = monitoring,
             details = if (max == null && monitoring == null) {
-                "仍使用系统默认限制（通常最多 32 个幽灵进程）。"
+                "Vẫn dùng giới hạn mặc định của hệ thống (thường tối đa 32 tiến trình ma)."
             } else {
-                "系统仍在限制幽灵进程。"
+                "Hệ thống vẫn đang hạn chế tiến trình ma."
             },
         )
     }

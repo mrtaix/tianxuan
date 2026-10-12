@@ -292,7 +292,7 @@ class SettingsViewModel(
                 appUpdateManager.installApk(apkFile)
             }.onFailure { err ->
                 _downloadProgress.value = null
-                _updateCheckState.value = top.wkbin.tianxuan.core.model.UpdateCheckState.Error("下载更新包失败：${err.message}")
+                _updateCheckState.value = top.wkbin.tianxuan.core.model.UpdateCheckState.Error("Tải gói cập nhật thất bại: ${err.message}")
             }
         }
     }
@@ -356,9 +356,9 @@ class SettingsViewModel(
             val res = linuxRuntime.installDistro(request) { p ->
                 _distroInstallState.value = _distroInstallState.value.copy(
                     progressText = if (p.totalMegabytes != null) {
-                        "下载中：${p.downloadedMegabytes} / ${p.totalMegabytes} MB"
+                        "Đang tải: ${p.downloadedMegabytes} / ${p.totalMegabytes} MB"
                     } else {
-                        "已下载：${p.downloadedMegabytes} MB"
+                        "Đã tải: ${p.downloadedMegabytes} MB"
                     },
                     progressFraction = (p.fraction ?: 0f) * 0.8f + 0.1f,
                 )
@@ -370,7 +370,7 @@ class SettingsViewModel(
                 res.errorOrNull()?.let { logger.e("Distro install failed: ${it.message}", it.cause) }
                 _distroInstallState.value = _distroInstallState.value.copy(
                     isInstalling = false,
-                    errorMessage = "安装失败，请检查网络与存储空间后重试",
+                    errorMessage = "Cài đặt thất bại, hãy kiểm tra mạng và dung lượng lưu trữ rồi thử lại",
                 )
             }
         }
@@ -389,10 +389,10 @@ class SettingsViewModel(
             }
             _restoringDistroId.value = null
             if (res is top.wkbin.tianxuan.core.common.result.AppResult.Success) {
-                onResult?.invoke(true, "已恢复初始状态")
+                onResult?.invoke(true, "Đã khôi phục trạng thái ban đầu")
             } else {
                 res.errorOrNull()?.let { logger.e("Distro reset failed: ${it.message}", it.cause) }
-                onResult?.invoke(false, "重置沙箱失败，请稍后重试")
+                onResult?.invoke(false, "Reset sandbox thất bại, hãy thử lại sau")
             }
         }
     }
@@ -407,10 +407,10 @@ class SettingsViewModel(
             val res = linuxRuntime.uninstallDistro(distroId)
             _deletingDistroId.value = null
             if (res is top.wkbin.tianxuan.core.common.result.AppResult.Success) {
-                onResult?.invoke(true, "系统已成功删除")
+                onResult?.invoke(true, "Hệ thống đã xóa thành công")
             } else {
                 res.errorOrNull()?.let { logger.e("Distro uninstall failed: ${it.message}", it.cause) }
-                onResult?.invoke(false, "删除系统失败，请稍后重试")
+                onResult?.invoke(false, "Xóa hệ thống thất bại, hãy thử lại sau")
             }
         }
     }
@@ -486,7 +486,7 @@ class SettingsViewModel(
                 mcpManager.refreshConnection(serverId)
             } catch (error: Exception) {
                 _mcpToggleOverrides.value = _mcpToggleOverrides.value - serverId
-                logger.e("MCP 开关切换失败: $serverId", error)
+                logger.e("Chuyển công tắc MCP thất bại: $serverId", error)
             }
         }
     }
@@ -605,7 +605,7 @@ class SettingsViewModel(
                 _localMcpDiscovery.value = LocalMcpDiscoveryState.Results(found)
             } catch (throwable: Throwable) {
                 _localMcpDiscovery.value = LocalMcpDiscoveryState.Error(
-                    throwable.message ?: "本机 MCP 探测失败",
+                    throwable.message ?: "Dò MCP cục bộ thất bại",
                 )
             }
         }
@@ -629,7 +629,7 @@ class SettingsViewModel(
             _switchingMode.value = false
             if (result.isSuccess) {
                 val authorized = result.getOrNull()
-                onResult(true, authorized?.details ?: "已成功切换至 ${mode.title}")
+                onResult(true, authorized?.details ?: "Đã chuyển thành công sang ${mode.title}")
             } else {
                 onResult(false, result.errorOrNull()?.message ?: "授权失败")
             }
@@ -668,7 +668,7 @@ class SettingsViewModel(
                 _phantomProcessMessage.value = if (result.success) {
                     "解除命令执行成功，已重新读取系统状态。"
                 } else {
-                    result.stderr.ifBlank { "解除失败（退出码 ${result.exitCode}）" }
+                    result.stderr.ifBlank { "Giải phóng thất bại (mã thoát ${result.exitCode})" }
                 }
                 _phantomProcessStatus.value = privilegeManager.checkPhantomProcessLimit()
             } finally {
@@ -908,7 +908,7 @@ class SettingsViewModel(
                     _isMarketOfflinePreset.value = client.lastCatalogUsedOfflineFallback
                 }
                 is top.wkbin.tianxuan.core.common.result.AppResult.Failure -> {
-                    logger.w("加载 ClawHub 技能市场失败: ${res.error.message}", res.error.cause)
+                    logger.w("Nạp chợ Skill ClawHub thất bại: ${res.error.message}", res.error.cause)
                 }
             }
             _isMarketLoading.value = false
@@ -917,7 +917,7 @@ class SettingsViewModel(
 
     fun prepareInstallMarketSkill(skillId: String) {
         val installer = skillInstallationManager ?: run {
-            _skillArchiveMessage.value = "技能安全审计与安装引擎未就绪"
+            _skillArchiveMessage.value = "Engine kiểm toán an toàn và cài đặt kỹ năng chưa sẵn sàng"
             _skillArchiveMessageIsError.value = true
             return
         }
@@ -930,7 +930,7 @@ class SettingsViewModel(
                     _pendingSkillInspection.value = res.data
                 }
                 is top.wkbin.tianxuan.core.common.result.AppResult.Failure -> {
-                    _skillArchiveMessage.value = "准备技能失败: ${res.error.message}"
+                    _skillArchiveMessage.value = "Chuẩn bị kỹ năng thất bại: ${res.error.message}"
                     _skillArchiveMessageIsError.value = true
                 }
             }
@@ -954,11 +954,11 @@ class SettingsViewModel(
                         maxBytes = top.wkbin.tianxuan.core.tools.skill.SkillPackageParser.MAX_ZIP_TOTAL_BYTES,
                         policy = top.wkbin.tianxuan.core.common.files.BoundedStreamCopy.OverflowPolicy.ABORT,
                     )
-                } ?: error("无法读取所选 ZIP 文件")
+                } ?: error("Không thể đọc tệp ZIP đã chọn")
                 val inspection = installer.inspectZipBytes(bos.toByteArray(), fallbackId = "custom_zip")
                 _pendingSkillInspection.value = inspection
             } catch (e: Throwable) {
-                _skillArchiveMessage.value = "解析或审计技能包失败: ${e.message}"
+                _skillArchiveMessage.value = "Phân giải hoặc kiểm toán gói kỹ năng thất bại: ${e.message}"
                 _skillArchiveMessageIsError.value = true
             }
         }
@@ -972,12 +972,12 @@ class SettingsViewModel(
             try {
                 val skillsDir = File(pathManager.attachmentsDir, "skills").apply { mkdirs() }
                 val skill = installer.commitInstallation(inspection, skillsDir)
-                _skillArchiveMessage.value = "技能“${skill.name}”已通过端侧静态审查并成功安装！"
+                _skillArchiveMessage.value = "Skill「${skill.name}」đã qua kiểm tra tĩnh phía thiết bị và cài đặt thành công!"
                 _skillArchiveMessageIsError.value = false
                 _pendingSkillInspection.value = null
                 loadClawHubMarket()
             } catch (e: Throwable) {
-                _skillArchiveMessage.value = "安装失败: ${e.message}"
+                _skillArchiveMessage.value = "Cài đặt thất bại: ${e.message}"
                 _skillArchiveMessageIsError.value = true
             } finally {
                 _isCommittingInstallation.value = false
@@ -1099,17 +1099,17 @@ class SettingsViewModel(
             uris.forEach { uri ->
                 runCatching { importSingleSkillArchive(uri) }
                     .onSuccess { successes += it }
-                    .onFailure { failures += it.message ?: "Skill 压缩包导入失败" }
+                    .onFailure { failures += it.message ?: "Nhập gói nén Skill thất bại" }
             }
             if (failures.isEmpty()) {
                 _skillArchiveMessageIsError.value = false
-                _skillArchiveMessage.value = if (successes.size == 1) successes.first() else "批量导入完成，共 ${successes.size} 个：\n${successes.joinToString("\n")}"
+                _skillArchiveMessage.value = if (successes.size == 1) successes.first() else "Nhập hàng loạt hoàn tất, tổng ${successes.size}:\n${successes.joinToString("\n")}"
             } else if (successes.isEmpty()) {
                 _skillArchiveMessageIsError.value = true
-                _skillArchiveMessage.value = if (failures.size == 1) failures.first() else "批量导入失败，共 ${failures.size} 个：\n${failures.joinToString("\n")}"
+                _skillArchiveMessage.value = if (failures.size == 1) failures.first() else "Nhập hàng loạt thất bại, tổng ${failures.size} mục: \n${failures.joinToString("\n")}"
             } else {
                 _skillArchiveMessageIsError.value = true
-                _skillArchiveMessage.value = "批量导入完成：成功 ${successes.size} 个，失败 ${failures.size} 个\n\n成功：\n${successes.joinToString("\n")}\n\n失败：\n${failures.joinToString("\n")}"
+                _skillArchiveMessage.value = "Nhập hàng loạt hoàn tất: thành công ${successes.size}, thất bại ${failures.size}\n\nThành công:\n${successes.joinToString("\n")}\n\nThất bại:\n${failures.joinToString("\n")}"
             }
         }
     }
@@ -1121,14 +1121,14 @@ class SettingsViewModel(
                 .onSuccess { imported ->
                     _skillArchiveMessageIsError.value = false
                     _skillArchiveMessage.value = when (imported.size) {
-                        0 -> "目录扫描完成，未发现新的 Skill（已导入的不会重复注册）"
-                        1 -> "目录扫描完成，导入 1 个：“${imported.first().name}”"
-                        else -> "目录扫描完成，共导入 ${imported.size} 个：\n${imported.joinToString("\n") { "· ${it.name}" }}"
+                        0 -> "Quét thư mục hoàn tất, không phát hiện Skill mới (các mục đã nhập sẽ không đăng ký lại)"
+                        1 -> "Quét thư mục hoàn tất, đã nhập 1 mục: \"${imported.first().name}\""
+                        else -> "Quét thư mục hoàn tất, tổng cộng nhập ${imported.size} mục:\n${imported.joinToString("\n") { "· ${it.name}" }}"
                     }
                 }
                 .onFailure {
                     _skillArchiveMessageIsError.value = true
-                    _skillArchiveMessage.value = it.message ?: "Skill 目录扫描失败"
+                    _skillArchiveMessage.value = it.message ?: "Quét thư mục Skill thất bại"
                 }
         }
     }
@@ -1142,18 +1142,18 @@ class SettingsViewModel(
     fun importSkillsFromTree(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                val treeRoot = DocumentFile.fromTreeUri(application, uri) ?: error("无法访问所选目录")
+                val treeRoot = DocumentFile.fromTreeUri(application, uri) ?: error("Không thể truy cập thư mục đã chọn")
                 val targetRoot = File(pathManager.attachmentsDir, "skills").apply { mkdirs() }
                 val copied = importDocumentTree(treeRoot, targetRoot)
-                check(copied > 0) { "所选目录及子目录中未发现包含 SKILL.md 的 Skill 文件夹" }
+                check(copied > 0) { "Trong thư mục đã chọn và thư mục con không phát hiện thư mục Skill chứa SKILL.md" }
                 val imported = agentSkillRepository.syncFromDirectories(skillScanRoots())
-                "自选目录导入完成，发现并注册 ${imported.size} 个 Skill"
+                "Nhập từ thư mục tự chọn hoàn tất, phát hiện và đăng ký ${imported.size} Skill"
             }.onSuccess {
                 _skillArchiveMessageIsError.value = false
                 _skillArchiveMessage.value = it
             }.onFailure {
                 _skillArchiveMessageIsError.value = true
-                _skillArchiveMessage.value = it.message ?: "自选目录导入失败"
+                _skillArchiveMessage.value = it.message ?: "Nhập thư mục tự chọn thất bại"
             }
         }
     }
@@ -1225,11 +1225,11 @@ class SettingsViewModel(
                 ZipInputStream(source).use { zip ->
                     var entry = zip.nextEntry
                     while (entry != null) {
-                        check(++entryCount <= MAX_SKILL_ARCHIVE_ENTRIES) { "Skill 压缩包文件数量超过 $MAX_SKILL_ARCHIVE_ENTRIES 个" }
+                        check(++entryCount <= MAX_SKILL_ARCHIVE_ENTRIES) { "Số lượng tệp trong gói nén Skill vượt quá $MAX_SKILL_ARCHIVE_ENTRIES" }
                         val relative = entry.name.replace('\\', '/')
-                        check(relative.isNotBlank() && !relative.startsWith('/')) { "Skill 压缩包包含非法路径" }
+                        check(relative.isNotBlank() && !relative.startsWith('/')) { "Gói nén Skill chứa đường dẫn bất hợp pháp" }
                         val out = File(target, relative)
-                        require(out.canonicalPath.startsWith(target.canonicalPath + File.separator)) { "Skill 压缩包包含非法路径" }
+                        require(out.canonicalPath.startsWith(target.canonicalPath + File.separator)) { "Gói nén Skill chứa đường dẫn bất hợp pháp" }
                         if (entry.isDirectory) {
                             out.mkdirs()
                         } else {
@@ -1242,8 +1242,8 @@ class SettingsViewModel(
                                     if (read < 0) break
                                     entryBytes += read
                                     totalBytes += read
-                                    check(entryBytes <= MAX_SKILL_ENTRY_BYTES) { "Skill 单个文件不能超过 8 MB" }
-                                    check(totalBytes <= MAX_SKILL_ARCHIVE_BYTES) { "Skill 解压后总大小不能超过 32 MB" }
+                                    check(entryBytes <= MAX_SKILL_ENTRY_BYTES) { "Mỗi tệp Skill không được vượt quá 8 MB" }
+                                    check(totalBytes <= MAX_SKILL_ARCHIVE_BYTES) { "Tổng kích thước Skill sau khi giải nén không được vượt quá 32 MB" }
                                     output.write(buffer, 0, read)
                                 }
                             }
@@ -1254,23 +1254,23 @@ class SettingsViewModel(
                         entry = zip.nextEntry
                     }
                 }
-            } ?: error("无法读取 Skill 压缩包")
+            } ?: error("Không thể đọc gói nén Skill")
             val promptFile = target.walkTopDown()
                 .maxDepth(3)
                 .filter { it.isFile && it.name.lowercase() in setOf("skill.md", "prompt.md") }
                 .singleOrNull()
-                ?: error("压缩包内未找到 SKILL.md")
+                ?: error("Không tìm thấy SKILL.md trong gói nén")
             val markdown = promptFile.readText().trim()
-            require(markdown.isNotBlank()) { "SKILL.md 为空" }
+            require(markdown.isNotBlank()) { "SKILL.md trống" }
             val skillName = AgentSkillRepository.extractSkillMetadata(markdown, "name")
                 ?: markdown.lineSequence().firstOrNull { it.startsWith("# ") }?.removePrefix("# ")?.trim()
                 ?: promptFile.parentFile?.name
                 ?: id
-            val description = AgentSkillRepository.extractSkillMetadata(markdown, "description") ?: "从压缩包导入的 Skill"
+            val description = AgentSkillRepository.extractSkillMetadata(markdown, "description") ?: "Skill được nhập từ gói nén"
             val guestPath = "/attachments/skills/$id"
-            val prompt = markdown + "\n\n【Skill 资源目录】$guestPath\n如需执行该 Skill 附带的脚本，请先检查脚本内容与参数，再从此目录调用。"
+            val prompt = markdown + "\n\n【Thư mục tài nguyên Skill】$guestPath\nNếu cần chạy script kèm theo Skill này, vui lòng kiểm tra nội dung và tham số script trước, rồi gọi từ thư mục này."
             agentSkillRepository.addCustom(top.wkbin.tianxuan.core.model.AgentSkill(id, skillName, description, prompt, isBuiltin = false, category = "自定义", resourcePath = target.absolutePath))
-            return "Skill“$skillName”导入成功，脚本资源位于 $guestPath"
+            return "Skill「$skillName」nhập thành công, tài nguyên script nằm tại $guestPath"
         } catch (error: Throwable) {
             target?.let(::deleteOwnedSkillDirectory)
             throw error
@@ -1380,7 +1380,7 @@ class SettingsViewModel(
             if (enabled) {
                 val distroId = linuxRuntime.activeDistroId.value
                 if (!QemuCompatibilityLayout.isReady(pathManager.tianxuanRootDir(distroId))) {
-                    _qemuCompatibilityMessage.value = "未检测到 QEMU x86_64 兼容环境，无法开启。请先在插件中心安装 qemu-x86-64-compat 插件。"
+                    _qemuCompatibilityMessage.value = "Chưa phát hiện môi trường tương thích QEMU x86_64, không thể bật. Vui lòng cài plugin qemu-x86-64-compat trong trung tâm plugin trước."
                     return@launch
                 }
             }
@@ -1422,7 +1422,7 @@ class SettingsViewModel(
             val discoveryKey = profileWriter.parseApiKeys(apiKey).firstOrNull() ?: providerRepository.readApiKey()
             // 对于要求 API Key 的服务商，空 key 不发请求，直接给出友好提示
             if (!provider.apiKeyOptional && discoveryKey.isNullOrBlank()) {
-                _modelDiscoveryError.value = "该服务商需要 API Key 才能获取模型列表，请先填写 API Key 后再刷新"
+                _modelDiscoveryError.value = "Nhà cung cấp này cần API Key mới lấy được danh sách model, hãy điền API Key trước rồi làm mới"
                 _discoveringModels.value = false
                 return@launch
             }
@@ -1433,7 +1433,7 @@ class SettingsViewModel(
                 }
                 .onFailure {
                     logger.w("Model discovery failed: ${it.message}", it)
-                    _modelDiscoveryError.value = "获取模型列表失败，请检查 Base URL、API Key 与网络后重试"
+                    _modelDiscoveryError.value = "Lấy danh sách model thất bại, hãy kiểm tra Base URL, API Key và mạng rồi thử lại"
                 }
             _discoveringModels.value = false
         }
@@ -1468,7 +1468,7 @@ class SettingsViewModel(
                 .onSuccess { _connectionResult.value = "连接成功" }
                 .onFailure {
                     logger.w("Connection test failed: ${it.message}", it)
-                    _connectionResult.value = "连接失败，请检查接口地址、密钥与网络后重试"
+                    _connectionResult.value = "Kết nối thất bại, vui lòng kiểm tra địa chỉ giao diện, khóa và mạng rồi thử lại"
                 }
             _testingConnection.value = false
         }
@@ -1515,7 +1515,7 @@ class SettingsViewModel(
     ): Boolean {
         val cleanUrl = ProviderEndpointPolicy.normalizeUrl(baseUrl)
         if (!ProviderEndpointPolicy.isSafeBaseUrl(cleanUrl)) {
-            _profileSaveError.value = "Base URL 无效：请填写合法的 http(s) 接口地址，且不能内嵌账号密码"
+            _profileSaveError.value = "Base URL không hợp lệ: hãy điền địa chỉ giao diện http(s) hợp lệ, và không được nhúng tài khoản mật khẩu"
             return false
         }
         _profileSaveError.value = null
@@ -1581,7 +1581,7 @@ class SettingsViewModel(
         // 无法解析）拒绝落库，否则请求期才在 OkHttp 解析处崩溃。
         val cleanUrl = ProviderEndpointPolicy.normalizeUrl(baseUrl)
         if (!ProviderEndpointPolicy.isSafeBaseUrl(cleanUrl)) {
-            _profileSaveError.value = "Base URL 无效：请填写合法的 http(s) 接口地址，且不能内嵌账号密码"
+            _profileSaveError.value = "Base URL không hợp lệ: hãy điền địa chỉ giao diện http(s) hợp lệ, và không được nhúng tài khoản mật khẩu"
             return false
         }
         _profileSaveError.value = null
@@ -1622,7 +1622,7 @@ class SettingsViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _profileSaveError.value = "保存失败：${e.message ?: e::class.simpleName}"
+                _profileSaveError.value = "Lưu thất bại: ${e.message ?: e::class.simpleName}"
             }
         }
         return true
@@ -1686,7 +1686,7 @@ class SettingsViewModel(
     /**
      * 新增自定义挂载绑定。保存前做与运行时一致的安全校验（StorageMountBinding.validationError），
      * 拒绝越界路径（容器路径必须在 /mnt 或 /sdcard 内、宿主路径必须在共享存储内），
-     * 避免历史版本"先入库、会话启动时才崩"的问题再次发生。
+     * 避免历史版本"Vào kho trước, khởi động hội thoại mới sập"的问题再次发生。
      */
     fun addCustomMountBinding(name: String, hostPath: String, guestPath: String): Result<Unit> {
         val binding = top.wkbin.tianxuan.core.model.StorageMountBinding(
@@ -1799,8 +1799,8 @@ private fun localLoopbackMcpCandidates(): List<DetectedLocalMcpServer> {
             DetectedLocalMcpServer(
                 server = top.wkbin.tianxuan.core.model.McpServerConfig(
                     id = "local_probe_${port}_$path",
-                    name = "本机 MCP ($port)",
-                    description = "在 127.0.0.1:$port 上自动探测到的 MCP 服务",
+                    name = "MCP cục bộ ($port)",
+                    description = "Dịch vụ MCP tự động dò được trên 127.0.0.1:$port",
                     transportType = top.wkbin.tianxuan.core.model.McpTransportType.SSE,
                     serverUrl = url,
                     isEnabled = true,

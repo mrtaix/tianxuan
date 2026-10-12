@@ -7,7 +7,7 @@ import java.security.MessageDigest
  *
  * 原则：
  * - Token 恒为必填：Android 上 127.0.0.1 并不按 UID 隔离，任意应用都能直接 POST /mcp 驱动浏览器，
- *   loopback 模式同样必须携带 Bearer Token，不存在"仅进程内自用"的豁免；
+ *   loopback 模式同样必须携带 Bearer Token，不存在"Chỉ dùng nội bộ trong tiến trình"的豁免；
  * - 比较使用常量时间算法（[MessageDigest.isEqual]），避免时序侧信道逐字节泄露；
  * - Token 不在响应日志/异常中露出。
  */

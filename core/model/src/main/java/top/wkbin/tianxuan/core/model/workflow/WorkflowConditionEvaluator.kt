@@ -23,13 +23,13 @@ object WorkflowConditionEvaluator {
         val raw = expression?.trim().orEmpty()
         if (raw.isEmpty()) {
             val code = upstream?.exitCode ?: 0
-            return Result(code == 0, "默认规则：exitCode == 0（实际 $code）")
+            return Result(code == 0, "Quy tắc mặc định: exitCode == 0 (thực tế $code)")
         }
         return runCatching {
             val matched = evalOr(raw, context, upstream)
-            Result(matched, "表达式「$raw」→ $matched")
+            Result(matched, "Biểu thức「$raw」→ $matched")
         }.getOrElse { error ->
-            Result(false, "条件求值失败：${error.message ?: error::class.java.simpleName}")
+            Result(false, "Đánh giá điều kiện thất bại: ${error.message ?: error::class.java.simpleName}")
         }
     }
 
@@ -39,7 +39,7 @@ object WorkflowConditionEvaluator {
         return runCatching {
             evalOr(raw, WorkflowRuntimeContext("v", "v", "/"), null)
             null
-        }.exceptionOrNull()?.message?.let { "条件表达式无效：$it" }
+        }.exceptionOrNull()?.message?.let { "Biểu thức điều kiện không hợp lệ: $it" }
     }
 
     private fun evalOr(expression: String, context: WorkflowRuntimeContext, upstream: NodeExecutionOutput?): Boolean {
@@ -54,7 +54,7 @@ object WorkflowConditionEvaluator {
 
     private fun evalAtom(expression: String, context: WorkflowRuntimeContext, upstream: NodeExecutionOutput?): Boolean {
         val expr = expression.trim()
-        require(expr.isNotEmpty()) { "空条件片段" }
+        require(expr.isNotEmpty()) { "Đoạn điều kiện rỗng" }
 
         when (expr.lowercase()) {
             "true", "yes", "1" -> return true
@@ -90,18 +90,18 @@ object WorkflowConditionEvaluator {
                 "contains" -> left.contains(right, ignoreCase = true)
                 "matches" -> Regex(right).containsMatchIn(left)
                 ">", ">=", "<", "<=" -> compareNumbers(left, right, op)
-                else -> error("不支持的运算符：$op")
+                else -> error("Toán tử không được hỗ trợ: $op")
             }
         }
 
         // Bare regex against upstream/previous output (legacy edge style)
         return runCatching { Regex(expr).containsMatchIn(upstream?.textOutput ?: context.previousOutput()) }
-            .getOrElse { error("无法解析条件：$expr") }
+            .getOrElse { error("Không thể phân giải điều kiện: $expr") }
     }
 
     private fun compareNumbers(left: String, right: String, op: String): Boolean {
-        val a = left.trim().toDoubleOrNull() ?: error("左侧不是数字：$left")
-        val b = right.trim().toDoubleOrNull() ?: error("右侧不是数字：$right")
+        val a = left.trim().toDoubleOrNull() ?: error("Bên trái không phải số: $left")
+        val b = right.trim().toDoubleOrNull() ?: error("Phía phải không phải số: $right")
         return when (op) {
             ">" -> a > b
             ">=" -> a >= b

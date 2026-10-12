@@ -110,13 +110,13 @@ object ContextWindowPolicy {
      * parts of each tool family instead of applying one blind head/tail truncation.
      */
     fun compactToolOutput(toolName: String?, args: JsonObject?, output: String, success: Boolean): String {
-        val statusLabel = if (success) "成功" else "失败"
-        val header = "【历史执行结果·状态:$statusLabel】"
+        val statusLabel = if (success) "Thành công" else "失败"
+        val header = "【Kết quả thực thi lịch sử · Trạng thái:$statusLabel】"
         val name = toolName?.trim()?.lowercase().orEmpty()
         val body = when (name) {
             "read" -> compactRead(args, output)
-            "write", "edit" -> output.take(160) + "…[文件操作结果已压缩]"
-            "process" -> compactList(output, 4, 2, "列表")
+            "write", "edit" -> output.take(160) + "…[Kết quả thao tác tệp đã được nén]"
+            "process" -> compactList(output, 4, 2, "Danh sách")
             "base", "download" -> compactCommand(output)
             else -> compactGeneric(output)
         }
@@ -125,11 +125,11 @@ object ContextWindowPolicy {
 
     private fun compactRead(args: JsonObject?, output: String): String {
         val path = runCatching { args?.get("path")?.jsonPrimitive?.contentOrNull }.getOrNull()
-        val pathHint = path?.let { "（文件: $it）" }.orEmpty()
+        val pathHint = path?.let { "(Tệp: $it)" }.orEmpty()
         val lines = output.lines()
         return if (lines.size > 12) {
             lines.take(6).joinToString("\n") +
-                "\n... [历史 read 输出已压缩，省略 ${lines.size - 10} 行]$pathHint ...\n" +
+                "\n... [Đầu ra read lịch sử đã nén, lược bỏ ${lines.size - 10} dòng]$pathHint ...\n" +
                 lines.takeLast(4).joinToString("\n")
         } else {
             output.take(600)
@@ -140,7 +140,7 @@ object ContextWindowPolicy {
         val lines = output.lines()
         return if (lines.size > 10) {
             lines.take(4).joinToString("\n") +
-                "\n... [历史命令输出已压缩，省略 ${lines.size - 8} 行] ...\n" +
+                "\n... [Đầu ra lệnh lịch sử đã nén, bỏ qua ${lines.size - 8} dòng] ...\n" +
                 lines.takeLast(4).joinToString("\n")
         } else {
             output.take(500)
@@ -151,7 +151,7 @@ object ContextWindowPolicy {
         val lines = output.lines()
         return if (lines.size > head + tail + 2) {
             lines.take(head).joinToString("\n") +
-                "\n... [$label 已压缩，省略 ${lines.size - head - tail} 项] ...\n" +
+                "\n... [$label đã nén, bỏ qua ${lines.size - head - tail} mục] ...\n" +
                 lines.takeLast(tail).joinToString("\n")
         } else {
             output.take(300)
@@ -162,10 +162,10 @@ object ContextWindowPolicy {
         val lines = output.lines()
         return if (lines.size > 6) {
             lines.take(3).joinToString("\n") +
-                "\n... [历史工具输出已压缩，已略去 ${lines.size - 5} 行日志] ...\n" +
+                "\n... [Đầu ra công cụ lịch sử đã nén, đã lược bỏ ${lines.size - 5} dòng log] ...\n" +
                 lines.takeLast(2).joinToString("\n")
         } else {
-            output.take(180) + "... [已自动压缩]"
+            output.take(180) + "... [Đã tự động nén]"
         }
     }
 
@@ -218,7 +218,7 @@ object ContextWindowPolicy {
             changed = true
             message.copy(
                 output = compactToolOutput(name, args, message.output, message.success) +
-                    "\n[老轮次工具输出已压缩；全文在会话记录中，需要细节时调用 history_read(message_id=\"${message.id}\") 回读]",
+                    "\n[Đầu ra công cụ lượt cũ đã được nén; toàn văn ở trong bản ghi phiên, khi cần chi tiết hãy gọi history_read(message_id=\"${message.id}\") để đọc lại]",
             )
         }
         return if (changed) transformed else messages
@@ -356,7 +356,7 @@ object ContextWindowPolicy {
     /**
      * 会话占用判定（SessionModelSwitcher）与实际请求组装（ApiContextAssembler）共用的
      * 预算钳制：先按当前模型元数据/全局回退取值，再统一钳制到 [1, MAX_CONTEXT_BUDGET]。
-     * 两处必须走同一口径，否则会出现"切换模型判定无需压缩、实际请求又压缩"。
+     * 两处必须走同一口径，否则会出现"Chuyển model phán định không cần nén, nhưng yêu cầu thực tế lại nén"。
      */
     fun clampedBudget(
         profileContextTokens: Int?,
@@ -598,7 +598,7 @@ object ContextWindowPolicy {
         if (prompt.isBlank() || budget <= 0) return prompt
         val maxTokens = (budget * MAX_SYSTEM_PROMPT_FRACTION).toInt().coerceAtLeast(MIN_SYSTEM_PROMPT_TOKENS)
         if (estimateTokens(prompt) <= maxTokens) return prompt
-        val suffix = "\n\n[系统提示因上下文预算受限已截断；请优先遵守以上核心规则]"
+        val suffix = "\n\n[Lời nhắc hệ thống đã bị cắt do giới hạn ngân sách context; vui lòng ưu tiên tuân thủ các quy tắc cốt lõi ở trên]"
         // 截断长度必须按 estimateTokens 二分校准：CJK ≈1.8 字/token、ASCII ≈2.5 字/token，
         // 与固定 4 字符/token 的换算差近 2 倍——中文系统提示按固定比截断后仍会超限 2 倍以上。
         var low = 0
@@ -621,7 +621,7 @@ object ContextWindowPolicy {
      * 巨型用户消息兜底：折叠线算法只能按消息边界或轮内切割，单条自身超线的用户消息
      * （粘贴长文档/日志）无法折叠，保留尾区恒超预算 → 每次请求必被 provider 400，
      * 且压缩判定每次命中、每次失败，形成稳定失败循环。
-     * 对保留区中超大的用户消息做"头尾保留 + 指针标记"的投影级截断——只影响发给
+     * 对保留区中超大的用户消息做"Giữ đầu đuôi + đánh dấu con trỏ"的投影级截断——只影响发给
      * provider 的正文，落库 transcript 与 UI 不变，完整内容可用 history_read 找回。
      */
     fun truncateOversizedUserMessages(messages: List<HarnessMessage>, limit: Int): List<HarnessMessage> {
@@ -657,7 +657,7 @@ object ContextWindowPolicy {
                 out[index] = message.copy(
                     imageUrls = emptyList(),
                     text = message.text +
-                        "\n\n[…… 本消息携带的 ${message.imageUrls.size} 张图片因上下文预算已从模型上下文省略 ……]",
+                        "\n\n[…… ${message.imageUrls.size} ảnh kèm theo tin nhắn này đã bị lược khỏi context model do ngân sách context ……]",
                 )
                 overage -= savedTokens
             }
@@ -691,7 +691,7 @@ object ContextWindowPolicy {
             val result = out[idx] as ToolResult
             val (name, args) = toolCallDetails[result.toolCallId] ?: (null to null)
             val compacted = compactActiveToolOutput(name, args, result.output, result.success) +
-                "\n[工具输出因请求体体积限制已压缩；全文在会话记录中，需要细节时调用 history_read(message_id=\"${result.id}\") 回读]"
+                "\n[Đầu ra công cụ đã nén do giới hạn kích thước request body; toàn văn trong bản ghi phiên, cần chi tiết thì gọi history_read(message_id=\"${result.id}\") để đọc lại]"
             if (compacted.length >= result.output.length) break
             val updated = result.copy(output = compacted)
             bytes += harnessMessagePayloadBytes(updated) - harnessMessagePayloadBytes(result)
@@ -706,7 +706,7 @@ object ContextWindowPolicy {
                 val updated = message.copy(
                     imageUrls = emptyList(),
                     text = message.text +
-                        "\n\n[…… 本消息携带的 ${message.imageUrls.size} 张图片因请求体体积限制已从模型上下文省略 ……]",
+                        "\n\n[…… ${message.imageUrls.size} ảnh kèm theo tin nhắn này đã bị lược khỏi context model do giới hạn kích thước request body ……]",
                 )
                 bytes += harnessMessagePayloadBytes(updated) - harnessMessagePayloadBytes(message)
                 out[index] = updated
@@ -751,7 +751,7 @@ object ContextWindowPolicy {
                 val updated = message.copy(
                     imageUrls = emptyList(),
                     content = message.content.orEmpty() +
-                        "\n\n[…… ${message.imageUrls.size} 张图片因请求体体积限制已从模型上下文省略 ……]",
+                        "\n\n[…… ${message.imageUrls.size} ảnh đã bị lược khỏi context model do giới hạn kích thước request body ……]",
                 )
                 bytes += apiMessagePayloadBytes(updated) - apiMessagePayloadBytes(message)
                 out[index] = updated
@@ -801,14 +801,14 @@ object ContextWindowPolicy {
         output: String,
         success: Boolean,
     ): String {
-        val status = if (success) "成功" else "失败"
+        val status = if (success) "Thành công" else "失败"
         val path = runCatching { args?.get("path")?.jsonPrimitive?.contentOrNull }.getOrNull()
             ?: runCatching { args?.get("command")?.jsonPrimitive?.contentOrNull }.getOrNull()
         val hint = buildString {
-            if (!toolName.isNullOrBlank()) append("工具:$toolName ")
-            if (!path.isNullOrBlank()) append("对象:${path.take(180)} ")
+            if (!toolName.isNullOrBlank()) append("Công cụ:$toolName ")
+            if (!path.isNullOrBlank()) append("Đối tượng:${path.take(180)} ")
         }.trim()
-        return "【当前轮执行结果·状态:$status】$hint\n${compactActiveText(output)}"
+        return "【Kết quả thực thi lượt hiện tại·trạng thái:$status】$hint\n${compactActiveText(output)}"
     }
 
     private fun compactActiveText(output: String): String {
@@ -816,7 +816,7 @@ object ContextWindowPolicy {
         if (output.length <= keep + 80) return output
         val omitted = output.length - ACTIVE_TOOL_KEEP_HEAD_CHARS - ACTIVE_TOOL_KEEP_TAIL_CHARS
         return output.take(ACTIVE_TOOL_KEEP_HEAD_CHARS) +
-            "\n... [请求体体积限制，已省略 $omitted 字符] ...\n" +
+            "\n... [Giới hạn dung lượng body yêu cầu, đã bỏ qua $omitted ký tự] ...\n" +
             output.takeLast(ACTIVE_TOOL_KEEP_TAIL_CHARS)
     }
 
@@ -830,7 +830,7 @@ object ContextWindowPolicy {
     }
 
     private fun fitUserText(text: String, targetTokens: Int): String? {
-        val marker = "\n\n[…… 消息过长已截断：完整原文保留在会话记录中，需要时可用 history_read 读取 ……]\n\n"
+        val marker = "\n\n[…… Tin nhắn quá dài đã cắt: toàn văn gốc được giữ trong lịch sử phiên, cần thì dùng history_read để đọc ……]\n\n"
         var keptChars = (targetTokens * 1.5f).toInt().coerceAtLeast(marker.length + 2)
         repeat(6) {
             if (text.length <= keptChars) return null
@@ -903,12 +903,12 @@ object ContextWindowPolicy {
                 val htmlStart = text.lastIndexOf("<img", dataStart, ignoreCase = true).takeIf { it >= cursor }
                 val mediaStart = listOfNotNull(markdownStart, htmlStart).maxOrNull() ?: dataStart
                 out.append(text, cursor, mediaStart)
-                out.append("[助手生成了一张图片；图片二进制已从模型上下文中省略]")
+                out.append("[Trợ lý đã tạo một ảnh; nhị phân ảnh đã được bỏ qua khỏi ngữ cảnh model]")
                 val end = text.indexOfAny(charArrayOf(')', '"', '\'', '>', ' ', '\n', '\r', '\t'), dataStart)
                 cursor = if (end >= 0) end + 1 else text.length
             } else {
                 out.append(text, cursor, jsonKeyStart)
-                out.append("\"b64_json\":\"[图片二进制已省略]\"")
+                out.append("\"b64_json\":\"[Nhị phân ảnh đã lược bỏ]\"")
                 val colon = text.indexOf(':', jsonKeyStart + 10)
                 val valueStart = if (colon >= 0) text.indexOf('"', colon + 1) else -1
                 val valueEnd = if (valueStart >= 0) text.indexOf('"', valueStart + 1) else -1
@@ -978,16 +978,16 @@ object ContextWindowPolicy {
             .map { it.output.replace('\n', ' ').take(480) }
         val unresolved = recentRequests.takeLast(4)
         return buildString {
-            appendLine("[早期历史摘要，共折叠 ${messages.size} 条消息]")
-            firstRequest?.takeIf { it.isNotBlank() }?.let { appendLine("初始目标：$it") }
-            if (toolStates.isNotEmpty()) appendLine("关键工具状态（新→旧）：${toolStates.asReversed().joinToString(" | ")}")
-            if (failures.isNotEmpty()) appendLine("失败根因线索（新→旧）：${failures.asReversed().joinToString(" | ")}")
-            if (constraints.isNotEmpty()) appendLine("用户硬约束：${constraints.joinToString(" | ")}")
-            if (decisions.isNotEmpty()) appendLine("关键决定：${decisions.joinToString(" | ")}")
-            if (files.isNotEmpty()) appendLine("涉及文件：${files.joinToString(" | ")}")
-            if (recentRequests.isNotEmpty()) appendLine("近期用户要求（新→旧）：${recentRequests.asReversed().joinToString(" | ")}")
-            if (unresolved.isNotEmpty()) appendLine("未解决事项：${unresolved.joinToString(" | ")}")
-            lastAssistant?.takeIf { it.isNotBlank() }?.let { append("最近阶段结论：$it") }
+            appendLine("[Tóm tắt lịch sử sớm, đã gộp ${messages.size} thông điệp]")
+            firstRequest?.takeIf { it.isNotBlank() }?.let { appendLine("Mục tiêu ban đầu: $it") }
+            if (toolStates.isNotEmpty()) appendLine("Trạng thái công cụ then chốt (mới→cũ): ${toolStates.asReversed().joinToString(" | ")}")
+            if (failures.isNotEmpty()) appendLine("Manh mối căn nguyên thất bại (mới→cũ): ${failures.asReversed().joinToString(" | ")}")
+            if (constraints.isNotEmpty()) appendLine("Ràng buộc cứng của người dùng: ${constraints.joinToString(" | ")}")
+            if (decisions.isNotEmpty()) appendLine("Quyết định then chốt: ${decisions.joinToString(" | ")}")
+            if (files.isNotEmpty()) appendLine("Tệp liên quan: ${files.joinToString(" | ")}")
+            if (recentRequests.isNotEmpty()) appendLine("Yêu cầu gần đây của người dùng (mới→cũ): ${recentRequests.asReversed().joinToString(" | ")}")
+            if (unresolved.isNotEmpty()) appendLine("Việc chưa giải quyết: ${unresolved.joinToString(" | ")}")
+            lastAssistant?.takeIf { it.isNotBlank() }?.let { append("Kết luận giai đoạn gần nhất: $it") }
         }.take(MAX_INCREMENTAL_SUMMARY_CHARS)
     }
 
@@ -1012,31 +1012,31 @@ object ContextWindowPolicy {
         val issues = mutableListOf<String>()
         // ISO 8601 date: 2026-09-05 or 2026/09/05
         if (Regex("""\b20\d{2}[-/]\d{2}[-/]\d{2}\b""").containsMatchIn(prompt)) {
-            issues += "ISO 日期（YYYY-MM-DD）"
+            issues += "Ngày ISO (YYYY-MM-DD)"
         }
         // Time of day: 14:30 or 14:30:05
         if (Regex("""\b\d{1,2}:\d{2}(:\d{2})?\b""").containsMatchIn(prompt)) {
-            issues += "时间（HH:MM）"
+            issues += "Thời gian (HH:MM)"
         }
         // Unix timestamp (10-13 digit integer, typically used as currentTimeMillis or epochSeconds)
         if (Regex("""\b1[6-9]\d{8}\b|\b17\d{8}\b|\b1[6-9]\d{11}\b|\b17\d{11}\b""")
                 .containsMatchIn(prompt)) {
-            issues += "UNIX 时间戳"
+            issues += "Dấu thời gian UNIX"
         }
-        // Chinese date patterns like "2026年9月5日"
+        // Chinese date patterns like "Ngày 5 tháng 9 năm 2026"
         if (Regex("""\d{4}年\d{1,2}月\d{1,2}日""").containsMatchIn(prompt)) {
-            issues += "中文日期（YYYY年M月D日）"
+            issues += "Ngày tiếng Trung (YYYY年M月D日)"
         }
-        // Battery/charge level patterns: "电量: 83%" or "battery: 83%"
-        if (Regex("""(?:电量|battery)[^\n]{0,20}?\d{1,3}%""", RegexOption.IGNORE_CASE)
+        // Battery/charge level patterns: "Điện lượng: 83%" or "battery: 83%"
+        if (Regex("""(?:điện lượng|battery)[^\n]{0,20}?\d{1,3}%""", RegexOption.IGNORE_CASE)
                 .containsMatchIn(prompt)) {
-            issues += "实时电量百分比"
+            issues += "Phần trăm pin thời gian thực"
         }
         return issues
     }
 
-    private val CONSTRAINT_MARKERS = listOf("必须", "不得", "禁止", "不能", "严禁", "要求", "must", "never", "should not")
-    private val DECISION_MARKERS = listOf("决定", "采用", "改为", "选择", "方案", "decision", "use", "采用")
+    private val CONSTRAINT_MARKERS = listOf("Bắt buộc", "Không được", "Cấm", "Không thể", "Nghiêm cấm", "Yêu cầu", "must", "never", "should not")
+    private val DECISION_MARKERS = listOf("Quyết định", "Áp dụng", "Đổi thành", "Lựa chọn", "Phương án", "decision", "use", "Áp dụng")
     private val WHITESPACE_REGEX = Regex("\\s+")
     private const val MAX_INCREMENTAL_SUMMARY_CHARS = 8_000
     private val FILE_PATH_REGEX = Regex("(?:/workspace|/sdcard|[A-Za-z]:[\\\\/])[^\\s,，。；;，)\\]]+")

@@ -33,7 +33,7 @@ class SponsorListViewModel(
         viewModelScope.launch {
             _state.value = repository.loadEntries().fold(
                 onSuccess = { SponsorListUiState.Success(it) },
-                onFailure = { SponsorListUiState.Error(it.message ?: "名单加载失败") },
+                onFailure = { SponsorListUiState.Error(it.message ?: "Nạp danh sách thất bại") },
             )
         }
     }

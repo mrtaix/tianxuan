@@ -87,12 +87,12 @@ class McpManager(
 
     /**
      * 最近错误。冷却期内额外带上剩余时间：状态只显示 OFFLINE 时，用户无法区分
-     * "退避中、稍后自动重试"与"真的连不上"，只会反复手动刷新。
+     * "Đang chờ lùi, sẽ tự động thử lại sau"与"Thật sự không kết nối được"，只会反复手动刷新。
      */
     fun getLastError(serverId: String): String? {
         val error = lastErrors[serverId] ?: return null
         val remaining = remainingDiscoveryCooldownMs(serverId) ?: return error
-        return "退避中，${remaining / 1000 + 1}s 后自动重试（$error）"
+        return "Đang lùi lại, tự động thử lại sau ${remaining / 1000 + 1}s ($error)"
     }
 
     suspend fun checkConnection(server: McpServerConfig): Boolean = withContext(Dispatchers.IO) {
@@ -199,7 +199,7 @@ class McpManager(
             if (!linuxReady) {
                 lastErrors[server.id] = RUNTIME_NOT_READY_MSG
                 state(server.id, McpConnectionState.OFFLINE)
-                logger.w("MCP[${server.name}] 工具发现推迟：Linux runtime 尚未就绪，下一轮对话将重试")
+                logger.w("MCP[${server.name}] hoãn phát hiện công cụ: Linux runtime chưa sẵn sàng, lượt hội thoại tiếp theo sẽ thử lại")
                 return@withContext emptyList()
             }
         }
@@ -215,21 +215,21 @@ class McpManager(
                 remainingDiscoveryCooldownMs(server.id)?.let { remaining ->
                     state(server.id, McpConnectionState.OFFLINE)
                     logger.w(
-                        "MCP[${server.name}] 工具发现冷却中（剩余 ${remaining / 1000}s，" +
-                            "连续失败 ${discoveryFailureStreak[server.id] ?: 0} 次），本轮跳过；" +
-                            "最近错误：${lastErrors[server.id] ?: "未知"}",
+                        "MCP[${server.name}] phát hiện công cụ đang trong thời gian chờ (còn ${remaining / 1000}s," +
+                            "Thất bại liên tiếp ${discoveryFailureStreak[server.id] ?: 0} lần), lượt này bỏ qua;" +
+                            "Lỗi gần nhất: ${lastErrors[server.id] ?: "未知"}",
                     )
                     return@withLock emptyList<McpToolInfo>()
                 }
                 // 总超时兜底：沙箱会话拉起或 MCP 进程挂起时不能阻塞每轮对话（挂起是无日志的），
                 // 超时按失败处理，本轮不注入该服务工具，退避到期后重试。
-                agentEventLogger.log(DISCOVERY_LOG_SESSION, "McpDiscovery", "MCP[${server.name}] 工具发现开始（transport=${server.transportType}）")
+                agentEventLogger.log(DISCOVERY_LOG_SESSION, "McpDiscovery", "MCP[${server.name}] bắt đầu phát hiện công cụ (transport=${server.transportType})")
                 val startedAt = System.currentTimeMillis()
                 cancellableResult { discoverWithTimeout(bound) }.onSuccess {
                     agentEventLogger.log(
                         DISCOVERY_LOG_SESSION,
                         "McpDiscovery",
-                        "MCP[${server.name}] 发现 ${it.size} 个工具，耗时 ${System.currentTimeMillis() - startedAt}ms",
+                        "MCP[${server.name}] phát hiện ${it.size} công cụ, mất ${System.currentTimeMillis() - startedAt}ms",
                     )
                     cache[server.id] = CachedTools(fingerprint, it)
                     lastErrors.remove(server.id)
@@ -239,18 +239,18 @@ class McpManager(
                     agentEventLogger.log(
                         DISCOVERY_LOG_SESSION,
                         "McpDiscovery",
-                        "MCP[${server.name}] 工具发现失败，耗时 ${System.currentTimeMillis() - startedAt}ms：${it.message ?: it::class.simpleName}",
+                        "MCP[${server.name}] phát hiện công cụ thất bại, mất ${System.currentTimeMillis() - startedAt}ms: ${it.message ?: it::class.simpleName}",
                         it,
                     )
-                    val msg = it.message ?: "工具发现异常"
+                    val msg = it.message ?: "Phát hiện công cụ bất thường"
                     lastErrors[server.id] = msg
                     val cooldownMs = recordDiscoveryFailure(server.id)
-                    // 静默失败会让"模型不调用 MCP 工具"无从排查，这里必须留下线索；
+                    // 静默失败会让"Model không gọi công cụ MCP"无从排查，这里必须留下线索；
                     // 冷却期内的重复失败只记一行，不再打整段堆栈刷屏。
                     val inCooldown = msg.contains("冷却中")
                     logger.w(
-                        "MCP[${server.name}] 工具发现失败，本轮对话不注入该服务的工具" +
-                            "（后续 ${cooldownMs / 1000}s 内不再重试）: $msg",
+                        "MCP[${server.name}] phát hiện công cụ thất bại, lượt hội thoại này không tiêm công cụ của dịch vụ đó" +
+                            "(không thử lại trong ${cooldownMs / 1000}s tiếp theo): $msg",
                         if (inCooldown) null else it,
                     )
                     cache.remove(server.id)
@@ -289,27 +289,27 @@ class McpManager(
         workspace: String = "",
     ): Pair<Boolean, String> = withContext(Dispatchers.IO) {
         val server = repository.servers.first().firstOrNull { it.id == serverId && it.isEnabled }
-            ?: return@withContext false to "未找到或未启用的 MCP 服务：$serverId"
+            ?: return@withContext false to "Dịch vụ MCP không tìm thấy hoặc chưa bật: $serverId"
         val bound = commandBuilder.bindWorkspaceRepository(server, workspace)
         lastBoundWorkspaces[server.id] = workspace
         val tools = discoverServerIfNeeded(server)
         val tool = tools.firstOrNull { it.name == toolName }
             ?: return@withContext false to buildString {
-                append("MCP[${server.name}] 没有名为 `$toolName` 的工具。")
+                append("MCP[${server.name}] không có công cụ tên `$toolName`.")
                 val available = tools.take(12).joinToString("、") { it.name }
                 if (available.isNotBlank()) {
-                    append("可用：$available")
-                    if (tools.size > 12) append(" 等 ${tools.size} 个")
+                    append("Khả dụng: $available")
+                    if (tools.size > 12) append(" và ${tools.size} cái khác")
                     append("。")
                 }
-                append("可用 use_capability(action=\"inspect\", server=\"$serverId\") 查看工具清单与参数。")
+                append("Có thể dùng use_capability(action=\"inspect\", server=\"$serverId\") để xem danh sách công cụ và tham số.")
             }
         cancellableResult { transport(bound).execute(bound, tool.name, arguments) }
-            .onFailure { logger.e("MCP[${server.name}] 工具 ${tool.name} 执行异常: ${it.message}", it) }
+            .onFailure { logger.e("MCP[${server.name}] công cụ ${tool.name} thực thi lỗi: ${it.message}", it) }
             .onSuccess { (ok, output) ->
-                if (!ok) logger.w("MCP[${server.name}] 工具 ${tool.name} 返回错误: ${secretRedactor.redact(output.take(500))}")
+                if (!ok) logger.w("MCP[${server.name}] công cụ ${tool.name} trả về lỗi: ${secretRedactor.redact(output.take(500))}")
             }
-            .getOrElse { false to "MCP 工具执行异常：${it.message ?: it::class.simpleName}" }
+            .getOrElse { false to "Lỗi thực thi công cụ MCP: ${it.message ?: it::class.simpleName}" }
     }
 
     suspend fun discoverTools(server: McpServerConfig): List<McpToolInfo> = withContext(Dispatchers.IO) {
@@ -338,7 +338,7 @@ class McpManager(
         arguments: JsonObject,
         workspace: String = "",
     ): Pair<Boolean, String> = withContext(Dispatchers.IO) {
-        if (!fullToolName.startsWith("mcp__")) return@withContext false to "无效的 MCP 工具名称：$fullToolName"
+        if (!fullToolName.startsWith("mcp__")) return@withContext false to "Tên công cụ MCP không hợp lệ: $fullToolName"
         val servers = repository.servers.first().filter { it.isEnabled }
         val parsedServerId = fullToolName.removePrefix("mcp__").substringBefore("__")
         val candidateServers = servers.filter { server ->
@@ -350,24 +350,24 @@ class McpManager(
             candidateServers.flatMap { discoverServerIfNeeded(it) }
         }
         val tool = tools.firstOrNull { McpToolApiName.matches(it, fullToolName) }
-            ?: return@withContext false to "未找到 MCP 工具：$fullToolName"
+            ?: return@withContext false to "Không tìm thấy công cụ MCP: $fullToolName"
         val server = servers.firstOrNull { it.id == tool.serverId }
-            ?: return@withContext false to "未找到 MCP 服务：${tool.serverId}"
+            ?: return@withContext false to "Không tìm thấy dịch vụ MCP: ${tool.serverId}"
         val bound = commandBuilder.bindWorkspaceRepository(server, workspace)
         // B1: 记录本次 workspace，使后续 discover/check 路径使用同一绑定配置，
         // 各路径 fingerprint 一致，避免 STDIO 进程被指纹乒乓反复重启
         lastBoundWorkspaces[server.id] = workspace
         return@withContext cancellableResult { transport(bound).execute(bound, tool.name, arguments) }
-            .onFailure { logger.e("MCP[${server.name}] 工具 ${tool.name} 执行异常: ${it.message}", it) }
+            .onFailure { logger.e("MCP[${server.name}] công cụ ${tool.name} thực thi lỗi: ${it.message}", it) }
             .onSuccess { (ok, output) ->
-                if (!ok) logger.w("MCP[${server.name}] 工具 ${tool.name} 返回错误: ${secretRedactor.redact(output.take(500))}")
+                if (!ok) logger.w("MCP[${server.name}] công cụ ${tool.name} trả về lỗi: ${secretRedactor.redact(output.take(500))}")
             }
-            .getOrElse { false to "MCP 工具执行异常：${it.message ?: it::class.simpleName}" }
+            .getOrElse { false to "Lỗi thực thi công cụ MCP: ${it.message ?: it::class.simpleName}" }
     }
 
     private suspend fun discoverWithTimeout(server: McpServerConfig): List<McpToolInfo> =
         withTimeoutOrNull(DISCOVERY_TIMEOUT_MS.milliseconds) { transport(server).discover(server) }
-            ?: error("工具发现超时（${DISCOVERY_TIMEOUT_MS / 1000}s）：沙箱会话或 MCP 进程可能已挂起")
+            ?: error("Phát hiện công cụ quá thời gian (${DISCOVERY_TIMEOUT_MS / 1000}s): phiên sandbox hoặc tiến trình MCP có thể đã treo")
 
     private suspend fun <T> cancellableResult(block: suspend () -> T): Result<T> = try {
         Result.success(block())

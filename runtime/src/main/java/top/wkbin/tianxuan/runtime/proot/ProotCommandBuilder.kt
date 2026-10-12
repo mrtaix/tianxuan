@@ -183,7 +183,7 @@ class ProotCommandBuilder private constructor(
     private fun MutableList<String>.addEmulator(emulatorBinary: File?) {
         if (emulatorBinary == null) return
         require(emulatorBinary.isFile && emulatorBinary.canExecute()) {
-            "QEMU emulator 不可执行：${emulatorBinary.absolutePath}"
+            "QEMU emulator không thể thực thi: ${emulatorBinary.absolutePath}"
         }
         add("-q")
         add(emulatorBinary.absolutePath)
@@ -238,12 +238,12 @@ class ProotCommandBuilder private constructor(
         // 规则统一收敛在 StorageMountBinding.validationError，与运行时过滤、设置页校验共用。
         // 此处 require 是防挂载逃逸的最后安全防线：即使 DB 被篡改也不允许越界绑定进入 PRoot。
         val error = StorageMountBinding.validationError(binding)
-        require(error == null) { error ?: "存储挂载绑定不合法" }
+        require(error == null) { error ?: "Ràng buộc mount lưu trữ không hợp lệ" }
 
         val guest = checkNotNull(StorageMountBinding.normalizeGuestPath(binding.guestPath))
         val host = File(binding.hostPath).canonicalFile
         if (!host.isDirectory || !host.canRead()) {
-            logWarning("宿主挂载目录不可访问（不存在/非目录/不可读），已跳过绑定：${binding.hostPath}")
+            logWarning("Thư mục mount của máy chủ không truy cập được (không tồn tại/không phải thư mục/không đọc được), đã bỏ qua gắn kết: ${binding.hostPath}")
             return null
         }
         return "${host.absolutePath}:$guest"

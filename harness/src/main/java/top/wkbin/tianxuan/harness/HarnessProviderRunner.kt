@@ -35,7 +35,7 @@ internal inline fun <T> withinStreamHandling(block: () -> T): T = try {
 } catch (cancellation: CancellationException) {
     throw cancellation
 } catch (throwable: Throwable) {
-    throw StreamChunkHandlingException(throwable.message ?: "流式增量处理失败", throwable)
+    throw StreamChunkHandlingException(throwable.message ?: "Xử lý tăng dần dạng luồng thất bại", throwable)
 }
 
 /** 模型能力选择、流式请求重试及助手回复持久化；不持有会话调度状态。 */
@@ -145,12 +145,12 @@ class HarnessProviderRunner(
             agentEventLogger.log(
                 sessId,
                 "LargeContextRetryPolicy",
-                "估算输入约 $estimatedRequestTokens tokens，大上下文网络重试限制为 $maxNetworkRetries 次",
+                "Ước tính đầu vào khoảng $estimatedRequestTokens tokens, giới hạn thử lại mạng với ngữ cảnh lớn là $maxNetworkRetries lần",
             )
         }
         while (streamed == null) {
             try {
-                stateMirrors.setStatus(sessId, "等待模型首个响应（${netRetry + 1}/$maxAttempts）")
+                stateMirrors.setStatus(sessId, "Chờ phản hồi đầu tiên của model (${netRetry + 1}/$maxAttempts)")
                 operationCoordinator.providerIntent(
                     operationId = operationId,
                     effectId = assistantId,
@@ -177,16 +177,16 @@ class HarnessProviderRunner(
                             stateMirrors.setStatus(
                                 sessId,
                                 if (progress.name == "write") {
-                                    "正在生成 write · +${progress.addedLines}"
+                                    "Đang tạo write · +${progress.addedLines}"
                                 } else {
-                                    "正在生成 edit · +${progress.addedLines} -${progress.deletedLines}"
+                                    "Đang tạo edit · +${progress.addedLines} -${progress.deletedLines}"
                                 },
                             )
                         }
                     },
                 ) { chunk ->
                     withinStreamHandling {
-                        stateMirrors.setStatus(sessId, "回复中")
+                        stateMirrors.setStatus(sessId, "Đang trả lời")
                         streamText.append(chunk)
                         streamText.publishIfDue(now(), ProviderClient.STREAM_PUBLISH_INTERVAL_MS)?.let {
                             messageProjector.streamText(sessId, assistantId, assistantAt, it)
@@ -205,7 +205,7 @@ class HarnessProviderRunner(
             } catch (cancellation: CancellationException) {
                 persistCancelledPartial(sessId, assistantId, assistantAt, streamText, streamReasoning, startedAt, operationId, round)
                 withContext(NonCancellable) {
-                    agentEventLogger.log(sessId, "Cancelled", "用户主动取消执行，保留已生成内容 ${streamText.length} 字符")
+                    agentEventLogger.log(sessId, "Cancelled", "Người dùng chủ động hủy thực thi, giữ lại ${streamText.length} ký tự nội dung đã tạo")
                 }
                 throw cancellation
             } catch (handling: StreamChunkHandlingException) {
@@ -214,7 +214,7 @@ class HarnessProviderRunner(
                 agentEventLogger.log(
                     sessId,
                     "StreamChunkHandling",
-                    "流式增量处理失败（本地异常，禁止网络重发）：${handling.message}",
+                    "Xử lý tăng dần dạng luồng thất bại (lỗi cục bộ, cấm gửi lại qua mạng): ${handling.message}",
                     handling,
                 )
                 if (streamText.length > 0) {
@@ -232,7 +232,7 @@ class HarnessProviderRunner(
                     messageProjector.remove(sessId, assistantId)
                 }
                 return TurnProviderOutcome.Failed(
-                    "流式响应处理失败（本地异常，未自动重试）：${friendly(handling.cause ?: handling)}",
+                    "Xử lý phản hồi dạng stream thất bại (lỗi cục bộ, chưa tự thử lại): ${friendly(handling.cause ?: handling)}",
                 )
             } catch (rateLimit: LlmRateLimitException) {
                 currentCoroutineContext().ensureActive()
@@ -242,7 +242,7 @@ class HarnessProviderRunner(
                     // 移除空的流式气泡；错误通过 error state 展示，不写入消息历史，避免下一轮注入模型上下文
                     messageProjector.remove(sessId, assistantId)
                     val detail = rateLimit.message?.takeIf { it.isNotBlank() }?.let { "\n\n$it" }.orEmpty()
-                    return TurnProviderOutcome.Failed("模型服务商额度已耗尽，无法继续执行。请充值、切换可用模型或更新 API Key。$detail")
+                    return TurnProviderOutcome.Failed("Hạn mức nhà cung cấp model đã cạn, không thể tiếp tục thực thi. Vui lòng nạp thêm, chuyển sang model khả dụng hoặc cập nhật API Key. $detail")
                 }
                 netRetry++
                 if (netRetry > maxNetworkRetries) {
@@ -252,12 +252,12 @@ class HarnessProviderRunner(
                 metrics.streamRetry()
                 stateMirrors.setThinkingLive(sessId, false)
                 val waitSeconds = rateLimit.retryAfterSeconds ?: (netRetry * RETRY_BACKOFF_SEC).coerceAtMost(60L)
-                stateMirrors.setStatus(sessId, "请求受限，${waitSeconds} 秒后自动重试（$netRetry/$maxNetworkRetries）")
-                agentEventLogger.log(sessId, "RateLimitRetry", "限流退避 ${waitSeconds}s，重试 $netRetry/$maxNetworkRetries", rateLimit)
+                stateMirrors.setStatus(sessId, "Yêu cầu bị hạn chế, tự động thử lại sau ${waitSeconds} giây ($netRetry/$maxNetworkRetries)")
+                agentEventLogger.log(sessId, "RateLimitRetry", "Lùi lại giới hạn tốc độ ${waitSeconds}s, thử lại $netRetry/$maxNetworkRetries", rateLimit)
                 resetStreamBaseline()
                 for (remaining in waitSeconds downTo 1L) {
                     currentCoroutineContext().ensureActive()
-                    stateMirrors.setStatus(sessId, "请求受限，${remaining} 秒后自动重试（$netRetry/$maxNetworkRetries）")
+                    stateMirrors.setStatus(sessId, "Yêu cầu bị giới hạn, tự động thử lại sau ${remaining} giây ($netRetry/$maxNetworkRetries)")
                     delay(1000L.milliseconds)
                 }
             } catch (invalidOutputTokens: LlmInvalidOutputTokensException) {
@@ -270,7 +270,7 @@ class HarnessProviderRunner(
                 agentEventLogger.log(
                     sessId,
                     "OutputBudgetReduction",
-                    "Provider 拒绝输出预算，严格降额至 $reduced 后重试",
+                    "Provider từ chối ngân sách đầu ra, giảm nghiêm ngặt xuống $reduced rồi thử lại",
                     invalidOutputTokens,
                 )
                 resetStreamBaseline()
@@ -282,11 +282,11 @@ class HarnessProviderRunner(
                 // 永远到不了 overflow -> compact -> replay 的自愈闭环。
                 if (!overflowRecovered) {
                     overflowRecovered = true
-                    stateMirrors.setStatus(sessId, "上下文超限，正在紧急压缩历史后重试")
+                    stateMirrors.setStatus(sessId, "Ngữ cảnh vượt giới hạn, đang nén khẩn cấp lịch sử rồi thử lại")
                     agentEventLogger.log(
                         sessId,
                         "ContextOverflowRecovery",
-                        "识别到上下文超限，执行紧急压缩：${contextOverflow.message}",
+                        "Nhận ra context vượt giới hạn, thực thi nén khẩn cấp: ${contextOverflow.message}",
                         contextOverflow,
                     )
                     val recovered = recoverFromContextOverflow(sessId, model)
@@ -294,7 +294,7 @@ class HarnessProviderRunner(
                         agentEventLogger.log(
                             sessId,
                             "ContextOverflowRecovery",
-                            "紧急压缩完成：折叠 ${recovered.first} 条，保留 ${recovered.second} 条，重新组装请求重试",
+                            "Nén khẩn cấp hoàn tất: gộp ${recovered.first} mục, giữ lại ${recovered.second} mục, lắp lại yêu cầu và thử lại",
                         )
                         resetStreamBaseline()
                         requestMessages = assembleFor(requestModel)
@@ -310,7 +310,7 @@ class HarnessProviderRunner(
                     agentEventLogger.log(
                         sessId,
                         "ContextOverflowImageStrip",
-                        "紧急压缩后仍超限，剥离 $pendingImages 张图片降级重试",
+                        "Sau khi nén khẩn cấp vẫn vượt giới hạn, bóc $pendingImages ảnh để hạ cấp thử lại",
                         contextOverflow,
                     )
                     resetStreamBaseline()
@@ -334,18 +334,18 @@ class HarnessProviderRunner(
                 agentEventLogger.log(
                     sessId,
                     "ContextOverflowUnrecoverable",
-                    "上下文超限且压缩/剥离图片均无法恢复",
+                    "Context vượt giới hạn và nén/lược ảnh đều không khôi phục được",
                     contextOverflow,
                 )
                 return TurnProviderOutcome.Failed(
-                    "上下文超出模型窗口，自动压缩后仍无法恢复。" +
-                        "可以让模型用 compress 工具手动压缩，或切换到更大上下文窗口的模型后重试。",
+                    "Context vượt cửa sổ model, sau khi tự động nén vẫn không khôi phục được." +
+                        "Có thể cho model dùng công cụ compress để nén thủ công, hoặc chuyển sang model có cửa sổ context lớn hơn rồi thử lại.",
                 )
             } catch (empty: LlmEmptyResponseException) {
                 // 必须位于 IOException 之前：LlmEmptyResponseException 继承 IOException。
                 // 空响应多为上游瞬时异常（网关提前断流、配额抖动），原样重发通常即可恢复；
-                // 超出预算则明确失败并给出原始响应首部——绝不返回"什么都没有"，
-                // 否则上层会走"无工具调用 → 收尾 → Outcome=completed"，前台零提示。
+                // 超出预算则明确失败并给出原始响应首部——绝不返回"Không có gì cả"，
+                // 否则上层会走"Không gọi công cụ → thu lại → Outcome=completed"，前台零提示。
                 currentCoroutineContext().ensureActive()
                 netRetry++
                 if (netRetry > EMPTY_RESPONSE_MAX_RETRIES) {
@@ -358,8 +358,8 @@ class HarnessProviderRunner(
                 }
                 metrics.streamRetry()
                 stateMirrors.setThinkingLive(sessId, false)
-                stateMirrors.setStatus(sessId, "模型返回空响应，正在重试（$netRetry/$EMPTY_RESPONSE_MAX_RETRIES）")
-                agentEventLogger.log(sessId, "EmptyModelResponseRetry", "第 $netRetry 次空响应，重试上限 $EMPTY_RESPONSE_MAX_RETRIES")
+                stateMirrors.setStatus(sessId, "Model trả về phản hồi rỗng, đang thử lại ($netRetry/$EMPTY_RESPONSE_MAX_RETRIES)")
+                agentEventLogger.log(sessId, "EmptyModelResponseRetry", "Lần phản hồi rỗng thứ $netRetry, giới hạn thử lại $EMPTY_RESPONSE_MAX_RETRIES")
                 resetStreamBaseline()
                 delay(retryPolicy.delayForRetry(netRetry).milliseconds)
             } catch (io: IOException) {
@@ -367,7 +367,7 @@ class HarnessProviderRunner(
                 if (!currentCoroutineContext().isActive) {
                     persistCancelledPartial(sessId, assistantId, assistantAt, streamText, streamReasoning, startedAt, operationId, round)
                     withContext(NonCancellable) {
-                        agentEventLogger.log(sessId, "Cancelled", "用户主动取消执行，保留已生成内容 ${streamText.length} 字符")
+                        agentEventLogger.log(sessId, "Cancelled", "Người dùng chủ động hủy thực thi, giữ lại ${streamText.length} ký tự nội dung đã tạo")
                     }
                 }
                 currentCoroutineContext().ensureActive()
@@ -378,12 +378,12 @@ class HarnessProviderRunner(
                 val transient = isTransientFailure(io)
                 val retryBudget = effectiveRetryBudget(maxNetworkRetries, io)
                 // netRetry 表示「这是第几次失败」；净重试预算为 retryBudget 次，故第 retryBudget+1 次失败即放弃。
-                // 原写法 "重试 $netRetry/$retryBudget" 会被误读成「已执行第 retryBudget 次重试、仍在继续」。
+                // 原写法 "Thử lại $netRetry/$retryBudget" 会被误读成「已执行第 retryBudget 次重试、仍在继续」。
                 agentEventLogger.log(
                     sessId,
                     "NetworkRetry",
-                    "网络中断，第 $netRetry 次失败（重试上限 $retryBudget 次" +
-                        (if (transient) "，瞬态故障不受大上下文降级" else "") + "）：${io.message}",
+                    "Mạng gián đoạn, thất bại lần $netRetry (giới hạn thử lại $retryBudget lần" +
+                        (if (transient) ", lỗi tạm thời không bị hạ cấp bởi ngữ cảnh lớn" else "") + "）：${io.message}",
                     io,
                 )
                 if (netRetry > retryBudget) {
@@ -392,7 +392,7 @@ class HarnessProviderRunner(
                 }
                 metrics.streamRetry()
                 stateMirrors.setThinkingLive(sessId, false)
-                stateMirrors.setStatus(sessId, "网络中断，自动重发中（第 $netRetry 次失败，上限 $retryBudget）")
+                stateMirrors.setStatus(sessId, "Mạng gián đoạn, đang tự động gửi lại (lần thất bại thứ $netRetry, giới hạn $retryBudget)")
                 resetStreamBaseline()
                 delay(retryPolicy.delayForRetry(netRetry).milliseconds)
             } catch (throwable: Throwable) {
@@ -404,19 +404,19 @@ class HarnessProviderRunner(
                     ("do not support image" in lowerMsg || "does not support image" in lowerMsg ||
                         "image input" in lowerMsg || "supports image" in lowerMsg ||
                         "image not supported" in lowerMsg ||
-                        "不支持图片" in lowerMsg || "不支持图像" in lowerMsg ||
-                        "图片输入" in lowerMsg || "图像输入" in lowerMsg)
+                        "Không hỗ trợ ảnh" in lowerMsg || "Không hỗ trợ ảnh" in lowerMsg ||
+                        "Nhập ảnh" in lowerMsg || "Nhập hình ảnh" in lowerMsg)
                 ) {
                     imageStripped = true
                     requestMessages = requestMessages.map { it.copy(imageUrls = emptyList()) }
                     agentEventLogger.log(
                         sessId, "VisionFallback",
-                        "模型不支持图片输入，已剥离 $pendingImages 张图片降级重试", throwable,
+                        "Model không hỗ trợ nhập hình ảnh, đã tách bỏ $pendingImages hình ảnh để hạ cấp thử lại", throwable,
                     )
                     resetStreamBaseline()
                     continue
                 }
-                agentEventLogger.log(sessId, "ModelError", "LLM 调用失败: ${throwable.message}", throwable)
+                agentEventLogger.log(sessId, "ModelError", "Gọi LLM thất bại: ${throwable.message}", throwable)
                 if (streamText.length > 0) {
                     persistAssistant(
                         sessId,
@@ -470,7 +470,7 @@ class HarnessProviderRunner(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
-            agentEventLogger.log(sessId, "ContextOverflowRecoveryFailed", "紧急压缩失败：${throwable.message}", throwable)
+            agentEventLogger.log(sessId, "ContextOverflowRecoveryFailed", "Nén khẩn cấp thất bại: ${throwable.message}", throwable)
             null
         }
     }
@@ -605,7 +605,7 @@ class HarnessProviderRunner(
         /**
          * 空响应（HTTP 200 但无正文/推理/工具调用）的重发上限。
          * 单次空响应多数是上游瞬时抖动，重发即可恢复；连续多次仍是空则判定为模型/网关
-         * 侧问题，明确失败并附上原始响应首部，而不是让用户面对"没有任何回复"。
+         * 侧问题，明确失败并附上原始响应首部，而不是让用户面对"Không có phản hồi nào"。
          */
         private const val EMPTY_RESPONSE_MAX_RETRIES = 2
 

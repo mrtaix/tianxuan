@@ -137,16 +137,16 @@ fun DeveloperScreen(
                     ) {
                         IconTile(RuntimeIconName.Sparkles)
                         Column {
-                            Text("液态玻璃全景组件图鉴", style = MaterialTheme.typography.titleMedium)
+                            Text("Đồ giám toàn cảnh thành phần kính lỏng", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "Apple HIG / Kyant Backdrop 规范对比与全套控件展厅",
+                                "Apple HIG / Kyant Backdrop đối chiếu quy chuẩn và phòng trưng bày đầy đủ các control",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                     Button(onClick = onOpenCatalog) {
-                        Text("进入展厅")
+                        Text("Vào phòng trưng bày")
                     }
                 }
             }
@@ -191,7 +191,7 @@ fun DeveloperScreen(
                 }
             }
 
-            SectionHeader("无线 ADB · Logcat", "mDNS 自动发现动态端口；成功配对一次后自动重连")
+            SectionHeader("ADB không dây · Logcat", "mDNS tự động phát hiện cổng động; sau khi ghép đôi thành công một lần sẽ tự động kết nối lại")
             RuntimeCard(Modifier.fillMaxWidth()) {
                 val connected = adbState as? EmbeddedAdbManager.ConnectionState.Connected
                 Row(
@@ -201,13 +201,13 @@ fun DeveloperScreen(
                 ) {
                     IconTile(RuntimeIconName.Terminal)
                     Column(Modifier.weight(1f)) {
-                        Text("内置无线 ADB", style = MaterialTheme.typography.titleMedium)
+                        Text("ADB không dây tích hợp", style = MaterialTheme.typography.titleMedium)
                         Text(
                             when (val current = adbState) {
-                                EmbeddedAdbManager.ConnectionState.Disconnected -> "未连接"
-                                EmbeddedAdbManager.ConnectionState.Discovering -> "正在通过 mDNS 发现端口"
-                                EmbeddedAdbManager.ConnectionState.Pairing -> "正在安全配对"
-                                EmbeddedAdbManager.ConnectionState.Connecting -> "正在连接"
+                                EmbeddedAdbManager.ConnectionState.Disconnected -> "Chưa kết nối"
+                                EmbeddedAdbManager.ConnectionState.Discovering -> "Đang phát hiện cổng qua mDNS"
+                                EmbeddedAdbManager.ConnectionState.Pairing -> "Đang ghép nối an toàn"
+                                EmbeddedAdbManager.ConnectionState.Connecting -> "Đang kết nối"
                                 is EmbeddedAdbManager.ConnectionState.Connected -> "${current.host}:${current.port}"
                                 is EmbeddedAdbManager.ConnectionState.Failed -> current.message
                             },
@@ -216,11 +216,11 @@ fun DeveloperScreen(
                             maxLines = 1,
                         )
                     }
-                    StatusBadge(if (connected != null) "已连接" else "未就绪", if (connected != null) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary)
+                    StatusBadge(if (connected != null) "Đã kết nối" else "Chưa sẵn sàng", if (connected != null) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary)
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "已发现：配对端口 ${adbDiscovery.pairingEndpoints.size} 个 · 连接端口 ${adbDiscovery.connectEndpoints.size} 个",
+                    "Đã phát hiện: cổng ghép nối ${adbDiscovery.pairingEndpoints.size} · cổng kết nối ${adbDiscovery.connectEndpoints.size}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -229,8 +229,8 @@ fun DeveloperScreen(
                     value = pairingCode,
                     onValueChange = { value -> pairingCode = value.filter(Char::isDigit).take(6) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("一次性 6 位配对码") },
-                    supportingText = { Text("先在系统“无线调试”中打开“使用配对码配对设备”；端口无需手填") },
+                    label = { Text("Mã ghép đôi 6 chữ số dùng một lần") },
+                    supportingText = { Text("Trước tiên bật “Ghép nối thiết bị bằng mã ghép nối” trong “Gỡ lỗi không dây” hệ thống; không cần điền cổng thủ công") },
                     singleLine = true,
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -238,12 +238,12 @@ fun DeveloperScreen(
                         onClick = { viewModel.pairWirelessAdb(pairingCode) },
                         enabled = !adbBusy && pairingCode.length == 6 && adbDiscovery.pairingEndpoints.isNotEmpty(),
                         modifier = Modifier.weight(1f),
-                    ) { Text("配对并连接") }
+                    ) { Text("Ghép nối và kết nối") }
                     OutlinedButton(
                         onClick = viewModel::connectWirelessAdb,
                         enabled = !adbBusy && adbDiscovery.connectEndpoints.isNotEmpty(),
                         modifier = Modifier.weight(1f),
-                    ) { Text("重新连接") }
+                    ) { Text("Kết nối lại") }
                 }
                 adbMessage?.let {
                     Spacer(Modifier.height(10.dp))
@@ -251,13 +251,13 @@ fun DeveloperScreen(
                 }
 
                 Spacer(Modifier.height(18.dp))
-                Text("应用日志抓取", style = MaterialTheme.typography.titleMedium)
+                Text("Bắt nhật ký ứng dụng", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = logcatPackage,
                     onValueChange = { logcatPackage = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("包名（留空抓取全部）") },
+                    label = { Text("Tên gói (để trống để lấy tất cả)") },
                     singleLine = true,
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -265,14 +265,14 @@ fun DeveloperScreen(
                         value = logcatTag,
                         onValueChange = { logcatTag = it },
                         modifier = Modifier.weight(1f),
-                        label = { Text("Tag（可选）") },
+                        label = { Text("Tag (tùy chọn)") },
                         singleLine = true,
                     )
                     OutlinedTextField(
                         value = logcatLines,
                         onValueChange = { logcatLines = it.filter(Char::isDigit).take(4) },
                         modifier = Modifier.weight(0.55f),
-                        label = { Text("行数") },
+                        label = { Text("Số dòng") },
                         singleLine = true,
                     )
                 }
@@ -280,7 +280,7 @@ fun DeveloperScreen(
                     value = logcatKeyword,
                     onValueChange = { logcatKeyword = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("关键词（可选，忽略大小写）") },
+                    label = { Text("Từ khóa (tùy chọn, bỏ qua phân biệt hoa thường)") },
                     singleLine = true,
                 )
                 Spacer(Modifier.height(10.dp))
@@ -299,7 +299,7 @@ fun DeveloperScreen(
                         onClick = { viewModel.captureLogcat(logcatPackage, logcatTag, logcatPriority, logcatKeyword, logcatLines.toIntOrNull() ?: 200) },
                         enabled = connected != null && !adbBusy,
                         modifier = Modifier.weight(1f),
-                    ) { Text("抓取日志") }
+                    ) { Text("Thu thập log") }
                     OutlinedButton(onClick = viewModel::clearDeviceLogcat, enabled = connected != null && !adbBusy) { Text("清空") }
                 }
                 if (logcatOutput.isNotBlank()) {
@@ -324,7 +324,7 @@ fun DeveloperScreen(
                             android.widget.Toast.makeText(context, "日志已复制", android.widget.Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text("复制日志") }
+                    ) { Text("Sao chép log") }
                 }
             }
 
@@ -342,7 +342,7 @@ fun DeveloperScreen(
                         label = { Text("清单 HTTPS 地址") },
                         isError = manifestUrl.isNotBlank() && !manifestUrlValid,
                         supportingText = {
-                            if (manifestUrl.isNotBlank() && !manifestUrlValid) Text("地址需以 https:// 开头")
+                            if (manifestUrl.isNotBlank() && !manifestUrlValid) Text("Địa chỉ phải bắt đầu bằng https://")
                         },
                         singleLine = true,
                     )
@@ -353,7 +353,7 @@ fun DeveloperScreen(
                         label = { Text("签名 HTTPS 地址") },
                         isError = signatureUrl.isNotBlank() && !signatureUrlValid,
                         supportingText = {
-                            if (signatureUrl.isNotBlank() && !signatureUrlValid) Text("地址需以 https:// 开头")
+                            if (signatureUrl.isNotBlank() && !signatureUrlValid) Text("Địa chỉ phải bắt đầu bằng https://")
                         },
                         singleLine = true,
                     )
@@ -364,7 +364,7 @@ fun DeveloperScreen(
                         label = { Text("Ed25519 公钥（Base64）") },
                         isError = !publicKeyValid,
                         supportingText = {
-                            if (!publicKeyValid) Text("公钥不能为空")
+                            if (!publicKeyValid) Text("Public key không được rỗng")
                         },
                         minLines = 2,
                     )
@@ -387,10 +387,10 @@ fun DeveloperScreen(
                 }
             }
 
-            SectionHeader("资源管理", "后台 Linux 进程与共享依赖")
+            SectionHeader("资源管理", "Tiến trình Linux nền và phụ thuộc chia sẻ")
 
             RuntimeCard(Modifier.fillMaxWidth()) {
-                ResourceHeader(RuntimeIconName.Cpu, "后台进程", "${processes.size} 个活动进程", viewModel::refreshProcesses)
+                ResourceHeader(RuntimeIconName.Cpu, "后台进程", "${processes.size} tiến trình hoạt động", viewModel::refreshProcesses)
                 Spacer(Modifier.height(14.dp))
                 if (processes.isEmpty()) {
                     Text("当前没有登记中的后台进程。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -436,13 +436,13 @@ fun DeveloperScreen(
                     Column(Modifier.weight(1f)) {
                         Text("智能体本地调试日志", style = MaterialTheme.typography.titleMedium)
                         Text(
-                            if (agentLoggingEnabled) "已启用（文件大小：${agentLogSize.toReadableSize()}）" else "已关闭（不写入本地日志文件）",
+                            if (agentLoggingEnabled) "Đã bật (kích thước tệp: ${agentLogSize.toReadableSize()})" else "已关闭（不写入本地日志文件）",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         if (agentLogLocation.isNotBlank()) {
                             Text(
-                                "日志文件：$agentLogLocation",
+                                "Tệp log: $agentLogLocation",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -529,7 +529,7 @@ fun DeveloperScreen(
     cleanupTarget?.let { runtime ->
         RuntimeAlertDialog(
             onDismissRequest = { cleanupTarget = null },
-            title = { Text("清理 ${runtime.name.name}？") },
+            title = { Text("Dọn ${runtime.name.name}?") },
             text = { Text("将移除未被工具引用的共享 Runtime，此操作无法自动恢复。") },
             confirmButton = { TextButton(onClick = { cleanupTarget = null; viewModel.cleanupRuntime(runtime.id) }) { Text("确认清理", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { cleanupTarget = null }) { Text("取消") } },
@@ -545,11 +545,11 @@ fun DeveloperScreen(
         }
         RuntimeAlertDialog(
             onDismissRequest = { showResetConfirmation = false },
-            title = { Text("重置当前沙箱？") },
+            title = { Text("Đặt lại sandbox hiện tại?") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("• 将清除自行安装的软件包与系统修改", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("• 不会删除 /workspace 中的项目代码", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                    Text("• Sẽ xóa các gói phần mềm tự cài và sửa đổi hệ thống", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("• Sẽ không xóa mã dự án trong /workspace", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                 }
             },
             confirmButton = {
@@ -558,7 +558,7 @@ fun DeveloperScreen(
                     enabled = countdown == 0,
                 ) {
                     Text(
-                        if (countdown > 0) "确认重置 (${countdown}s)" else "确认重置",
+                        if (countdown > 0) "Xác nhận reset (${countdown}s)" else "确认重置",
                         color = if (countdown == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
                     )
                 }
@@ -676,7 +676,7 @@ private fun RuntimeControlCard(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
                 ) {
-                    Text("更新RootFS", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                    Text("Cập nhật RootFS", style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
             Spacer(Modifier.height(9.dp))
@@ -692,7 +692,7 @@ private fun RuntimeControlCard(
             androidx.compose.runtime.LaunchedEffect(it.throwable) {
                 android.util.Log.w("DeveloperScreen", "Runtime error: ${it.throwable.message}")
             }
-            NoticeBanner("Runtime 初始化失败，请检查网络与存储空间后点击「重试初始化」", isError = true)
+            NoticeBanner("Khởi tạo Runtime thất bại, hãy kiểm tra mạng và dung lượng lưu trữ rồi bấm「Thử khởi tạo lại」", isError = true)
         }
     }
 }

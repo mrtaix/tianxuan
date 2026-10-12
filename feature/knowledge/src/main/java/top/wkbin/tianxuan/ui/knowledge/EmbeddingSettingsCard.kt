@@ -24,12 +24,12 @@ fun EmbeddingSettingsCard(
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("嵌入配置", style = MaterialTheme.typography.titleSmall)
+            Text("Cấu hình nhúng", style = MaterialTheme.typography.titleSmall)
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = embeddingModel,
                 onValueChange = onModelChange,
-                label = { Text("嵌入模型名") },
+                label = { Text("Tên model nhúng") },
                 placeholder = { Text("text-embedding-3-small") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -38,16 +38,16 @@ fun EmbeddingSettingsCard(
             OutlinedTextField(
                 value = embeddingEndpointSuffix,
                 onValueChange = onSuffixChange,
-                label = { Text("嵌入端点后缀") },
+                label = { Text("Hậu tố endpoint nhúng") },
                 placeholder = { Text("/embeddings") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "嵌入请求走激活模型档案的 Base URL + Key + 此模型名与端点后缀。" +
-                    "若 404/NOT_FOUND，说明你的提供商不提供此端点或模型名不对，请改为实际支持的名字。" +
-                    "嵌入失败时自动降级为关键词检索（BM25），知识库仍可用。",
+                "Yêu cầu nhúng đi qua Base URL + Key của hồ sơ model đã kích hoạt cùng tên model này và hậu tố endpoint." +
+                    "Nếu 404/NOT_FOUND, nghĩa là nhà cung cấp của bạn không cung cấp endpoint này hoặc tên model sai, hãy đổi sang tên thực sự được hỗ trợ." +
+                    "Khi nhúng thất bại tự động hạ cấp xuống tìm kiếm từ khóa (BM25), kho tri thức vẫn khả dụng.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

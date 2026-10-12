@@ -34,7 +34,7 @@ class HarnessWorkspaceRecommendations(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
-            logger.e("启用推荐 MCP 失败：$presetId", error)
+            logger.e("Bật MCP khuyến nghị thất bại: $presetId", error)
         }
     }
 
@@ -61,7 +61,7 @@ class HarnessWorkspaceRecommendations(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: Exception) {
-                logger.e("扫描工作区 MCP 推荐失败", error)
+                logger.e("Quét đề xuất MCP trong workspace thất bại", error)
             }
         }
     }

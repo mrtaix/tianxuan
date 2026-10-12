@@ -186,7 +186,7 @@ fun StorageMountSettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                "点击上方“新增挂载”将 Android 目录映射进 Linux 沙箱（仅终端 / 智枢 / 构建可见）",
+                                "Nhấp «Thêm điểm gắn kết» phía trên để ánh xạ thư mục Android vào sandbox Linux (chỉ terminal / Trí Khu / build nhìn thấy)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -228,7 +228,7 @@ fun StorageMountSettingsScreen(
                                 val bindingError = remember(binding) { StorageMountBinding.validationError(binding) }
                                 if (bindingError != null) {
                                     Text(
-                                        text = "无效挂载：$bindingError（删除后重新添加）",
+                                        text = "Mount không hợp lệ: $bindingError (xóa rồi thêm lại)",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.error,
                                     )
@@ -251,7 +251,7 @@ fun StorageMountSettingsScreen(
                                 modifier = Modifier
                                     .minimumInteractiveComponentSize()
                                     .size(32.dp),
-                                contentDescription = "删除挂载点 ${binding.name}",
+                                contentDescription = "Xóa điểm mount ${binding.name}",
                             ) {
                                 RuntimeIcon(
                                     name = RuntimeIconName.Trash,
@@ -269,9 +269,9 @@ fun StorageMountSettingsScreen(
     pendingDeleteBinding?.let { binding ->
         RuntimeAlertDialog(
             onDismissRequest = { pendingDeleteBindingId = null },
-            title = { Text("删除挂载点", fontWeight = FontWeight.Bold) },
+            title = { Text("Xóa điểm mount", fontWeight = FontWeight.Bold) },
             text = {
-                Text("确定要删除挂载点「${binding.name}」（${binding.hostPath} ➔ ${binding.guestPath}）吗？删除后新建的终端 / 构建任务将不再映射该目录。")
+                Text("Bạn có chắc muốn xóa điểm gắn kết «${binding.name}» (${binding.hostPath} ➔ ${binding.guestPath}) không? Sau khi xóa, các tác vụ terminal / build mới tạo sẽ không còn ánh xạ thư mục đó.")
             },
             confirmButton = {
                 Button(
@@ -283,7 +283,7 @@ fun StorageMountSettingsScreen(
                         containerColor = MaterialTheme.colorScheme.error,
                     ),
                 ) {
-                    Text("确认删除")
+                    Text("Xác nhận xóa")
                 }
             },
             dismissButton = {
@@ -390,7 +390,7 @@ private fun AddMountDialog(
                     label = { Text("挂载点名称") },
                     placeholder = { Text("例如：相册照片、项目源码") },
                     isError = !nameValid,
-                    supportingText = { if (!nameValid) Text("请输入挂载点名称") },
+                    supportingText = { if (!nameValid) Text("Hãy nhập tên điểm mount") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -402,9 +402,9 @@ private fun AddMountDialog(
                     isError = hostPath.isNotBlank() && !hostPathValid,
                     supportingText = {
                         when {
-                            hostPath.isNotBlank() && hostCharInvalid -> Text("宿主路径不能包含冒号等非法字符")
+                            hostPath.isNotBlank() && hostCharInvalid -> Text("Đường dẫn host không được chứa ký tự không hợp lệ như dấu hai chấm")
                             hostPath.isNotBlank() && !hostRootAllowed ->
-                                Text("宿主路径必须位于 /storage/emulated/0 内")
+                                Text("Đường dẫn host phải nằm trong /storage/emulated/0")
                             else -> {}
                         }
                     },
@@ -419,12 +419,12 @@ private fun AddMountDialog(
                     isError = guestPath.isNotBlank() && !guestPathValid,
                     supportingText = {
                         when {
-                            guestPath.isNotBlank() && !guestPath.trim().startsWith("/") -> Text("路径必须以 / 开头")
-                            guestPath.isNotBlank() && guestNormalized == null -> Text("容器路径不允许包含 ..")
-                            guestPath.isNotBlank() && guestCharInvalid -> Text("容器路径不能包含冒号等非法字符")
+                            guestPath.isNotBlank() && !guestPath.trim().startsWith("/") -> Text("Đường dẫn phải bắt đầu bằng /")
+                            guestPath.isNotBlank() && guestNormalized == null -> Text("Đường dẫn container không được chứa ..")
+                            guestPath.isNotBlank() && guestCharInvalid -> Text("Đường dẫn container không được chứa ký tự bất hợp pháp như dấu hai chấm")
                             guestPath.isNotBlank() && !guestRootAllowed ->
-                                Text("容器路径必须位于 /mnt 或 /sdcard 内")
-                            guestDuplicate -> Text("该容器路径已被其他挂载点使用")
+                                Text("Đường dẫn container phải nằm trong /mnt hoặc /sdcard")
+                            guestDuplicate -> Text("Đường dẫn container này đã bị điểm mount khác dùng")
                             else -> {}
                         }
                     },

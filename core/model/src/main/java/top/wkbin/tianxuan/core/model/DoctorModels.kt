@@ -16,10 +16,10 @@ enum class DoctorStatus {
 }
 
 enum class DoctorCategory(val displayName: String) {
-    SANDBOX("沙箱与存储"),
-    NETWORK_SSL("网络与安全"),
-    PACKAGE_MANAGER("包管理与源"),
-    DEV_RUNTIMES("核心开发环境"),
+    SANDBOX("Sandbox và lưu trữ"),
+    NETWORK_SSL("Mạng và bảo mật"),
+    PACKAGE_MANAGER("Quản lý gói và nguồn"),
+    DEV_RUNTIMES("Môi trường phát triển cốt lõi"),
 }
 
 @Serializable

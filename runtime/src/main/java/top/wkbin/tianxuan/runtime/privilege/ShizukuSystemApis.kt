@@ -106,7 +106,7 @@ class ShizukuSystemApis(
             } ?: return BinderOutcome.ChannelUnavailable
             interpret(target.invoke(proxy, *args))
         } catch (invocation: InvocationTargetException) {
-            BinderOutcome.Failed(invocation.cause?.message ?: invocation.cause?.toString() ?: "未知宿主错误")
+            BinderOutcome.Failed(invocation.cause?.message ?: invocation.cause?.toString() ?: "Lỗi máy chủ không xác định")
         } catch (reflective: ReflectiveOperationException) {
             BinderOutcome.ChannelUnavailable
         }

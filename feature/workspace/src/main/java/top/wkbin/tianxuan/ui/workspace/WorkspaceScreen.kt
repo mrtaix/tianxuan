@@ -198,7 +198,7 @@ fun WorkspaceScreen(
                             DropdownMenuItem(text = { Text(stringResource(R.string.workspace_menu_import)) }, leadingIcon = { RuntimeIcon(RuntimeIconName.FolderDownload, Modifier.size(18.dp)) }, onClick = { actionsExpanded = false; showImport = true })
                             DropdownMenuItem(text = { Text(stringResource(R.string.workspace_menu_templates)) }, leadingIcon = { RuntimeIcon(RuntimeIconName.Package, Modifier.size(18.dp)) }, onClick = { actionsExpanded = false; showTemplateManager = true })
                             DropdownMenuItem(text = { Text(stringResource(R.string.workspace_menu_plugins)) }, leadingIcon = { RuntimeIcon(RuntimeIconName.Package, Modifier.size(18.dp)) }, onClick = { actionsExpanded = false; onOpenToolCenter() })
-                            DropdownMenuItem(text = { Text("工作流") }, leadingIcon = { RuntimeIcon(RuntimeIconName.Hub, Modifier.size(18.dp)) }, onClick = { actionsExpanded = false; onOpenWorkflows("") })
+                            DropdownMenuItem(text = { Text("Workflow") }, leadingIcon = { RuntimeIcon(RuntimeIconName.Hub, Modifier.size(18.dp)) }, onClick = { actionsExpanded = false; onOpenWorkflows("") })
                             DropdownMenuItem(text = { Text(stringResource(R.string.workspace_menu_settings)) }, leadingIcon = { RuntimeIcon(RuntimeIconName.Settings, Modifier.size(18.dp)) }, onClick = { actionsExpanded = false; onOpenWorkshopSettings() })
                         }
                     }

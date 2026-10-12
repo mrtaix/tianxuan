@@ -380,8 +380,8 @@ fun ChatScreen(
 
     // 模型·权限·主线·轮次 工具条：单栏浏览器分页模式下随对话页一起滑走（浏览器页全屏），
     // 双栏/纯对话模式固定在顶部。提出为局部 lambda 避免三处重复传参。
-    // onOpenBrowser 非空时工具条末尾追加"浏览器"入口（agent 有新动态时高亮）。
-    // onOpenRepository 非空即追加"仓库"入口（Git 分支管理）；未绑定项目时点击给提示而非隐藏。
+    // onOpenBrowser 非空时工具条末尾追加"Trình duyệt"入口（agent 有新动态时高亮）。
+    // onOpenRepository 非空即追加"Kho (repo)"入口（Git 分支管理）；未绑定项目时点击给提示而非隐藏。
     val noProjectHint = stringResource(R.string.chat_repository_no_project)
     val chatTopBar: @Composable (onOpenBrowser: (() -> Unit)?, browserHighlight: Boolean) -> Unit =
         { onOpenBrowser, browserHighlight ->
@@ -583,7 +583,7 @@ fun ChatScreen(
                                 ) {
                                     TextButton(onClick = { rightPaneBrowser = false }) {
                                         Text(
-                                            "终端",
+                                            "Terminal",
                                             fontWeight = if (rightPaneBrowser) FontWeight.Normal else FontWeight.Bold,
                                             color = if (rightPaneBrowser) {
                                                 MaterialTheme.colorScheme.onSurfaceVariant
@@ -594,7 +594,7 @@ fun ChatScreen(
                                     }
                                     TextButton(onClick = { rightPaneBrowser = true }) {
                                         Text(
-                                            "浏览器",
+                                            "Trình duyệt",
                                             fontWeight = if (rightPaneBrowser) FontWeight.Bold else FontWeight.Normal,
                                             color = if (rightPaneBrowser) {
                                                 MaterialTheme.colorScheme.primary
@@ -651,7 +651,7 @@ fun ChatScreen(
                                 )
                             }
                         } else {
-                            // 浏览器页：全屏，仅保留自己的极薄状态栏（末尾带"返回对话"）+ URL 栏；
+                            // 浏览器页：全屏，仅保留自己的极薄状态栏（末尾带"Trở về hội thoại"）+ URL 栏；
                             // 底部用贴合版 insets（无呼吸空间），URL 栏直接贴在底部导航栏上方
                             Box(
                                 Modifier
@@ -1208,7 +1208,7 @@ private fun ProactiveWorkflowBanner(
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier.height(28.dp),
                     ) {
-                        Text("运行", style = MaterialTheme.typography.labelSmall)
+                        Text("Chạy", style = MaterialTheme.typography.labelSmall)
                     }
                     IconButton(
                         onClick = { onDismiss(suggestion.workflowId) },

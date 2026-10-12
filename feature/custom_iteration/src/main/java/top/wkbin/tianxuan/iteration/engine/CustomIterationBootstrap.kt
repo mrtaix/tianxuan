@@ -52,16 +52,16 @@ object CustomIterationBootstrap {
         applicationId: String = DEV_APPLICATION_ID,
         appLabel: String = DEV_APP_LABEL,
     ): String? {
-        if (appLabel.isBlank()) return "应用名不能为空"
+        if (appLabel.isBlank()) return "Tên ứng dụng không được để trống"
         if (applicationId == OFFICIAL_APPLICATION_ID) {
-            return "预览包包名不能与正式版相同（$OFFICIAL_APPLICATION_ID），否则无法共存"
+            return "Tên gói bản xem trước không được trùng với bản chính thức ($OFFICIAL_APPLICATION_ID), nếu không sẽ không thể cùng tồn tại"
         }
         val segments = applicationId.split('.')
-        if (segments.size < 2) return "包名至少需要两段（reverse-DNS），实际为 \"$applicationId\""
+        if (segments.size < 2) return "Tên gói cần ít nhất hai phần (reverse-DNS), thực tế là \"$applicationId\""
         val segmentPattern = Regex("^[a-z][a-z0-9_]*$")
         for (seg in segments) {
             if (!segmentPattern.matches(seg)) {
-                return "包名段 \"$seg\" 非法：每段须以小写字母开头，仅含 [a-z0-9_]"
+                return "Phần tên gói \"$seg\" không hợp lệ: mỗi phần phải bắt đầu bằng chữ thường, chỉ chứa [a-z0-9_]"
             }
         }
         return null

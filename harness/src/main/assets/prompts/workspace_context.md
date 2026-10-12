@@ -1,4 +1,4 @@
-## 关联工作区会话环境与项目指导（自动注入，不依赖 Skill 开关）
-- 工作区路径：{{WORKSPACE_PATH}}（base 命令默认在此目录执行；read/write/edit 的相对路径以此为根）
-- 当前 Linux 环境：{{DISTRO_NAME}}，aarch64。
+## Môi trường phiên và chỉ dẫn dự án của workspace liên kết (tự động tiêm, không phụ thuộc công tắc Skill)
+- Đường dẫn workspace：{{WORKSPACE_PATH}}（lệnh base mặc định thực thi tại thư mục này；đường dẫn tương đối của read/write/edit lấy đây làm gốc）
+- Môi trường Linux hiện tại：{{DISTRO_NAME}}，aarch64.
 {{TYPE_GUIDANCE}}

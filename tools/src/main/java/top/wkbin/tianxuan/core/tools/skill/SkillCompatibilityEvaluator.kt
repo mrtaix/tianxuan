@@ -26,7 +26,7 @@ class SkillCompatibilityEvaluator(
             val hasOverlap = declaredRuntimes.any { it.lowercase() in supportedInTianXuan }
             if (!hasOverlap) {
                 unsupportedRuntimes.addAll(declaredRuntimes)
-                notes.add("该技能声明的目标运行环境 (${declaredRuntimes.joinToString()}) 与天玄 Android PRoot (arm64-v8a) 不匹配")
+                notes.add("Môi trường chạy mục tiêu khai báo của kỹ năng này (${declaredRuntimes.joinToString()}) không khớp với Thiên Huyền Android PRoot (arm64-v8a)")
             }
         }
 
@@ -41,7 +41,7 @@ class SkillCompatibilityEvaluator(
 
                 if (!isBuiltinLinuxCommand && !isRegisteredInTianXuan) {
                     missingTools.add(tool)
-                    notes.add("缺少前置工具依赖: `$tool`（可在沙箱内通过 apt 安装或在工具中心配置对应 Recipe）")
+                    notes.add("Thiếu phụ thuộc công cụ tiền đề: `$tool` (có thể cài qua apt trong sandbox hoặc cấu hình Recipe tương ứng trong trung tâm công cụ)")
                 }
             }
         }
@@ -54,7 +54,7 @@ class SkillCompatibilityEvaluator(
         }
 
         if (level == CompatibilityLevel.COMPATIBLE) {
-            notes.add("与当前天玄沙箱 (Debian arm64-v8a) 完全兼容，所有前置依赖均已就绪。")
+            notes.add("Hoàn toàn tương thích với sandbox Thien Huyen hiện tại (Debian arm64-v8a), tất cả phụ thuộc tiền đề đều đã sẵn sàng.")
         }
 
         return SkillCompatibilityResult(

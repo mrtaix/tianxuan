@@ -86,12 +86,12 @@ internal object WorkflowGraphEditor {
     }
 
     fun addNode(definition: WorkflowDefinition, node: WorkflowNode): WorkflowDefinition {
-        require(definition.nodes.none { it.id == node.id }) { "节点 ID 已存在" }
+        require(definition.nodes.none { it.id == node.id }) { "ID nút đã tồn tại" }
         return definition.copy(nodes = definition.nodes + node, updatedAt = System.currentTimeMillis())
     }
 
     fun updateNode(definition: WorkflowDefinition, node: WorkflowNode): WorkflowDefinition {
-        require(definition.nodes.any { it.id == node.id }) { "节点不存在" }
+        require(definition.nodes.any { it.id == node.id }) { "Node không tồn tại" }
         return definition.copy(
             nodes = definition.nodes.map { if (it.id == node.id) node else it },
             updatedAt = System.currentTimeMillis(),
@@ -105,27 +105,27 @@ internal object WorkflowGraphEditor {
     )
 
     fun connect(definition: WorkflowDefinition, edge: WorkflowEdge): WorkflowDefinition {
-        require(edge.fromNodeId != edge.toNodeId) { "节点不能连接到自身" }
+        require(edge.fromNodeId != edge.toNodeId) { "Node không thể kết nối tới chính nó" }
         require(definition.nodes.any { it.id == edge.fromNodeId } && definition.nodes.any { it.id == edge.toNodeId }) {
-            "连接引用了不存在的节点"
+            "Đường nối tham chiếu nút không tồn tại"
         }
         require(definition.edges.none { it.fromNodeId == edge.fromNodeId && it.toNodeId == edge.toNodeId }) {
-            "这两个节点已经连接"
+            "Hai nút này đã kết nối rồi"
         }
         val candidate = definition.copy(edges = definition.edges + edge, updatedAt = System.currentTimeMillis())
         require(WorkflowValidator.validate(candidate).none { it.field == "edges" && it.message.contains("无环图") }) {
-            "该连接会形成循环"
+            "Kết nối này sẽ tạo thành vòng lặp"
         }
         return candidate
     }
 
     fun updateEdge(definition: WorkflowDefinition, edge: WorkflowEdge): WorkflowDefinition {
-        require(definition.edges.any { it.id == edge.id }) { "连接不存在" }
+        require(definition.edges.any { it.id == edge.id }) { "Kết nối không tồn tại" }
         require(definition.nodes.any { it.id == edge.fromNodeId } && definition.nodes.any { it.id == edge.toNodeId }) {
-            "连接引用了不存在的节点"
+            "Đường nối tham chiếu nút không tồn tại"
         }
         val validationError = WorkflowEdgeCondition.validationError(edge)
-        require(validationError == null) { validationError ?: "连接配置无效" }
+        require(validationError == null) { validationError ?: "Cấu hình kết nối không hợp lệ" }
         return definition.copy(
             edges = definition.edges.map { if (it.id == edge.id) edge else it },
             updatedAt = System.currentTimeMillis(),

@@ -223,17 +223,17 @@ class ToolManager(
                                 )
                                 is InstallEvent.Completed -> installCompleted = true
                                 is InstallEvent.Failed -> installFailure = event.message
-                                is InstallEvent.Cancelled -> installFailure = "插件安装已取消"
+                                is InstallEvent.Cancelled -> installFailure = "Cài đặt plugin đã hủy"
                                 else -> Unit
                             }
                         }
                     } catch (throwable: Throwable) {
-                        installFailure = throwable.message ?: "插件安装失败"
+                        installFailure = throwable.message ?: "Cài plugin thất bại"
                     }
                     if (installCompleted) {
                         LocalPluginImportState.Succeeded(manifest.name, manifest.version)
                     } else {
-                        LocalPluginImportState.Failed(installFailure ?: "插件已解压，但安装流程未完成")
+                        LocalPluginImportState.Failed(installFailure ?: "Plugin đã giải nén, nhưng quy trình cài đặt chưa hoàn tất")
                     }
                 }
                     is AppResult.Failure -> LocalPluginImportState.Failed(result.error.message)
@@ -242,7 +242,7 @@ class ToolManager(
                 throw cancellation
             } catch (throwable: Throwable) {
                 _localPluginImportState.value = LocalPluginImportState.Failed(
-                    "本地插件安装失败：${throwable.message ?: "未知错误"}",
+                    "Cài plugin cục bộ thất bại: ${throwable.message ?: "未知错误"}",
                 )
             }
         }.also { localPluginImportJob = it }
@@ -372,7 +372,7 @@ class ToolManager(
                 installTaskRepository.upsert(
                     task.copy(
                         state = TASK_INTERRUPTED,
-                        message = "检测到应用进程被中断，请重试",
+                        message = "Phát hiện tiến trình ứng dụng bị gián đoạn, hãy thử lại",
                         updatedAt = System.currentTimeMillis(),
                     ),
                 )
@@ -390,7 +390,7 @@ class ToolManager(
                         distroId = taskDistro,
                         toolId = task.toolId,
                         event = TASK_INTERRUPTED,
-                        message = "${task.operation} 任务在应用进程终止后被标记为中断",
+                        message = "Tác vụ ${task.operation} bị đánh dấu là gián đoạn sau khi tiến trình ứng dụng kết thúc",
                     ),
                 )
             }
@@ -414,7 +414,7 @@ class ToolManager(
                             distroId = distroId,
                             toolId = manifest.id,
                             event = "RECOVERED",
-                            message = "检测到上次安装被中断，请重试",
+                            message = "Phát hiện lần cài đặt trước bị gián đoạn, hãy thử lại",
                         ),
                     )
                 }
@@ -461,7 +461,7 @@ class ToolManager(
             return@flow
         }
         val distroId = currentDistroId()
-        val bundleTitle = "开发套件装配"
+        val bundleTitle = "Lắp ráp bộ công cụ phát triển"
         installMutex.withLock {
             _isBatchInstalling.value = true
             backgroundTaskRegistry.start(BUNDLE_TASK_ID)
@@ -475,7 +475,7 @@ class ToolManager(
             val selectedComps = top.wkbin.tianxuan.core.model.BuiltinPluginBundles.bundles.flatMap { it.components }.filter { it.id in componentIds }
             val compNames = selectedComps.joinToString("、") { it.name }
 
-            val initialMsg = "正在准备 [$compNames] 批量装配流水线..."
+            val initialMsg = "Đang chuẩn bị dây chuyền lắp ráp hàng loạt [$compNames]..."
             _bundleInstallState.value = initialMsg
             appendBundleInstallLog(initialMsg)
             notificationNotifier.showProgress("dev_bundle_install", bundleTitle, initialMsg, 0.05f)
@@ -485,22 +485,22 @@ class ToolManager(
                 steps.forEachIndexed { index, step ->
                     val progress = 0.1f + 0.8f * (index.toFloat() / steps.size.toFloat())
                     val shortDesc = when {
-                        index == 0 -> "正在创建 dpkg 配置目录..."
-                        index == 1 -> "正在写入 PRoot dpkg 安全策略..."
-                        index == 2 -> "正在清理 dpkg/apt 残留锁与临时文件..."
-                        "dpkg --remove" in step -> "正在清理无法完成的可选软件包事务..."
-                        "dpkg --configure" in step -> "正在恢复未完成的 dpkg 事务..."
+                        index == 0 -> "Đang tạo thư mục cấu hình dpkg..."
+                        index == 1 -> "Đang ghi chính sách bảo mật dpkg của PRoot..."
+                        index == 2 -> "Đang dọn khóa còn sót và tệp tạm của dpkg/apt..."
+                        "dpkg --remove" in step -> "Đang dọn transaction gói phần mềm tùy chọn không thể hoàn tất..."
+                        "dpkg --configure" in step -> "Đang khôi phục giao dịch dpkg chưa hoàn tất..."
                         // apt-get 后面带有 -o 参数，不能用固定的
                         // "apt-get update" 子串判断，否则会误落入安装文案。
-                        "apt-get" in step && " update " in step -> "正在同步软件源并聚合下载全部依赖包..."
-                        "apt-get" in step -> "正在安装 [$compNames] 所需系统依赖..."
-                        "gradle" in step -> "正在部署并链接 Gradle 8.14.2 自动化构建环境..."
-                        "setup_android_core" in step -> "正在部署 Android SDK 平台包与 Gradle 构建环境 (国内镜像加速)..."
-                        "termux_ndk" in step -> "正在下载、校验并原子装配 Linux AArch64 NDK..."
-                        "jadx" in step -> "正在部署 JADX-CLI 源码反编译工具包..."
-                        "android" in step -> "正在配置 Android SDK 官方开发工具链..."
-                        "flutter" in step -> "正在拉取并配置 Flutter SDK 跨端开发环境..."
-                        else -> "正在执行环境准备步骤..."
+                        "apt-get" in step && " update " in step -> "Đang đồng bộ nguồn phần mềm và tải gộp toàn bộ gói phụ thuộc..."
+                        "apt-get" in step -> "Đang cài đặt các phụ thuộc hệ thống cần thiết cho [$compNames]..."
+                        "gradle" in step -> "Đang triển khai và liên kết môi trường build tự động Gradle 8.14.2..."
+                        "setup_android_core" in step -> "Đang triển khai gói nền tảng Android SDK và môi trường build Gradle (mirror nội địa tăng tốc)..."
+                        "termux_ndk" in step -> "Đang tải, kiểm tra và lắp ráp nguyên tử Linux AArch64 NDK..."
+                        "jadx" in step -> "Đang triển khai bộ công cụ decompile mã nguồn JADX-CLI..."
+                        "android" in step -> "Đang cấu hình chuỗi công cụ phát triển chính thức Android SDK..."
+                        "flutter" in step -> "Đang kéo và cấu hình môi trường phát triển đa nền tảng Flutter SDK..."
+                        else -> "Đang thực thi bước chuẩn bị môi trường..."
                     }
                     // 重型下载型脚本 (SDK 平台包 ~60MB / Gradle ~120MB / Flutter SDK git clone) 放宽超时
                     val stepTimeoutMs = when {
@@ -508,14 +508,14 @@ class ToolManager(
                             "setup_android_core.sh" in step || "setup_flutter.sh" in step -> HEAVY_SETUP_STEP_TIMEOUT_MS
                         else -> DEFAULT_STEP_TIMEOUT_MS
                     }
-                    val stepLabel = "[步骤 ${index + 1}/${steps.size}] $shortDesc"
+                    val stepLabel = "[Bước ${index + 1}/${steps.size}] $shortDesc"
                     _bundleInstallState.value = stepLabel
                     appendBundleInstallLog(stepLabel)
                     notificationNotifier.showProgress("dev_bundle_install", bundleTitle, stepLabel, progress)
                     emit(InstallEvent.Progress("components", stepLabel, progress))
 
                     val flutterArchive = if ("setup_flutter.sh" in step) {
-                        appendBundleInstallLog("==> [TianXuan] 使用应用内断点下载器获取 Flutter SDK（不在 PRoot 内调用 curl）...")
+                        appendBundleInstallLog("==> [TianXuan] Dùng trình tải tiếp tục trong ứng dụng để lấy Flutter SDK (không gọi curl trong PRoot)...")
                         var lastFlutterLogAt = 0L
                         var lastFlutterLoggedBytes = -1L
                         flutterSdkDownloader.prepare(distroId) { downloaded, total ->
@@ -526,7 +526,7 @@ class ToolManager(
                             val shouldLog = downloaded == 0L || completed ||
                                 (downloaded > lastFlutterLoggedBytes && now - lastFlutterLogAt >= FLUTTER_DOWNLOAD_LOG_INTERVAL_MS)
                             if (shouldLog) {
-                                appendBundleInstallLog("[TianXuan] Flutter SDK 应用内下载：$downloadedMb MB$totalText")
+                                appendBundleInstallLog("[TianXuan] Tải Flutter SDK trong ứng dụng: $downloadedMb MB$totalText")
                                 lastFlutterLoggedBytes = downloaded
                                 lastFlutterLogAt = now
                             }
@@ -548,27 +548,27 @@ class ToolManager(
                     result.stdout.trim().takeIf { it.isNotBlank() }?.let { appendBundleInstallLog(it.takeLast(4000)) }
                     result.stderr.trim().takeIf { it.isNotBlank() }?.let { appendBundleInstallLog(it.takeLast(4000)) }
                     if (!result.isSuccess) {
-                        error("安装步骤执行失败: ${result.stderr.ifBlank { result.stdout }.takeLast(800)}")
+                        error("Thực thi bước cài đặt thất bại: ${result.stderr.ifBlank { result.stdout }.takeLast(800)}")
                     }
                 }
 
-                _bundleInstallState.value = "正在验证已安装组件状态..."
-                appendBundleInstallLog("正在验证已安装组件状态...")
-                notificationNotifier.showProgress("dev_bundle_install", bundleTitle, "正在验证状态...", 0.95f)
-                emit(InstallEvent.Progress("components", "正在验证已安装组件状态...", 0.95f))
+                _bundleInstallState.value = "Đang xác minh trạng thái thành phần đã cài..."
+                appendBundleInstallLog("Đang xác minh trạng thái thành phần đã cài...")
+                notificationNotifier.showProgress("dev_bundle_install", bundleTitle, "Đang xác minh trạng thái...", 0.95f)
+                emit(InstallEvent.Progress("components", "Đang xác minh trạng thái thành phần đã cài...", 0.95f))
 
                 val installed = probeInstalledComponents()
                 val missing = componentIds - installed
                 if (missing.isNotEmpty()) {
-                    error("开发套件安装未完成，缺少组件: ${missing.joinToString()}")
+                    error("Cài đặt bộ công cụ phát triển chưa hoàn tất, thiếu thành phần: ${missing.joinToString()}")
                 }
 
-                notificationNotifier.showSuccess("dev_bundle_install", bundleTitle, "已成功就绪")
+                notificationNotifier.showSuccess("dev_bundle_install", bundleTitle, "Đã sẵn sàng thành công")
                 emit(InstallEvent.Completed("components", "1.0.0"))
             } catch (e: Exception) {
-                appendBundleInstallLog("安装失败: ${e.message ?: "装配异常"}")
-                notificationNotifier.showFailed("dev_bundle_install", bundleTitle, e.message ?: "装配异常")
-                emit(InstallEvent.Failed("components", e.message ?: "装配异常"))
+                appendBundleInstallLog("Cài đặt thất bại: ${e.message ?: "装配异常"}")
+                notificationNotifier.showFailed("dev_bundle_install", bundleTitle, e.message ?: "Bất thường khi lắp ráp")
+                emit(InstallEvent.Failed("components", e.message ?: "Bất thường khi lắp ráp"))
                 throw e
             } finally {
                 _isBatchInstalling.value = false
@@ -636,11 +636,11 @@ class ToolManager(
     }
 
     private fun installInternal(toolId: String, operation: String): Flow<InstallEvent> = flow {
-        require(isToolSupported(toolId)) { "暂不支持安装工具：$toolId" }
+        require(isToolSupported(toolId)) { "Tạm chưa hỗ trợ cài công cụ: $toolId" }
         requireManifestEnabled(toolId)
         val distroId = currentDistroId()
         val currentJob = coroutineContext[Job]
-            ?: error("安装任务必须运行在协程中")
+            ?: error("Nhiệm vụ cài đặt phải chạy trong coroutine")
         val previousTool = toolRepository.findById(distroId, toolId)
         val preservePreviousInstall = operation == OPERATION_UPDATE &&
             previousTool?.installedVersion != null
@@ -649,9 +649,9 @@ class ToolManager(
             // 再启动，那条路径下 currentJob 与表内条目是同一个实例。只有**别的** Job 正在跑同一
             // 工具时才拒绝，否则 startInstall 会被自己刚登记的条目挡死。
             val running = installJobs.putIfAbsent(toolId, currentJob)
-            check(running == null || running === currentJob) { "工具正在安装：$toolId" }
+            check(running == null || running === currentJob) { "Công cụ đang được cài đặt：$toolId" }
             installLogRepository.deleteForTool(distroId, toolId)
-            updateProgress(ToolInstallProgress(toolId, "准备安装", 0f))
+            updateProgress(ToolInstallProgress(toolId, "Chuẩn bị cài đặt", 0f))
             toolRepository.updateState(distroId, toolId, ToolState.INSTALLING.name)
             installTaskRepository.upsert(
                 InstallTaskEntity(
@@ -659,7 +659,7 @@ class ToolManager(
                     toolId = toolId,
                     operation = operation,
                     state = TASK_RUNNING,
-                    message = "任务开始",
+                    message = "Bắt đầu nhiệm vụ",
                 ),
             )
         }
@@ -695,7 +695,7 @@ class ToolManager(
             if (preservePreviousInstall) {
                 val current = requireAdapter(toolId).verify()
                 check(current.isSuccess) {
-                    "更新前验证失败：${current.stderr.ifBlank { current.stdout }.trim()}"
+                    "Xác minh trước khi cập nhật thất bại: ${current.stderr.ifBlank { current.stdout }.trim()}"
                 }
             }
             transaction = installTransactionManager.begin(distroId, toolId, preservePreviousInstall)
@@ -735,7 +735,7 @@ class ToolManager(
                         installedVersion = installedVer,
                     )
                     notificationNotifier.showSuccess(toolId, toolName, installedVer)
-                    updateTask(distroId, toolId, TASK_COMPLETED, "安装完成")
+                    updateTask(distroId, toolId, TASK_COMPLETED, "Cài đặt hoàn tất")
                 }
                 emit(safeEvent)
             }
@@ -744,7 +744,7 @@ class ToolManager(
             notificationNotifier.cancel(toolId)
             withContext(NonCancellable) {
                 settleFailure(cancelledByUser = true)
-                updateTask(distroId, toolId, TASK_CANCELLED, "用户取消安装")
+                updateTask(distroId, toolId, TASK_CANCELLED, "Người dùng hủy cài đặt")
                 val event = InstallEvent.Cancelled(toolId)
                 recordEvent(distroId, event)
                 updateFromEvent(event)
@@ -753,7 +753,7 @@ class ToolManager(
         } catch (throwable: Throwable) {
             val event = InstallEvent.Failed(
                 toolId,
-                secretRedactor.redact(throwable.message ?: "安装流程异常终止"),
+                secretRedactor.redact(throwable.message ?: "Quy trình cài đặt chấm dứt bất thường"),
             )
             notificationNotifier.showFailed(toolId, toolName, event.message)
             withContext(NonCancellable) {
@@ -775,7 +775,7 @@ class ToolManager(
                 if (!cancelled && _installProgress.value[toolId]?.terminal != true) {
                     // An adapter that ended without Completed/Failed is not a successful install.
                     settleFailure(cancelledByUser = false)
-                    val event = InstallEvent.Failed(toolId, "安装流程未完成")
+                    val event = InstallEvent.Failed(toolId, "Quy trình cài đặt chưa hoàn tất")
                     updateTask(distroId, toolId, TASK_FAILED, event.message)
                     recordEvent(distroId, event)
                     updateFromEvent(event)
@@ -787,16 +787,16 @@ class ToolManager(
     fun update(toolId: String): Flow<InstallEvent> = installInternal(toolId, OPERATION_UPDATE)
 
     fun cancelInstall(toolId: String) {
-        installJobs[toolId]?.cancel(CancellationException("用户取消安装"))
+        installJobs[toolId]?.cancel(CancellationException("Người dùng hủy cài đặt"))
     }
 
     suspend fun uninstall(toolId: String, deleteData: Boolean = false) {
-        require(isToolSupported(toolId)) { "暂不支持卸载工具：$toolId" }
+        require(isToolSupported(toolId)) { "Tạm thời chưa hỗ trợ gỡ cài đặt công cụ：$toolId" }
         installMutex.withLock {
             // 必须用 containsKey：ConcurrentHashMap 覆写了 contains，使其等价于
             // containsValue（历史遗留语义），写成 `toolId !in installJobs` 会去比对
             // 全部 Job 值，永远为真，这道「安装中禁止卸载」的闸门等于不存在。
-            check(!installJobs.containsKey(toolId)) { "工具正在安装：$toolId" }
+            check(!installJobs.containsKey(toolId)) { "Công cụ đang được cài đặt：$toolId" }
         }
         linuxRuntime.listBackground()
             .filter { it.toolId == toolId }
@@ -812,13 +812,13 @@ class ToolManager(
                 toolId = toolId,
                 operation = OPERATION_UNINSTALL,
                 state = TASK_RUNNING,
-                message = "卸载任务开始",
+                message = "Tác vụ gỡ cài đặt bắt đầu",
             ),
         )
         try {
             val outcome = requireAdapter(toolId, requireEnabled = false).uninstall(deleteData).toUninstallOutcome()
             val event = if (outcome.success) "UNINSTALLED" else "UNINSTALL_FAILED"
-            val safeMessage = secretRedactor.redact(outcome.message.ifBlank { "卸载完成" })
+            val safeMessage = secretRedactor.redact(outcome.message.ifBlank { "Gỡ cài đặt hoàn tất" })
             toolRepository.updateStateAndInstalledVersion(
                 distroId = distroId,
                 id = toolId,
@@ -833,10 +833,10 @@ class ToolManager(
             updateTask(distroId, toolId, if (outcome.success) TASK_COMPLETED else TASK_FAILED, safeMessage)
             installLogRepository.insert(InstallLogEntity(distroId = distroId, toolId = toolId, event = event, message = safeMessage))
         } catch (cancellation: CancellationException) {
-            withContext(NonCancellable) { updateTask(distroId, toolId, TASK_CANCELLED, "用户取消卸载") }
+            withContext(NonCancellable) { updateTask(distroId, toolId, TASK_CANCELLED, "Người dùng hủy gỡ cài") }
             throw cancellation
         } catch (throwable: Throwable) {
-            val message = secretRedactor.redact(throwable.message ?: "卸载流程异常终止")
+            val message = secretRedactor.redact(throwable.message ?: "Quy trình gỡ cài đặt bị kết thúc bất thường")
             updateTask(distroId, toolId, TASK_FAILED, message)
             throw throwable
         }
@@ -884,7 +884,7 @@ class ToolManager(
     }
 
     suspend fun verify(toolId: String): ToolVerification {
-        require(isToolSupported(toolId)) { "暂不支持验证工具：$toolId" }
+        require(isToolSupported(toolId)) { "Tạm chưa hỗ trợ công cụ xác minh: $toolId" }
         requireManifestEnabled(toolId)
         val result = requireAdapter(toolId).verify()
         val safeStdout = secretRedactor.redact(result.stdout)
@@ -894,9 +894,9 @@ class ToolManager(
             healthy = result.isSuccess,
             version = safeStdout.trim().lineSequence().firstOrNull()?.takeIf { it.isNotBlank() },
             detail = if (result.isSuccess) {
-                safeStdout.trim().ifBlank { "命令执行成功" }
+                safeStdout.trim().ifBlank { "Lệnh thực thi thành công" }
             } else {
-                safeStderr.ifBlank { safeStdout }.trim().ifBlank { "命令退出码 ${result.exitCode}" }
+                safeStderr.ifBlank { safeStdout }.trim().ifBlank { "Mã thoát lệnh ${result.exitCode}" }
             },
         )
         _verifications.value = _verifications.value + (toolId to verification)
@@ -932,9 +932,9 @@ class ToolManager(
 
     private suspend fun requireInstalledTool(toolId: String): ToolEntity {
         val tool = toolRepository.findById(currentDistroId(), toolId)
-            ?: error("工具不在当前清单中：$toolId")
+            ?: error("Công cụ không nằm trong danh sách hiện tại: $toolId")
         check(tool.state == ToolState.INSTALLED.name || tool.state == ToolState.UPDATE_AVAILABLE.name) {
-            "工具尚未安装：${tool.name}"
+            "Công cụ chưa cài: ${tool.name}"
         }
         return tool
     }
@@ -945,7 +945,7 @@ class ToolManager(
     private fun requireAdapter(
         toolId: String,
         requireEnabled: Boolean = true,
-    ): ToolRuntimeAdapter = checkNotNull(getAdapter(toolId)) { "暂不支持工具：$toolId" }.also {
+    ): ToolRuntimeAdapter = checkNotNull(getAdapter(toolId)) { "Tạm chưa hỗ trợ công cụ: $toolId" }.also {
         if (requireEnabled) {
             requireManifestEnabled(toolId)
         }
@@ -953,8 +953,8 @@ class ToolManager(
 
     private fun requireManifestEnabled(toolId: String) {
         val manifest = toolRepository.manifest(toolId)
-            ?: error("工具不在当前清单中：$toolId")
-        check(manifest.enabled) { "工具已被 Registry 暂停：${manifest.name}" }
+            ?: error("Công cụ không nằm trong danh sách hiện tại: $toolId")
+        check(manifest.enabled) { "Công cụ đã bị Registry tạm dừng: ${manifest.name}" }
     }
 
     private suspend fun recordEvent(distroId: String, event: InstallEvent) {
@@ -984,10 +984,10 @@ class ToolManager(
             is InstallEvent.Started -> ToolInstallProgress(event.toolId, "开始安装", 0f)
             is InstallEvent.Progress -> ToolInstallProgress(event.toolId, event.message, event.progress)
             is InstallEvent.Output -> ToolInstallProgress(event.toolId, event.line)
-            is InstallEvent.Completed -> ToolInstallProgress(event.toolId, "安装完成", 1f, terminal = true)
+            is InstallEvent.Completed -> ToolInstallProgress(event.toolId, "Cài đặt hoàn tất", 1f, terminal = true)
             is InstallEvent.Failed -> ToolInstallProgress(event.toolId, event.message, terminal = true)
-            is InstallEvent.RolledBack -> ToolInstallProgress(event.toolId, "安装失败，正在回滚")
-            is InstallEvent.Cancelled -> ToolInstallProgress(event.toolId, "已取消安装", terminal = true)
+            is InstallEvent.RolledBack -> ToolInstallProgress(event.toolId, "Cài đặt thất bại, đang rollback")
+            is InstallEvent.Cancelled -> ToolInstallProgress(event.toolId, "Đã hủy cài đặt", terminal = true)
         }
         updateProgress(state)
     }
@@ -1033,10 +1033,10 @@ class ToolManager(
             message = message,
         )
         is InstallEvent.Output -> InstallLogEntity(distroId = distroId, toolId = toolId, event = "OUTPUT", message = line)
-        is InstallEvent.Completed -> InstallLogEntity(distroId = distroId, toolId = toolId, event = "COMPLETED", message = "安装完成${version?.let { "：$it" } ?: ""}")
+        is InstallEvent.Completed -> InstallLogEntity(distroId = distroId, toolId = toolId, event = "COMPLETED", message = "Cài đặt hoàn tất${version?.let { "：$it" } ?: ""}")
         is InstallEvent.Failed -> InstallLogEntity(distroId = distroId, toolId = toolId, event = "FAILED", message = message)
-        is InstallEvent.RolledBack -> InstallLogEntity(distroId = distroId, toolId = toolId, event = "ROLLED_BACK", message = "已回滚安装事务")
-        is InstallEvent.Cancelled -> InstallLogEntity(distroId = distroId, toolId = toolId, event = "CANCELLED", message = "用户取消安装")
+        is InstallEvent.RolledBack -> InstallLogEntity(distroId = distroId, toolId = toolId, event = "ROLLED_BACK", message = "Đã khôi phục giao dịch cài đặt")
+        is InstallEvent.Cancelled -> InstallLogEntity(distroId = distroId, toolId = toolId, event = "CANCELLED", message = "Người dùng hủy cài đặt")
     }
 
     private suspend fun ToolManifest.toEntity(distroId: String, existing: ToolEntity?) = ToolEntity(

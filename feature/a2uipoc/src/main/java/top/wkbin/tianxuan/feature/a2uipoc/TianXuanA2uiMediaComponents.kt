@@ -33,7 +33,7 @@ internal class TianXuanImageComponent : A2uiBasicCatalogV1.Image {
         variant: A2uiBasicCatalogV1.Image.Variant,
         accessibility: AccessibilityAttributes?,
         modifier: Modifier,
-    ) = MediaPlaceholder("🖼 图片：${description.orEmpty().ifBlank { url }}", modifier)
+    ) = MediaPlaceholder("🖼 Ảnh: ${description.orEmpty().ifBlank { url }}", modifier)
 }
 
 internal class TianXuanVideoComponent : A2uiBasicCatalogV1.Video {
@@ -42,7 +42,7 @@ internal class TianXuanVideoComponent : A2uiBasicCatalogV1.Video {
         url: String,
         accessibility: AccessibilityAttributes?,
         modifier: Modifier,
-    ) = MediaPlaceholder("🎬 视频：$url", modifier)
+    ) = MediaPlaceholder("🎬 Video: $url", modifier)
 }
 
 internal class TianXuanAudioPlayerComponent : A2uiBasicCatalogV1.AudioPlayer {
@@ -52,7 +52,7 @@ internal class TianXuanAudioPlayerComponent : A2uiBasicCatalogV1.AudioPlayer {
         description: String?,
         accessibility: AccessibilityAttributes?,
         modifier: Modifier,
-    ) = MediaPlaceholder("🎧 音频：${description.orEmpty().ifBlank { url }}", modifier)
+    ) = MediaPlaceholder("🎧 Âm thanh: ${description.orEmpty().ifBlank { url }}", modifier)
 }
 
 internal object TianXuanUrlOpener : A2uiUrlOpener {

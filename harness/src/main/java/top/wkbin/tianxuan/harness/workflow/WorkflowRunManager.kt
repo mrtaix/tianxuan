@@ -126,7 +126,7 @@ class WorkflowRunManager(
             val reconciled = state.copy(
                 status = WorkflowRunStatus.CANCELLED,
                 finishedAt = System.currentTimeMillis(),
-                error = "进程曾被系统终止，可重新运行",
+                error = "Tiến trình từng bị hệ thống kết thúc, có thể chạy lại",
             )
             runCatching { repository.saveExecution(reconciled, row.triggerSource, row.scheduleId) }
         }
@@ -196,12 +196,12 @@ class WorkflowRunManager(
         if (state.value is RuntimeState.NotInitialized) {
             val restored = runCatching { linuxRuntime.restoreInstalledState() }.getOrDefault(false)
             if (!restored && state.value !is RuntimeState.Ready) {
-                return "Linux 沙箱尚未初始化，无法运行工作流"
+                return "Sandbox Linux chưa được khởi tạo, không thể chạy workflow"
             }
         }
         val ready = withTimeoutOrNull(RUNTIME_READY_TIMEOUT_MS) {
             state.first { it is RuntimeState.Ready }
-        } ?: return "等待 Linux 沙箱就绪超时（${RUNTIME_READY_TIMEOUT_MS / 1000} 秒），工作流未执行"
+        } ?: return "Chờ sandbox Linux sẵn sàng quá thời gian (${RUNTIME_READY_TIMEOUT_MS / 1000} giây), workflow chưa thực thi"
         return null
     }
 

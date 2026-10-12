@@ -94,15 +94,15 @@ object A2uiSurfaceBus {
      */
     fun publishFromTool(args: JsonObject, sessionId: String = ""): Pair<Boolean, String> {
         val payload = parseToolArgs(args, sessionId).getOrElse { failure ->
-            return false to "render_surface 参数校验未通过：${failure.message}。请修正参数后重新调用。"
+            return false to "Kiểm tra tham số render_surface không qua: ${failure.message}. Vui lòng sửa tham số rồi gọi lại."
         }
         publish(payload)
         return true to buildString {
-            append("已提交 A2UI 界面「${payload.title}」（surfaceId=${payload.surfaceId}，")
-            append("${payload.messageCount} 条协议消息）。界面已在用户聊天流中渲染为原生组件；")
-            append("如需更新该界面，请用相同 surfaceId 再次调用并只携带 updateComponents 消息；")
-            append("如需移除界面，发送 deleteSurface 消息。用户与界面的交互（按钮点击等）")
-            append("会以 [A2UI 界面事件] 消息回传给你。")
+            append("Đã nộp giao diện A2UI «${payload.title}» (surfaceId=${payload.surfaceId}, ")
+            append("${payload.messageCount} thông điệp giao thức). Giao diện đã được render thành component gốc trong luồng chat của người dùng;")
+            append("Nếu cần cập nhật giao diện này, hãy gọi lại với cùng surfaceId và chỉ kèm tin nhắn updateComponents; ")
+            append("Nếu cần gỡ giao diện, gửi tin nhắn deleteSurface. Tương tác của người dùng với giao diện (bấm nút v.v.) ")
+            append("Sẽ được trả lại cho bạn dưới dạng tin nhắn [Sự kiện giao diện A2UI].")
         }
     }
 
@@ -122,35 +122,35 @@ object A2uiSurfaceBus {
 
     /** 把用户交互事件格式化为注入 agent 会话的消息文本。 */
     fun formatUserEvent(event: A2uiUserEvent): String = buildString {
-        append("[A2UI 界面事件] 用户在界面「${event.surfaceTitle}」（surfaceId=${event.surfaceId}）")
-        append("上触发了交互：组件 componentId=${event.componentId}，事件 eventName=${event.eventName}")
-        if (event.context.isNotEmpty()) append("，携带 context=${event.context}")
-        append("。这是 A2UI 界面的用户交互回传，请根据事件语义继续处理；")
-        append("如需更新界面，用相同 surfaceId 调用 render_surface 并只携带 updateComponents 消息。")
+        append("[Sự kiện giao diện A2UI] Người dùng tại giao diện \"${event.surfaceTitle}\" (surfaceId=${event.surfaceId})")
+        append("đã kích hoạt tương tác: thành phần componentId=${event.componentId}, sự kiện eventName=${event.eventName}")
+        if (event.context.isNotEmpty()) append("，mang theo context=${event.context}")
+        append(". Đây là phản hồi tương tác người dùng của giao diện A2UI, hãy xử lý tiếp theo ngữ nghĩa sự kiện; ")
+        append("Nếu cần cập nhật giao diện, gọi render_surface với cùng surfaceId và chỉ kèm thông điệp updateComponents.")
     }
 
     /** 把引擎运行时错误格式化为注入 agent 会话的消息文本（否则界面只会静默转圈）。 */
     fun formatErrorEvent(event: A2uiErrorEvent): String = buildString {
-        append("[A2UI 界面错误] 界面「${event.surfaceTitle}」（surfaceId=${event.surfaceId}）")
-        append("渲染失败：[${event.code}] ${event.message}。")
-        append("请修正组件定义（属性名/类型/子组件引用必须符合 Catalog），")
-        append("用相同 surfaceId 重新调用 render_surface 并携带完整 components 列表（含 id=root 的顶部组件）。")
+        append("[Lỗi giao diện A2UI] Giao diện «${event.surfaceTitle}» (surfaceId=${event.surfaceId})")
+        append("Render thất bại: [${event.code}] ${event.message}.")
+        append("Hãy sửa định nghĩa thành phần (tên thuộc tính/kiểu/tham chiếu thành phần con phải phù hợp Catalog),")
+        append("Gọi lại render_surface với cùng surfaceId và kèm danh sách components đầy đủ (gồm component gốc id=root).")
     }
 
     internal fun parseToolArgs(args: JsonObject, sessionId: String = ""): Result<A2uiSurfacePayload> = runCatching {
         val surfaceId = args["surfaceId"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
-        require(surfaceId.isNotEmpty()) { "缺少 surfaceId" }
+        require(surfaceId.isNotEmpty()) { "Thiếu surfaceId" }
         require(surfaceId.length <= MAX_ID_CHARS && SURFACE_ID_REGEX.matches(surfaceId)) {
-            "surfaceId 仅允许字母数字与 _ . : -，且不超过 $MAX_ID_CHARS 字符"
+            "surfaceId chỉ cho phép chữ số và _ . : -, và không vượt quá $MAX_ID_CHARS ký tự"
         }
-        val title = args["title"]?.jsonPrimitive?.contentOrNull?.trim().takeIf { !it.isNullOrBlank() } ?: "A2UI 界面"
-        require(title.length <= MAX_TITLE_CHARS) { "title 不超过 $MAX_TITLE_CHARS 字符" }
+        val title = args["title"]?.jsonPrimitive?.contentOrNull?.trim().takeIf { !it.isNullOrBlank() } ?: "Giao diện A2UI"
+        require(title.length <= MAX_TITLE_CHARS) { "title không vượt quá $MAX_TITLE_CHARS ký tự" }
         val rawMessages = args["messages"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
         require(rawMessages.length in MIN_JSON_CHARS..MAX_JSON_CHARS) {
-            "messages 必须是 A2UI 协议消息数组的 JSON 字符串（长度 $MIN_JSON_CHARS..$MAX_JSON_CHARS）"
+            "messages phải là chuỗi JSON của mảng tin nhắn giao thức A2UI (độ dài $MIN_JSON_CHARS..$MAX_JSON_CHARS)"
         }
         val messagesJson = parseMessagesArray(rawMessages).toString()
-        deepValidator?.invoke(messagesJson)?.let { error -> error("A2UI 协议校验失败：$error") }
+        deepValidator?.invoke(messagesJson)?.let { error -> error("Kiểm tra giao thức A2UI thất bại: $error") }
         A2uiSurfacePayload(
             surfaceId = surfaceId,
             title = title,
@@ -187,20 +187,20 @@ object A2uiSurfaceBus {
             if (repaired is JsonArray) return validateArrayShape(repaired)
         }
         throw IllegalArgumentException(
-            "messages 必须是 A2UI 协议消息数组的 JSON 字符串（首条 createSurface，" +
-                "其后 updateComponents/deleteSurface）；不要对 messages 参数做二次转义，" +
-                "直接给出数组原文即可",
+            "messages phải là chuỗi JSON của mảng tin nhắn giao thức A2UI (tin đầu tiên createSurface, " +
+                "sau đó updateComponents/deleteSurface); đừng escape hai lần với tham số messages," +
+                "Đưa ra nguyên văn mảng trực tiếp là được",
         )
     }
 
     private fun validateArrayShape(array: JsonArray): JsonArray {
         require(array.isNotEmpty() && array.all { it is JsonObject && it.containsKey("version") }) {
-            "messages 数组每项必须是带 version 的 A2UI 协议消息对象"
+            "messages mỗi phần tử mảng phải là đối tượng tin nhắn giao thức A2UI có version"
         }
         array.forEach { message ->
             val version = (message as JsonObject)["version"]?.jsonPrimitive?.contentOrNull
             require(version in SUPPORTED_VERSIONS) {
-                "协议 version 仅支持 $SUPPORTED_VERSIONS（收到：$version）"
+                "Giao thức version chỉ hỗ trợ $SUPPORTED_VERSIONS (nhận được: $version)"
             }
         }
         return array
@@ -224,9 +224,9 @@ object A2uiSurfaceBus {
         """[{"version":"v0.9","createSurface":{"surfaceId":"$surfaceId","catalogId":"${A2uiSurfaceContract.CATALOG_ID}"}},
 {"version":"v0.9","updateComponents":{"surfaceId":"$surfaceId","components":[
 {"id":"root","component":"Column","children":["title","card","hint"]},
-{"id":"title","component":"Text","text":"天玄 A2UI PoC"},
+{"id":"title","component":"Text","text":"Thiên Huyền A2UI PoC"},
 {"id":"card","component":"Card","child":"cardText"},
-{"id":"cardText","component":"Text","text":"这段界面由智能体通过 render_surface 生成，渲染为原生 Compose 组件。"},
-{"id":"hint","component":"Text","text":"组件范围由 Catalog 声明，智能体无法执行任意代码。"}
+{"id":"cardText","component":"Text","text":"Giao diện này do Agent tạo qua render_surface, render thành thành phần Compose native."},
+{"id":"hint","component":"Text","text":"Phạm vi thành phần do Catalog khai báo, Agent không thể thực thi mã bất kỳ."}
 ]}}]"""
 }

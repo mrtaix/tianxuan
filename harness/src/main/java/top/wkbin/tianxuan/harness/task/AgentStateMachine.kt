@@ -36,7 +36,7 @@ class AgentStateMachine(
             updatedAt = nowMs,
             maxAttempts = maxAttempts.coerceIn(1, MAX_ATTEMPTS),
             autoResume = autoResume,
-            statusDetail = "等待执行",
+            statusDetail = "Chờ thực thi",
         )
         repository.upsert(task)
         return task
@@ -45,7 +45,7 @@ class AgentStateMachine(
     suspend fun markRunning(
         id: String,
         operationId: String? = null,
-        detail: String = "正在执行",
+        detail: String = "Đang thực thi",
         incrementAttempt: Boolean = true,
         nowMs: Long = System.currentTimeMillis(),
     ): Boolean = transition(
@@ -67,7 +67,7 @@ class AgentStateMachine(
 
     suspend fun markWaitingApproval(
         id: String,
-        detail: String = "等待用户批准",
+        detail: String = "Chờ người dùng phê chuẩn",
         nowMs: Long = System.currentTimeMillis(),
     ): Boolean = transition(
         id,
@@ -111,7 +111,7 @@ class AgentStateMachine(
         id,
         setOf(AgentTaskStatus.RUNNING, AgentTaskStatus.RECOVERING, AgentTaskStatus.WAITING_APPROVAL),
         AgentTaskStatus.COMPLETED,
-        detail = "已完成",
+        detail = "Đã hoàn thành",
         completedAt = nowMs,
         nowMs = nowMs,
     )
@@ -125,14 +125,14 @@ class AgentStateMachine(
         setOf(AgentTaskStatus.RUNNING, AgentTaskStatus.RECOVERING, AgentTaskStatus.WAITING_APPROVAL),
         AgentTaskStatus.FAILED,
         error = error,
-        detail = "执行失败",
+        detail = "Thực thi thất bại",
         completedAt = nowMs,
         nowMs = nowMs,
     )
 
     suspend fun markCancelled(
         id: String,
-        detail: String = "用户已取消",
+        detail: String = "Người dùng đã hủy",
         nowMs: Long = System.currentTimeMillis(),
     ): Boolean = transition(
         id,

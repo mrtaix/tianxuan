@@ -22,7 +22,7 @@ internal fun copyToClipboard(context: Context, text: String, label: String, toas
     // 拿不到剪贴板服务时如实告知：静默失败会让用户以为已复制，
     // 然后在粘贴处找不到内容而反复排查。
     if (clipboard == null) {
-        Toast.makeText(context, "系统剪贴板不可用", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Clipboard hệ thống không khả dụng", Toast.LENGTH_SHORT).show()
         return
     }
     clipboard.setPrimaryClip(ClipData.newPlainText(label, text))

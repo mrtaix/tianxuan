@@ -99,9 +99,9 @@ class ProcessRegistryImpl(
         )
 
         val logKey = toolId ?: id
-        appendLog(logKey, "[TianXuan] 正在启动服务进程...")
+        appendLog(logKey, "[TianXuan] Đang khởi động tiến trình dịch vụ...")
         if (toolId != null && toolId != id) {
-            appendLog(id, "[TianXuan] 正在启动服务进程...")
+            appendLog(id, "[TianXuan] Đang khởi động tiến trình dịch vụ...")
         }
 
         scope.launch {
@@ -118,7 +118,7 @@ class ProcessRegistryImpl(
                 }
             } catch (_: Exception) {
             } finally {
-                val exitNotice = "[TianXuan] 服务进程已停止"
+                val exitNotice = "[TianXuan] Tiến trình dịch vụ đã dừng"
                 appendLog(logKey, exitNotice)
                 if (toolId != null && toolId != id) {
                     appendLog(id, exitNotice)

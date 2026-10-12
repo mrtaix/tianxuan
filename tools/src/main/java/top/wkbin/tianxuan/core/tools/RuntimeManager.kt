@@ -58,19 +58,19 @@ class RuntimeManagerImpl(
             return AppResult.Failure(
                 top.wkbin.tianxuan.core.common.result.AppError(
                     top.wkbin.tianxuan.core.common.result.ErrorCode.INSTALLATION_FAILED,
-                    "Runtime ${requirement.name} 已被其他工具引用，当前版本 ${incompatible.version ?: "未知"} " +
-                        "不满足 ${requirement.constraint ?: "当前"} 要求，拒绝原地替换共享 Runtime",
+                    "Runtime ${requirement.name} đã bị công cụ khác tham chiếu, phiên bản hiện tại ${incompatible.version ?: "未知"} " +
+                        "Không thỏa mãn ${requirement.constraint ?: "当前"} yêu cầu, từ chối thay thế tại chỗ Runtime chia sẻ",
                 ),
             )
         }
 
         return try {
             if (linuxRuntime.state.value !is top.wkbin.tianxuan.core.model.RuntimeState.Ready) {
-                error("Linux Runtime 未就绪")
+                error("Linux Runtime chưa sẵn sàng")
             }
             val packageName = packageName(requirement.name)
             // 修复上次被中断的 dpkg/apt 事务（例如安装脚本超时被强杀后，git 等包处于
-            // "已解包未配置"状态），否则后续 apt-get install 会报 Unmet dependencies。
+            // "Đã giải nén chưa cấu hình"状态），否则后续 apt-get install 会报 Unmet dependencies。
             var install = linuxRuntime.execute(
                 ShellCommand(
                     commandLine =
@@ -103,10 +103,10 @@ class RuntimeManagerImpl(
                 version = versionResult.stdout.trim().lineSequence().firstOrNull()
             }
             if (!versionResult.isSuccess) {
-                error(versionResult.stderr.ifBlank { "无法验证 $executable" })
+                error(versionResult.stderr.ifBlank { "Không thể xác minh $executable" })
             }
             if (!versionSatisfies(version, requirement.constraint)) {
-                error("$packageName 版本不满足要求 ${requirement.constraint}：${version ?: "未知"}")
+                error("$packageName phiên bản không đáp ứng yêu cầu ${requirement.constraint}: ${version ?: "未知"}")
             }
             val entity = RuntimeEntity(id, requirement.name.name, version, executable, STATE_INSTALLED)
             runtimeRepository.saveRuntime(entity)
@@ -117,7 +117,7 @@ class RuntimeManagerImpl(
         } catch (throwable: Throwable) {
             AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(
                 top.wkbin.tianxuan.core.common.result.ErrorCode.INSTALLATION_FAILED,
-                throwable.message ?: "共享 Runtime 安装失败",
+                throwable.message ?: "Cài đặt Runtime chia sẻ thất bại",
                 throwable,
             ))
         }
@@ -132,7 +132,7 @@ class RuntimeManagerImpl(
     } catch (throwable: Throwable) {
         AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(
             top.wkbin.tianxuan.core.common.result.ErrorCode.IO,
-            throwable.message ?: "释放 Runtime 引用失败",
+            throwable.message ?: "Giải phóng tham chiếu Runtime thất bại",
             throwable,
         ))
     }
@@ -152,10 +152,10 @@ class RuntimeManagerImpl(
             val entity = runtimeRepository.findRuntime(runtimeId)
                 ?: return@withLock AppResult.Success(Unit)
             check(runtimeRepository.referenceCount(runtimeId) == 0) {
-                "Runtime 仍被工具引用，不能清理：${entity.name}"
+                "Runtime vẫn đang được công cụ tham chiếu, không thể dọn: ${entity.name}"
             }
             if (linuxRuntime.state.value !is top.wkbin.tianxuan.core.model.RuntimeState.Ready) {
-                error("Linux Runtime 未就绪")
+                error("Linux Runtime chưa sẵn sàng")
             }
             val result = if (entity.executablePath.startsWith("/opt/tianxuan/")) {
                 runtimeBinaryInstaller.removeNode()
@@ -171,7 +171,7 @@ class RuntimeManagerImpl(
                 )
             }
             if (result != null && !result.isSuccess) {
-                error(result.stderr.ifBlank { "清理 Runtime 失败" })
+                error(result.stderr.ifBlank { "Dọn Runtime thất bại" })
             }
             runtimeRepository.deleteRuntime(runtimeId)
             AppResult.Success(Unit)
@@ -181,7 +181,7 @@ class RuntimeManagerImpl(
             AppResult.Failure(
                 top.wkbin.tianxuan.core.common.result.AppError(
                     top.wkbin.tianxuan.core.common.result.ErrorCode.IO,
-                    throwable.message ?: "清理共享 Runtime 失败",
+                    throwable.message ?: "Dọn dẹp Runtime chia sẻ thất bại",
                     throwable,
                 ),
             )

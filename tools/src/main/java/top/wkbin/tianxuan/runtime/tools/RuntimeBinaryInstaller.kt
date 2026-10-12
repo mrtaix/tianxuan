@@ -54,7 +54,7 @@ class RuntimeBinaryInstaller(
             check(File(extractedRoot, "bin/node").isFile) { "Node archive has no ARM64 executable" }
             SafeFileTree.delete(runtimeRoot)
             runtimeRoot.parentFile?.mkdirs()
-            check(extractedRoot.renameTo(runtimeRoot)) { "无法提交 Node Runtime" }
+            check(extractedRoot.renameTo(runtimeRoot)) { "Không thể gửi Node Runtime" }
             archive.delete()
         }
         createWrappers(distroId)

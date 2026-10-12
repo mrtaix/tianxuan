@@ -5,7 +5,7 @@ import java.security.MessageDigest
 
 class ChecksumVerifier() {
     fun sha256(file: File): String {
-        require(file.isFile) { "文件不存在：${file.absolutePath}" }
+        require(file.isFile) { "Tệp không tồn tại: ${file.absolutePath}" }
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().use { input ->
             val buffer = ByteArray(BUFFER_SIZE)

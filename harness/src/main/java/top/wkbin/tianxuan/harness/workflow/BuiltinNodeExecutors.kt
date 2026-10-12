@@ -33,7 +33,7 @@ class PassthroughNodeExecutor() : NodeExecutor {
         return if (missing.isEmpty()) {
             NodeExecutionOutput(NodeRunStatus.SUCCESS, textOutput = if (node.type == WorkflowNodeType.TERMINAL_OUTPUT) context.previousOutput().ifBlank { node.description } else node.description)
         } else {
-            NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 2, error = "缺少变量：${missing.joinToString()}")
+            NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 2, error = "Thiếu biến: ${missing.joinToString()}")
         }
     }
 }
@@ -48,7 +48,7 @@ class ApprovalNodeExecutor(
         context: WorkflowRuntimeContext,
         onProgress: suspend (NodeRunStatus, String) -> Unit,
     ): NodeExecutionOutput {
-        onProgress(NodeRunStatus.WAITING_APPROVAL, node.description.ifBlank { "等待人工确认" })
+        onProgress(NodeRunStatus.WAITING_APPROVAL, node.description.ifBlank { "Chờ xác nhận thủ công" })
         val decision = broker.await(
             WorkflowApprovalRequest(
                 executionId = context.executionId,
@@ -60,9 +60,9 @@ class ApprovalNodeExecutor(
             ),
         )
         return if (decision.approved) {
-            NodeExecutionOutput(NodeRunStatus.SUCCESS, textOutput = "已确认", variables = decision.variables)
+            NodeExecutionOutput(NodeRunStatus.SUCCESS, textOutput = "Đã xác nhận", variables = decision.variables)
         } else {
-            NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 130, error = "用户拒绝执行")
+            NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 130, error = "Người dùng từ chối thực thi")
         }
     }
 }
@@ -82,7 +82,7 @@ class LinuxNodeExecutor(
         onProgress: suspend (NodeRunStatus, String) -> Unit,
     ): NodeExecutionOutput = withContext(Dispatchers.IO) {
         val commandLine = commandFor(node, context)
-            ?: return@withContext NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 2, error = "节点缺少可执行配置")
+            ?: return@withContext NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 2, error = "Node thiếu cấu hình thực thi được")
         onProgress(NodeRunStatus.STREAMING, commandLine)
         if (node.type == WorkflowNodeType.PROCESS_SERVICE) {
             val process = linuxRuntime.startBackground(
@@ -92,7 +92,7 @@ class LinuxNodeExecutor(
             )
             return@withContext NodeExecutionOutput(
                 status = NodeRunStatus.SUCCESS,
-                textOutput = "后台进程已启动：${process.id}",
+                textOutput = "Tiến trình nền đã khởi động: ${process.id}",
                 variables = mapOf("PROCESS_ID" to process.id),
             )
         }
@@ -131,7 +131,7 @@ class LinuxNodeExecutor(
             textOutput = combined,
             artifacts = APK_PATH.findAll(combined).map { it.value }.distinct().toList(),
             durationMs = result.durationMs,
-            error = result.stderr.takeIf { !result.isSuccess }?.ifBlank { "命令退出码 ${result.exitCode}" },
+            error = result.stderr.takeIf { !result.isSuccess }?.ifBlank { "Mã thoát lệnh ${result.exitCode}" },
         )
     }
 
@@ -184,7 +184,7 @@ class AgentNodeExecutor(
             ?: return NodeExecutionOutput(
                 status = NodeRunStatus.FAILED,
                 exitCode = 2,
-                error = "${node.title} 缺少 prompt，且没有可用的上游输出",
+                error = "${node.title} thiếu prompt, và không có đầu ra thượng nguồn khả dụng",
             )
         val request = WorkflowAgentRequest(
             executionId = context.executionId,
@@ -208,7 +208,7 @@ class AgentNodeExecutor(
         )
         onProgress(
             NodeRunStatus.STREAMING,
-            if (node.type == WorkflowNodeType.SUBAGENT_DELEGATE) "正在派发子智能体…" else "智能体正在推理…",
+            if (node.type == WorkflowNodeType.SUBAGENT_DELEGATE) "Đang phái Agent con…" else "Agent đang suy luận…",
         )
         val result = when (node.type) {
             WorkflowNodeType.AGENT_INFERENCE -> agentExecution.infer(request)

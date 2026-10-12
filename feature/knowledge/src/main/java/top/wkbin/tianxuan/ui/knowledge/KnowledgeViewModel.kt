@@ -56,7 +56,7 @@ class KnowledgeViewModel(
 
     fun addDocument(name: String, content: String) {
         if (name.isBlank() || content.isBlank()) {
-            _error.value = "名称和内容不能为空"
+            _error.value = "Tên và nội dung không được rỗng"
             return
         }
         viewModelScope.launch {

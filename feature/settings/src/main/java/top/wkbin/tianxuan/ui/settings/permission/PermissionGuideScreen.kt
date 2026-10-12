@@ -96,7 +96,7 @@ fun PermissionGuideScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RuntimeTopBar(
-                title = "后台保活与权限向导",
+                title = "Hướng dẫn giữ sống nền và quyền",
                 onBack = onBack,
             )
         },
@@ -124,7 +124,7 @@ fun PermissionGuideScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "当前适配厂商机型",
+                                    text = "Dòng máy nhà sản xuất đang thích ứng",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -138,7 +138,7 @@ fun PermissionGuideScreen(
                                 RuntimeOutlinedButton(
                                     onClick = { brandMenuExpanded = true },
                                 ) {
-                                    Text("切换品牌", fontSize = 13.sp)
+                                    Text("Chuyển thương hiệu", fontSize = 13.sp)
                                     Spacer(Modifier.width(4.dp))
                                     RuntimeIcon(RuntimeIconName.ChevronDown, modifier = Modifier.size(14.dp))
                                 }
@@ -165,7 +165,7 @@ fun PermissionGuideScreen(
                         }
 
                         Text(
-                            text = "国产定制系统后台清理机制较为激进，为了保证 PRoot 沙箱、后台编译任务与 Agent 长时间思考不被冻结杀掉，建议根据指引完成配置。",
+                            text = "Cơ chế dọn nền của các hệ thống tùy biến nội địa khá quyết liệt; để đảm bảo sandbox PRoot, tác vụ biên dịch nền và Agent suy nghĩ lâu không bị đóng băng/kill, khuyến nghị làm theo hướng dẫn để cấu hình.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 18.sp,
@@ -224,7 +224,7 @@ fun PermissionGuideScreen(
                                             .clip(CircleShape)
                                             .background(if (granted) successStatusColor() else warningStatusColor())
                                             .semantics {
-                                                contentDescription = if (granted) "权限已授权" else "权限未授权"
+                                                contentDescription = if (granted) "Đã cấp quyền" else "Quyền chưa được cấp"
                                             },
                                     )
                                 }
@@ -276,7 +276,7 @@ fun PermissionGuideScreen(
                                     ),
                                 ) {
                                     Text(
-                                        text = if (isGranted) "已放行 / 已就绪" else "待配置 / 未豁免",
+                                        text = if (isGranted) "Đã cho qua / Đã sẵn sàng" else "Chờ cấu hình / Chưa miễn trừ",
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                                         color = if (isGranted) Color(0xFF4CAF50) else Color(0xFFFF9800),
@@ -300,7 +300,7 @@ fun PermissionGuideScreen(
                         ) {
                             RuntimeIcon(RuntimeIconName.OpenInNew, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("直达系统对应设置页")
+                            Text("Truy cập thẳng trang cài đặt tương ứng của hệ thống")
                         }
                     }
                 }
@@ -309,7 +309,7 @@ fun PermissionGuideScreen(
             // 4. 分步指引卡片列表
             item {
                 Text(
-                    text = "配置步骤详解",
+                    text = "Chi tiết các bước cấu hình",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, top = 4.dp),
@@ -382,5 +382,5 @@ private fun launchSettingIntents(context: Context, brand: OemBrand, topic: Keepa
             // 继续尝试降级 intent
         }
     }
-    Toast.makeText(context, "无法直接跳转，请在系统设置的应用管理中手动配置", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, "Không thể nhảy trực tiếp, hãy cấu hình thủ công trong quản lý ứng dụng của cài đặt hệ thống", Toast.LENGTH_LONG).show()
 }

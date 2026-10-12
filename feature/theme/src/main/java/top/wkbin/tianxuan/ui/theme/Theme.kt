@@ -54,20 +54,20 @@ enum class ThemeStyle(
         id = "material_you",
         displayName = "Material You",
         displayNameEn = "Material You",
-        description = "默认主题 · Google Material You (M3) 原生设计系统，支持跟随系统壁纸动态取色与经典曜石配色。",
+        description = "Chủ đề mặc định · Hệ thống thiết kế nguyên bản Google Material You (M3), hỗ trợ lấy màu động theo hình nền hệ thống và phối màu obsidian cổ điển.",
     ),
     LIQUID_GLASS(
         id = "liquid_glass",
-        displayName = "液态玻璃",
+        displayName = "Kính lỏng",
         displayNameEn = "Liquid Glass",
-        description = "液态玻璃主题 · 毛玻璃折射 + 流光 Aurora，通透清澈的玻璃质感。",
+        description = "Chủ đề kính lỏng · khúc xạ kính mờ + ánh sáng chảy Aurora, chất kính trong trẻo thông suốt.",
     ),
     ;
 
     companion object {
-        @Deprecated("使用 MATERIAL_YOU 代替", ReplaceWith("MATERIAL_YOU"))
+        @Deprecated("Dùng MATERIAL_YOU thay thế", ReplaceWith("MATERIAL_YOU"))
         val XUANTONG get() = MATERIAL_YOU
-        @Deprecated("使用 LIQUID_GLASS 代替", ReplaceWith("LIQUID_GLASS"))
+        @Deprecated("Dùng LIQUID_GLASS thay thế", ReplaceWith("LIQUID_GLASS"))
         val CHENGMING get() = LIQUID_GLASS
 
         fun fromId(id: String?): ThemeStyle = when (id) {
@@ -281,7 +281,7 @@ fun TianXuanTheme(
 
 /**
  * 当前液态玻璃折射源（[LayerBackdrop]），仅在澄明主题存在（否则为 null）。
- * 底部导航等"液态玻璃"组件可通过 [LocalLiquidGlassBackdrop] 读取并叠加毛玻璃折射。
+ * 底部导航等"Kính lỏng"组件可通过 [LocalLiquidGlassBackdrop] 读取并叠加毛玻璃折射。
  */
 val LocalLiquidGlassBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
 
@@ -301,7 +301,7 @@ val LocalLiquidGlassSurfaceBackdrop = staticCompositionLocalOf<LayerBackdrop?> {
  * [LocalLiquidGlassBackdrop]，用 [com.kyant.backdrop.drawBackdrop] 叠加毛玻璃折射，
  * 呈现悬浮磨砂玻璃效果（见 RuntimeBottomBar）。
  *
- * 在 RenderEffect 不可用的设备上，折射会自动退化为"半透明冰霜 + 流光底色"，不崩溃。
+ * 在 RenderEffect 不可用的设备上，折射会自动退化为"Băng sương bán trong + nền sáng chảy"，不崩溃。
  */
 @Composable
 private fun LiquidGlassRoot(content: @Composable () -> Unit, darkTheme: Boolean, backgroundUri: String?) {

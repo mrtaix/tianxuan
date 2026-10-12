@@ -139,7 +139,7 @@ class SettingsDataStore(
         context.settingsDataStore.edit { prefs ->
             val current = prefs[workshopKeystoresKey]
             if (current != null && secretManager.decrypt(current) == null) {
-                // Keystore 短暂故障导致存量密文解密失败时，内存里的"空表"不可信；
+                // Keystore 短暂故障导致存量密文解密失败时，内存里的"Bảng rỗng"不可信；
                 // 此时任何覆盖写（尤其 clear）都会把全部签名密文永久销毁——拒绝写入。
                 return@edit
             }
@@ -733,7 +733,7 @@ class SettingsDataStore(
 
     /**
      * 连续失败熔断阈值（默认 8）。当连续 N 轮工具调用全部失败时，主动终止循环并提示用户，
-     * 避免模型在"调用→失败→再调用"中死循环空转。
+     * 避免模型在"Gọi→thất bại→gọi lại"中死循环空转。
      */
     private val maxConsecutiveFailuresKey = androidx.datastore.preferences.core.intPreferencesKey("agent_max_consecutive_failures")
     val maxConsecutiveFailures: Flow<Int> = context.settingsDataStore.data.map { it[maxConsecutiveFailuresKey] ?: 8 }
@@ -745,7 +745,7 @@ class SettingsDataStore(
     private val adbPairedOnceKey = booleanPreferencesKey("adb_wireless_paired_once")
     private val adbNotificationEnabledKey = booleanPreferencesKey("adb_notification_enabled")
 
-    /** 无线调试主端口（开发者选项里"无线调试"显示的 IP:PORT），0 表示未配置。 */
+    /** 无线调试主端口（开发者选项里"Gỡ lỗi không dây"显示的 IP:PORT），0 表示未配置。 */
     val adbWirelessPort: Flow<Int> = context.settingsDataStore.data.map { it[adbWirelessPortKey] ?: 0 }
     suspend fun setAdbWirelessPort(port: Int) {
         context.settingsDataStore.edit { it[adbWirelessPortKey] = port.coerceIn(0, 65535) }
@@ -782,7 +782,7 @@ class SettingsDataStore(
     }
 
     suspend fun setSshPort(distroId: String, port: Int) {
-        require(port in 1024..65535) { "SSH 端口必须在 1024..65535 之间" }
+        require(port in 1024..65535) { "Cổng SSH phải nằm trong khoảng 1024..65535" }
         context.settingsDataStore.edit {
             it[intPreferencesKey("ssh_${normalizedDistroId(distroId)}_port")] = port
         }
@@ -844,7 +844,7 @@ class SettingsDataStore(
     }
 
     suspend fun setFtpPort(distroId: String, port: Int) {
-        require(port in 1024..65535) { "FTP 端口必须在 1024..65535 之间" }
+        require(port in 1024..65535) { "Cổng FTP phải nằm trong khoảng 1024..65535" }
         context.settingsDataStore.edit {
             it[intPreferencesKey("ftp_${normalizedDistroId(distroId)}_port")] = port
         }
@@ -983,7 +983,7 @@ class SettingsDataStore(
 
     private fun normalizedDistroId(value: String): String {
         val normalized = value.lowercase().trim()
-        require(normalized.matches(Regex("[a-z0-9][a-z0-9_-]{0,31}"))) { "Linux 发行版 ID 无效" }
+        require(normalized.matches(Regex("[a-z0-9][a-z0-9_-]{0,31}"))) { "ID bản phân phối Linux không hợp lệ" }
         return normalized
     }
 

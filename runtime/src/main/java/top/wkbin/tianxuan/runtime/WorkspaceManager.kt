@@ -35,8 +35,8 @@ enum class ProjectType {
         get() = when (this) {
             ANDROID -> "Android"
             FLUTTER -> "Flutter"
-            REVERSE -> "APK 逆向"
-            GENERAL -> "通用"
+            REVERSE -> "Reverse APK"
+            GENERAL -> "Chung"
         }
 }
 
@@ -63,9 +63,9 @@ enum class ProjectTemplate {
 
     val displayName: String
         get() = when (this) {
-            EMPTY -> "空工程 (Empty)"
-            APK_REVERSE -> "APK 逆向"
-            GIT_IMPORT -> "从 Git 导入"
+            EMPTY -> "Dự án trống (Empty)"
+            APK_REVERSE -> "Reverse APK"
+            GIT_IMPORT -> "Nhập từ Git"
         }
 }
 
@@ -202,16 +202,16 @@ class WorkspaceManager(
     ): AppResult<WorkspaceProject> = withContext(Dispatchers.IO) {
         try {
             val safeName = name.trim()
-            require(isValidProjectName(safeName)) { "名称需以文字或数字开头，只能包含文字、数字、点、下划线和短横线" }
-            require(safeName != "sdcard") { "sdcard 是系统共享空间保留名称" }
-            check(workspaceDao.findByName(safeName) == null) { "项目已存在：$safeName" }
+            require(isValidProjectName(safeName)) { "Tên phải bắt đầu bằng chữ hoặc số, chỉ được chứa chữ, số, dấu chấm, gạch dưới và gạch nối" }
+            require(safeName != "sdcard") { "sdcard là tên dành riêng của không gian chia sẻ hệ thống" }
+            check(workspaceDao.findByName(safeName) == null) { "Dự án đã tồn tại: $safeName" }
             val resolvedTemplateId = templateId
             val resolvedManifest = resolvedTemplateId.takeIf(String::isNotBlank)?.let(projectTemplateEngine::inspect)
             resolvedManifest?.variables?.firstOrNull { it.name == "projectName" }?.let { variable ->
-                require(!variable.required || safeName.isNotBlank()) { "项目名称不能为空" }
+                require(!variable.required || safeName.isNotBlank()) { "Tên dự án không được rỗng" }
                 if (variable.validationRegex.isNotBlank()) {
                     require(Regex(variable.validationRegex).matches(safeName)) {
-                        variable.description.ifBlank { "项目名称不符合所选模板的格式要求" }
+                        variable.description.ifBlank { "Tên dự án không khớp định dạng yêu cầu của mẫu đã chọn" }
                     }
                 }
             }
@@ -220,27 +220,27 @@ class WorkspaceManager(
                 WorkspaceStorage.INTERNAL -> pathManager.workspaceDir
                 WorkspaceStorage.SHARED -> SHARED_STORAGE_ROOT
             }
-            check(base.isDirectory || base.mkdirs()) { "关联空间不可用：${base.absolutePath}" }
+            check(base.isDirectory || base.mkdirs()) { "Không gian liên kết không khả dụng: ${base.absolutePath}" }
             val prefix = if (storage == WorkspaceStorage.INTERNAL) "/workspace/" else "/sdcard/"
             val requested = directoryPath.trim().replace('\\', '/').removePrefix(prefix).trim('/')
             val relative = requested.ifBlank { safeName }
             requireValidRelativePath(relative)
             val directory = File(base, relative).canonicalFile
-            check(isInside(base.canonicalFile, directory) && directory != base.canonicalFile) { "关联目录越界" }
+            check(isInside(base.canonicalFile, directory) && directory != base.canonicalFile) { "Thư mục liên kết vượt phạm vi" }
             val duplicate = workspaceDao.listAll().any {
                 it.name != safeName && runCatching { File(it.path).canonicalFile == directory }.getOrDefault(false)
             }
-            check(!duplicate) { "该目录已关联其他工程" }
+            check(!duplicate) { "Thư mục này đã liên kết dự án khác" }
             val existed = directory.exists()
             if (template == ProjectTemplate.GIT_IMPORT) {
-                require(isValidGitUrl(gitUrl)) { "Git 仓库地址必须是 HTTPS、SSH 或 git@ 地址" }
-                require(!existed || directory.isDirectory) { "Git 导入目标不是目录" }
-                require(!existed || directory.listFiles().orEmpty().isEmpty()) { "Git 导入目标目录必须为空" }
-                if (!existed) require(directory.mkdirs()) { "无法创建 Git 导入目录" }
+                require(isValidGitUrl(gitUrl)) { "Địa chỉ kho Git phải là địa chỉ HTTPS, SSH hoặc git@" }
+                require(!existed || directory.isDirectory) { "Mục tiêu Git import không phải thư mục" }
+                require(!existed || directory.listFiles().orEmpty().isEmpty()) { "Thư mục mục tiêu nhập Git phải rỗng" }
+                if (!existed) require(directory.mkdirs()) { "Không thể tạo thư mục nhập Git" }
             } else {
-                check((existed && directory.isDirectory) || (!existed && directory.mkdirs())) { "无法创建或访问关联目录" }
+                check((existed && directory.isDirectory) || (!existed && directory.mkdirs())) { "Không thể tạo hoặc truy cập thư mục liên kết" }
                 if (template != ProjectTemplate.EMPTY || templateId.isNotBlank()) {
-                    check(!existed || directory.listFiles().orEmpty().isEmpty()) { "模板目标目录必须为空" }
+                    check(!existed || directory.listFiles().orEmpty().isEmpty()) { "Thư mục đích của mẫu phải rỗng" }
                 }
             }
             File(directory, UNLINKED_MARKER).delete()
@@ -257,7 +257,7 @@ class WorkspaceManager(
                     .ifBlank { packageName.trim() }
                     .ifBlank { packageDefault }
                     .ifBlank { "com.example.${safeName.lowercase().filter { it.isLetterOrDigit() }}" }
-                require(PACKAGE_NAME.matches(cleanPkg)) { "包名必须是合法的 Java/Kotlin 包名：$cleanPkg" }
+                require(PACKAGE_NAME.matches(cleanPkg)) { "Tên gói phải là tên gói Java/Kotlin hợp lệ: $cleanPkg" }
                 effectivePackage = cleanPkg
             }
             if (resolvedTemplateId.isNotBlank() && resolvedManifest != null) {
@@ -275,7 +275,7 @@ class WorkspaceManager(
                 }
                 val values = projectTemplateEngine.resolvedValues(resolvedManifest, suppliedValues)
                 val hasScripts = resolvedManifest.hooks.beforeCreate.isNotBlank() || resolvedManifest.hooks.afterCreate.isNotBlank()
-                require(!hasScripts || trustTemplateScripts) { "该模板包含构造脚本，请先查看并明确授权" }
+                require(!hasScripts || trustTemplateScripts) { "Mẫu này chứa script dựng, vui lòng xem trước và cấp quyền rõ ràng" }
                 if (resolvedManifest.hooks.beforeCreate.isNotBlank()) {
                     executeTemplateHook(
                         resolvedTemplateId,
@@ -327,17 +327,17 @@ class WorkspaceManager(
             )
             val createdEntity = workspaceDao.findByName(safeName)
             if (createdEntity == null) {
-                AppResult.Failure(AppError(ErrorCode.IO, "项目写入后查询失败", null))
+                AppResult.Failure(AppError(ErrorCode.IO, "Truy vấn thất bại sau khi ghi dự án", null))
             } else {
                 val created = projectFromEntity(createdEntity)
                 if (created == null) {
-                    AppResult.Failure(AppError(ErrorCode.IO, "项目数据转换失败", null))
+                    AppResult.Failure(AppError(ErrorCode.IO, "Chuyển đổi dữ liệu dự án thất bại", null))
                 } else {
                     AppResult.Success(created)
                 }
             }
         } catch (throwable: Throwable) {
-            AppResult.Failure(AppError(ErrorCode.IO, throwable.message ?: "创建项目失败", throwable))
+            AppResult.Failure(AppError(ErrorCode.IO, throwable.message ?: "Tạo dự án thất bại", throwable))
         }
     }
 
@@ -373,8 +373,8 @@ class WorkspaceManager(
         importProject(name, directoryPath, projectType, ProjectImportSource.GITHUB) { directory, cleanupOnFailure ->
             require(isValidGitUrlForTransport(gitUrl, transport)) {
                 when (transport) {
-                    GitTransport.HTTP -> "HTTP 地址必须以 http:// 或 https:// 开头"
-                    GitTransport.SSH -> "SSH 地址必须使用 ssh:// 或 git@host:path 格式"
+                    GitTransport.HTTP -> "Địa chỉ HTTP phải bắt đầu bằng http:// hoặc https://"
+                    GitTransport.SSH -> "Địa chỉ SSH phải dùng định dạng ssh:// hoặc git@host:path"
                 }
             }
             cloneGitRepository(directory, gitUrl, cleanupOnFailure, onProgress)
@@ -384,10 +384,10 @@ class WorkspaceManager(
     /** Compresses all regular project files and exports the ZIP into a SAF-selected local directory. */
     suspend fun exportProject(name: String, targetTreeUri: String): AppResult<String> = withContext(Dispatchers.IO) {
         try {
-            require(isValidProjectName(name)) { "项目名称无效" }
-            val entity = workspaceDao.findByName(name) ?: error("项目不存在：$name")
+            require(isValidProjectName(name)) { "Tên dự án không hợp lệ" }
+            val entity = workspaceDao.findByName(name) ?: error("Dự án không tồn tại: $name")
             val projectDir = File(entity.path).canonicalFile
-            check(projectDir.isDirectory) { "项目目录不存在：$name" }
+            check(projectDir.isDirectory) { "Thư mục dự án không tồn tại: $name" }
 
             val treeUri = Uri.parse(targetTreeUri)
             val parentUri = DocumentsContract.buildDocumentUriUsingTree(
@@ -400,20 +400,20 @@ class WorkspaceManager(
                 parentUri,
                 "application/zip",
                 fileName,
-            ) ?: error("无法在所选目录创建导出文件")
+            ) ?: error("Không thể tạo tệp xuất trong thư mục đã chọn")
             val output = context.contentResolver.openOutputStream(outputUri, "w")
-                ?: error("无法写入导出文件")
+                ?: error("Không thể ghi tệp xuất")
             output.use { stream -> writeProjectZip(projectDir, stream) }
             AppResult.Success(fileName)
         } catch (throwable: Throwable) {
-            AppResult.Failure(AppError(ErrorCode.IO, throwable.message ?: "导出项目失败", throwable))
+            AppResult.Failure(AppError(ErrorCode.IO, throwable.message ?: "Export dự án thất bại", throwable))
         }
     }
 
     suspend fun deleteProject(name: String): AppResult<Unit> = withContext(Dispatchers.IO) {
         try {
-            require(isValidProjectName(name)) { "项目名称无效" }
-            val entity = workspaceDao.findByName(name) ?: error("项目不存在：$name")
+            require(isValidProjectName(name)) { "Tên dự án không hợp lệ" }
+            val entity = workspaceDao.findByName(name) ?: error("Dự án không tồn tại: $name")
             val directory = File(entity.path)
             if (entity.ownsDirectory && directory.exists()) {
                 SafeFileTree.delete(directory)
@@ -424,15 +424,15 @@ class WorkspaceManager(
             runCatching { buildScriptRepository?.value?.unbind(name) }
             AppResult.Success(Unit)
         } catch (throwable: Throwable) {
-            AppResult.Failure(AppError(ErrorCode.IO, throwable.message ?: "删除项目失败", throwable))
+            AppResult.Failure(AppError(ErrorCode.IO, throwable.message ?: "Xóa dự án thất bại", throwable))
         }
     }
 
     suspend fun linuxWorkingDirectory(name: String): String {
         if (name == "sdcard") return "/sdcard"
-        require(isValidProjectName(name)) { "项目名称无效" }
-        val entity = workspaceDao.findByName(name) ?: error("项目不存在：$name")
-        check(File(entity.path).isDirectory) { "关联目录不存在：$name" }
+        require(isValidProjectName(name)) { "Tên dự án không hợp lệ" }
+        val entity = workspaceDao.findByName(name) ?: error("Dự án không tồn tại: $name")
+        check(File(entity.path).isDirectory) { "Thư mục liên kết không tồn tại: $name" }
         return linuxPathFor(File(entity.path))
     }
 
@@ -446,7 +446,7 @@ class WorkspaceManager(
 
     /**
      * 该项目根目录是否位于宿主共享存储（/storage/emulated/0）之下。
-     * 共享存储受 Android 11+ "所有文件访问" 权限约束：未授权时系统会过滤
+     * 共享存储受 Android 11+ "Truy cập tất cả tệp" 权限约束：未授权时系统会过滤
      * 其他应用的文件（典型表现是只列出文件夹），需要引导用户授权。
      */
     suspend fun usesSharedStorage(projectName: String): Boolean = withContext(Dispatchers.IO) {
@@ -498,7 +498,7 @@ class WorkspaceManager(
      */
     private fun requireValidRelativePath(relative: String) {
         require(relative.split('/').none { it.isBlank() || it == "." || it == ".." }) {
-            "关联目录包含无效路径"
+            "Thư mục liên kết chứa đường dẫn không hợp lệ"
         }
     }
 
@@ -591,7 +591,7 @@ class WorkspaceManager(
         check(result.isSuccess) {
             if (cleanupOnFailure) SafeFileTree.delete(directory)
             val output = (result.stderr + "\n" + result.stdout).trim().takeLast(1200)
-            "Git clone 失败：${output.ifBlank { "请确认 Git 已安装、仓库地址和认证配置可用" }}"
+            "Git clone thất bại: ${output.ifBlank { "请确认 Git 已安装、仓库地址和认证配置可用" }}"
         }
         SafeFileTree.delete(File(directory, ".git/hooks"))
     }
@@ -605,25 +605,25 @@ class WorkspaceManager(
     ): AppResult<WorkspaceProject> {
         return try {
             val safeName = name.trim()
-            require(isValidProjectName(safeName)) { "名称需以文字或数字开头，只能包含文字、数字、点、下划线和短横线" }
-            require(safeName != "sdcard") { "sdcard 是系统共享空间保留名称" }
-            check(workspaceDao.findByName(safeName) == null) { "项目已存在：$safeName" }
+            require(isValidProjectName(safeName)) { "Tên phải bắt đầu bằng chữ hoặc số, chỉ được chứa chữ, số, dấu chấm, gạch dưới và gạch nối" }
+            require(safeName != "sdcard") { "sdcard là tên dành riêng của không gian chia sẻ hệ thống" }
+            check(workspaceDao.findByName(safeName) == null) { "Dự án đã tồn tại: $safeName" }
             pathManager.workspaceDir.mkdirs()
             val base = pathManager.workspaceDir.canonicalFile
-            check(base.isDirectory || base.mkdirs()) { "内部沙盒目录不可用" }
+            check(base.isDirectory || base.mkdirs()) { "Thư mục sandbox nội bộ không khả dụng" }
             val requested = directoryPath.trim().replace('\\', '/').removePrefix("/workspace/").trim('/')
             val relative = requested.ifBlank { safeName }
             requireValidRelativePath(relative)
             val directory = File(base, relative).canonicalFile
-            check(isInside(base, directory) && directory != base) { "关联目录越界" }
+            check(isInside(base, directory) && directory != base) { "Thư mục liên kết vượt phạm vi" }
             val duplicate = workspaceDao.listAll().any {
                 runCatching { File(it.path).canonicalFile == directory }.getOrDefault(false)
             }
-            check(!duplicate) { "该目录已关联其他工程" }
+            check(!duplicate) { "Thư mục này đã liên kết dự án khác" }
             val existed = directory.exists()
-            require(!existed || directory.isDirectory) { "导入目标不是目录" }
-            require(!existed || directory.listFiles().orEmpty().isEmpty()) { "导入目标目录必须为空" }
-            if (!existed) require(directory.mkdirs()) { "无法创建导入目录" }
+            require(!existed || directory.isDirectory) { "Mục tiêu nhập không phải thư mục" }
+            require(!existed || directory.listFiles().orEmpty().isEmpty()) { "Thư mục đích khi nhập phải trống" }
+            if (!existed) require(directory.mkdirs()) { "Không thể tạo thư mục nhập" }
             materialize(directory, !existed)
             writeProjectTypeMetadata(directory, projectType, source)
             workspaceDao.upsert(
@@ -631,33 +631,33 @@ class WorkspaceManager(
             )
             val createdEntity = workspaceDao.findByName(safeName)
             if (createdEntity == null) {
-                AppResult.Failure(AppError(ErrorCode.IO, "项目写入后查询失败", null))
+                AppResult.Failure(AppError(ErrorCode.IO, "Truy vấn thất bại sau khi ghi dự án", null))
             } else {
                 val created = projectFromEntity(createdEntity)
                 if (created == null) {
-                    AppResult.Failure(AppError(ErrorCode.IO, "项目数据转换失败", null))
+                    AppResult.Failure(AppError(ErrorCode.IO, "Chuyển đổi dữ liệu dự án thất bại", null))
                 } else {
                     AppResult.Success(created)
                 }
             }
         } catch (throwable: Throwable) {
-            AppResult.Failure(AppError(ErrorCode.IO, throwable.message ?: "导入项目失败", throwable))
+            AppResult.Failure(AppError(ErrorCode.IO, throwable.message ?: "Nhập dự án thất bại", throwable))
         }
     }
 
     private fun extractProjectArchive(source: ProjectArchiveSource, directory: File) {
-        require(source.fileName.endsWith(".zip", ignoreCase = true)) { "本地导入目前仅支持 ZIP 项目压缩包" }
+        require(source.fileName.endsWith(".zip", ignoreCase = true)) { "Nhập cục bộ hiện chỉ hỗ trợ gói nén dự án ZIP" }
         val input = context.contentResolver.openInputStream(Uri.parse(source.uri))
-            ?: error("无法读取所选项目压缩包（URI 授权可能已过期，请重新选择）")
+            ?: error("Không thể đọc gói nén dự án đã chọn (ủy quyền URI có thể đã hết hạn, hãy chọn lại)")
         extractProjectArchive(input, source.fileName, directory)
     }
 
     internal fun extractProjectArchive(input: java.io.InputStream, fileName: String, directory: File) {
-        require(fileName.endsWith(".zip", ignoreCase = true)) { "本地导入目前仅支持 ZIP 项目压缩包" }
+        require(fileName.endsWith(".zip", ignoreCase = true)) { "Nhập cục bộ hiện chỉ hỗ trợ gói nén dự án ZIP" }
         val staging = File(directory, IMPORT_STAGING_DIRECTORY).canonicalFile
-        check(isInside(directory.canonicalFile, staging)) { "导入暂存目录越界" }
+        check(isInside(directory.canonicalFile, staging)) { "Thư mục lưu tạm nhập vượt biên" }
         SafeFileTree.delete(staging)
-        check(staging.mkdirs()) { "无法创建导入暂存目录" }
+        check(staging.mkdirs()) { "Không thể tạo thư mục tạm khi nhập" }
         var entryCount = 0
         var totalBytes = 0L
         try {
@@ -665,36 +665,36 @@ class WorkspaceManager(
                 while (true) {
                     val entry = zip.nextEntry ?: break
                     entryCount++
-                    require(entryCount <= MAX_ARCHIVE_ENTRIES) { "压缩包文件数量过多" }
+                    require(entryCount <= MAX_ARCHIVE_ENTRIES) { "Số lượng tệp trong gói nén quá nhiều" }
                     val normalizedName = entry.name.replace('\\', '/').trimStart('/')
-                    require(normalizedName.isNotBlank()) { "压缩包包含空路径" }
-                    require(normalizedName.split('/').none { it == ".." }) { "压缩包包含越界路径：${entry.name}" }
+                    require(normalizedName.isNotBlank()) { "Gói nén chứa đường dẫn rỗng" }
+                    require(normalizedName.split('/').none { it == ".." }) { "Gói nén chứa đường dẫn vượt phạm vi: ${entry.name}" }
                     val target = File(staging, normalizedName).canonicalFile
-                    require(isInside(staging, target) && target != staging) { "压缩包包含越界路径：${entry.name}" }
+                    require(isInside(staging, target) && target != staging) { "Gói nén chứa đường dẫn vượt phạm vi: ${entry.name}" }
                     if (entry.isDirectory) {
-                        check(target.isDirectory || target.mkdirs()) { "无法创建目录：${entry.name}" }
+                        check(target.isDirectory || target.mkdirs()) { "Không thể tạo thư mục：${entry.name}" }
                     } else {
                         check(target.parentFile?.isDirectory == true || target.parentFile?.mkdirs() == true) {
-                            "无法创建目录：${entry.name}"
+                            "Không thể tạo thư mục：${entry.name}"
                         }
                         target.outputStream().buffered().use { output ->
                             val copied = copyCapped(zip, output, entry.name)
                             totalBytes += copied
                         }
-                        require(totalBytes <= MAX_ARCHIVE_TOTAL_BYTES) { "压缩包解压后体积过大" }
+                        require(totalBytes <= MAX_ARCHIVE_TOTAL_BYTES) { "Gói nén sau khi giải nén có dung lượng quá lớn" }
                     }
                     zip.closeEntry()
                 }
             }
-            require(entryCount > 0) { "项目压缩包为空" }
+            require(entryCount > 0) { "Gói nén dự án rỗng" }
             val meaningful = staging.listFiles().orEmpty().filterNot { it.name == "__MACOSX" }
             val contentRoot = meaningful.singleOrNull()?.takeIf { it.isDirectory } ?: staging
             val children = contentRoot.listFiles().orEmpty().filterNot { it.name == "__MACOSX" }
-            require(children.isNotEmpty()) { "项目压缩包没有可导入的文件" }
+            require(children.isNotEmpty()) { "Gói nén dự án không có tệp nào để nhập" }
             children.forEach { child ->
                 val destination = File(directory, child.name).canonicalFile
-                check(isInside(directory.canonicalFile, destination) && !destination.exists()) { "导入文件冲突：${child.name}" }
-                check(child.renameTo(destination)) { "无法写入导入文件：${child.name}" }
+                check(isInside(directory.canonicalFile, destination) && !destination.exists()) { "Xung đột tệp nhập: ${child.name}" }
+                check(child.renameTo(destination)) { "Không thể ghi tệp nhập: ${child.name}" }
             }
         } finally {
             SafeFileTree.delete(staging)
@@ -756,7 +756,7 @@ class WorkspaceManager(
                 ),
             )
             check(result.isSuccess) {
-                "模板脚本执行失败（$stage）：${result.stderr.ifBlank { result.stdout }.takeLast(2_000)}"
+                "Thực thi script mẫu thất bại ($stage): ${result.stderr.ifBlank { result.stdout }.takeLast(2_000)}"
             }
         } finally {
             hookFile.delete()
@@ -773,7 +773,7 @@ class WorkspaceManager(
     )
 
     /**
-     * APK 逆向模板初始化：把安装包导入工程目录并做第一层"解包"。
+     * APK 逆向模板初始化：把安装包导入工程目录并做第一层"Giải nén"。
      *
      * 产物结构（以工程名 [name] 为例）：
      * ```
@@ -793,7 +793,7 @@ class WorkspaceManager(
         name: String,
         apkSource: ApkImportSource?,
     ): ImportedApk {
-        requireNotNull(apkSource) { "APK 逆向模板必须选择安装包来源（已安装应用或 APK 文件）" }
+        requireNotNull(apkSource) { "Mẫu dịch ngược APK bắt buộc phải chọn nguồn gói cài đặt (ứng dụng đã cài hoặc tệp APK)" }
         projectDir.mkdirs()
 
         // 1. 解析来源并拷贝安装包到工程目录
@@ -806,15 +806,15 @@ class WorkspaceManager(
             is ApkImportSource.FromInstalledApp -> {
                 val info = runCatching {
                     context.packageManager.getApplicationInfo(apkSource.packageName, 0)
-                }.getOrElse { error("无法读取已安装应用信息：${apkSource.packageName}") }
+                }.getOrElse { error("Không thể đọc thông tin ứng dụng đã cài: ${apkSource.packageName}") }
                 val source = File(info.sourceDir)
-                require(source.isFile) { "应用安装包不可读：${source.absolutePath}" }
+                require(source.isFile) { "Gói cài ứng dụng không đọc được: ${source.absolutePath}" }
                 apkFileName = "${apkSource.packageName}.apk"
                 sourceLabel = apkSource.appLabel
                 sourceKind = "installed-app"
                 packageHint = apkSource.packageName
                 apkFile = File(projectDir, apkFileName).canonicalFile
-                check(isInside(projectDir.canonicalFile, apkFile)) { "APK 输出路径越界" }
+                check(isInside(projectDir.canonicalFile, apkFile)) { "Đường dẫn xuất APK vượt biên" }
                 source.copyTo(apkFile, overwrite = true)
             }
             is ApkImportSource.FromFileUri -> {
@@ -831,15 +831,15 @@ class WorkspaceManager(
                 sourceKind = "file-uri"
                 packageHint = ""
                 apkFile = File(projectDir, apkFileName).canonicalFile
-                check(isInside(projectDir.canonicalFile, apkFile)) { "APK 输出路径越界" }
+                check(isInside(projectDir.canonicalFile, apkFile)) { "Đường dẫn xuất APK vượt biên" }
                 val input = context.contentResolver.openInputStream(uri)
-                    ?: error("无法读取所选 APK 文件（URI 授权可能已过期，请重新选择）")
+                    ?: error("Không đọc được tệp APK đã chọn (ủy quyền URI có thể đã hết hạn, hãy chọn lại)")
                 input.use { source ->
                     apkFile.outputStream().use { output -> source.copyTo(output) }
                 }
             }
         }
-        require(apkFile.isFile && apkFile.length() > 0) { "安装包导入失败：$apkFileName" }
+        require(apkFile.isFile && apkFile.length() > 0) { "Nhập gói cài đặt thất bại: $apkFileName" }
 
         // 2. 标准 ZIP 解包 -> unpacked/
         val unpackedDir = File(projectDir, "unpacked").apply { mkdirs() }
@@ -879,7 +879,7 @@ class WorkspaceManager(
             zip.entries().asSequence().forEach { entry ->
                 if (entry.isDirectory) return@forEach
                 entryCount++
-                require(entryCount <= MAX_ARCHIVE_ENTRIES) { "APK 文件数量过多" }
+                require(entryCount <= MAX_ARCHIVE_ENTRIES) { "Số lượng tệp APK quá nhiều" }
                 val rawName = entry.name.replace('\\', '/')
                 // 防 zip-slip：拒绝绝对路径与 .. 穿越
                 if (rawName.startsWith("/") || rawName.split('/').any { it == ".." }) return@forEach
@@ -891,7 +891,7 @@ class WorkspaceManager(
                         totalBytes += copyCapped(input, output, entry.name)
                     }
                 }
-                require(totalBytes <= MAX_ARCHIVE_TOTAL_BYTES) { "APK 解包后体积过大" }
+                require(totalBytes <= MAX_ARCHIVE_TOTAL_BYTES) { "APK sau khi giải nén có dung lượng quá lớn" }
             }
         }
     }
@@ -910,7 +910,7 @@ class WorkspaceManager(
             val read = input.read(buffer)
             if (read < 0) break
             entryBytes += read
-            require(entryBytes <= MAX_ARCHIVE_ENTRY_BYTES) { "压缩包单个文件过大：$entryName" }
+            require(entryBytes <= MAX_ARCHIVE_ENTRY_BYTES) { "Một tệp trong gói nén quá lớn: $entryName" }
             output.write(buffer, 0, read)
         }
         return entryBytes
@@ -918,7 +918,7 @@ class WorkspaceManager(
 
     /**
      * 把工程内导入的 APK 同步导出到宿主公共下载目录（best-effort，供宿主侧 MT 管理器等外部工具直接读取；
-     * Android 11+ 需已授予"所有文件访问"权限，未授权时静默跳过，不影响工程创建）。
+     * Android 11+ 需已授予"Truy cập tất cả tệp"权限，未授权时静默跳过，不影响工程创建）。
      */
     private fun exportApkToDownload(apkFileName: String, projectDir: File, projectName: String) {
         runCatching {
@@ -937,7 +937,7 @@ class WorkspaceManager(
         return when {
             isInside(internal, canonical) -> "/workspace/${canonical.toRelativeString(internal).replace(File.separatorChar, '/')}"
             isInside(shared, canonical) -> "/sdcard/${canonical.toRelativeString(shared).replace(File.separatorChar, '/')}"
-            else -> error("目录不在可关联空间内")
+            else -> error("Thư mục không nằm trong không gian liên kết được")
         }.trimEnd('/')
     }
 

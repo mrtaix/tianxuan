@@ -70,7 +70,7 @@ class TianXuanApplication : Application(), Configuration.Provider {
     private val virtualDisplayCoordinatorLazy: Lazy<VirtualDisplayCoordinator> = inject()
 
     /**
-     * 内存水位哨兵：低频采样堆水位，越过 85% 时先释放"可再生数据"（视频等待缓冲等）
+     * 内存水位哨兵：低频采样堆水位，越过 85% 时先释放"Dữ liệu có thể tái tạo"（视频等待缓冲等）
      * 并写运行日志留痕，把慢性内存增长拦截在 OOM 闪退之前。释放钩子必须是丢了能自动重建的数据。
      */
     private val memoryWatchdog = MemoryWatchdog(log = { message -> appLoggerLazy.value.w(message) })
@@ -114,7 +114,7 @@ class TianXuanApplication : Application(), Configuration.Provider {
                             )
                         )
                         if (imported.isNotEmpty()) {
-                            Log.i(TAG, "Skill 目录自动发现并导入 ${imported.size} 个：${imported.joinToString { it.name }}")
+                            Log.i(TAG, "Thư mục Skill tự động phát hiện và nhập ${imported.size} cái: ${imported.joinToString { it.name }}")
                         }
                     }
                 }
@@ -125,7 +125,7 @@ class TianXuanApplication : Application(), Configuration.Provider {
             //  1) MCP 预设已入库：McpManager 预热（构造时触发）能读到完整 server 列表，
             //     否则首启预热读到空表，第一轮对话缺工具；
             //  2) 浏览器 HTTP server 已监听 + 引擎已注册：内置 browser server 的自环发现
-            //     不会撞"连接拒绝 → 5 分钟冷却"；
+            //     不会撞"Kết nối bị từ chối → chờ 5 phút"；
             //  3) 构造不再由前台服务监听协程在主线程提前触发（重 依赖图主线程构造即启动 jank，
             //     且预热时机不受控）。即使页面抢先注入触发构造，预热失败也按轮自愈，此处只是尽量保证顺序。
             val harnessLoop = harnessLoopLazy.value
@@ -144,10 +144,10 @@ class TianXuanApplication : Application(), Configuration.Provider {
             runCatching {
                 val recovered = harnessLoop.recoverAllInterruptedSessions()
                 if (recovered > 0) {
-                    Log.i(TAG, "已恢复 $recovered 个被中断的 Agent 会话/任务")
+                    Log.i(TAG, "Đã khôi phục $recovered phiên/nhiệm vụ Agent bị gián đoạn")
                 }
             }.onFailure {
-                Log.w(TAG, "恢复中断会话失败", it)
+                Log.w(TAG, "Khôi phục phiên bị gián đoạn thất bại", it)
             }
             // 工作流后台化：启动对账（把进程死亡遗留的非终态运行标为已中断）+ 通知/HUD
             // 控制器 + FGS 联动。工作流 agent 会话由工作流体系自管，已在恢复中排除。
@@ -156,7 +156,7 @@ class TianXuanApplication : Application(), Configuration.Provider {
             workflowRunUiController.start()
             workflowApprovalNotifier.start(this@TianXuanApplication)
             runCatching { workflowRunManager.reconcileInterruptedRuns() }
-                .onFailure { Log.w(TAG, "工作流启动对账失败", it) }
+                .onFailure { Log.w(TAG, "Đối soát khởi động workflow thất bại", it) }
             launch {
                 workflowRunManager.running.collectLatest { running ->
                     if (running) {
@@ -174,7 +174,7 @@ class TianXuanApplication : Application(), Configuration.Provider {
     }
 
     /**
-     * 🌟 内存水位哨兵装配：注册"可再生数据"释放钩子并启动低频采样（30s 一次，85% 触发）。
+     * 🌟 内存水位哨兵装配：注册"Dữ liệu có thể tái tạo"释放钩子并启动低频采样（30s 一次，85% 触发）。
      * - shower-video-pending-frames：虚拟屏视频流等待 SPS/PPS 的包缓冲（历史 OOM 根因），
      *   丢弃后画面随下一个 IDR 自动恢复；
      * 触发与释放效果统一写入 AppLogger（runtime.log，磁盘轮转），崩溃时可对照时间线定位增长源。

@@ -1,15 +1,15 @@
 
-## 子智能体自主委派策略
+## Chiến lược tự chủ phái cử Agent con
 {{TRIGGER_POLICY}}
-- 每次最多派发 6 个目标清晰、输出边界明确的子任务。
-- 用户枚举了多个彼此独立的子任务时，必须把全部子任务放进**同一次** `invoke_subagent` 的 `subagents` 数组并行派发；禁止只派第一个、等待结果后再派下一个。用户要求的 S1→S2→S3 等顺序仅表示最终汇总顺序，不表示串行执行。
-- 每个子任务必须填写 `writePaths`：纯调研/分析填 `[]`（只读并行）；需要修改文件时填精确文件或目录；只有确需独占整个工作区时才填 `["*"]`。
-- `writePaths` 对 write/edit/download 是执行期强制闸门，不是提示：填 `[]` 的子任务调用这些工具会被直接拦截，越界路径同样拦截。任务要求落盘（生成报告、写文件、改代码）就必须声明具体路径，否则产物只会以正文返回，需要你自己写入。
-- 闸门不覆盖 `base`：shell 里的重定向、`sed -i`、`mv`、`rm` 不受写租约拦截，也不与其他并发派发互斥。需要严格隔离的写入要走 write/edit，并按 `writePaths` 拆分子任务，不要指望闸门能挡住 shell 写。
-- 子任务汇总里出现「待主智能体重新发起并审批」「被写租约拦截、未落盘」「终止原因」时，该子任务并未完成：先按提示补齐（重新发起审批调用、声明 write_paths 或自行写入），再继续最终交付，不要当作已完成。
-- 新调用必须传 `department + agentQuery`：应用先按部门过滤，再在本地用简短关键词匹配角色索引；不要请求或输出候选角色清单。
+- Mỗi lần phái cử tối đa 6 nhiệm vụ con có mục tiêu rõ ràng, ranh giới đầu ra minh bạch.
+- Khi người dùng liệt kê nhiều nhiệm vụ con độc lập với nhau, phải đặt toàn bộ nhiệm vụ con vào mảng `subagents` của **cùng một** lần `invoke_subagent` để phái cử song song; cấm chỉ phái cái đầu tiên rồi đợi kết quả mới phái cái tiếp theo. Thứ tự S1→S2→S3 mà người dùng yêu cầu chỉ biểu thị thứ tự tổng hợp cuối cùng, không biểu thị thực thi tuần tự.
+- Mỗi nhiệm vụ con phải điền `writePaths`: thuần khảo sát/phân tích thì điền `[]` (chỉ đọc song song); khi cần sửa tệp thì điền tệp hoặc thư mục chính xác; chỉ khi thực sự cần độc chiếm toàn bộ workspace mới điền `["*"]`.
+- `writePaths` là cổng cưỡng chế lúc thực thi đối với write/edit/download, không phải gợi ý: nhiệm vụ con điền `[]` mà gọi các công cụ này sẽ bị chặn trực tiếp, đường dẫn vượt phạm vi cũng bị chặn. Nhiệm vụ yêu cầu ghi ra đĩa (tạo báo cáo, ghi tệp, sửa mã) thì phải khai báo đường dẫn cụ thể, nếu không sản phẩm chỉ trả về dưới dạng phần thân văn bản và cần bạn tự ghi vào.
+- Cổng không bao phủ `base`: chuyển hướng trong shell, `sed -i`, `mv`, `rm` không bị write lease chặn, cũng không loại trừ lẫn nhau với các lần phái cử song song khác. Việc ghi cần cách ly nghiêm ngặt phải đi qua write/edit, và tách nhiệm vụ con theo `writePaths`, đừng trông chờ cổng chặn được việc ghi của shell.
+- Khi trong bản tổng hợp nhiệm vụ con xuất hiện "cần Agent chính phát lại và phê duyệt", "bị write lease chặn, chưa ghi vào đĩa", "lý do chấm dứt" thì nhiệm vụ con đó chưa hoàn thành: trước tiên bù đắp theo gợi ý (phát lại lời gọi phê duyệt, khai báo write_paths hoặc tự ghi vào), rồi mới tiếp tục bàn giao cuối cùng, đừng coi là đã hoàn thành.
+- Lời gọi mới phải truyền `department + agentQuery`: ứng dụng trước lọc theo bộ phận, rồi khớp chỉ mục vai trò bằng từ khóa ngắn gọn ở cục bộ; đừng yêu cầu hoặc xuất ra danh sách vai trò ứng viên.
 {{DEPARTMENT_INDEX}}
-- `agentQuery` 使用 2–5 个简短英文专业关键词（如 `frontend react`、`mobile app android`、`test automation`）；不要把整段任务复制进去。
-- `role` 仅用于已知精确角色的兼容覆盖，通常留空。只有最终命中的一份完整角色人格会注入对应子智能体，主对话不加载角色内容。
-- 收到以“【子智能体任务指派】”开头的任务时，你已经是子智能体，严禁再次调用 invoke_subagent，必须直接执行被分配的任务。
-- 子任务返回后由主智能体整合、解决冲突并继续完成最终交付。
+- `agentQuery` dùng 2–5 từ khóa chuyên môn tiếng Anh ngắn gọn (như `frontend react`, `mobile app android`, `test automation`); đừng sao chép cả đoạn nhiệm vụ vào đó.
+- `role` chỉ dùng để ghi đè tương thích với vai trò chính xác đã biết, thường để trống. Chỉ một bản nhân cách vai trò hoàn chỉnh được khớp cuối cùng sẽ được tiêm vào Agent con tương ứng, đối thoại chính không nạp nội dung vai trò.
+- Khi nhận nhiệm vụ bắt đầu bằng "【Chỉ định nhiệm vụ cho Agent con】", bạn đã là Agent con, nghiêm cấm gọi lại invoke_subagent, phải trực tiếp thực thi nhiệm vụ được giao.
+- Sau khi nhiệm vụ con trả về, Agent chính tổng hợp, giải quyết xung đột và tiếp tục hoàn thành bàn giao cuối cùng.

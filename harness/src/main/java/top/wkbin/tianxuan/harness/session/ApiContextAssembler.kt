@@ -263,4 +263,4 @@ class ApiContextAssembler(
 
 /** Split-Turn 压缩后的角色桥接消息：当保留段从 assistant / tool_call 中途开始时插入。 */
 private const val SPLIT_TURN_BRIDGE_MESSAGE =
-    "[系统说明] 为避免单个超长任务轮次撑爆上下文，更早的步骤已折叠为上方摘要。以下从当前任务中途继续，请勿重复已完成的工作。"
+    "[Giải thích hệ thống] Để tránh một lượt nhiệm vụ quá dài làm tràn ngữ cảnh, các bước sớm hơn đã được gộp thành tóm tắt ở trên. Dưới đây tiếp tục từ giữa chừng nhiệm vụ hiện tại, vui lòng không lặp lại công việc đã hoàn thành."

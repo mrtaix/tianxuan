@@ -24,7 +24,7 @@ object WebViewDebugging {
         } catch (e: Exception) {
             lastFailure = "${e.javaClass.simpleName}: ${e.message}"
             Log.e("TianXuanCdp", "WebView debugging=$value failed; pid=${Process.myPid()}", e)
-            throw IllegalStateException("WebView 调试开关设置失败（enabled=$value）: $lastFailure", e)
+            throw IllegalStateException("WebView đặt công tắc gỡ lỗi thất bại (enabled=$value): $lastFailure", e)
         }
     }
 

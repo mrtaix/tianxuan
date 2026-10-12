@@ -22,7 +22,7 @@ import top.wkbin.tianxuan.harness.session.ApiMessageProjector
 /**
  * 会话文本序列化（对齐 pi 的 serializeConversation）：
  * 把 HarnessMessage 列表压平为 `[User]:` / `[Assistant]:` / `[Assistant tool calls]:` / `[Tool result]:`
- * 的纯文本叙事，供 LLM 摘要请求使用。纯文本形态防止模型把历史当作"要继续的对话"。
+ * 的纯文本叙事，供 LLM 摘要请求使用。纯文本形态防止模型把历史当作"Hội thoại cần tiếp tục"。
  *
  * 设计要点（源自 pi compaction/utils.ts）：
  * - 工具结果截断到 [TOOL_RESULT_CHAR_LIMIT]（2000 字符），超出部分标注省略量——
@@ -91,7 +91,7 @@ object ConversationText {
         val tailBudget = maxChars - headBudget
         val omitted = text.length - headBudget - tailBudget
         return text.take(headBudget) +
-            "\n…[中段 $omitted 字符已省略]…\n" +
+            "\n…[đoạn giữa đã bỏ qua $omitted ký tự]…\n" +
             text.takeLast(tailBudget)
     }
 
@@ -113,7 +113,7 @@ object ConversationText {
         val trimmed = output.trim()
         if (trimmed.length <= TOOL_RESULT_CHAR_LIMIT) return trimmed
         return trimmed.take(TOOL_RESULT_CHAR_LIMIT) +
-            "…[已截断，省略 ${trimmed.length - TOOL_RESULT_CHAR_LIMIT} 字符]"
+            "…[Đã cắt, bỏ qua ${trimmed.length - TOOL_RESULT_CHAR_LIMIT} ký tự]"
     }
 }
 
@@ -199,40 +199,40 @@ internal object SummaryReplayRequests {
     const val DEFAULT_COMPACTION_BUDGET_TOKENS = 128_000
 
     fun buildReplayInstruction(hasPreviousSummaries: Boolean): String = buildString {
-        appendLine("你是会话压缩器。任务：把本条消息之前的全部对话历史压缩为一份结构化摘要，供同一会话的后续轮次继续使用。")
-        appendLine("该摘要将替代以上历史注入后续请求，必须自包含。")
+        appendLine("Bạn là trình nén hội thoại. Nhiệm vụ: nén toàn bộ lịch sử hội thoại trước thông điệp này thành một bản tóm tắt có cấu trúc, để các lượt sau của cùng hội thoại tiếp tục dùng.")
+        appendLine("Tóm tắt này sẽ thay thế lịch sử trên để tiêm vào các yêu cầu sau, phải tự chứa.")
         appendLine()
         appendFormatSection(this, null)
         if (hasPreviousSummaries) {
             appendLine()
-            appendLine("注意：上方上下文（系统提示中的摘要层）已包含此前的压缩摘要，请把其中的关键信息合并进新摘要，不要丢失未完成事项与决策。")
+            appendLine("Lưu ý: context phía trên (lớp tóm tắt trong system prompt) đã chứa tóm tắt nén trước đó, hãy gộp thông tin then chốt vào tóm tắt mới, đừng làm mất việc chưa hoàn thành và các quyết định.")
         }
         appendLine()
-        appendLine("现在只输出摘要本身，不要任何寒暄、说明或代码块包裹。")
+        appendLine("Giờ chỉ xuất phần thân tóm tắt, không chào hỏi, giải thích hay bao bọc bằng khối mã nào.")
     }
 
     fun appendFormatSection(sb: StringBuilder, previousInline: String?) {
-        sb.appendLine("输出格式（严格遵守，只输出摘要本身，不要任何寒暄或代码块包裹）：")
-        sb.appendLine("## 目标")
-        sb.appendLine("[用户想完成什么]")
-        sb.appendLine("## 约束与偏好")
-        sb.appendLine("- [用户明确提出的要求、偏好与禁区]")
-        sb.appendLine("## 进度")
-        sb.appendLine("### 已完成")
-        sb.appendLine("- [x] [已完成的任务]")
-        sb.appendLine("### 进行中")
-        sb.appendLine("- [ ] [当前正在做的事]")
-        sb.appendLine("### 受阻")
-        sb.appendLine("- [问题与原因，无则省略该小节]")
-        sb.appendLine("## 关键决策")
-        sb.appendLine("- **[决策]**：[理由]")
-        sb.appendLine("## 下一步")
-        sb.appendLine("1. [接下来应该做什么]")
-        sb.appendLine("## 关键上下文")
-        sb.appendLine("- [继续工作必需的数据：路径、命令输出要点、错误信息、版本号等]")
+        sb.appendLine("Định dạng đầu ra (tuân thủ nghiêm ngặt, chỉ xuất bản tóm tắt, không có lời xã giao hay bọc khối mã nào):")
+        sb.appendLine("## Mục tiêu")
+        sb.appendLine("[Người dùng muốn hoàn thành điều gì]")
+        sb.appendLine("## Ràng buộc và sở thích")
+        sb.appendLine("- [Yêu cầu, sở thích và vùng cấm người dùng nêu rõ]")
+        sb.appendLine("## Tiến độ")
+        sb.appendLine("### Đã hoàn thành")
+        sb.appendLine("- [x] [Nhiệm vụ đã hoàn thành]")
+        sb.appendLine("### Đang tiến hành")
+        sb.appendLine("- [ ] [Việc đang làm hiện tại]")
+        sb.appendLine("### Bị chặn")
+        sb.appendLine("- [Vấn đề và nguyên nhân, không có thì bỏ qua mục này]")
+        sb.appendLine("## Quyết định then chốt")
+        sb.appendLine("- **[Quyết định]**: [Lý do]")
+        sb.appendLine("## Bước tiếp theo")
+        sb.appendLine("1. [Tiếp theo nên làm gì]")
+        sb.appendLine("## Context then chốt")
+        sb.appendLine("- [Dữ liệu cần thiết để tiếp tục làm việc: đường dẫn, điểm chính đầu ra lệnh, thông tin lỗi, số phiên bản v.v.]")
         if (previousInline != null) {
             sb.appendLine()
-            sb.appendLine("【此前的压缩摘要】（请把其中的关键信息合并进新摘要，不要丢失未完成事项与决策）：")
+            sb.appendLine("【Tóm tắt nén trước đó】 (hãy gộp thông tin then chốt trong đó vào tóm tắt mới, đừng làm mất các việc chưa hoàn thành và quyết định):")
             sb.appendLine(previousInline)
         }
     }
@@ -310,12 +310,12 @@ class CompactionSummarizer(
             .joinToString("\n\n---\n\n")
             .takeIf { it.isNotEmpty() }
         return buildString {
-            appendLine("你是会话压缩器。请把下面的对话历史压缩为一份结构化摘要，供同一会话的后续轮次继续使用。")
-            appendLine("摘要将被注入后续请求作为早期历史的唯一替代，必须自包含。")
+            appendLine("Bạn là bộ nén phiên. Hãy nén lịch sử hội thoại dưới đây thành một bản tóm tắt có cấu trúc, để các lượt tiếp theo của cùng phiên tiếp tục sử dụng.")
+            appendLine("Tóm tắt sẽ được tiêm vào các request sau làm bản thay thế duy nhất cho lịch sử ban đầu, bắt buộc phải tự chứa đủ.")
             appendLine()
             SummaryReplayRequests.appendFormatSection(this, previous)
             appendLine()
-            appendLine("【待压缩的对话历史】：")
+            appendLine("【Lịch sử hội thoại cần nén】：")
             appendLine(serialized)
         }
     }
@@ -400,7 +400,7 @@ class CompactionSummarizer(
         const val MIN_SERIALIZED_CHARS_CAP = 3_000
         const val SERIALIZED_CHARS_PER_TOKEN = 1.5f
         const val SYSTEM_PROMPT =
-            "你是会话压缩器。任务：把长对话历史压缩为结构化摘要。只输出摘要正文，" +
-                "保留全部关键信息（目标、约束、进度、决策、下一步、关键上下文），不要复述无关细节。"
+            "Bạn là bộ nén hội thoại. Nhiệm vụ: nén lịch sử hội thoại dài thành tóm tắt có cấu trúc. Chỉ xuất phần thân tóm tắt, " +
+                "Giữ lại toàn bộ thông tin then chốt (mục tiêu, ràng buộc, tiến độ, quyết định, bước tiếp theo, ngữ cảnh then chốt), đừng nhắc lại chi tiết không liên quan."
     }
 }

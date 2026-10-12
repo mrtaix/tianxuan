@@ -28,7 +28,7 @@ class AgentModelDiscovery(
             else -> "${provider.baseUrl.trimEnd('/')}/models"
         }
         val targetUrl = ProviderEndpointPolicy.normalizeUrl(url)
-        require(targetUrl.isNotBlank() && ProviderEndpointPolicy.isSafeBaseUrl(targetUrl)) { "模型发现地址不安全或为空" }
+        require(targetUrl.isNotBlank() && ProviderEndpointPolicy.isSafeBaseUrl(targetUrl)) { "Địa chỉ phát hiện model không an toàn hoặc rỗng" }
         val isAnthropic = provider.protocol == ProviderProtocol.ANTHROPIC ||
             targetUrl.contains("api.anthropic.com") ||
             provider.name.contains("anthropic", ignoreCase = true) ||
@@ -48,17 +48,17 @@ class AgentModelDiscovery(
         http.newCall(request).execute().use { response ->
             val body = response.body.string()
             if (!response.isSuccessful) {
-                throw ModelDiscoveryResponseException("获取模型失败 HTTP ${response.code}：${body.take(200)}")
+                throw ModelDiscoveryResponseException("Lấy model thất bại HTTP ${response.code}: ${body.take(200)}")
             }
             val mediaType = response.body.contentType()
             if (looksLikeHtml(body)) {
                 throw ModelDiscoveryResponseException(
-                    "模型接口返回了网页而不是 JSON（HTTP ${response.code}，Content-Type: ${mediaType ?: "未知"}）",
+                    "Giao diện model trả về trang web thay vì JSON (HTTP ${response.code}, Content-Type: ${mediaType ?: "未知"}）",
                 )
             }
             val root = runCatching { json.parseToJsonElement(body) as? JsonObject }
-                .getOrElse { cause -> throw ModelDiscoveryResponseException("模型接口返回的 JSON 无法解析", cause) }
-                ?: throw ModelDiscoveryResponseException("模型接口返回的 JSON 顶层不是对象")
+                .getOrElse { cause -> throw ModelDiscoveryResponseException("JSON do giao diện model trả về không phân giải được", cause) }
+                ?: throw ModelDiscoveryResponseException("JSON cấp cao nhất mà giao diện model trả về không phải là đối tượng")
             val ids = runCatching {
                 root["data"]?.jsonArray?.mapNotNull { it.jsonObject["id"]?.jsonPrimitive?.content }
                     ?: root["models"]?.jsonArray?.mapNotNull { item ->
@@ -66,7 +66,7 @@ class AgentModelDiscovery(
                         obj["name"]?.jsonPrimitive?.content ?: obj["model"]?.jsonPrimitive?.content
                     }.orEmpty()
             }.getOrElse { cause ->
-                throw ModelDiscoveryResponseException("模型接口返回的 JSON 结构不符合预期", cause)
+                throw ModelDiscoveryResponseException("Cấu trúc JSON do giao diện model trả về không đúng như mong đợi", cause)
             }
             ids.filter(::isAgentModel).distinct().sorted()
         }

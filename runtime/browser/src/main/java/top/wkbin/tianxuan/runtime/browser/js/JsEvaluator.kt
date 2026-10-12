@@ -34,14 +34,14 @@ object JsEvaluator {
         } catch (e: TimeoutCancellationException) {
             // #12：超时放弃等待；WebView 无法中止已派发的 evaluateJavascript，页面内副作用可能仍执行，
             // 回调结果因 deferred 已超时而被丢弃（不写回任何共享状态）。
-            android.util.Log.w("JsEvaluator", "evaluateJavascript 超时(${timeoutMs}ms)，页面内脚本可能仍在执行")
+            android.util.Log.w("JsEvaluator", "evaluateJavascript quá thời gian (${timeoutMs}ms), script trong trang có thể vẫn đang thực thi")
             null
         } catch (e: kotlinx.coroutines.CancellationException) {
             // 调用方协程被取消：正常传播，不得吞掉
             throw e
         } catch (t: Throwable) {
-            // 视图已销毁 / WebView 内部异常：返回 null（调用方各自按"不可用"处理）
-            android.util.Log.w("JsEvaluator", "evaluateJavascript 失败: ${t.message}")
+            // 视图已销毁 / WebView 内部异常：返回 null（调用方各自按"Không khả dụng"处理）
+            android.util.Log.w("JsEvaluator", "evaluateJavascript thất bại: ${t.message}")
             null
         }
     }

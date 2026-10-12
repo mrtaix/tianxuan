@@ -6,18 +6,18 @@ object WorkflowEdgeCondition {
 
     fun validationError(edge: WorkflowEdge): String? {
         if (edge.fromPort.lowercase() !in supportedPorts) {
-            return "输出端口只能是 output、success 或 failure"
+            return "Cổng đầu ra chỉ có thể là output, success hoặc failure"
         }
-        if (edge.toPort.lowercase() != "input") return "输入端口只能是 input"
+        if (edge.toPort.lowercase() != "input") return "Cổng đầu vào chỉ có thể là input"
 
         val expression = edge.conditionExpression?.trim().orEmpty()
         if (expression.isEmpty()) return null
         EXIT_CODE_EQ.matchEntire(expression)?.let { return null }
         EXIT_CODE_NEQ.matchEntire(expression)?.let { return null }
         OUTPUT_CONTAINS.matchEntire(expression)?.let { match ->
-            return if (match.groupValues[1].isBlank()) "output contains 后必须填写匹配文本" else null
+            return if (match.groupValues[1].isBlank()) "Sau output contains phải điền văn bản khớp" else null
         }
-        return runCatching { Regex(expression) }.exceptionOrNull()?.let { "条件正则无效：${it.message}" }
+        return runCatching { Regex(expression) }.exceptionOrNull()?.let { "Regex điều kiện không hợp lệ: ${it.message}" }
     }
 
     fun matches(edge: WorkflowEdge, output: NodeExecutionOutput): Boolean {

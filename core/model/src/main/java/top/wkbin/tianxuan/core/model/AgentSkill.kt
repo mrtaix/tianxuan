@@ -13,7 +13,7 @@ data class AgentSkill(
     val isEnabled: Boolean = true,
     val isBuiltin: Boolean = true,
     val isImmutable: Boolean = false,
-    val category: String = "通用",
+    val category: String = "Chung",
     /** 私有 Skill 包解压目录；为空表示仅包含提示词。 */
     val resourcePath: String? = null,
 )
@@ -22,8 +22,8 @@ object BuiltinSkills {
     val presets: List<AgentSkill> = listOf(
         AgentSkill(
             id = "agent_context",
-            name = "上下文与任务记忆规划",
-            description = "天玄核心系统能力：提供长期事实记忆 (memory)、任务执行规划 (plan) 与工作草稿便签 (scratchpad)",
+            name = "Lập kế hoạch ngữ cảnh và ký ức nhiệm vụ",
+            description = "Năng lực hệ thống lõi Thien Huyen: cung cấp bộ nhớ sự kiện dài hạn (memory), lập kế hoạch thực thi nhiệm vụ (plan) và ghi chú nháp (scratchpad)",
             systemPrompt = """
                 【Agent 上下文与任务记忆规划核心指导】：
                 1. 长期记忆 (memory)：当用户表达偏好、架构规范或重要事实时，主动调用 memory(action="save", key=..., value=..., kind="preference"|"rule"|"fact") 持久化存储；
@@ -35,12 +35,12 @@ object BuiltinSkills {
             isEnabled = true,
             isBuiltin = true,
             isImmutable = true,
-            category = "核心系统",
+            category = "Hệ thống lõi",
         ),
         AgentSkill(
             id = "linux_ops",
-            name = "Linux 沙箱运维专精",
-            description = "深入理解 PRoot 特性、Debian dpkg setuid 残留修复、前台常驻进程与网络诊断",
+            name = "Chuyên môn vận hành sandbox Linux",
+            description = "Hiểu sâu đặc tính PRoot, sửa lỗi tồn dư setuid dpkg Debian, tiến trình thường trú foreground và chẩn đoán mạng",
             systemPrompt = """
                 【Linux 沙箱运维专精指导】：
                 1. PRoot 环境中没有真实 root 权限，避免执行破坏性内核命令（如 mount、sysctl、chown）。
@@ -51,12 +51,12 @@ object BuiltinSkills {
             iconName = "Terminal",
             isEnabled = true,
             isBuiltin = true,
-            category = "系统运维",
+            category = "Vận hành hệ thống",
         ),
         AgentSkill(
             id = "code_refactor",
-            name = "代码重构与审查",
-            description = "精细化代码审查、遵循架构模式、利用 edit 工具进行小步无损重构",
+            name = "Tái cấu trúc và rà soát mã",
+            description = "Rà soát mã tinh tế, tuân theo mẫu kiến trúc, dùng công cụ edit để tái cấu trúc không mất mát từng bước nhỏ",
             systemPrompt = """
                 【代码重构与审查指导】：
                 1. 优先使用 edit 进行局部精准修改，避免无意义的大范围整文件重写。
@@ -67,12 +67,12 @@ object BuiltinSkills {
             iconName = "Check",
             isEnabled = true,
             isBuiltin = true,
-            category = "编程开发",
+            category = "Lập trình phát triển",
         ),
         AgentSkill(
             id = "git_workflow",
-            name = "Git 敏捷工作流",
-            description = "自动化 Git 状态分析、分支管理、原子提交信息规范生成与冲突诊断",
+            name = "Luồng công việc linh hoạt Git",
+            description = "Phân tích trạng thái Git tự động, quản lý nhánh, tạo chuẩn thông điệp commit nguyên tử và chẩn đoán xung đột",
             systemPrompt = """
                 【Git 敏捷工作流指导】：
                 1. 执行 git 提交前务必通过 base 运行 git status 和 git diff 确认改动范围。
@@ -83,12 +83,12 @@ object BuiltinSkills {
             iconName = "Code",
             isEnabled = true,
             isBuiltin = true,
-            category = "版本控制",
+            category = "Kiểm soát phiên bản",
         ),
         AgentSkill(
             id = "build_debugger",
-            name = "全栈构建与排错",
-            description = "快速定位 Python venv、Node.js/npm、C/C++ makefile 等构建报错与依赖解析",
+            name = "Build toàn stack và gỡ lỗi",
+            description = "Định vị nhanh lỗi xây dựng và phân giải phụ thuộc như Python venv, Node.js/npm, makefile C/C++",
             systemPrompt = """
                 【全栈构建与排错指导】：
                 1. Python 项目优先推荐创建和激活 venv 虚拟环境，避免污染全局 python 库。
@@ -99,12 +99,12 @@ object BuiltinSkills {
             iconName = "Alert",
             isEnabled = true,
             isBuiltin = true,
-            category = "编程开发",
+            category = "Lập trình phát triển",
         ),
         AgentSkill(
             id = "mobile_build_guard",
-            name = "移动端构建环境守卫",
-            description = "Android/Flutter 构建前强制自检，优先使用天玄 ARM64 工具链，并在必要时显式切换 QEMU 兼容会话",
+            name = "Bảo vệ môi trường build di động",
+            description = "Tự kiểm tra bắt buộc trước khi build Android/Flutter, ưu tiên dùng toolchain ARM64 Thien Huyen, và chuyển sang phiên tương thích QEMU rõ ràng khi cần",
             systemPrompt = """
                 【移动端构建环境守卫】：
                 1. 在执行 Android 或 Flutter 构建前，先运行 `tianxuan-build doctor <项目路径>`；不得跳过自检后直接下载或执行未知主机架构的工具。
@@ -118,12 +118,12 @@ object BuiltinSkills {
             iconName = "Shield",
             isEnabled = true,
             isBuiltin = true,
-            category = "移动端开发",
+            category = "Phát triển di động",
         ),
         AgentSkill(
             id = "mobile_project_align",
-            name = "移动端项目兼容对齐",
-            description = "分析第三方 Android/Flutter 项目与 TianXuan ARM64 工具链的差异，生成变更计划并在确认后执行最小调整",
+            name = "Căn chỉnh tương thích dự án di động",
+            description = "Phân tích khác biệt giữa dự án Android/Flutter bên thứ ba và toolchain ARM64 TianXuan, tạo kế hoạch thay đổi và thực thi điều chỉnh tối thiểu sau khi xác nhận",
             systemPrompt = """
                 【移动端项目兼容对齐】：
                 1. 这是只读分析优先的 Skill。先运行 `tianxuan-build analyze <项目路径>`，必要时加 `--offline`，并读取输出中的 compileSdk、Gradle Wrapper、AGP、Kotlin、ABI 与缓存结论。
@@ -138,12 +138,12 @@ object BuiltinSkills {
             isEnabled = true,
             isBuiltin = true,
             isImmutable = true,
-            category = "移动端开发",
+            category = "Phát triển di động",
         ),
         AgentSkill(
             id = "android_cli",
-            name = "Google Android 原生开发助手",
-            description = "精通 Android SDK 工具链、Jetpack Compose 与现代 Gradle 流水线",
+            name = "Trợ lý phát triển native Google Android",
+            description = "Thành thạo chuỗi công cụ Android SDK, Jetpack Compose và pipeline Gradle hiện đại",
             systemPrompt = """
                 【Google Android 原生开发助手指导】：
                 1. 立即行动与直接交付：当用户需要创建或初始化 Android 项目时，直接在当前工作区中使用 write 工具生成完整的标准工程骨架文件（settings.gradle.kts、build.gradle.kts、app/build.gradle.kts、AndroidManifest.xml、MainActivity.kt 与 Compose UI 页面代码）。严禁调用已移除的 `android` CLI，也不要在无必要时反复探测环境或询问多余问题！
@@ -181,12 +181,12 @@ object BuiltinSkills {
             iconName = "Play",
             isEnabled = true,
             isBuiltin = true,
-            category = "安卓开发",
+            category = "Phát triển Android",
         ),
         AgentSkill(
             id = "android_reverse",
-            name = "Android 逆向与代码审计",
-            description = "精通 APK 解包、JADX-CLI 全自动 Java 源码反编译、Ripgrep 毫秒级检索、反射图谱与漏洞分析",
+            name = "Dịch ngược Android và kiểm toán mã",
+            description = "Thành thạo giải nén APK, dịch ngược mã nguồn Java tự động hoàn toàn bằng JADX-CLI, truy xuất Ripgrep mức mili giây, bản đồ phản chiếu và phân tích lỗ hổng",
             systemPrompt = """
                 【Android 逆向与代码审计指导】：
                 1. 强制规划先行：第一轮工具调用必须先调用 plan(action="replace_active", ...) 建立执行看板，分阶段推进（结构感知 -> JADX 反编译 -> rg 检索 -> 反射追踪 -> 结论输出），每步完成后调用 advance。
@@ -210,12 +210,12 @@ object BuiltinSkills {
             iconName = "Search",
             isEnabled = true,
             isBuiltin = true,
-            category = "安卓开发",
+            category = "Phát triển Android",
         ),
         AgentSkill(
             id = "flutter_dev",
-            name = "Flutter 跨平台开发助手",
-            description = "精通 Dart 与 Flutter 3.x 跨平台架构、国内镜像构建与 APK 手机极速部署",
+            name = "Trợ lý phát triển đa nền Flutter",
+            description = "Thành thạo kiến trúc đa nền tảng Dart và Flutter 3.x, build mirror nội địa và triển khai APK siêu nhanh lên điện thoại",
             systemPrompt = """
                 【Flutter 跨平台开发助手指导】：
                 1. 立即行动与直接交付：当用户需要创建或编辑 Flutter 跨平台项目时，直接在当前工作区生成或修改 pubspec.yaml、lib/main.dart 等标准 Dart/Flutter 代码文件，严禁多余推诿！
@@ -233,12 +233,12 @@ object BuiltinSkills {
             iconName = "Play",
             isEnabled = true,
             isBuiltin = true,
-            category = "跨端开发",
+            category = "Phát triển đa nền tảng",
         ),
         AgentSkill(
             id = "code_graph",
-            name = "CodeGraph 代码知识图谱",
-            description = "精通利用本地代码知识图谱进行毫秒级符号搜索、调用链路（Call Graph）追踪与架构探索，1 步获取代码切片与波及范围",
+            name = "Đồ thị tri thức mã CodeGraph",
+            description = "Tinh thông việc dùng đồ thị tri thức mã cục bộ để tìm ký hiệu cấp mili giây, truy vết chuỗi gọi (Call Graph) và khám phá kiến trúc, lấy lát cắt mã và phạm vi ảnh hưởng trong 1 bước",
             systemPrompt = """
                 【CodeGraph 代码知识图谱导航指导】：
                 1. 消除代码探索“发现税”：
@@ -255,7 +255,7 @@ object BuiltinSkills {
             iconName = "Star",
             isEnabled = true,
             isBuiltin = true,
-            category = "编程开发",
+            category = "Lập trình phát triển",
         ),
     )
 }

@@ -171,7 +171,7 @@ class EmbeddedAdbManager(
             )
         }.onFailure { error ->
             discoveryStarted.set(false)
-            _state.value = ConnectionState.Failed(error.userMessage("无法启动 mDNS 自动发现"))
+            _state.value = ConnectionState.Failed(error.userMessage("Không thể khởi động tự động phát hiện mDNS"))
             Log.w(TAG, "startDiscovery failed", error)
         }
     }
@@ -284,7 +284,7 @@ class EmbeddedAdbManager(
     private fun onDiscoveryError(reason: String) {
         Log.w(TAG, "mDNS discovery error: $reason")
         if (client == null) {
-            _state.value = ConnectionState.Failed("mDNS 自动发现失败，请确认 Wi-Fi 与无线调试已开启")
+            _state.value = ConnectionState.Failed("Phát hiện tự động mDNS thất bại, vui lòng xác nhận Wi-Fi và gỡ lỗi không dây đã bật")
         }
     }
 
@@ -304,7 +304,7 @@ class EmbeddedAdbManager(
     /** 显式端口仅作为 mDNS 不可用时的兼容入口。 */
     suspend fun pair(pairingPort: Int?, pairingCode: String): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            require(pairingCode.matches(PAIRING_CODE)) { "配对码必须是 6 位数字" }
+            require(pairingCode.matches(PAIRING_CODE)) { "Mã ghép nối phải là 6 chữ số" }
             val endpoint = pairingEndpoint(pairingPort)
             _state.value = ConnectionState.Pairing
             Kadb.pair(endpoint.host, endpoint.port, pairingCode, "TianXuan")
@@ -319,7 +319,7 @@ class EmbeddedAdbManager(
                 _state.value = ConnectionState.Discovering
             }
         }.onFailure { error ->
-            _state.value = ConnectionState.Failed(error.userMessage("无线 ADB 配对失败"))
+            _state.value = ConnectionState.Failed(error.userMessage("Ghép đôi ADB không dây thất bại"))
             Log.w(TAG, "wireless adb pairing failed", error)
         }.map { }
     }
@@ -345,7 +345,7 @@ class EmbeddedAdbManager(
                     }
                 }
                 require(candidates.isNotEmpty()) {
-                    "未发现无线调试连接端口，请确认系统「无线调试」已开启，或手动填入 5 位连接端口"
+                    "Không phát hiện cổng kết nối gỡ lỗi không dây, hãy xác nhận 「Gỡ lỗi không dây」của hệ thống đã bật, hoặc tự điền cổng kết nối 5 chữ số"
                 }
                 var lastError: Throwable? = null
                 for (endpoint in candidates) {
@@ -356,9 +356,9 @@ class EmbeddedAdbManager(
                         lastError = error
                     }
                 }
-                throw lastError ?: IllegalStateException("没有可用的无线调试端点")
+                throw lastError ?: IllegalStateException("Không có điểm cuối gỡ lỗi không dây khả dụng")
             }.onFailure { error ->
-                _state.value = ConnectionState.Failed(error.userMessage("无线 ADB 连接失败"))
+                _state.value = ConnectionState.Failed(error.userMessage("Kết nối ADB không dây thất bại"))
                 Log.w(TAG, "wireless adb connect failed", error)
             }.map { }
         }
@@ -384,7 +384,7 @@ class EmbeddedAdbManager(
             }
             try {
                 val probe = connected.shell("echo ok")
-                check(probe.output.trim() == "ok") { "ADB 链路探活失败" }
+                check(probe.output.trim() == "ok") { "Dò sống liên kết ADB thất bại" }
                 client = connected
                 _state.value = ConnectionState.Connected(h, endpoint.port)
                 scope.launch {
@@ -398,7 +398,7 @@ class EmbeddedAdbManager(
                 lastError = error
             }
         }
-        throw lastError ?: IllegalStateException("无法连接到端口 ${endpoint.port}")
+        throw lastError ?: IllegalStateException("Không thể kết nối đến cổng ${endpoint.port}")
     }
 
     fun disconnect() {
@@ -443,7 +443,7 @@ class EmbeddedAdbManager(
             if (connection.isFailure) {
                 return ShellOutcome(
                     null,
-                    connection.exceptionOrNull()?.userMessage("内置 ADB 未就绪").orEmpty(),
+                    connection.exceptionOrNull()?.userMessage("ADB tích hợp chưa sẵn sàng").orEmpty(),
                     false,
                 )
             }
@@ -458,16 +458,16 @@ class EmbeddedAdbManager(
                     // target footprint OOM。与 harness 侧 ToolExecutor.MAX_HOST_OUTPUT_CHARS 同值。
                     val output = if (response.allOutput.length > MAX_SHELL_OUTPUT_CHARS) {
                         response.allOutput.take(MAX_SHELL_OUTPUT_CHARS) +
-                            "\n[ADB shell 输出超限已截断：原文 ${response.allOutput.length} 字符，" +
-                            "仅保留前 $MAX_SHELL_OUTPUT_CHARS；请缩小输出范围后重试]"
+                            "\n[Đầu ra ADB shell vượt giới hạn đã bị cắt: nguyên văn ${response.allOutput.length} ký tự, " +
+                            "Chỉ giữ $MAX_SHELL_OUTPUT_CHARS đầu tiên; hãy thu hẹp phạm vi đầu ra rồi thử lại]"
                     } else {
                         response.allOutput
                     }
                     ShellOutcome(response.exitCode, output, response.exitCode == 0)
                 } catch (error: Throwable) {
                     closeClient()
-                    _state.value = ConnectionState.Failed(error.userMessage("ADB 执行失败"))
-                    ShellOutcome(null, error.userMessage("ADB 执行失败"), false)
+                    _state.value = ConnectionState.Failed(error.userMessage("ADB thực thi thất bại"))
+                    ShellOutcome(null, error.userMessage("ADB thực thi thất bại"), false)
                 }
             }
         }
@@ -475,9 +475,9 @@ class EmbeddedAdbManager(
 
     /** 抓取目标应用日志；关键词在本进程过滤，避免把用户文本拼进 shell。 */
     suspend fun captureLogcat(request: LogcatRequest, explicitPort: Int? = null): ShellOutcome {
-        require(request.packageName.isBlank() || PACKAGE_NAME.matches(request.packageName)) { "包名格式不合法" }
-        require(request.tag.isBlank() || LOGCAT_TAG.matches(request.tag)) { "Logcat Tag 格式不合法" }
-        require(request.priority.uppercaseChar() in PRIORITIES) { "日志优先级无效" }
+        require(request.packageName.isBlank() || PACKAGE_NAME.matches(request.packageName)) { "Định dạng tên gói không hợp lệ" }
+        require(request.tag.isBlank() || LOGCAT_TAG.matches(request.tag)) { "Định dạng Logcat Tag không hợp lệ" }
+        require(request.priority.uppercaseChar() in PRIORITIES) { "Mức ưu tiên log không hợp lệ" }
         val lines = request.lines.coerceIn(1, MAX_LOG_LINES)
         val tagArgs = if (request.tag.isBlank()) {
             shellQuote("*:${request.priority.uppercaseChar()}")
@@ -489,7 +489,7 @@ class EmbeddedAdbManager(
             "$logcat $tagArgs"
         } else {
             "pid=\$(/system/bin/pidof ${shellQuote(request.packageName)} | /system/bin/cut -d' ' -f1); " +
-                "if [ -z \"\$pid\" ]; then echo '目标应用未运行：${request.packageName}'; exit 3; fi; " +
+                "if [ -z \"\$pid\" ]; then echo 'Ứng dụng mục tiêu chưa chạy: ${request.packageName}'; exit 3; fi; " +
                 "$logcat --pid=\"\$pid\" $tagArgs"
         }
         val outcome = executeShell(command, explicitPort)
@@ -505,7 +505,7 @@ class EmbeddedAdbManager(
     suspend fun installApk(apk: File): Result<String> = mutex.withLock {
         withContext(Dispatchers.IO) {
             runCatching {
-                val current = client ?: error("内置 ADB 未连接，请先开启无线调试并完成配对")
+                val current = client ?: error("ADB tích hợp chưa kết nối, vui lòng bật gỡ lỗi không dây và hoàn tất ghép đôi trước")
                 current.install(apk)
                 "安装成功"
             }
@@ -516,12 +516,12 @@ class EmbeddedAdbManager(
 
     private fun pairingEndpoint(explicitPort: Int?): Endpoint {
         if (explicitPort != null) {
-            require(explicitPort in VALID_PORTS) { "配对端口无效" }
+            require(explicitPort in VALID_PORTS) { "Cổng ghép đôi không hợp lệ" }
             return pairingEndpointMap.values.firstOrNull { it.port == explicitPort }
                 ?: Endpoint("manual", LOOPBACK, explicitPort)
         }
         return pairingEndpointMap.values.firstOrNull()
-            ?: error("未发现配对端口：请在系统\"无线调试\"中打开\"使用配对码配对设备\"")
+            ?: error("Không tìm thấy cổng ghép nối: hãy mở「Ghép nối thiết bị bằng mã ghép nối」trong「gỡ lỗi không dây」của hệ thống")
     }
 
     private suspend fun awaitConnectEndpoint(preferredHost: String): Endpoint? =
@@ -542,11 +542,11 @@ class EmbeddedAdbManager(
         val raw = message.orEmpty()
         val friendlyMessage = when {
             raw.contains("Failure in SSL library", ignoreCase = true) || raw.contains("ssl", ignoreCase = true) ->
-                "TLS 握手失败（无线调试连接端口已变更，或误连接了配对端口）。请确认系统「无线调试」已开启并核对端口号，或重新完成配对。"
+                "Bắt tay TLS thất bại (cổng kết nối gỡ lỗi không dây đã thay đổi, hoặc nhầm cổng ghép nối). Hãy xác nhận「gỡ lỗi không dây」của hệ thống đã bật và kiểm tra số cổng, hoặc ghép nối lại."
             raw.contains("Connection refused", ignoreCase = true) ->
-                "连接被拒绝（端口未监听），请确认系统「无线调试」已开启，且端口号输入无误。"
+                "Kết nối bị từ chối (cổng không lắng nghe), hãy xác nhận \"Gỡ lỗi không dây\" của hệ thống đã bật và số cổng nhập đúng."
             raw.contains("ETIMEDOUT", ignoreCase = true) || raw.contains("timed out", ignoreCase = true) ->
-                "连接超时，请确认手机已连接 Wi-Fi 且无线调试处于开启状态。"
+                "Kết nối hết thời gian chờ, vui lòng xác nhận điện thoại đã kết nối Wi-Fi và gỡ lỗi không dây đang bật."
             raw.isNotBlank() -> raw
             else -> javaClass.simpleName
         }

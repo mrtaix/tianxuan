@@ -88,7 +88,7 @@ class AgentSkillRepository(
      * 无需通过 ZIP 逐个导入。按 resourcePath 去重，重复调用安全。
      *
      * 嵌套语义：目录树中任何直属含 SKILL.md 的目录都是一个 Skill——既支持
-     * "单个 Skill 目录"，也支持"集合目录（如外部工具的整个 skills 目录）"，
+     * "Thư mục Skill đơn lẻ"，也支持"Thư mục tập hợp (như toàn bộ thư mục skills của công cụ bên ngoài)"，
      * 以及 Skill 目录内再嵌套 Skill 子目录的多级结构。
      *
      * @return 本次新注册的 Skill 列表
@@ -126,8 +126,8 @@ class AgentSkillRepository(
                 ?: markdown.lineSequence().firstOrNull { it.startsWith("# ") }?.removePrefix("# ")?.trim()
                 ?: dir.name,
             description = metadata["description"]?.takeIf { it.isNotBlank() }
-                ?.take(MAX_DESCRIPTION_CHARS) ?: "从目录自动发现的 Skill",
-            systemPrompt = markdown + "\n\n【Skill 资源目录】$guestPath\n如需执行该 Skill 附带的脚本，请先检查脚本内容与参数，再从此目录调用。",
+                ?.take(MAX_DESCRIPTION_CHARS) ?: "Skill tự phát hiện từ thư mục",
+            systemPrompt = markdown + "\n\n【Thư mục tài nguyên Skill】$guestPath\nNếu cần chạy script kèm theo Skill này, vui lòng kiểm tra nội dung và tham số script trước, rồi gọi từ thư mục này.",
             isBuiltin = false,
             category = "自定义",
             resourcePath = dir.absolutePath,

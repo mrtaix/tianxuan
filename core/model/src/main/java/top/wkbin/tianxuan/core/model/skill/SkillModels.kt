@@ -14,38 +14,38 @@ enum class SkillPermission(
 ) {
     EXEC_COMMAND(
         id = "exec_command",
-        label = "命令执行",
-        description = "允许在 Linux PRoot 沙箱中执行 Shell 指令或调用附带脚本",
+        label = "Thực thi lệnh",
+        description = "Cho phép thực thi lệnh Shell hoặc gọi script đi kèm trong sandbox PRoot Linux",
         isHighRisk = true,
     ),
     NETWORK(
         id = "network",
-        label = "网络访问",
-        description = "允许向外部公网或局域网主机发起网络请求",
+        label = "Truy cập mạng",
+        description = "Cho phép phát yêu cầu mạng tới máy chủ công cộng hoặc mạng cục bộ bên ngoài",
         isHighRisk = true,
     ),
     FILE_WRITE(
         id = "file_write",
-        label = "文件系统写",
-        description = "允许在工作区或沙箱内部创建、修改或删除文件",
+        label = "Ghi hệ thống tệp",
+        description = "Cho phép tạo, sửa hoặc xóa tệp trong workspace hoặc nội bộ sandbox",
         isHighRisk = false,
     ),
     BROWSER_AUTOMATION(
         id = "browser_automation",
-        label = "浏览器控制",
-        description = "允许控制内置无头浏览器进行页面渲染、快照抓取或 DOM 分析",
+        label = "Điều khiển trình duyệt",
+        description = "Cho phép điều khiển trình duyệt không giao diện tích hợp để render trang, chụp snapshot hoặc phân tích DOM",
         isHighRisk = true,
     ),
     BACKGROUND_SERVICE(
         id = "background_service",
-        label = "后台常驻",
-        description = "允许在沙箱中注册并启动长期常驻的后台进程服务",
+        label = "Thường trú nền",
+        description = "Cho phép đăng ký và khởi động dịch vụ tiến trình nền thường trú dài hạn trong sandbox",
         isHighRisk = false,
     ),
     SYSTEM_PROBE(
         id = "system_probe",
-        label = "系统探测",
-        description = "允许探测沙箱 CPU、内存利用率及运行中进程列表",
+        label = "Dò hệ thống",
+        description = "Cho phép dò CPU sandbox, mức sử dụng bộ nhớ và danh sách tiến trình đang chạy",
         isHighRisk = false,
     );
 
@@ -67,7 +67,7 @@ data class SkillManifest(
     val author: String = "TianXuan Community",
     val license: String? = "Apache-2.0",
     val icon: String = "Sparkles",
-    val category: String = "通用",
+    val category: String = "Chung",
     val tags: List<String> = emptyList(),
     val minTianXuanVersion: String = "1.0.0",
     val compatibleRuntimes: List<String> = listOf("debian", "proot"),
@@ -103,44 +103,44 @@ data class PromptTemplateBundle(
 
         // 2. 角色与执行指引 (AGENT)
         agentMd?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            append("### 【核心角色与指令 (AGENT)】\n")
+            append("### 【Vai trò cốt lõi và chỉ thị (AGENT)】\n")
             append(it)
             append("\n\n")
         }
 
         // 3. 人格心智与沟通风格 (SOUL)
         soulMd?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            append("### 【人格边界与风格 (SOUL)】\n")
+            append("### 【Ranh giới nhân cách và phong cách (SOUL)】\n")
             append(it)
             append("\n\n")
         }
 
         // 4. 工具使用约定 (TOOLS)
         toolsMd?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            append("### 【工具使用规范 (TOOLS)】\n")
+            append("### 【Quy chuẩn sử dụng công cụ (TOOLS)】\n")
             append(it)
             append("\n\n")
         }
 
         // 5. 用户上下文契约 (USER)
         userMd?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            append("### 【用户交互契约 (USER)】\n")
+            append("### 【Hợp đồng tương tác người dùng (USER)】\n")
             append(it)
             append("\n\n")
         }
 
         // 6. 长期记忆与初始事实切片 (MEMORY)
         memoryMd?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            append("### 【初始化事实记忆 (MEMORY)】\n")
+            append("### 【Khởi tạo ký ức sự kiện (MEMORY)】\n")
             append(it)
             append("\n\n")
         }
 
         // 7. 沙箱物理资源目录挂载提示
         if (!resourceGuestPath.isNullOrBlank()) {
-            append("### 【Skill 资源与沙箱挂载】\n")
-            append("资源物理路径：`$resourceGuestPath`\n")
-            append("如需调用该 Skill 附带的 scripts/ 脚本或 references/ 资产，请在此目录下执行。\n")
+            append("### 【Tài nguyên Skill và mount sandbox】\n")
+            append("Đường dẫn vật lý tài nguyên: `$resourceGuestPath`\n")
+            append("Nếu cần gọi script scripts/ hoặc tài nguyên references/ đi kèm Skill này, hãy thực thi trong thư mục này.\n")
         }
     }.trim()
 }
@@ -161,11 +161,11 @@ data class SkillPackage(
  */
 @Serializable
 enum class AuditLevel(val severity: Int, val label: String) {
-    SAFE(0, "安全"),
-    INFO(1, "提示"),
-    WARNING(2, "警告"),
-    DANGER(3, "高危"),
-    BLOCKED(4, "严重阻断");
+    SAFE(0, "An toàn"),
+    INFO(1, "Nhắc"),
+    WARNING(2, "Cảnh báo"),
+    DANGER(3, "Nguy hiểm cao"),
+    BLOCKED(4, "Chặn nghiêm trọng");
 }
 
 /**
@@ -203,9 +203,9 @@ data class SecurityAuditReport(
  */
 @Serializable
 enum class CompatibilityLevel(val label: String) {
-    COMPATIBLE("完全兼容"),
-    PARTIALLY_COMPATIBLE("部分兼容（存在依赖缺失或降级）"),
-    INCOMPATIBLE("不兼容");
+    COMPATIBLE("Tương thích hoàn toàn"),
+    PARTIALLY_COMPATIBLE("Tương thích một phần (có phụ thuộc thiếu hoặc hạ cấp)"),
+    INCOMPATIBLE("Không tương thích");
 }
 
 /**
@@ -233,7 +233,7 @@ data class ClawHubMarketItem(
     val author: String,
     val icon: String = "Sparkles",
     val tags: List<String> = emptyList(),
-    val category: String = "通用",
+    val category: String = "Chung",
     val downloadUrl: String,
     val stars: Int = 0,
     val isInstalled: Boolean = false,

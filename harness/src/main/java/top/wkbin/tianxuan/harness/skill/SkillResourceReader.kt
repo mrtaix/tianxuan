@@ -40,7 +40,7 @@ object SkillResourceReader {
             target.absolutePath.startsWith(root.absolutePath + File.separator)
         if (!inside || !target.isFile) return null
         if (target.length() > MAX_RESOURCE_BYTES) {
-            return "（资源过大：${target.length()} 字节，上限 $MAX_RESOURCE_BYTES 字节；请用 base 的 head/sed 分页查看）"
+            return "(Tài nguyên quá lớn: ${target.length()} byte, giới hạn $MAX_RESOURCE_BYTES byte; hãy dùng head/sed của base để xem phân trang)"
         }
         return runCatching { target.readText(Charsets.UTF_8) }.getOrNull()
     }

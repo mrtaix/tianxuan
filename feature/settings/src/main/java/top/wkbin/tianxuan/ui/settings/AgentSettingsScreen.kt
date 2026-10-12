@@ -171,11 +171,11 @@ fun AgentSettingsScreen(
         topBar = {
             RuntimeTopBar(
                 title = when (category) {
-                    AgentSettingsCategory.EXECUTION -> "Agent 执行与上下文"
-                    AgentSettingsCategory.SUBAGENTS -> "子智能体角色"
-                    AgentSettingsCategory.SKILLS -> "Skills 与插件"
+                    AgentSettingsCategory.EXECUTION -> "Thực thi Agent và ngữ cảnh"
+                    AgentSettingsCategory.SUBAGENTS -> "Vai trò Agent con"
+                    AgentSettingsCategory.SKILLS -> "Skills và plugin"
                 },
-                statusText = "按领域独立管理 Agent 能力",
+                statusText = "Quản lý năng lực Agent độc lập theo lĩnh vực",
                 onBack = onBack,
             )
         },
@@ -196,7 +196,7 @@ fun AgentSettingsScreen(
                 )
             }
             item {
-                AgentBlockTitle("思考呈现与翻译")
+                AgentBlockTitle("Trình bày và dịch suy nghĩ")
             }
             item {
                 AgentSettingsGroup {
@@ -210,23 +210,23 @@ fun AgentSettingsScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     AgentToggleRow(
                         icon = RuntimeIconName.Globe,
-                        title = "展开时自动翻译英文思考为中文",
-                        subtitle = if (thinkingAutoTranslate) "展开思考块时若检测为英文将自动调用本地离线模型翻译呈现" else "仅在点击思考块上的翻译按钮时进行翻译",
+                        title = "Tự động dịch suy nghĩ tiếng Anh sang tiếng Trung khi mở rộng",
+                        subtitle = if (thinkingAutoTranslate) "Khi mở rộng khối tư duy nếu phát hiện là tiếng Anh sẽ tự động gọi model offline cục bộ để dịch và hiển thị" else "Chỉ dịch khi bấm nút dịch trên khối suy nghĩ",
                         checked = thinkingAutoTranslate,
                         onCheckedChange = viewModel::setThinkingAutoTranslate,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     AgentToggleRow(
                         icon = RuntimeIconName.Compress,
-                        title = "自动收拢历史轮次的思考与工具过程",
-                        subtitle = if (chatRoundCollapse) "已结束的历史轮次中，超过 2 步的思考与工具调用将收拢为「展开更多」摘要，点击即可展开；当前进行中的轮次始终完整呈现" else "关闭时保持自然单行流：全部思考过程与工具调用逐条平铺呈现",
+                        title = "Tự động thu gọn quá trình tư duy và công cụ của các lượt lịch sử",
+                        subtitle = if (chatRoundCollapse) "Trong các lượt lịch sử đã kết thúc, phần suy nghĩ và gọi công cụ vượt quá 2 bước sẽ được thu lại thành tóm tắt «mở rộng thêm», nhấp vào để mở rộng; lượt đang diễn ra luôn hiển thị đầy đủ" else "Khi tắt giữ dòng đơn tự nhiên: toàn bộ quá trình tư duy và lời gọi công cụ được trình bày trải phẳng từng mục",
                         checked = chatRoundCollapse,
                         onCheckedChange = viewModel::setChatRoundCollapse,
                     )
                 }
             }
             item {
-                AgentBlockTitle("思考流离线翻译语种模型")
+                AgentBlockTitle("Model ngôn ngữ dịch ngoại tuyến luồng tư duy")
             }
             item {
                 AgentSettingsGroup {
@@ -253,8 +253,8 @@ fun AgentSettingsScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     AgentToggleRow(
                         icon = RuntimeIconName.Compress,
-                        title = "智能压缩 Agent 命令输出",
-                        subtitle = "减少 Agent 读取 git、搜索、测试与构建日志时的上下文消耗；终端与原始文件不受影响",
+                        title = "Nén thông minh đầu ra lệnh Agent",
+                        subtitle = "Giảm tiêu hao ngữ cảnh khi Agent đọc log git, tìm kiếm, test và build; terminal và tệp gốc không bị ảnh hưởng",
                         checked = commandOutputCompressionEnabled,
                         onCheckedChange = viewModel::setCommandOutputCompressionEnabled,
                     )
@@ -369,8 +369,8 @@ fun AgentSettingsScreen(
             // ---- 模块 3：内置子智能体 ----
             item {
                 SectionHeader(
-                    title = "软件研发 Agent (${subagents.count { it.isEnabled }}/${subagents.size} 已启用)",
-                    subtitle = "Agency Agents · 9 个研发部门 · MIT 许可 · 完整提示词离线内置",
+                    title = "Agent nghiên cứu phát triển phần mềm (${subagents.count { it.isEnabled }}/${subagents.size} đã bật)",
+                    subtitle = "Agency Agents · 9 bộ phận R&D · Giấy phép MIT · Prompt đầy đủ tích hợp ngoại tuyến",
                 )
             }
             item {
@@ -399,8 +399,8 @@ fun AgentSettingsScreen(
                     value = subagentQuery,
                     onValueChange = { subagentQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("搜索 Agent") },
-                    placeholder = { Text("名称、角色标识或职责") },
+                    label = { Text("Tìm Agent") },
+                    placeholder = { Text("Tên, định danh vai trò hoặc trách nhiệm") },
                     leadingIcon = { RuntimeIcon(RuntimeIconName.Search, Modifier.size(18.dp)) },
                     singleLine = true,
                 )
@@ -447,8 +447,8 @@ fun AgentSettingsScreen(
                             modelLabel = profile.defaultModelId?.let { modelId ->
                                 models.firstOrNull { it.id == modelId }?.let { model ->
                                     "${model.name} · ${profile.defaultModelVariant ?: model.model.substringBefore(',').trim()}"
-                                } ?: "模型档案已删除"
-                            } ?: "跟随主智能体",
+                                } ?: "Đã xóa profile model"
+                            } ?: "Theo Agent chính",
                             onToggle = { enabled -> viewModel.toggleSubagent(profile.id, enabled) },
                             onEdit = {
                                 editingSubagent = profile
@@ -471,23 +471,23 @@ fun AgentSettingsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     SectionHeader(
-                        title = "Skill 专精技能库 (${skills.count { it.isEnabled }}/${skills.size} 已启用)",
+                        title = "Kho kỹ năng chuyên sâu Skill (${skills.count { it.isEnabled }}/${skills.size} đã bật)",
                         subtitle = "向 Agent 系统提示词注入领域专业规范与操作指导",
                     )
                 }
             }
             item {
-                AgentBlockTitle("技能进化")
+                AgentBlockTitle("Tiến hóa kỹ năng")
             }
             item {
                 AgentSettingsGroup {
                     AgentToggleRow(
                         icon = RuntimeIconName.Sparkles,
-                        title = "对话后建议沉淀或修复技能",
+                        title = "Sau hội thoại nên đúc kết hoặc sửa kỹ năng",
                         subtitle = if (skillEvolutionSuggestions) {
-                            "成功完成一轮含工具调用的工作后，可建议创建新技能或修复既有自定义技能"
+                            "Sau khi hoàn thành thành công một lượt công việc có gọi công cụ, có thể gợi ý tạo kỹ năng mới hoặc sửa kỹ năng tùy chỉnh hiện có"
                         } else {
-                            "已关闭：对话结束后不再弹出技能进化建议卡片"
+                            "Đã tắt: sau khi kết thúc đối thoại không còn hiện thẻ gợi ý tiến hóa kỹ năng"
                         },
                         checked = skillEvolutionSuggestions,
                         onCheckedChange = viewModel::setSkillEvolutionSuggestions,
@@ -501,7 +501,7 @@ fun AgentSettingsScreen(
                 OutlinedButton(onClick = { skillArchivePicker.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream")) }, modifier = Modifier.fillMaxWidth().height(44.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         RuntimeIcon(RuntimeIconName.FolderDownload, Modifier.size(16.dp))
-                        Text("从 ZIP 导入 Skill（支持批量多选）")
+                        Text("Nhập Skill từ ZIP (hỗ trợ chọn nhiều hàng loạt)")
                     }
                 }
             }
@@ -509,11 +509,11 @@ fun AgentSettingsScreen(
                 OutlinedButton(onClick = viewModel::scanSkillDirectories, modifier = Modifier.fillMaxWidth().height(44.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         RuntimeIcon(RuntimeIconName.FolderOpen, Modifier.size(16.dp))
-                        Text("扫描 Skill 目录批量导入")
+                        Text("Quét thư mục Skill để nhập hàng loạt")
                     }
                 }
                 Text(
-                    text = "可将外部工具的 skills 目录整体复制到 attachments/skills 或工作区 skills 目录，重启应用即自动批量导入；运行中复制可点击上方按钮立即扫描，已导入的不会重复注册",
+                    text = "Có thể copy toàn bộ thư mục skills của công cụ ngoài vào attachments/skills hoặc thư mục skills workspace, khởi động lại ứng dụng sẽ tự nhập hàng loạt; copy khi đang chạy thì bấm nút phía trên để quét ngay, cái đã nhập sẽ không đăng ký lại.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp, start = 4.dp),
@@ -523,11 +523,11 @@ fun AgentSettingsScreen(
                 OutlinedButton(onClick = { skillDirPicker.launch(null) }, modifier = Modifier.fillMaxWidth().height(44.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         RuntimeIcon(RuntimeIconName.Search, Modifier.size(16.dp))
-                        Text("从自选目录导入（任意位置）")
+                        Text("Nhập từ thư mục tự chọn (vị trí bất kỳ)")
                     }
                 }
                 Text(
-                    text = "在文件管理器中任选一个目录（支持任意深度嵌套，含 Skill 目录内再嵌套 Skill 子目录的情况），自动查找其中所有包含 SKILL.md 的技能文件夹并导入",
+                    text = "Chọn bất kỳ một thư mục trong trình quản lý tệp (hỗ trợ lồng nhau ở độ sâu bất kỳ, bao gồm trường hợp lồng thư mục con Skill bên trong thư mục Skill), tự động tìm tất cả thư mục kỹ năng chứa SKILL.md trong đó và nhập vào",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp, start = 4.dp),
@@ -552,8 +552,8 @@ fun AgentSettingsScreen(
                     value = skillQuery,
                     onValueChange = { skillQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("搜索 Skill") },
-                    placeholder = { Text("名称、标识、分类或描述") },
+                    label = { Text("Tìm kiếm Skill") },
+                    placeholder = { Text("Tên, định danh, phân loại hoặc mô tả") },
                     leadingIcon = { RuntimeIcon(RuntimeIconName.Search, Modifier.size(18.dp)) },
                     singleLine = true,
                 )
@@ -570,7 +570,7 @@ fun AgentSettingsScreen(
             if (visibleSkills.isEmpty()) {
                 item {
                     Text(
-                        text = "没有匹配 \"${skillQuery.trim()}\" 的技能",
+                        text = "Không có kỹ năng khớp với \"${skillQuery.trim()}\"",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
@@ -582,11 +582,11 @@ fun AgentSettingsScreen(
             // ---- 模块 4.5：ClawHub 技能生态市场 ----
             item {
                 SectionHeader(
-                    title = "ClawHub 技能生态市场",
+                    title = "Chợ hệ sinh thái kỹ năng ClawHub",
                     subtitle = if (isMarketOfflinePreset) {
-                        "离线精选模式：以下为内置精选生态包（远端市场暂未接入）；安装前仍由本地引擎执行静态安全与兼容性审查"
+                        "Chế độ tuyển chọn offline: dưới đây là các gói hệ sinh thái tuyển chọn tích hợp sẵn (chợ từ xa chưa kết nối); trước khi cài vẫn do engine cục bộ kiểm tra tĩnh về an toàn và tương thích"
                     } else {
-                        "精选社区标准生态技能包，下载前由本地引擎执行静态安全与兼容性审查"
+                        "Gói hệ sinh thái skill chuẩn tuyển chọn từ cộng đồng, trước khi tải engine cục bộ kiểm tra tĩnh về an toàn và tương thích"
                     },
                 )
             }
@@ -613,7 +613,7 @@ fun AgentSettingsScreen(
             // ---- 模块 5：Plugin 插件生态管理 ----
             item {
                 SectionHeader(
-                    title = "Plugin 插件生态管理 (${plugins.count { it.isEnabled }}/${plugins.size} 运行中)",
+                    title = "Quản lý hệ sinh thái Plugin (${plugins.count { it.isEnabled }}/${plugins.size} đang chạy)",
                     subtitle = "沙箱运行时探测、高危操作安全拦截与扩展能力",
                 )
             }
@@ -645,7 +645,7 @@ fun AgentSettingsScreen(
     skillArchiveMessage?.let { message ->
         RuntimeAlertDialog(
             onDismissRequest = viewModel::clearSkillArchiveMessage,
-            title = { Text(if (!skillArchiveMessageIsError) "Skill 导入完成" else "Skill 导入失败", fontWeight = FontWeight.Bold) },
+            title = { Text(if (!skillArchiveMessageIsError) "Nhập Skill hoàn tất" else "Nhập Skill thất bại", fontWeight = FontWeight.Bold) },
             text = { Text(message) },
             confirmButton = { TextButton(onClick = viewModel::clearSkillArchiveMessage) { Text("知道了") } },
         )
@@ -731,8 +731,8 @@ fun AgentSettingsScreen(
     deletingSkill?.let { skill ->
         RuntimeAlertDialog(
             onDismissRequest = { deletingSkill = null },
-            title = { Text("删除 Skill", fontWeight = FontWeight.Bold) },
-            text = { Text("确定删除“${skill.name}”吗？其脚本资源目录将一并清理，删除后不可恢复。") },
+            title = { Text("Xóa Skill", fontWeight = FontWeight.Bold) },
+            text = { Text("Chắc chắn xoá \"${skill.name}\"? Thư mục tài nguyên script của nó sẽ bị dọn cùng, sau khi xoá không thể khôi phục.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -753,7 +753,7 @@ fun AgentSettingsScreen(
         RuntimeAlertDialog(
             onDismissRequest = { deletingSubagent = null },
             title = { Text("删除子智能体", fontWeight = FontWeight.Bold) },
-            text = { Text("确定删除“${profile.name}”吗？删除后该角色不会再参与任务委派。") },
+            text = { Text("Chắc chắn xóa「${profile.name}」? Sau khi xóa vai trò này sẽ không tham gia ủy thác nhiệm vụ nữa.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -790,15 +790,15 @@ private fun BaseCommandTimeoutSliderRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("base 命令默认超时", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+            Text("Thời gian chờ mặc định của lệnh base", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
             Text(
-                "${sliderMinutes.toInt()} 分钟",
+                "${sliderMinutes.toInt()} phút",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace),
                 color = MaterialTheme.colorScheme.primary,
             )
         }
         Text(
-            "适用于普通前台命令；模型可为单次命令指定 1–60 分钟，常驻任务应使用 process 工具",
+            "Áp dụng cho lệnh tiền cảnh thông thường; model có thể chỉ định 1–60 phút cho một lệnh đơn, nhiệm vụ thường trú nên dùng công cụ process",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -893,9 +893,9 @@ private fun ApprovalModeSelectorRow(
                 RuntimeIcon(RuntimeIconName.Shield, Modifier.size(18.dp), MaterialTheme.colorScheme.primary)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("全局工具权限", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                Text("Quyền công cụ toàn cục", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
                 Text(
-                    "修改后立即同步覆盖所有会话；聊天顶部的单独切换会被下一次全局修改覆盖。",
+                    "Sau khi sửa sẽ đồng bộ ghi đè tất cả phiên ngay lập tức; chuyển đổi riêng lẻ ở đầu khung chat sẽ bị lần sửa toàn cục tiếp theo ghi đè.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -936,7 +936,7 @@ private fun RunModeSelectorRow(
                 RuntimeIcon(RuntimeIconName.Code, Modifier.size(18.dp), MaterialTheme.colorScheme.primary)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("新会话默认运行意图", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                Text("Ý định chạy mặc định của hội thoại mới", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
                 Text(
                     "仅作为新建会话初始值，已存在会话可在聊天顶部单独切换。",
                     style = MaterialTheme.typography.bodySmall,
@@ -946,8 +946,8 @@ private fun RunModeSelectorRow(
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf(
-                RunMode.BUILD to "构建",
-                RunMode.PLAN to "规划",
+                RunMode.BUILD to "Xây dựng",
+                RunMode.PLAN to "Quy hoạch",
             ).forEach { (value, label) ->
                 FilterChip(
                     selected = mode == value,
@@ -996,7 +996,7 @@ private fun AgentDepartmentCard(
                     maxLines = 1,
                 )
                 Text(
-                    "$enabledCount/$agentCount 已启用",
+                    "$enabledCount/$agentCount đã bật",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1059,7 +1059,7 @@ private fun SubagentProfileCard(
 
             Text(profile.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                "默认模型：$modelLabel",
+                "Model mặc định: $modelLabel",
                 style = MaterialTheme.typography.labelSmall,
                 color = if (profile.defaultModelId == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
             )
@@ -1074,7 +1074,7 @@ private fun SubagentProfileCard(
                     modifier = Modifier
                         .minimumInteractiveComponentSize()
                         .size(36.dp),
-                    contentDescription = "编辑角色",
+                    contentDescription = "Chỉnh sửa vai trò",
                 ) {
                     RuntimeIcon(RuntimeIconName.Edit, Modifier.size(17.dp), MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -1083,7 +1083,7 @@ private fun SubagentProfileCard(
                     modifier = Modifier
                         .minimumInteractiveComponentSize()
                         .size(36.dp),
-                    contentDescription = "删除角色",
+                    contentDescription = "Xóa vai trò",
                 ) {
                     RuntimeIcon(RuntimeIconName.Trash, Modifier.size(17.dp), MaterialTheme.colorScheme.error)
                 }
@@ -1122,7 +1122,7 @@ private fun RoundsSliderRow(
         ) {
             Text("单回合最大工具轮次上限", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
             Text(
-                "${sliderVal.toInt()} 轮",
+                "${sliderVal.toInt()} vòng",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace),
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -1163,7 +1163,7 @@ private fun AutoContinuationSliderRow(
         ) {
             Text("轮次用尽后自动续跑", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
             Text(
-                if (continuations == 0) "关闭" else "$continuations 次",
+                if (continuations == 0) "关闭" else "$continuations lần",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace),
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -1172,8 +1172,8 @@ private fun AutoContinuationSliderRow(
             if (continuations == 0) {
                 "轮次用尽即停下等待用户确认；适合希望逐段把关的场景"
             } else {
-                "轮次用尽时先让模型收束并记录进度，再自动续跑，无需用户点击继续；" +
-                    "总预算上限 ${roundsPerSegment * (continuations + 1)} 轮"
+                "Khi hết lượt sẽ cho model thu lại và ghi tiến độ trước, rồi tự động chạy tiếp, không cần người dùng nhấp tiếp tục; " +
+                    "Giới hạn tổng ngân sách ${roundsPerSegment * (continuations + 1)} lượt"
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1215,11 +1215,11 @@ private fun ContextBudgetSliderRow(
         }
         Text(
             if (declaredTokens != null) {
-                "当前激活模型已适配上下文上限 ${declaredTokens / 1000}K（显式配置或自动识别），此滑块暂不生效；" +
-                    "仅在模型无法识别且未配置 contextTokens 时，本值才作为兜底预算。"
+                "Model đang kích hoạt đã khớp giới hạn ngữ cảnh ${declaredTokens / 1000}K (cấu hình tường minh hoặc tự động nhận diện), thanh trượt này tạm thời không có hiệu lực;" +
+                    "Chỉ khi model không nhận diện được và chưa cấu hình contextTokens thì giá trị này mới dùng làm ngân sách dự phòng."
             } else {
-                "当前未识别到激活模型上下文上限，本值即实际生效预算；" +
-                    "长会话历史超出预算将自动折叠早期内容。"
+                "Hiện chưa nhận diện được giới hạn ngữ cảnh của model đang kích hoạt, giá trị này chính là ngân sách thực tế có hiệu lực;" +
+                    "Lịch sử hội thoại dài vượt ngân sách sẽ tự động gộp nội dung sớm."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1273,7 +1273,7 @@ private fun ContextFoldingRatioSliderRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("历史折叠线比例", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+            Text("Tỷ lệ đường gấp lịch sử", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
             Text(
                 "${sliderVal.toInt()}%",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace),
@@ -1281,32 +1281,32 @@ private fun ContextFoldingRatioSliderRow(
             )
         }
         Text(
-            "历史在「预算 × 比例」处开始折叠；默认 100%，对齐主流 harness 的" +
+            "Lịch sử bắt đầu gộp tại「ngân sách × tỉ lệ」; mặc định 100%, canh với harness chủ lưu" +
                 " contextWindow - reserveTokens - toolSchemaReserve - systemTokens。" +
-                "调低比例可让历史更早进入摘要、节省 input token；大窗口模型不再被 96K 封顶。" +
-                "走 Nginx/中转时请把 client_max_body_size 调到 20m 以上，否则可能 HTTP 413。",
+                "Giảm tỉ lệ sẽ khiến lịch sử vào tóm tắt sớm hơn, tiết kiệm input token; model cửa sổ lớn không còn bị giới hạn 96K." +
+                "Khi đi qua Nginx/trung chuyển hãy chỉnh client_max_body_size lên trên 20m, nếu không có thể gặp HTTP 413.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            "按当前设置，折叠线约为 ${previewLimit / 1000}K tok",
+            "Theo cài đặt hiện tại, đường gộp khoảng ${previewLimit / 1000}K tok",
             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
             color = MaterialTheme.colorScheme.primary,
         )
         // 说明这个预览数按什么预算折算，避免用户误以为它基于「上下文预算上限」滑块。
         Text(
             if (declaredTokens != null) {
-                "以上按当前生效模型窗口 ${budget / 1000}K 计算" +
-                    "（显式配置或自动适配）" +
+                "Trên đây tính theo cửa sổ model đang có hiệu lực hiện tại ${budget / 1000}K" +
+                    "(Cấu hình rõ ràng hoặc tự thích ứng)" +
                     (if (declaredTokens > ContextWindowPolicy.MAX_CONTEXT_BUDGET) {
-                        "，引擎钳制到 ${ContextWindowPolicy.MAX_CONTEXT_BUDGET / 1000}K"
+                        ", engine kẹp xuống ${ContextWindowPolicy.MAX_CONTEXT_BUDGET / 1000}K"
                     } else {
                         ""
                     }) +
-                    "。预览已扣除系统提示/输出/工具 schema 预留。"
+                    ". Bản xem trước đã trừ phần dành riêng cho system prompt/đầu ra/tool schema."
             } else {
-                "以上按上方「上下文预算上限」滑块的值计算（当前未识别到模型上下文上限）。" +
-                    "预览已扣除系统提示/输出/工具 schema 预留。"
+                "Phần trên tính theo giá trị thanh trượt「giới hạn ngân sách context」phía trên (hiện chưa nhận diện được giới hạn context của model)." +
+                    "Bản xem trước đã trừ phần dự trữ system prompt/đầu ra/schema công cụ."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1341,7 +1341,7 @@ private fun ToolsPerRoundSliderRow(
         ) {
             Text("单轮最大工具调用数", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
             Text(
-                "${sliderVal.toInt()} 个",
+                "${sliderVal.toInt()} cái",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace),
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -1380,7 +1380,7 @@ private fun ConsecutiveFailuresSliderRow(
         ) {
             Text("连续失败熔断阈值", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
             Text(
-                "${sliderVal.toInt()} 轮",
+                "${sliderVal.toInt()} vòng",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace),
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -1482,7 +1482,7 @@ private fun SkillCard(
                             modifier = Modifier
                                 .minimumInteractiveComponentSize()
                                 .size(32.dp),
-                            contentDescription = "删除 Skill",
+                            contentDescription = "Xóa Skill",
                         ) {
                             RuntimeIcon(RuntimeIconName.Trash, Modifier.size(16.dp), MaterialTheme.colorScheme.error)
                         }
@@ -1557,7 +1557,7 @@ private fun ClawHubMarketSkillCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    "作者: ${item.author} · ★ ${item.stars}",
+                    "Tác giả: ${item.author} · ★ ${item.stars}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -1574,7 +1574,7 @@ private fun ClawHubMarketSkillCard(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp)
-                                Text("审查中…", style = MaterialTheme.typography.labelSmall)
+                                Text("Đang rà soát…", style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
@@ -1585,7 +1585,7 @@ private fun ClawHubMarketSkillCard(
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         ) {
-                            Text("已安装", style = MaterialTheme.typography.labelSmall)
+                            Text("Đã cài đặt", style = MaterialTheme.typography.labelSmall)
                         }
                     }
                     else -> {
@@ -1598,7 +1598,7 @@ private fun ClawHubMarketSkillCard(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 RuntimeIcon(name = RuntimeIconName.Shield, modifier = Modifier.size(14.dp))
-                                Text("审查并安装", style = MaterialTheme.typography.labelSmall)
+                                Text("Rà soát và cài đặt", style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
@@ -1640,7 +1640,7 @@ private fun PluginCard(
                         Text("v${plugin.version}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(
-                        "作者: ${plugin.author}",
+                        "Tác giả: ${plugin.author}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -1693,7 +1693,7 @@ private fun PluginCard(
                             shape = RoundedCornerShape(4.dp),
                         ) {
                             Text(
-                                "等 ${plugin.permissions.size} 项权限",
+                                "${plugin.permissions.size} quyền",
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1848,7 +1848,7 @@ private fun SubagentEditorDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("默认模型", style = MaterialTheme.typography.labelMedium)
+                    Text("Model mặc định", style = MaterialTheme.typography.labelMedium)
                     Box(Modifier.fillMaxWidth()) {
                         OutlinedButton(
                             onClick = { modelMenuExpanded = true },
@@ -1857,7 +1857,7 @@ private fun SubagentEditorDialog(
                             val selected = models.firstOrNull { it.id == defaultModelId }
                             Text(
                                 selected?.let { "${it.name} · ${defaultModelVariant ?: it.model.substringBefore(',').trim()}" }
-                                    ?: if (defaultModelId == null) "跟随主智能体" else "模型档案已删除",
+                                    ?: if (defaultModelId == null) "Theo Agent chính" else "Đã xóa profile model",
                                 modifier = Modifier.weight(1f),
                             )
                             RuntimeIcon(RuntimeIconName.ChevronDown, Modifier.size(18.dp))
@@ -1867,7 +1867,7 @@ private fun SubagentEditorDialog(
                             onDismissRequest = { modelMenuExpanded = false },
                         ) {
                             DropdownMenuItem(
-                                text = { Text("跟随主智能体") },
+                                text = { Text("Theo Agent chính") },
                                 onClick = {
                                     defaultModelId = null
                                     defaultModelVariant = null
@@ -1898,7 +1898,7 @@ private fun SubagentEditorDialog(
                         }
                     }
                     Text(
-                        "任务派发时显式指定的模型仍会优先于此设置",
+                        "Model chỉ định rõ khi phái nhiệm vụ vẫn ưu tiên hơn cài đặt này",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

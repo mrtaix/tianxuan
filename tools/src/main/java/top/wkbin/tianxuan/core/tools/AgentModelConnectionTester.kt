@@ -17,7 +17,7 @@ class AgentModelConnectionTester(private val http: OkHttpClient) {
         providerName: String? = null,
     ) = withContext(Dispatchers.IO) {
         val cleanBaseUrl = ProviderEndpointPolicy.normalizeUrl(baseUrl)
-        require(cleanBaseUrl.isNotBlank() && ProviderEndpointPolicy.isSafeBaseUrl(cleanBaseUrl)) { "Base URL 不安全或为空" }
+        require(cleanBaseUrl.isNotBlank() && ProviderEndpointPolicy.isSafeBaseUrl(cleanBaseUrl)) { "Base URL không an toàn hoặc rỗng" }
         val isAnthropic = protocol == ProviderProtocol.ANTHROPIC ||
             cleanBaseUrl.trimEnd('/').contains("api.anthropic.com") ||
             providerName?.contains("anthropic", ignoreCase = true) == true ||
@@ -47,7 +47,7 @@ class AgentModelConnectionTester(private val http: OkHttpClient) {
             .build()
         http.newCall(request).execute().use { response ->
             val text = response.body.string()
-            check(response.isSuccessful) { "连接失败 HTTP ${response.code}：${text.take(240)}" }
+            check(response.isSuccessful) { "Kết nối thất bại HTTP ${response.code}: ${text.take(240)}" }
         }
     }
 
@@ -59,11 +59,11 @@ class AgentModelConnectionTester(private val http: OkHttpClient) {
             .post(body.toRequestBody("application/json".toMediaType())).build()
         http.newCall(request).execute().use { response ->
             val text = response.body.string()
-            check(response.isSuccessful) { "连接失败 HTTP ${response.code}：${text.take(240)}" }
+            check(response.isSuccessful) { "Kết nối thất bại HTTP ${response.code}: ${text.take(240)}" }
         }
     }
 
-    /** 按"使用 Responses API"开关测试 /responses 端点（与运行时使用同一协议结构）。 */
+    /** 按"Dùng Responses API"开关测试 /responses 端点（与运行时使用同一协议结构）。 */
     private fun testResponses(baseUrl: String, model: String, apiKey: String?) {
         val escapedModel = model.replace("\\", "\\\\").replace("\"", "\\\"")
         val body = """{"model":"$escapedModel","input":[{"role":"user","content":[{"type":"input_text","text":"Reply with OK"}]}],"max_output_tokens":8}"""
@@ -73,7 +73,7 @@ class AgentModelConnectionTester(private val http: OkHttpClient) {
             .post(body.toRequestBody("application/json".toMediaType())).build()
         http.newCall(request).execute().use { response ->
             val text = response.body.string()
-            check(response.isSuccessful) { "连接失败 HTTP ${response.code}：${text.take(240)}" }
+            check(response.isSuccessful) { "Kết nối thất bại HTTP ${response.code}: ${text.take(240)}" }
         }
     }
 
@@ -86,7 +86,7 @@ class AgentModelConnectionTester(private val http: OkHttpClient) {
             .post(body.toRequestBody("application/json".toMediaType())).build()
         http.newCall(request).execute().use { response ->
             val text = response.body.string()
-            check(response.isSuccessful) { "连接失败 HTTP ${response.code}：${text.take(240)}" }
+            check(response.isSuccessful) { "Kết nối thất bại HTTP ${response.code}: ${text.take(240)}" }
         }
     }
 }

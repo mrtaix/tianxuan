@@ -48,7 +48,7 @@ fun StatsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RuntimeTopBar(
-                title = "数据统计与用量分析",
+                title = "Thống kê dữ liệu và phân tích mức dùng",
                 onBack = onBack,
             )
         },
@@ -67,10 +67,10 @@ fun StatsScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 val presets = listOf(
-                    StatsDateRangePreset.ALL_TIME to "全部时间",
-                    StatsDateRangePreset.LAST_30_DAYS to "近30天",
-                    StatsDateRangePreset.PREVIOUS_MONTH to "上个月",
-                    StatsDateRangePreset.PREVIOUS_QUARTER to "上季度",
+                    StatsDateRangePreset.ALL_TIME to "Toàn bộ thời gian",
+                    StatsDateRangePreset.LAST_30_DAYS to "30 ngày gần đây",
+                    StatsDateRangePreset.PREVIOUS_MONTH to "Tháng trước",
+                    StatsDateRangePreset.PREVIOUS_QUARTER to "Quý trước",
                 )
 
                 for ((preset, label) in presets) {
@@ -129,7 +129,7 @@ fun StatsScreen(
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                     RuntimeCard(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "暂无统计数据。开始使用 Agent 对话与工具后，这里会展示活跃度与 Token 用量。",
+                            text = "Chưa có dữ liệu thống kê. Sau khi bắt đầu dùng hội thoại Agent và công cụ, nơi đây sẽ hiển thị mức độ hoạt động và lượng dùng Token.",
                             modifier = Modifier.fillMaxWidth().padding(24.dp),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -147,21 +147,21 @@ fun StatsScreen(
                 ) {
                     // 1. 活跃度打卡热力图
                     item {
-                        StatsSectionCard(title = "活跃度打卡热力图") {
+                        StatsSectionCard(title = "Heatmap điểm danh độ hoạt động") {
                             StatsHeatmap(days = snapshot.heatmap)
                         }
                     }
 
                     // 2. 核心指标概览 6 宫格
                     item {
-                        StatsSectionCard(title = "核心指标概览") {
+                        StatsSectionCard(title = "Tổng quan chỉ số cốt lõi") {
                             StatsMetricGrid(summary = snapshot.summary)
                         }
                     }
 
                     // 3. Token 用量趋势图表
                     item {
-                        StatsSectionCard(title = "Token 用量与消耗趋势") {
+                        StatsSectionCard(title = "Lượng dùng Token và xu hướng tiêu thụ") {
                             StatsUsageChart(days = snapshot.trend)
                         }
                     }
@@ -169,9 +169,9 @@ fun StatsScreen(
                     // 4. 模型使用排行
                     item {
                         StatsRankSection(
-                            title = "模型使用排行",
+                            title = "Xếp hạng sử dụng model",
                             leftHeader = "模型名称",
-                            rightHeader = "调用次数",
+                            rightHeader = "Số lần gọi",
                             items = snapshot.modelRank,
                             icon = RuntimeIconName.Brain,
                         )
@@ -180,9 +180,9 @@ fun StatsScreen(
                     // 5. 助手 / 工程工作区排行
                     item {
                         StatsRankSection(
-                            title = "助手与工程排行",
-                            leftHeader = "工作区 / 助手",
-                            rightHeader = "使用频次",
+                            title = "Xếp hạng trợ lý và kỹ thuật",
+                            leftHeader = "Vùng làm việc / Trợ lý",
+                            rightHeader = "Tần suất sử dụng",
                             items = snapshot.assistantRank,
                             icon = RuntimeIconName.Bot,
                         )
@@ -191,9 +191,9 @@ fun StatsScreen(
                     // 6. 热门话题排行
                     item {
                         StatsRankSection(
-                            title = "热门话题会话排行",
-                            leftHeader = "会话标题",
-                            rightHeader = "消息条数",
+                            title = "Xếp hạng phiên chủ đề hot",
+                            leftHeader = "Tiêu đề phiên",
+                            rightHeader = "Số lượng tin nhắn",
                             items = snapshot.topicRank,
                             icon = RuntimeIconName.Chat,
                         )

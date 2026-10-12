@@ -47,7 +47,7 @@ class WorkflowScheduler(
 ) {
     private val executorMap = executors
         .flatMap { executor -> executor.supportedTypes.map { it to executor } }
-        .also { pairs -> require(pairs.map { it.first }.distinct().size == pairs.size) { "同一工作流节点类型注册了多个执行器" } }
+        .also { pairs -> require(pairs.map { it.first }.distinct().size == pairs.size) { "Cùng một loại node workflow đã đăng ký nhiều executor" } }
         .toMap()
 
     fun execute(
@@ -66,7 +66,7 @@ class WorkflowScheduler(
             runWorkflow(executionId, definition, initialVariables, workspacePath, mutableState)
         }
         jobRef.set(job)
-        if (cancelled.get()) job.cancel(CancellationException("用户取消工作流"))
+        if (cancelled.get()) job.cancel(CancellationException("Người dùng hủy workflow"))
         job.invokeOnCompletion { cause ->
             approvalBroker.cancelExecution(executionId)
             if (cause is CancellationException) mutableState.update { current ->
@@ -81,7 +81,7 @@ class WorkflowScheduler(
             cancelAction = {
                 approvalBroker.cancelExecution(executionId)
                 cancelled.set(true)
-                jobRef.get()?.cancel(CancellationException("用户取消工作流"))
+                jobRef.get()?.cancel(CancellationException("Người dùng hủy workflow"))
             },
             decisionAction = { nodeId, decision -> approvalBroker.decide(executionId, nodeId, decision) },
         )
@@ -122,7 +122,7 @@ class WorkflowScheduler(
             while (pending.isNotEmpty()) {
                 val settled = context.nodeOutputs.keys
                 val resolvable = pending.filter { nodeId -> incoming[nodeId].orEmpty().all { it.fromNodeId in settled } }
-                check(resolvable.isNotEmpty()) { "调度器无法继续，请检查工作流依赖" }
+                check(resolvable.isNotEmpty()) { "Scheduler không thể tiếp tục, hãy kiểm tra phụ thuộc workflow" }
 
                 val skipped = resolvable.filter { nodeId ->
                     val edges = incoming[nodeId].orEmpty()
@@ -131,7 +131,7 @@ class WorkflowScheduler(
                     }
                 }
                 skipped.forEach { nodeId ->
-                    val output = NodeExecutionOutput(NodeRunStatus.SKIPPED, textOutput = "上游分支未选择此节点")
+                    val output = NodeExecutionOutput(NodeRunStatus.SKIPPED, textOutput = "Nhánh thượng nguồn chưa chọn nút này")
                     context = context.withOutput(nodeId, output)
                     updateNode(state, nodeId, output.status, output.textOutput, output)
                     pending.remove(nodeId)
@@ -158,13 +158,13 @@ class WorkflowScheduler(
                     output.status == NodeRunStatus.FAILED && nodesById[nodeId]?.failurePolicy != FailurePolicy.CONTINUE
                 }
                 if (abort != null) {
-                    pending.forEach { nodeId -> updateNode(state, nodeId, NodeRunStatus.CANCELLED, "因上游失败而取消") }
+                    pending.forEach { nodeId -> updateNode(state, nodeId, NodeRunStatus.CANCELLED, "Hủy do thất bại ở thượng nguồn") }
                     state.update {
                         it.copy(
                             status = WorkflowRunStatus.FAILED,
                             context = context,
                             finishedAt = System.currentTimeMillis(),
-                            error = abort.second.error ?: "节点 ${abort.first} 执行失败",
+                            error = abort.second.error ?: "Node ${abort.first} thực thi thất bại",
                         )
                     }
                     return
@@ -202,14 +202,14 @@ class WorkflowScheduler(
         state: MutableStateFlow<WorkflowRuntimeState>,
     ): NodeExecutionOutput {
         val executor = executorMap[node.type]
-            ?: return NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 127, error = "没有 ${node.type} 节点执行器")
+            ?: return NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 127, error = "Không có trình thực thi nút ${node.type}")
                 .also { updateNode(state, node.id, it.status, it.error.orEmpty(), it) }
         var attempts = 0
         val maxAttempts = if (node.failurePolicy == FailurePolicy.RETRY_ONCE) 2 else 1
         var output: NodeExecutionOutput
         do {
             attempts++
-            updateNode(state, node.id, NodeRunStatus.RUNNING, if (attempts > 1) "正在重试" else "正在执行")
+            updateNode(state, node.id, NodeRunStatus.RUNNING, if (attempts > 1) "Đang thử lại" else "Đang thực thi")
             val started = System.nanoTime()
             // 人工等待类节点（HUMAN_APPROVAL）默认不限时等待用户决定：默认 300s 超时会在用户
             // 迟迟未批准时把节点误判 FAILED，此后 decide() 永远无效。
@@ -232,7 +232,7 @@ class WorkflowScheduler(
                     executor.execute(node, context, onProgress)
                 } else {
                     withTimeoutOrNull(timeoutMs) { executor.execute(node, context, onProgress) }
-                        ?: NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 124, error = "节点超时（${timeoutMs / 1_000} 秒）")
+                        ?: NodeExecutionOutput(NodeRunStatus.FAILED, exitCode = 124, error = "Node hết thời gian chờ (${timeoutMs / 1_000} giây)")
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -243,14 +243,14 @@ class WorkflowScheduler(
         } while (output.status == NodeRunStatus.FAILED && attempts < maxAttempts)
 
         if (output.status == NodeRunStatus.FAILED && node.failurePolicy == FailurePolicy.ASK_USER) {
-            updateNode(state, node.id, NodeRunStatus.WAITING_APPROVAL, "执行失败，等待决定是否重试")
+            updateNode(state, node.id, NodeRunStatus.WAITING_APPROVAL, "Thực thi thất bại, chờ quyết định có thử lại không")
             // ASK_USER 等待期间 workflow 级状态也应反映 WAITING_APPROVAL（此前只有节点级）
             state.update { current ->
                 val waiting = current.nodeStates.values.any { it.status == NodeRunStatus.WAITING_APPROVAL }
                 current.copy(status = if (waiting) WorkflowRunStatus.WAITING_APPROVAL else WorkflowRunStatus.RUNNING)
             }
             val decision = approvalBroker.await(
-                WorkflowApprovalRequest(context.executionId, node.id, "重试“${node.title}”？", output.error.orEmpty()),
+                WorkflowApprovalRequest(context.executionId, node.id, "Thử lại「${node.title}」?", output.error.orEmpty()),
             )
             if (decision.approved) return executeNode(node.copy(failurePolicy = FailurePolicy.ABORT), context, state)
         }

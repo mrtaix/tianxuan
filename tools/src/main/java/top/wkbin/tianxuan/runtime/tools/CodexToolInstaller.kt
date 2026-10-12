@@ -27,10 +27,10 @@ class CodexToolInstaller(
         emit(InstallEvent.Started(toolId))
         try {
             checkRuntimeReady()
-            emit(InstallEvent.Progress(toolId, "准备 curl 和 CA 证书", 0.15f, InstallEvent.Phase.INSTALLING_DEPENDENCY))
+            emit(InstallEvent.Progress(toolId, "Chuẩn bị curl và chứng chỉ CA", 0.15f, InstallEvent.Phase.INSTALLING_DEPENDENCY))
             ensureDependency(RuntimeName.CURL, toolId)
             ensureDependency(RuntimeName.CA_CERTIFICATES, toolId)
-            emit(InstallEvent.Progress(toolId, "运行 OpenAI Codex 安装脚本", 0.45f, InstallEvent.Phase.RUNNING_INSTALLER))
+            emit(InstallEvent.Progress(toolId, "Chạy script cài đặt OpenAI Codex", 0.45f, InstallEvent.Phase.RUNNING_INSTALLER))
             val installEnvironment = providerManager.environment() + mapOf(
                 "HOME" to ToolLayout.toolDirectory(toolId),
                 "CODEX_HOME" to ToolLayout.toolDataDirectory(toolId),
@@ -46,7 +46,7 @@ class CodexToolInstaller(
                         installEnvironment,
                     ),
                 )
-            }.getOrElse { CommandResult(exitCode = 1, stdout = "", stderr = it.message ?: "网络超时", durationMs = 0L) }
+            }.getOrElse { CommandResult(exitCode = 1, stdout = "", stderr = it.message ?: "Mạng quá thời gian", durationMs = 0L) }
 
             if (!install.isSuccess) {
                 // 失败必须如实上抛。此前这里会写入一个只会打印 "codex 0.1.0" 的 stub
@@ -54,8 +54,8 @@ class CodexToolInstaller(
                 // 真实 CLI 从未落盘却被掩盖，网络恢复后也不会触发重装。
                 val reason = install.stderr.ifBlank { install.stdout }.trim()
                 error(
-                    "Codex 远程安装脚本执行失败（exit=${install.exitCode}）：" +
-                        reason.lineSequence().firstOrNull().orEmpty().ifBlank { "网络受限或脚本下载失败" },
+                    "Codex thực thi script cài đặt từ xa thất bại (exit=${install.exitCode}): " +
+                        reason.lineSequence().firstOrNull().orEmpty().ifBlank { "Mạng bị giới hạn hoặc tải script thất bại" },
                 )
             }
             val link = toolCommandLinker.link(
@@ -63,16 +63,16 @@ class CodexToolInstaller(
                 target = "${ToolLayout.toolDirectory(toolId)}/.local/bin/codex",
                 environment = providerManager.environment(),
             )
-            if (!link.isSuccess) error(link.stderr.ifBlank { "无法创建 codex 命令入口" })
-            emit(InstallEvent.Progress(toolId, "验证 codex 命令", 0.85f, InstallEvent.Phase.VERIFYING_INSTALLATION))
+            if (!link.isSuccess) error(link.stderr.ifBlank { "Không thể tạo điểm vào lệnh codex" })
+            emit(InstallEvent.Progress(toolId, "Xác minh lệnh codex", 0.85f, InstallEvent.Phase.VERIFYING_INSTALLATION))
             val version = executeAndReport("codex --version")
-            if (!version.isSuccess) error(version.stderr.ifBlank { "找不到 codex 命令" })
+            if (!version.isSuccess) error(version.stderr.ifBlank { "Không tìm thấy lệnh codex" })
             emit(InstallEvent.Completed(toolId, version.stdout.trim().lineSequence().firstOrNull()))
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
             emit(InstallEvent.RolledBack(toolId))
-            emit(InstallEvent.Failed(toolId, throwable.message ?: "Codex 安装失败"))
+            emit(InstallEvent.Failed(toolId, throwable.message ?: "Cài Codex thất bại"))
         }
     }
 
@@ -94,14 +94,14 @@ class CodexToolInstaller(
             success = link.isSuccess && directory.isSuccess,
             message = listOf(link, directory).firstOrNull { !it.isSuccess }
                 ?.let { it.stderr.ifBlank { it.stdout } }
-                ?.ifBlank { "卸载失败" }
-                ?: "卸载完成",
+                ?.ifBlank { "Gỡ cài thất bại" }
+                ?: "Gỡ cài đặt hoàn tất",
         )
     }
 
     private suspend fun ensureDependency(name: RuntimeName, toolId: String) {
         val result = dependencyManager.acquire(RuntimeRequirement(name), toolId)
-        if (result.isFailure) error(result.errorOrNull()?.message ?: "依赖安装失败：$name")
+        if (result.isFailure) error(result.errorOrNull()?.message ?: "Cài đặt phụ thuộc thất bại：$name")
     }
 
     private suspend fun execute(command: String) = linuxRuntime.execute(
@@ -122,12 +122,12 @@ class CodexToolInstaller(
 
     private fun checkRuntimeReady() {
         check(linuxRuntime.state.value is top.wkbin.tianxuan.core.model.RuntimeState.Ready) {
-            "Linux Runtime 未就绪，请先初始化 Linux"
+            "Linux Runtime chưa sẵn sàng, hãy khởi tạo Linux trước"
         }
     }
 
     private fun CommandResult.toActionResult() = ToolActionResult(
         success = isSuccess,
-        message = stderr.ifBlank { stdout }.trim().ifBlank { if (isSuccess) "卸载完成" else "命令退出码 $exitCode" },
+        message = stderr.ifBlank { stdout }.trim().ifBlank { if (isSuccess) "Gỡ cài đặt hoàn tất" else "Mã thoát lệnh $exitCode" },
     )
 }

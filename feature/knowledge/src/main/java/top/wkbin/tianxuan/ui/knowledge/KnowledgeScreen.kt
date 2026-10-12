@@ -75,7 +75,7 @@ fun KnowledgeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("知识库") },
+                title = { Text("Kho tri thức") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -83,7 +83,7 @@ fun KnowledgeScreen(
                 },
                 actions = {
                     IconButton(onClick = { showAddDialog = true }) {
-                        Icon(Icons.Filled.Add, contentDescription = "添加文档")
+                        Icon(Icons.Filled.Add, contentDescription = "Thêm tài liệu")
                     }
                 },
             )
@@ -113,7 +113,7 @@ fun KnowledgeScreen(
             )
 
             Text(
-                "文档列表 (${documents.size})",
+                "Danh sách tài liệu (${documents.size})",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
@@ -154,8 +154,8 @@ fun KnowledgeScreen(
     showDeleteConfirm?.let { doc ->
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = null },
-            title = { Text("删除文档") },
-            text = { Text("确定要删除「${doc.name}」吗？共 ${doc.chunkCount} 个分块将一并移除。") },
+            title = { Text("Xóa tài liệu") },
+            text = { Text("Chắc chắn muốn xóa 「${doc.name}」? Tổng ${doc.chunkCount} phân khối sẽ bị xóa cùng.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -189,18 +189,18 @@ private fun SearchSection(
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("检索测试", style = MaterialTheme.typography.titleSmall)
+            Text("Kiểm tra truy xuất", style = MaterialTheme.typography.titleSmall)
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = query,
                 onValueChange = onQueryChange,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("输入内容检索相关文档片段…") },
+                placeholder = { Text("Nhập nội dung để truy xuất đoạn tài liệu liên quan…") },
                 trailingIcon = {
                     if (searching) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp))
                     } else {
-                        Icon(Icons.Filled.Search, contentDescription = "检索")
+                        Icon(Icons.Filled.Search, contentDescription = "Truy xuất")
                     }
                 },
                 singleLine = true,
@@ -273,7 +273,7 @@ private fun DocumentCard(
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "来源: ${doc.source}  |  分块: ${doc.chunkCount}  |  添加于 ${formatTime(doc.createdAt)}",
+                "Nguồn: ${doc.source}  |  Phân khối: ${doc.chunkCount}  |  Thêm vào lúc ${formatTime(doc.createdAt)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -295,7 +295,7 @@ private fun DocumentCard(
                     if (isReEmbedding) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp))
                     } else {
-                        Icon(Icons.Filled.Refresh, contentDescription = "重新嵌入")
+                        Icon(Icons.Filled.Refresh, contentDescription = "Nhúng lại")
                     }
                 }
                 IconButton(onClick = onDelete) {
@@ -313,11 +313,11 @@ private fun DocumentCard(
 @Composable
 private fun StatusBadge(status: String) {
     val (text, color) = when (status) {
-        "embedded" -> "已嵌入" to MaterialTheme.colorScheme.primary
-        "embedding" -> "嵌入中…" to MaterialTheme.colorScheme.tertiary
-        "partial" -> "部分嵌入" to MaterialTheme.colorScheme.secondary
+        "embedded" -> "Đã nhúng" to MaterialTheme.colorScheme.primary
+        "embedding" -> "Đang nhúng…" to MaterialTheme.colorScheme.tertiary
+        "partial" -> "Nhúng một phần" to MaterialTheme.colorScheme.secondary
         "error" -> "错误" to MaterialTheme.colorScheme.error
-        else -> "待处理" to MaterialTheme.colorScheme.onSurfaceVariant
+        else -> "Chờ xử lý" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Badge(containerColor = color) { Text(text) }
 }
@@ -330,12 +330,12 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                "还没有知识库文档",
+                "Chưa có tài liệu kho tri thức",
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "点击右上角 + 添加文档。添加后系统会自动调用嵌入 API 生成向量，检索时按语义相似度匹配相关内容注入对话上下文。",
+                "Nhấn + ở góc trên bên phải để thêm tài liệu. Sau khi thêm, hệ thống sẽ tự động gọi API nhúng để tạo vector, khi truy xuất sẽ khớp nội dung liên quan theo độ tương đồng ngữ nghĩa và chèn vào ngữ cảnh hội thoại.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -37,7 +37,7 @@ class AdbNotificationReceiver : BroadcastReceiver(), KoinComponent {
                     ?.trim()
 
                 if (pairingCode.isNullOrBlank() || !pairingCode.matches(Regex("\\d{6}"))) {
-                    adbNotificationManager.showFailed("配对码格式无效：必须是 6 位纯数字，请重试")
+                    adbNotificationManager.showFailed("Định dạng mã ghép nối không hợp lệ: phải là 6 chữ số thuần, vui lòng thử lại")
                     return
                 }
 
@@ -46,16 +46,16 @@ class AdbNotificationReceiver : BroadcastReceiver(), KoinComponent {
                 val pendingResult = goAsync()
                 scope.launch {
                     try {
-                        Log.i(TAG, "从通知栏接收到配对码，正在发起无线 ADB 配对…")
+                        Log.i(TAG, "Đã nhận mã ghép đôi từ thanh thông báo, đang khởi tạo ghép đôi ADB không dây…")
                         val result = embeddedAdbManager.pair(pairingCode)
                         result.fold(
                             onSuccess = {
-                                Log.i(TAG, "通知栏无线 ADB 配对成功")
+                                Log.i(TAG, "Ghép đôi ADB không dây trên thanh thông báo thành công")
                                 // EmbeddedAdbManager 会自动切入 Connected 状态，并通过 StateFlow 触发 showConnected
                             },
                             onFailure = { error ->
-                                Log.w(TAG, "通知栏无线 ADB 配对失败", error)
-                                adbNotificationManager.showFailed(error.message ?: "无线 ADB 配对失败，请确认系统配对码并重试")
+                                Log.w(TAG, "Ghép đôi ADB không dây ở thanh thông báo thất bại", error)
+                                adbNotificationManager.showFailed(error.message ?: "Ghép nối ADB không dây thất bại, hãy xác nhận mã ghép nối hệ thống và thử lại")
                             },
                         )
                     } finally {
@@ -69,15 +69,15 @@ class AdbNotificationReceiver : BroadcastReceiver(), KoinComponent {
                 val pendingResult = goAsync()
                 scope.launch {
                     try {
-                        Log.i(TAG, "从通知栏发起无线 ADB 直接连接…")
+                        Log.i(TAG, "Khởi tạo kết nối ADB không dây trực tiếp từ thanh thông báo…")
                         val result = embeddedAdbManager.connect()
                         result.fold(
                             onSuccess = {
-                                Log.i(TAG, "通知栏无线 ADB 连接成功")
+                                Log.i(TAG, "Kết nối ADB không dây trên thanh thông báo thành công")
                             },
                             onFailure = { error ->
-                                Log.w(TAG, "通知栏无线 ADB 连接失败", error)
-                                adbNotificationManager.showFailed(error.message ?: "无线 ADB 连接失败，请确认端口或重新配对")
+                                Log.w(TAG, "Kết nối ADB không dây từ thanh thông báo thất bại", error)
+                                adbNotificationManager.showFailed(error.message ?: "Kết nối ADB không dây thất bại, hãy xác nhận cổng hoặc ghép đôi lại")
                             },
                         )
                     } finally {
@@ -87,7 +87,7 @@ class AdbNotificationReceiver : BroadcastReceiver(), KoinComponent {
             }
 
             AdbNotificationManager.ACTION_DISCONNECT -> {
-                Log.i(TAG, "从通知栏请求断开无线 ADB")
+                Log.i(TAG, "Yêu cầu ngắt kết nối ADB không dây từ thanh thông báo")
                 embeddedAdbManager.disconnect()
                 adbNotificationManager.showPairingPrompt()
             }

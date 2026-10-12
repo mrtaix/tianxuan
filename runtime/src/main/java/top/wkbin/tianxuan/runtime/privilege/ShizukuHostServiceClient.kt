@@ -39,17 +39,17 @@ class ShizukuHostServiceClient(
 
         override fun onServiceDisconnected(name: ComponentName) {
             service = null
-            pendingConnection?.completeExceptionally(IllegalStateException("Shizuku UserService 连接已断开"))
+            pendingConnection?.completeExceptionally(IllegalStateException("Kết nối Shizuku UserService đã bị ngắt"))
         }
 
         override fun onBindingDied(name: ComponentName) {
             service = null
-            pendingConnection?.completeExceptionally(IllegalStateException("Shizuku UserService Binder 已失效"))
+            pendingConnection?.completeExceptionally(IllegalStateException("Shizuku UserService Binder đã mất hiệu lực"))
         }
 
         override fun onNullBinding(name: ComponentName) {
             service = null
-            pendingConnection?.completeExceptionally(IllegalStateException("Shizuku UserService 未返回 Binder"))
+            pendingConnection?.completeExceptionally(IllegalStateException("Shizuku UserService không trả về Binder"))
         }
     }
 
@@ -70,8 +70,8 @@ class ShizukuHostServiceClient(
 
     private suspend fun requireService(): IShizukuHostService = connectionMutex.withLock {
         service?.takeIf { it.asBinder().isBinderAlive }?.let { return@withLock it }
-        check(Shizuku.pingBinder()) { "Shizuku 服务未运行" }
-        check(Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED) { "Shizuku 未授权" }
+        check(Shizuku.pingBinder()) { "Dịch vụ Shizuku chưa chạy" }
+        check(Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED) { "Shizuku chưa cấp quyền" }
 
         // UserService 由 Shizuku fork 独立进程，首次冷启动需加载 APK classloader + AIDL Stub，
         // 中低端设备可能超过 8 秒；放宽超时并允许一次重试，覆盖进程冷启动与 Binder 交付抖动。

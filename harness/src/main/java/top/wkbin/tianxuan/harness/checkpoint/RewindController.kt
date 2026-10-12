@@ -80,15 +80,15 @@ class RewindController(
             forkedSessionId = conversationRewinder?.rewindConversation(plan.sessionId, plan.turn)
             if (forkedSessionId == null) {
                 partial = true
-                note = "对话尚未在目标轮派生新会话（未配置对话 fork 处理器或该轮无锚点）；代码恢复已完成。"
+                note = "Hội thoại chưa phái sinh phiên mới ở lượt mục tiêu (chưa cấu hình handler fork hội thoại hoặc lượt đó không có anchor); khôi phục mã đã hoàn tất."
             }
         }
         if (conflicts.isNotEmpty()) {
             note = (note?.let { "$it\n" } ?: "") +
-                "以下文件在会话外被修改过，已跳过恢复以免覆盖外部改动（如需回滚请先自行备份）：${conflicts.joinToString("；")}"
+                "Các tệp sau đã bị sửa ngoài phiên, đã bỏ qua khôi phục để tránh ghi đè thay đổi bên ngoài (nếu cần rollback hãy tự backup trước): ${conflicts.joinToString("；")}"
         }
         if (problems.isNotEmpty()) {
-            note = (note?.let { "$it\n" } ?: "") + "以下文件恢复失败：${problems.joinToString("；")}"
+            note = (note?.let { "$it\n" } ?: "") + "Các tệp sau khôi phục thất bại: ${problems.joinToString("；")}"
         }
         return RewindResult(
             filesRestored = restored,
@@ -139,7 +139,7 @@ class RewindController(
             }
         }
         val note = if (conflicts.isNotEmpty()) {
-            "以下文件在 rewind 后又被改动，已跳过撤销：${conflicts.joinToString("；")}"
+            "Các tệp sau đã bị thay đổi lại sau khi rewind, đã bỏ qua hoàn tác: ${conflicts.joinToString("；")}"
         } else {
             null
         }

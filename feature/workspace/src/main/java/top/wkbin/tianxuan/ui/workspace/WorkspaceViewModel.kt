@@ -84,7 +84,7 @@ class WorkspaceViewModel(
             _busy.value = true
             runCatching {
                 val input = requireNotNull(context.contentResolver.openInputStream(android.net.Uri.parse(uri))) {
-                    "无法读取模板文件"
+                    "Không thể đọc tệp mẫu"
                 }
                 input.use(projectTemplateStore::importZip)
             }.onSuccess { template ->
@@ -103,7 +103,7 @@ class WorkspaceViewModel(
             _busy.value = true
             runCatching {
                 val output = requireNotNull(context.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt")) {
-                    "无法创建模板文件"
+                    "Không thể tạo tệp template"
                 }
                 output.use { projectTemplateStore.exportZip(id, it) }
             }.onSuccess {
@@ -134,8 +134,8 @@ class WorkspaceViewModel(
             _templateScriptPreview.value = runCatching {
                 projectTemplateStore.hookScripts(id).joinToString("\n\n") { (path, script) ->
                     "===== $path =====\n$script"
-                }.ifBlank { "该模板没有构造脚本" }
-            }.getOrElse { error -> "读取脚本失败：${error.message.orEmpty()}" }
+                }.ifBlank { "Mẫu này không có script dựng" }
+            }.getOrElse { error -> "Đọc script thất bại: ${error.message.orEmpty()}" }
         }
     }
 
@@ -281,7 +281,7 @@ class WorkspaceViewModel(
 
     /**
      * 当前浏览的项目位于宿主共享存储（/storage/emulated/0），
-     * 且缺少"所有文件访问"权限——此时系统会过滤其他应用的文件（只显示文件夹），
+     * 且缺少"Truy cập tất cả tệp"权限——此时系统会过滤其他应用的文件（只显示文件夹），
      * 文件浏览器需要展示授权引导横幅。
      */
     private val _sharedStorageAccessLimited = MutableStateFlow(false)
@@ -354,7 +354,7 @@ class WorkspaceViewModel(
         trustTemplateScripts: Boolean = false,
     ) {
         if (_busy.value) return
-        // 同步置 busy：UI 依据它把创建弹窗保持在"进行中"状态（模板实例化可能耗时 60 秒）
+        // 同步置 busy：UI 依据它把创建弹窗保持在"Đang tiến hành"状态（模板实例化可能耗时 60 秒）
         _busy.value = true
         viewModelScope.launch {
             val result = workspaceManager.createProject(

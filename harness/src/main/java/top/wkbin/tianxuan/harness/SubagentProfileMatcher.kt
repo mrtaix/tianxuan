@@ -124,15 +124,15 @@ internal object SubagentDepartmentIndexRenderer {
                 append(department.localizedName)
                 append(" / ")
                 append(department.name)
-                append("（启用 ")
+                append("(Bật ")
                 append(countByDepartment[department.id] ?: 0)
                 append("）\n")
             }
             val customCount = countByDepartment[AgentDepartments.CUSTOM_ID] ?: 0
             if (customCount > 0) {
-                append("- 用户自定义精确覆盖：启用 ")
+                append("- Ghi đè chính xác tùy chỉnh của người dùng: bật ")
                 append(customCount)
-                append("；仅在已知精确 role 时使用，不参与目录展开。\n")
+                append("; chỉ dùng khi đã biết chính xác role, không tham gia mở rộng thư mục.\n")
             }
         }.trimEnd()
     }

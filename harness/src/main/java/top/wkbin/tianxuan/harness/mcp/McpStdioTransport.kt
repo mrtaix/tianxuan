@@ -106,12 +106,12 @@ class McpStdioTransport(
                     json.decodeFromJsonElement(McpCallToolResult.serializer(), it)
                 } ?: error("MCP tools/call did not return a result")
                 !result.isError to result.content.joinToString("\n") { it.text.orEmpty() }
-                    .ifBlank { if (result.isError) "执行失败" else "执行成功" }
+                    .ifBlank { if (result.isError) "Thực thi thất bại" else "Thực thi thành công" }
             }
         } catch (e: McpJsonRpcErrorException) {
             // B5: server 返回的 JSON-RPC 错误响应是正常协议行为，连接健康；
             // 错误作为结果返回给模型，而不是销毁子进程重启（丢失有状态上下文）
-            false to (e.message ?: "MCP JSON-RPC 错误")
+            false to (e.message ?: "Lỗi MCP JSON-RPC")
         } catch (cancellation: CancellationException) {
             // B2: 调用被取消不代表进程损坏，保留连接
             throw cancellation
@@ -134,7 +134,7 @@ class McpStdioTransport(
     private suspend fun discardConnection(serverId: String, failed: Connection? = null) {
         withContext(NonCancellable + Dispatchers.IO) {
             // 按引用精确删除：失败连接触发 discard 前，另一线程可能已经历
-            // "A 死亡 → connectionLocked 换新 B" 的重建，单参 remove 会误杀 B 及其
+            // "A chết → connectionLocked đổi B mới" 的重建，单参 remove 会误杀 B 及其
             // 挂着的并发等待者（sweep 用的同样是两参 remove）
             val removed = if (failed != null) {
                 failed.takeIf { connections.remove(serverId, it) }
@@ -152,7 +152,7 @@ class McpStdioTransport(
             if (connection.inFlight) continue
             if (nowMs - connection.lastActivityMs < IDLE_TIMEOUT_MS) continue
             // B8: 与 connection() 的获取路径互斥（startupMutex）后二次确认 inFlight 与活跃时间，
-            // 消除"新请求刚从 map 拿到连接、尚未锁 Connection.mutex"被清扫误关的 TOCTOU：
+            // 消除"Yêu cầu mới vừa lấy kết nối từ map, chưa khóa Connection.mutex"被清扫误关的 TOCTOU：
             // 新请求要么先在锁内 markActive（此处复查到新活跃时间即跳过），要么等锁释放后拿到新连接
             val removed = startupMutexes.getOrPut(id) { Mutex() }.withLock {
                 !connection.inFlight &&
@@ -182,7 +182,7 @@ class McpStdioTransport(
             val until = downUntil[server.id]
             if (until != null && now < until) {
                 throw IllegalStateException(
-                    "MCP[" + server.name + "] 沙箱会话拉起冷却中（剩余 " + (until - now) / 1000 + "s），跳过本次连接",
+                    "MCP[" + server.name + "] Phiên sandbox đang trong thời gian làm nguội khi kéo lên (còn lại " + (until - now) / 1000 + "s), bỏ qua lần kết nối này",
                 )
             }
         }
@@ -192,7 +192,7 @@ class McpStdioTransport(
                 channelFactory.open(server)
             } ?: run {
                 downUntil[server.id] = System.currentTimeMillis() + FAILURE_COOLDOWN_MS
-                error("MCP 沙箱会话启动超时（" + STARTUP_TIMEOUT_MS / 1000 + "s）：" + server.command)
+                error("Phiên sandbox MCP khởi động quá thời gian (" + STARTUP_TIMEOUT_MS / 1000 + "s）：" + server.command)
             }
         } catch (t: Throwable) {
             // 手动测试（bypassCooldown=true）失败不写冷却：对齐 HTTP 侧 B7 口径，
@@ -229,7 +229,7 @@ class McpStdioTransport(
 
         /**
          * 连续不可路由帧（垃圾/回显/无主响应）计数：成功路由任何响应即清零——毒化只判定
-         * "通道持续输出不可解析"。旧实现每请求重置；多路复用后由读泵统一计数，若改为连接
+         * "Kênh liên tục xuất ra nội dung không phân giải được"。旧实现每请求重置；多路复用后由读泵统一计数，若改为连接
          * 生命周期累计，PTY 回显与 server 进度通知随正常流量穿插也会在长会话中累积到阈值，
          * 毒杀健康连接。仅读泵线程访问。
          */
@@ -246,7 +246,7 @@ class McpStdioTransport(
         @Volatile
         internal var lastActivityMs: Long = System.currentTimeMillis()
 
-        /** 供空闲清扫判断"有在途请求"（旧实现等价于 mutex.isLocked）。 */
+        /** 供空闲清扫判断"Có yêu cầu đang trên đường"（旧实现等价于 mutex.isLocked）。 */
         val inFlight: Boolean get() = pending.isNotEmpty()
 
         fun markActive() {
@@ -279,7 +279,7 @@ class McpStdioTransport(
             params: kotlinx.serialization.json.JsonElement,
             timeoutMs: Long,
         ): JsonRpcResponse {
-            dead?.let { throw McpStdioChannelException("MCP 通道已失效：" + it) }
+            dead?.let { throw McpStdioChannelException("Kênh MCP đã mất hiệu lực:" + it) }
             markActive()
             val id = UUID.randomUUID().toString()
             val waiter = CompletableDeferred<JsonRpcResponse>()
@@ -293,7 +293,7 @@ class McpStdioTransport(
                 throw cancellation
             } catch (t: Throwable) {
                 pending.remove(id)
-                throw McpStdioChannelException("MCP 请求 " + method + " 写入失败：" + (t.message ?: t::class.simpleName))
+                throw McpStdioChannelException("MCP yêu cầu " + method + " ghi thất bại:" + (t.message ?: t::class.simpleName))
             }
             // 超时必须以普通异常而非 TimeoutCancellationException 暴露，且销毁连接：
             // tools/call 可能已产生副作用，不能重放；下次调用必须从干净连接重建。
@@ -305,9 +305,9 @@ class McpStdioTransport(
                 // A timed-out request may have reached the server and produced a side effect.
                 // Drop the session rather than replaying it on the next call; the next request
                 // will establish a fresh initialized connection.
-                failPending(McpStdioChannelException("MCP 请求 $method 响应超时"))
+                failPending(McpStdioChannelException("Yêu cầu MCP $method phản hồi quá thời gian"))
                 scope.launch { discardConnection(serverId, this@Connection) }
-                throw McpStdioChannelException("MCP 请求 $method 响应超时（${timeoutMs / 1000}s）")
+                throw McpStdioChannelException("Yêu cầu MCP $method phản hồi quá thời gian (${timeoutMs / 1000}s)")
             }
             // B5: server 的 JSON-RPC error 响应用专用异常承载，调用方将其作为结果返回而非传输故障
             response.error?.let { throw McpJsonRpcErrorException(it.code, it.message) }
@@ -318,19 +318,19 @@ class McpStdioTransport(
         fun route(rawLine: String) {
             val element = runCatching { json.parseToJsonElement(rawLine) }.getOrNull()
             if (element == null) {
-                countIgnored("MCP 输出了过多无效 JSON 行")
+                countIgnored("MCP xuất ra quá nhiều dòng JSON không hợp lệ")
                 return
             }
             if (element is JsonObject && element.containsKey("method")) {
                 // Valid server notifications have no id and are allowed by JSON-RPC; they must
                 // not poison a healthy stream. A request echo with an id remains suspicious.
                 if (!element.containsKey("id")) return
-                countIgnored("MCP 输出了过多请求回显")
+                countIgnored("MCP xuất ra quá nhiều phản hồi yêu cầu lặp lại")
                 return
             }
             val parsed = runCatching { json.decodeFromJsonElement(JsonRpcResponseSerializer, element) }.getOrNull()
                 ?: run {
-                    countIgnored("MCP 输出了过多无效响应帧")
+                    countIgnored("MCP đã xuất quá nhiều khung phản hồi không hợp lệ")
                     return
                 }
             val waiter = parsed.id?.let { pending.remove(it) }
@@ -360,11 +360,11 @@ class McpStdioTransport(
             }
             // 无等待者的响应 = 超时后的迟到响应或 id 错乱的 server：计入连续不可路由帧——
             // 迟到响应每次超时至多一条且随后必有成功路由清零；持续错乱说明 server 坏了
-            countIgnored("MCP 输出了过多无主响应帧")
+            countIgnored("MCP xuất quá nhiều khung phản hồi vô chủ")
         }
 
         private fun countIgnored(reason: String) {
-            // 输出持续不可解析说明通道已"中毒"，后续请求同样无法工作，判定为传输层故障
+            // 输出持续不可解析说明通道已"Nhiễm độc"，后续请求同样无法工作，判定为传输层故障
             if (++consecutiveIgnoredFrames > MAX_IGNORED_FRAMES) {
                 failPending(McpStdioChannelException(reason))
             }
@@ -385,7 +385,7 @@ class McpStdioTransport(
         suspend fun close() {
             if (dead == null) dead = "connection closed"
             readerJob?.cancel()
-            failPending(McpStdioChannelException("MCP 通道已关闭"))
+            failPending(McpStdioChannelException("Kênh MCP đã đóng"))
             runCatching { channel.close() }
         }
     }
@@ -401,7 +401,7 @@ class McpStdioTransport(
                 throw cancellation // close() 主动取消，等待者已由 close 收尾
             } catch (t: Throwable) {
                 // B5/B2: EOF/进程退出/IO 是传输层故障，只有此类失败才值得销毁重建
-                connection.failPending(McpStdioChannelException("MCP 通道读取终止：" + (t.message ?: t::class.simpleName)))
+                connection.failPending(McpStdioChannelException("Đọc kênh MCP chấm dứt:" + (t.message ?: t::class.simpleName)))
             }
         }
     }

@@ -141,8 +141,8 @@ object BuiltinMcpPresets {
     val presets: List<McpServerConfig> = listOf(
         McpServerConfig(
             id = "mcp_sqlite",
-            name = "SQLite 数据库探索器",
-            description = "查询、分析与操作沙箱或工作区内的 SQLite 数据库文件",
+            name = "Trình khám phá cơ sở dữ liệu SQLite",
+            description = "Dùng khi truy vấn, phân tích và thao tác tệp cơ sở dữ liệu SQLite trong sandbox hoặc workspace",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/sqlite_mcp_server.py", "--db-path", "/root/tianxuan.db"),
@@ -151,8 +151,8 @@ object BuiltinMcpPresets {
         ),
         McpServerConfig(
             id = "mcp_git",
-            name = "Git 仓库协同中心",
-            description = "深入分析 Git 历史提交、分支拓扑、Diff 差异与工作区状态",
+            name = "Trung tâm cộng tác kho Git",
+            description = "Phân tích sâu lịch sử commit Git, topology nhánh, khác biệt Diff và trạng thái workspace",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/git_mcp_server.py", "--repository", "/workspace"),
@@ -161,8 +161,8 @@ object BuiltinMcpPresets {
         ),
         McpServerConfig(
             id = "mcp_apktool",
-            name = "Android 逆向与 APK 审计",
-            description = "自动化反编译 APK、解析清单权限、提取硬编码凭据、Smali 敏感代码检索与重打包签名（天玄内置 MCP 服务，依赖 android-suite 的 apktool/jadx/aapt 工具链）",
+            name = "Dịch ngược Android và kiểm toán APK",
+            description = "Tự động decompile APK, phân tích quyền manifest, trích xuất credential hardcode, truy xuất mã nhạy cảm Smali và đóng gói lại ký tên (dịch vụ MCP tích hợp Thien Huyen, phụ thuộc chuỗi công cụ apktool/jadx/aapt của android-suite)",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/apktool_mcp_server.py"),
@@ -171,8 +171,8 @@ object BuiltinMcpPresets {
         ),
         McpServerConfig(
             id = "mcp_codegraph",
-            name = "CodeGraph 代码知识图谱",
-            description = "毫秒级索引工作区符号定义、调用链与影响面（支持 Python/Java/Kotlin/C/C++/JS/TS/Smali），大幅减少代码探索的 Token 与工具调用轮次",
+            name = "Đồ thị tri thức mã CodeGraph",
+            description = "Lập chỉ mục định nghĩa ký hiệu vùng làm việc, chuỗi gọi và phạm vi ảnh hưởng ở cấp mili giây (hỗ trợ Python/Java/Kotlin/C/C++/JS/TS/Smali), giảm đáng kể Token và số lượt gọi công cụ khi khám phá mã",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/codegraph_mcp_server.py", "--repository", "/workspace"),
@@ -181,8 +181,8 @@ object BuiltinMcpPresets {
         ),
         McpServerConfig(
             id = "mcp_websearch",
-            name = "Web 搜索（Open-WebSearch）",
-            description = "免 API Key 的多引擎网络搜索与网页正文抓取（天玄内置零依赖 MCP 服务）：支持 Baidu、Bing、DuckDuckGo 等多引擎直连搜索与正文清洗提取，毫秒级响应，无需 Node.js/npx，开箱即用",
+            name = "Tìm kiếm Web (Open-WebSearch)",
+            description = "Tìm kiếm web đa engine không cần API Key và trích xuất nội dung trang (dịch vụ MCP không phụ thuộc tích hợp sẵn trong Thien Huyen): hỗ trợ tìm kiếm trực tiếp đa engine như Baidu, Bing, DuckDuckGo và trích xuất làm sạch nội dung, phản hồi mili giây, không cần Node.js/npx, dùng ngay.",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/websearch_mcp_server.py"),
@@ -195,7 +195,7 @@ object BuiltinMcpPresets {
         McpServerConfig(
             id = BROWSER_BUILTIN_ID,
             name = "TianXuan Browser (Built-in)",
-            description = "TianXuan 内置 in-app WebView 的 MCP server（in-process loopback 127.0.0.1:8787，Streamable HTTP POST /mcp 请求-响应，Bearer 认证）；由 harness 层 BrowserMcpBootstrap 启动，暴露 mcp__browser__* 工具给 Agent 与外接 IDE。",
+            description = "MCP server của WebView in-app tích hợp trong Thiên Huyền (in-process loopback 127.0.0.1:8787, Streamable HTTP POST /mcp yêu cầu-phản hồi, xác thực Bearer); được tầng harness BrowserMcpBootstrap khởi động, phơi bày công cụ mcp__browser__* cho Agent và IDE bên ngoài.",
             transportType = McpTransportType.SSE,
             serverUrl = "http://127.0.0.1:8787/mcp",
             isEnabled = true,

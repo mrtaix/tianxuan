@@ -24,7 +24,7 @@ class SkillPackageParser {
      * 无上限的 walkTopDown + readBytes 会在超大目录上直接 OOM。
      */
     fun parseFromDirectory(dir: File): SkillPackage {
-        require(dir.isDirectory) { "指定路径不是有效目录: ${dir.absolutePath}" }
+        require(dir.isDirectory) { "Đường dẫn chỉ định không phải thư mục hợp lệ: ${dir.absolutePath}" }
 
         val files = mutableMapOf<String, ByteArray>()
         var totalBytes = 0L
@@ -32,14 +32,14 @@ class SkillPackageParser {
         dir.walkTopDown().maxDepth(4).filter { it.isFile }.forEach { file ->
             fileCount++
             if (fileCount > MAX_ZIP_ENTRIES) {
-                throw SecurityException("技能目录内文件数超过上限 ($MAX_ZIP_ENTRIES)")
+                throw SecurityException("Số tệp trong thư mục kỹ năng vượt giới hạn ($MAX_ZIP_ENTRIES)")
             }
             if (file.length() > MAX_SINGLE_ENTRY_BYTES) {
-                throw SecurityException("技能目录内单个文件超过大小上限 $MAX_SINGLE_ENTRY_BYTES 字节: ${file.name}")
+                throw SecurityException("Một tệp trong thư mục skill vượt giới hạn kích thước $MAX_SINGLE_ENTRY_BYTES byte: ${file.name}")
             }
             totalBytes += file.length()
             if (totalBytes > MAX_ZIP_TOTAL_BYTES) {
-                throw SecurityException("技能目录总大小超过上限 $MAX_ZIP_TOTAL_BYTES 字节")
+                throw SecurityException("Tổng kích thước thư mục kỹ năng vượt giới hạn $MAX_ZIP_TOTAL_BYTES byte")
             }
             files[file.relativeTo(dir).invariantSeparatorsPath] = file.readBytes()
         }
@@ -67,13 +67,13 @@ class SkillPackageParser {
             while (entry != null) {
                 entryCount++
                 if (entryCount > MAX_ZIP_ENTRIES) {
-                    throw SecurityException("技能压缩包内条目数超过上限 ($MAX_ZIP_ENTRIES)")
+                    throw SecurityException("Số mục trong gói nén kỹ năng vượt giới hạn ($MAX_ZIP_ENTRIES)")
                 }
 
                 val name = entry.name.replace('\\', '/')
                 // 防御 Zip Slip 路径穿越
                 if (name.contains("../") || name.startsWith("/") || name.contains("/../")) {
-                    throw SecurityException("检测到非法的 Zip Slip 路径穿越攻击: $name")
+                    throw SecurityException("Phát hiện tấn công vượt đường dẫn Zip Slip bất hợp pháp: $name")
                 }
 
                 if (!entry.isDirectory) {
@@ -85,7 +85,7 @@ class SkillPackageParser {
                         val remainingTotal = MAX_ZIP_TOTAL_BYTES - totalBytes
                         val remainingEntry = MAX_SINGLE_ENTRY_BYTES - entryBytes
                         if (remainingTotal <= 0L || remainingEntry <= 0L) {
-                            throw SecurityException("技能解压超出大小限制 (单文件上限 $MAX_SINGLE_ENTRY_BYTES 字节，总大小上限 $MAX_ZIP_TOTAL_BYTES 字节)")
+                            throw SecurityException("Giải nén kỹ năng vượt giới hạn kích thước (giới hạn mỗi tệp $MAX_SINGLE_ENTRY_BYTES byte, tổng kích thước tối đa $MAX_ZIP_TOTAL_BYTES byte)")
                         }
                         val toRead = minOf(buffer.size.toLong(), remainingTotal, remainingEntry).toInt()
                         val read = zip.read(buffer, 0, toRead)
@@ -97,7 +97,7 @@ class SkillPackageParser {
 
                         if (entryBytes >= MAX_SINGLE_ENTRY_BYTES || totalBytes >= MAX_ZIP_TOTAL_BYTES) {
                             if (zip.read() != -1) {
-                                throw SecurityException("技能解压超出大小限制 (单文件上限 $MAX_SINGLE_ENTRY_BYTES 字节，总大小上限 $MAX_ZIP_TOTAL_BYTES 字节)")
+                                throw SecurityException("Giải nén kỹ năng vượt giới hạn kích thước (giới hạn mỗi tệp $MAX_SINGLE_ENTRY_BYTES byte, tổng kích thước tối đa $MAX_ZIP_TOTAL_BYTES byte)")
                             }
                             break
                         }
@@ -155,13 +155,13 @@ class SkillPackageParser {
             ?: fallbackId
 
         val description = frontmatter["description"]
-            ?: "天玄声明式智能体技能包"
+            ?: "Gói kỹ năng Agent khai báo của Thien Huyen"
 
         val version = frontmatter["version"] ?: "1.0.0"
         val author = frontmatter["author"] ?: "Community"
         val license = frontmatter["license"]
         val icon = frontmatter["icon"] ?: "Sparkles"
-        val category = frontmatter["category"] ?: "通用"
+        val category = frontmatter["category"] ?: "Chung"
         val triggerCommand = frontmatter["trigger_command"] ?: frontmatter["triggercommand"]
 
         val tags = (frontmatter["tags"] ?: "")
@@ -221,7 +221,7 @@ class SkillPackageParser {
     private fun sanitizeSkillId(raw: String): String {
         val sanitized = raw.lowercase().replace(Regex("[^a-z0-9_-]"), "_")
         if (sanitized.isBlank() || sanitized.all { it == '_' }) {
-            throw SecurityException("技能包声明的 id 非法，已拒绝解析: $raw")
+            throw SecurityException("id khai báo của gói kỹ năng bất hợp pháp, đã từ chối phân giải: $raw")
         }
         return sanitized
     }

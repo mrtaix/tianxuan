@@ -106,7 +106,7 @@ object TianXuanA2uiRenderer {
             }
         }.fold(
             onSuccess = { null },
-            onFailure = { it.message?.let { msg -> "A2UI 消息处理失败：$msg" } ?: "A2UI 消息处理失败" },
+            onFailure = { it.message?.let { msg -> "Xử lý thông điệp A2UI thất bại：$msg" } ?: "Xử lý thông điệp A2UI thất bại" },
         )
         if (error == null) {
             synchronized(processedPayloads) { processedPayloads[fingerprint] = extractSurfaceId(messagesJson).orEmpty() }
@@ -131,17 +131,17 @@ object TianXuanA2uiRenderer {
                 val obj = component.jsonObject
                 val type = obj["component"]?.jsonPrimitive?.contentOrNull
                 if (type != null && catalog.components[type] == null) {
-                    error("组件类型 \"$type\" 不在客户端 Catalog 中。可用组件：${availableComponentNames()}")
+                    error("Loại thành phần \"$type\" không nằm trong Catalog phía client. Thành phần khả dụng: ${availableComponentNames()}")
                 }
                 if (obj["id"]?.jsonPrimitive?.contentOrNull == "root") rootCount++
             }
         }
         if (array.any { it.jsonObject.containsKey("updateComponents") } && rootCount != 1) {
-            error("components 中必须恰好有一个 id=\"root\" 的顶部组件（当前 $rootCount 个）")
+            error("Trong components phải có đúng một thành phần đỉnh id=\"root\" (hiện có $rootCount)")
         }
     }.fold(
         onSuccess = { null },
-        onFailure = { it.message?.let { msg -> "A2UI 协议消息解析失败：$msg" } ?: "A2UI 协议消息解析失败" },
+        onFailure = { it.message?.let { msg -> "Phân giải tin nhắn giao thức A2UI thất bại: $msg" } ?: "Phân giải thông điệp giao thức A2UI thất bại" },
     )
 
     /**

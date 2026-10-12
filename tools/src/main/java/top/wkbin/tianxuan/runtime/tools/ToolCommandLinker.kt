@@ -13,12 +13,12 @@ class ToolCommandLinker(
         target: String,
         environment: Map<String, String> = emptyMap(),
     ): CommandResult {
-        require(SAFE_NAME.matches(command)) { "工具命令名称无效" }
-        require(SAFE_TARGET.matches(target)) { "工具命令目标路径无效" }
+        require(SAFE_NAME.matches(command)) { "Tên lệnh công cụ không hợp lệ" }
+        require(SAFE_TARGET.matches(target)) { "Đường dẫn mục tiêu lệnh công cụ không hợp lệ" }
         val link = ToolLayout.commandPath(command)
         // 自指守卫：shim 的 exec 目标绝不能是 shim 自身（直接相等或经软链解析
         // 回自身）。脚本 exec 自己在 PRoot 下是零输出的无限 ptrace 循环。
-        require(target != link) { "工具命令目标不能指向自身: $link" }
+        require(target != link) { "Mục tiêu lệnh công cụ không được trỏ tới chính nó: $link" }
         val scriptLine = shellQuote("exec $target \"\$@\"")
         val quotedLink = shellQuote(link)
         val quotedTarget = shellQuote(target)
@@ -44,7 +44,7 @@ class ToolCommandLinker(
     }
 
     suspend fun remove(command: String, environment: Map<String, String> = emptyMap()): CommandResult {
-        require(SAFE_NAME.matches(command)) { "工具命令名称无效" }
+        require(SAFE_NAME.matches(command)) { "Tên lệnh công cụ không hợp lệ" }
         return linuxRuntime.execute(
             ShellCommand(
                 commandLine = "rm -f ${shellQuote(ToolLayout.commandPath(command))}",

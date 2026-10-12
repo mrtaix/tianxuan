@@ -5,7 +5,7 @@ import top.wkbin.tianxuan.core.model.ExecutionMode
 import top.wkbin.tianxuan.runtime.privilege.PrivilegeManager
 
 /**
- * 系统提示词中"执行权限章节"的渲染端口。
+ * 系统提示词中"Chương quyền thực thi"的渲染端口。
  *
  * 独立成接口是为了让 SystemPromptBuilder 的单元测试可以注入固定行为，
  * 而不必构造完整的 PrivilegeManager 运行时依赖。

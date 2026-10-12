@@ -100,7 +100,7 @@ class LocalLlmViewModel(
 
     fun downloadPreset(preset: MobileModelPreset) {
         if (!isDeviceSuitable(preset)) {
-            showMessage("设备总内存低于该模型建议值，不建议在本机运行 ${preset.name}", isError = true)
+            showMessage("Tổng bộ nhớ thiết bị thấp hơn giá trị khuyến nghị của model này, không khuyến nghị chạy ${preset.name} trên máy này", isError = true)
             return
         }
         download(preset.url, preset.sha256)
@@ -214,7 +214,7 @@ class LocalLlmViewModel(
                         is LocalModelTransfer.Completed -> LocalModelTransferUiState()
                     }
                     if (event is LocalModelTransfer.Completed) {
-                        showMessage("模型已就绪：${event.model.fileName}", isError = false)
+                        showMessage("Model đã sẵn sàng: ${event.model.fileName}", isError = false)
                     }
                 }
             } catch (cancellation: CancellationException) {
@@ -236,7 +236,7 @@ class LocalLlmViewModel(
         aiModelRepository.upsert(
             AiModelEntity(
                 id = profileId,
-                name = "本地 LLM · $fileName",
+                name = "LLM cục bộ · $fileName",
                 provider = "llama.cpp 沙箱离线模型",
                 model = fileName,
                 baseUrl = LocalLlmManager.BASE_URL,

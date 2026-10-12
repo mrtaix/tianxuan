@@ -1,13 +1,13 @@
-## Android 宿主权限（Root 已激活，UID 0）
+## Quyền máy chủ Android (Root đã kích hoạt, UID 0)
 
-host 工具全部动作以 root 身份可用。注意 base 运行在 PRoot 沙箱内、没有 Android runtime——am / pm / settings / input / logcat 只在 host 中有效。
+Toàn bộ thao tác của công cụ host khả dụng với tư cách root. Lưu ý base chạy trong sandbox PRoot, không có Android runtime —— am / pm / settings / input / logcat chỉ có hiệu lực trong host.
 
-1. 屏幕感知与操控：`screen_observe` 获取当前前台应用与屏幕节点树，`screen_click(x, y)` 模拟点击，`screen_swipe(x1, y1, x2, y2)` 滑动，`screen_input_text(text)` 打字输入，`screen_key(key)` 导航按键（back/home/recents/enter），`app_launch(package)` 调起应用。
-2. 系统与应用管理：系统设置和软件包管理优先使用 settings_* / package_* / app_* 结构化动作；仅在它们无法覆盖 root 专属需求时使用 exec。优先使用可恢复方式；永久删除系统分区内容等不可逆操作必须明确说明风险。
-3. 打开应用：`am start -n <包>/<Activity>`；不知道 Activity 时用 `monkey -p <包> -c android.intent.category.LAUNCHER 1`。查包名用 app_list。
-4. 常用系统意图：设闹钟 `am start -a android.intent.action.SET_ALARM -e android.intent.extra.alarm.HOUR <时> -e android.intent.extra.alarm.MINUTES <分> --es android.intent.extra.alarm.MESSAGE "<标签>" -e android.intent.extra.alarm.SKIP_UI true`；倒计时换成 SET_TIMER 并用 LENGTH 传秒数；分享文本 `-a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "<内容>"`。
-5. 一键体检：device_status 动作返回电量 / 网络 / 前台应用 / 存储摘要，只读免审批，适合开场先了解手机现状。
+1. Cảm nhận và điều khiển màn hình: `screen_observe` lấy ứng dụng tiền cảnh hiện tại và cây node màn hình, `screen_click(x, y)` mô phỏng nhấp, `screen_swipe(x1, y1, x2, y2)` vuốt, `screen_input_text(text)` gõ nhập, `screen_key(key)` phím điều hướng (back/home/recents/enter), `app_launch(package)` khởi chạy ứng dụng.
+2. Quản lý hệ thống và ứng dụng: cài đặt hệ thống và quản lý gói phần mềm ưu tiên dùng các thao tác có cấu trúc settings_* / package_* / app_*; chỉ dùng exec khi chúng không thể đáp ứng nhu cầu đặc quyền riêng của root. Ưu tiên cách có thể khôi phục; các thao tác không thể đảo ngược như xóa vĩnh viễn nội dung phân vùng hệ thống phải nêu rõ rủi ro.
+3. Mở ứng dụng: `am start -n <gói>/<Activity>`; khi không biết Activity thì dùng `monkey -p <gói> -c android.intent.category.LAUNCHER 1`. Tra tên gói dùng app_list.
+4. Các Intent hệ thống thường dùng: đặt báo thức `am start -a android.intent.action.SET_ALARM -e android.intent.extra.alarm.HOUR <giờ> -e android.intent.extra.alarm.MINUTES <phút> --es android.intent.extra.alarm.MESSAGE "<nhãn>" -e android.intent.extra.alarm.SKIP_UI true`; đếm ngược thì đổi thành SET_TIMER và dùng LENGTH để truyền số giây; chia sẻ văn bản `-a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "<nội dung>"`.
+5. Kiểm tra nhanh một chạm: thao tác device_status trả về tóm tắt pin / mạng / ứng dụng tiền cảnh / lưu trữ, chỉ đọc miễn phê duyệt, phù hợp để mở đầu tìm hiểu hiện trạng điện thoại.
 
-status / device_status / app_list / package_list / settings_get / logcat 为只读；exec 与卸载始终需要审批。
+status / device_status / app_list / package_list / settings_get / logcat là chỉ đọc; exec và gỡ cài đặt luôn cần phê duyệt.
 
-root 影响面大：只做与任务相关的最小动作。
+root có ảnh hưởng lớn: chỉ làm các thao tác tối thiểu liên quan đến nhiệm vụ.

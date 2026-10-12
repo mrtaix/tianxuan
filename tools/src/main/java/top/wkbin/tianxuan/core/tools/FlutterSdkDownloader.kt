@@ -40,7 +40,7 @@ class FlutterSdkDownloader(
         val metadata = File(cacheDir, "releases_linux_arm64.json")
         val release = fetchRelease(metadata)
         val archiveName = release.archive.substringAfterLast('/').ifBlank {
-            error("Flutter 发布索引返回了无效 archive：${release.archive}")
+            error("Chỉ mục phát hành Flutter trả về archive không hợp lệ: ${release.archive}")
         }
         val archive = File(cacheDir, archiveName)
         val cacheValid = archive.isFile && archive.length() > 0L &&
@@ -78,7 +78,7 @@ class FlutterSdkDownloader(
             }
         }
         throw IllegalStateException(
-            "Flutter 发布信息下载失败：${lastError?.message ?: "未知网络错误"}",
+            "Tải thông tin phát hành Flutter thất bại: ${lastError?.message ?: "未知网络错误"}",
             lastError,
         )
     }
@@ -91,7 +91,7 @@ class FlutterSdkDownloader(
         }?.jsonObject
         if (armAsset != null) {
             val archive = armAsset["browser_download_url"]?.jsonPrimitive?.content.orEmpty()
-            check(archive.isNotBlank()) { "ARM64 Flutter 发布资产缺少下载地址" }
+            check(archive.isNotBlank()) { "Tài sản phát hành ARM64 Flutter thiếu địa chỉ tải xuống" }
             return ReleaseInfo(
                 archive = archive,
                 sha256 = "",
@@ -100,17 +100,17 @@ class FlutterSdkDownloader(
             )
         }
         val releases = document["releases"]?.jsonArray
-            ?: error("Flutter 发布索引缺少 ARM64 assets 字段")
+            ?: error("Chỉ mục phát hành Flutter thiếu trường ARM64 assets")
         val release = releases.firstOrNull { item ->
             val objectValue = item.jsonObject
             objectValue["channel"]?.jsonPrimitive?.content == "stable" &&
                 objectValue["dart_sdk_arch"]?.jsonPrimitive?.content == "arm64"
-        }?.jsonObject ?: error("Flutter 发布索引中没有 stable Linux ARM64 SDK")
+        }?.jsonObject ?: error("Trong chỉ mục phát hành Flutter không có SDK stable Linux ARM64")
         val archive = release["archive"]?.jsonPrimitive?.content.orEmpty()
         val sha256 = release["sha256"]?.jsonPrimitive?.content.orEmpty()
         val version = release["version"]?.jsonPrimitive?.content ?: "stable"
         check(archive.isNotBlank() && sha256.matches(Regex("[0-9a-fA-F]{64}"))) {
-            "Flutter 发布索引中的 archive 或 sha256 无效"
+            "archive hoặc sha256 trong chỉ mục phát hành Flutter không hợp lệ"
         }
         return ReleaseInfo(archive, sha256, version, absoluteUrl = false)
     }
@@ -122,7 +122,7 @@ class FlutterSdkDownloader(
     ) {
         var lastError: Throwable? = null
         // ARM64 资产（GitHub release 直链）拿不到官方 sha256；此时必须禁用第三方镜像——
-        // 镜像站可篡改字节流且无完整性兜底，"无校验 + 不可信通道"等于盲装。
+        // 镜像站可篡改字节流且无完整性兜底，"Không kiểm tra + kênh không tin cậy"等于盲装。
         // 只保留 GitHub 直连（HTTPS 保障传输完整与来源一致），直连失败如实报错。
         val bases = when {
             !release.absoluteUrl -> ARCHIVE_BASE_URLS
@@ -154,7 +154,7 @@ class FlutterSdkDownloader(
             }
         }
         throw IllegalStateException(
-            "Flutter SDK 下载或 SHA-256 校验失败：${lastError?.message ?: "未知错误"}",
+            "Tải Flutter SDK hoặc kiểm tra SHA-256 thất bại: ${lastError?.message ?: "未知错误"}",
             lastError,
         )
     }

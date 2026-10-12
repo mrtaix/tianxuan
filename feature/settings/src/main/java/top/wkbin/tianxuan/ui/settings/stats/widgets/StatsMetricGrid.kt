@@ -32,33 +32,33 @@ fun StatsMetricGrid(
     val items = listOf(
         MetricItem(
             icon = RuntimeIconName.Chat,
-            label = "对话总数",
+            label = "Tổng số hội thoại",
             value = formatCompact(summary.totalConversations.toLong()),
         ),
         MetricItem(
             icon = RuntimeIconName.NavMessage,
-            label = "消息总数",
+            label = "Tổng số tin nhắn",
             value = formatCompact(summary.totalMessages.toLong()),
         ),
         MetricItem(
             icon = RuntimeIconName.Sparkles,
-            label = "输入 Token",
+            label = "Nhập Token",
             value = formatCompact(summary.inputTokens),
         ),
         MetricItem(
             icon = RuntimeIconName.Sparkles,
-            label = "输出 Token",
+            label = "Đầu ra Token",
             value = formatCompact(summary.outputTokens),
         ),
         MetricItem(
             icon = RuntimeIconName.Brain,
-            label = "缓存 Token",
+            label = "Cache Token",
             value = formatCompact(summary.cachedTokens),
         ),
         MetricItem(
             icon = RuntimeIconName.Speed,
-            label = "启动次数",
-            value = "${summary.launchCount} 次",
+            label = "Số lần khởi động",
+            value = "${summary.launchCount} lần",
         ),
     )
 

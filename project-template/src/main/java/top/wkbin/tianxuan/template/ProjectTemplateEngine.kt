@@ -22,9 +22,9 @@ class ProjectTemplateEngine(
     fun inspect(id: String): ProjectTemplateManifest {
         val source = resolveSource(id)
         val manifest = json.decodeFromString<ProjectTemplateManifest>(source.read(ProjectTemplateManifest.MANIFEST_PATH).toString(Charsets.UTF_8))
-        require(manifest.id == id) { "模板标识不匹配：${manifest.id}" }
+        require(manifest.id == id) { "Định danh mẫu không khớp: ${manifest.id}" }
         require(manifest.schemaVersion == ProjectTemplateManifest.CURRENT_SCHEMA_VERSION) {
-            "不支持的模板规范版本：${manifest.schemaVersion}"
+            "Phiên bản đặc tả mẫu không được hỗ trợ: ${manifest.schemaVersion}"
         }
         return manifest
     }
@@ -44,7 +44,7 @@ class ProjectTemplateEngine(
             var result = text
             resolvedValues.forEach { (name, value) -> result = result.replace("{{$name}}", value) }
             val unresolved = PLACEHOLDER.find(result)?.value
-            require(unresolved == null) { "模板包含未赋值变量：$unresolved" }
+            require(unresolved == null) { "Mẫu chứa biến chưa gán giá trị: $unresolved" }
             return result
         }
 
@@ -67,7 +67,7 @@ class ProjectTemplateEngine(
                 normalizedPath in previewPaths
             ) return
             val target = File(projectDir, outputPath(relativePath)).canonicalFile
-            require(target.path.startsWith(projectDir.canonicalPath + File.separator)) { "模板路径越界：$relativePath" }
+            require(target.path.startsWith(projectDir.canonicalPath + File.separator)) { "Đường dẫn mẫu vượt giới hạn: $relativePath" }
             target.parentFile?.mkdirs()
             if (isTextFile(relativePath, target.name)) {
                 target.writeText(replaceVariables(bytes.toString(Charsets.UTF_8)), Charsets.UTF_8)
@@ -80,7 +80,7 @@ class ProjectTemplateEngine(
         require(
             (sourceFiles + validationPaths).none { "TIANXUAN_PACKAGE_PATH" in it } ||
                 resolvedValues["packagePath"].orEmpty().isNotBlank(),
-        ) { "模板使用了 TIANXUAN_PACKAGE_PATH，但没有声明 packageName 或 packagePath" }
+        ) { "Mẫu đã dùng TIANXUAN_PACKAGE_PATH nhưng chưa khai báo packageName hoặc packagePath" }
         sourceFiles.forEach { relativePath -> write(relativePath, source.read(relativePath)) }
         return manifest
     }
@@ -93,7 +93,7 @@ class ProjectTemplateEngine(
             var result = text
             resolvedValues.forEach { (name, value) -> result = result.replace("{{$name}}", value) }
             val unresolved = PLACEHOLDER.find(result)?.value
-            require(unresolved == null) { "模板包含未赋值变量：$unresolved" }
+            require(unresolved == null) { "Mẫu chứa biến chưa gán giá trị: $unresolved" }
             return result
         }
         fun outputPath(relativePath: String): String = replaceVariables(
@@ -107,7 +107,7 @@ class ProjectTemplateEngine(
         require(!normalized.startsWith('/') && !WINDOWS_ABSOLUTE_PATH.containsMatchIn(normalized) &&
             normalized.startsWith("template-hooks/") && normalized.split('/').none { it == ".." }
         ) {
-            "模板脚本必须位于 template-hooks/ 目录"
+            "Script template phải nằm trong thư mục template-hooks/"
         }
         return resolveSource(id).read(normalized)
     }
@@ -115,15 +115,15 @@ class ProjectTemplateEngine(
     private fun validateVariables(manifest: ProjectTemplateManifest, values: Map<String, String>) {
         manifest.variables.forEach { variable ->
             val value = values[variable.name].orEmpty()
-            require(!variable.required || value.isNotBlank()) { "模板变量不能为空：${variable.label}" }
+            require(!variable.required || value.isNotBlank()) { "Biến mẫu không được rỗng: ${variable.label}" }
             if (value.isNotBlank() && variable.validationRegex.isNotBlank()) {
                 // NOTE: validationRegex 来自模板清单（可能由外部导入），坏正则会抛
-                // PatternSyntaxException；统一按"校验不通过"处理而非崩溃。
+                // PatternSyntaxException；统一按"Xác minh không đạt"处理而非崩溃。
                 val valid = runCatching { Regex(variable.validationRegex).matches(value) }.getOrDefault(false)
-                require(valid) { "模板变量格式无效：${variable.label}" }
+                require(valid) { "Định dạng biến mẫu không hợp lệ: ${variable.label}" }
             }
             if (variable.inputType == ProjectTemplateInputType.SELECT && value.isNotBlank()) {
-                require(variable.options.any { it.value == value }) { "模板变量选项无效：${variable.label}" }
+                require(variable.options.any { it.value == value }) { "Tùy chọn biến mẫu không hợp lệ: ${variable.label}" }
             }
         }
     }
@@ -155,7 +155,7 @@ class ProjectTemplateEngine(
             manifest.isFile && runCatching {
                 json.decodeFromString<ProjectTemplateManifest>(manifest.readText(Charsets.UTF_8)).id == id
             }.getOrDefault(false)
-        } ?: error("项目模板不可用：$id")
+        } ?: error("Mẫu dự án không khả dụng: $id")
 
     private fun validateOutput(
         manifest: ProjectTemplateManifest,
@@ -166,29 +166,29 @@ class ProjectTemplateEngine(
         fun validatedFile(relativePath: String): File {
             val file = File(projectDir, outputPath(relativePath)).canonicalFile
             require(file.path.startsWith(projectDir.canonicalPath + File.separator)) {
-                "模板校验路径越界：$relativePath"
+                "Đường dẫn kiểm tra mẫu vượt giới hạn: $relativePath"
             }
             return file
         }
         manifest.validation.requiredFiles.forEach { relativePath ->
-            require(validatedFile(relativePath).isFile) { "模板缺少必需文件：${outputPath(relativePath)}" }
+            require(validatedFile(relativePath).isFile) { "Mẫu thiếu tệp bắt buộc: ${outputPath(relativePath)}" }
         }
         manifest.validation.forbiddenFiles.forEach { relativePath ->
-            require(!validatedFile(relativePath).exists()) { "模板生成了禁止文件：${outputPath(relativePath)}" }
+            require(!validatedFile(relativePath).exists()) { "Template tạo ra tệp bị cấm: ${outputPath(relativePath)}" }
         }
         manifest.validation.contentRules.forEach { rule ->
             val relativePath = outputPath(rule.path)
             val file = validatedFile(rule.path)
-            require(file.isFile) { "模板内容校验文件不存在：$relativePath" }
+            require(file.isFile) { "Tệp kiểm tra nội dung mẫu không tồn tại: $relativePath" }
             val content = file.readText(Charsets.UTF_8)
             if (rule.equals.isNotEmpty()) {
-                require(content.trim() == replaceVariables(rule.equals)) { "模板文件内容不符合要求：$relativePath" }
+                require(content.trim() == replaceVariables(rule.equals)) { "Nội dung tệp mẫu không đáp ứng yêu cầu: $relativePath" }
             }
             rule.contains.forEach { expected ->
-                require(replaceVariables(expected) in content) { "模板文件缺少必需内容：$relativePath" }
+                require(replaceVariables(expected) in content) { "Tệp mẫu thiếu nội dung bắt buộc: $relativePath" }
             }
             rule.excludes.forEach { forbidden ->
-                require(replaceVariables(forbidden) !in content) { "模板文件包含禁止内容：$relativePath" }
+                require(replaceVariables(forbidden) !in content) { "Tệp mẫu chứa nội dung bị cấm: $relativePath" }
             }
         }
     }
@@ -219,7 +219,7 @@ class ProjectTemplateEngine(
     private class DirectoryTemplateSource(private val root: File) : TemplateSource {
         override fun read(relativePath: String): ByteArray {
             val file = File(root, relativePath).canonicalFile
-            require(file.path.startsWith(root.canonicalPath + File.separator) && file.isFile) { "模板文件不存在：$relativePath" }
+            require(file.path.startsWith(root.canonicalPath + File.separator) && file.isFile) { "Tệp template không tồn tại: $relativePath" }
             return file.readBytes()
         }
 

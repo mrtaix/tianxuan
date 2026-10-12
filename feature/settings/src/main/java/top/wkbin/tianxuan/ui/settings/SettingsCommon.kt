@@ -182,7 +182,7 @@ fun WebChatBridgeDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RuntimeIcon(RuntimeIconName.Globe, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
-                Text("天玄智枢 Web 协作台")
+                Text("Bàn cộng tác Web Thiên Huyền Tri Khu")
             }
         },
         text = {
@@ -191,7 +191,7 @@ fun WebChatBridgeDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = "在同一 Wi-Fi / 局域网下，通过电脑浏览器连接天玄智枢，同步处理 Agent 任务、对话与 Linux 工作区文件。",
+                    text = "Trong cùng Wi-Fi / mạng LAN, kết nối Thien Huyen Tri Khu qua trình duyệt máy tính để đồng bộ xử lý nhiệm vụ Agent, hội thoại và tệp workspace Linux.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
@@ -205,7 +205,7 @@ fun WebChatBridgeDialog(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "协作服务状态",
+                                text = "Trạng thái dịch vụ cộng tác",
                                 style = MaterialTheme.typography.titleSmall,
                             )
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -224,7 +224,7 @@ fun WebChatBridgeDialog(
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("浏览器访问地址", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Địa chỉ truy cập trình duyệt", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Row(
                                     Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -237,14 +237,14 @@ fun WebChatBridgeDialog(
                                     )
                                     TextButton(
                                         onClick = {
-                                            copyToClipboard(context, status.accessUrl, "天玄智枢协作地址", "已复制基础链接")
+                                            copyToClipboard(context, status.accessUrl, "Địa chỉ cộng tác Thiên Huyền Tri Khu", "Đã sao chép liên kết cơ sở")
                                         }
                                     ) { Text("复制") }
                                 }
                             }
 
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("安全配对码 (PIN)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Mã ghép nối an toàn (PIN)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Row(
                                     Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -257,7 +257,7 @@ fun WebChatBridgeDialog(
                                     )
                                     TextButton(
                                         onClick = {
-                                            copyToClipboard(context, status.pinCode, "PIN", "已复制配对码")
+                                            copyToClipboard(context, status.pinCode, "PIN", "Đã sao chép mã ghép đôi")
                                         }
                                     ) { Text("复制") }
                                 }
@@ -269,8 +269,8 @@ fun WebChatBridgeDialog(
                                     copyToClipboard(
                                         context,
                                         directUrl,
-                                        "天玄智枢直连地址",
-                                        "已复制免密直达链接，在电脑浏览器打开即可！",
+                                        "Địa chỉ kết nối trực tiếp Thien Huyen Tri Khu",
+                                        "Đã sao chép liên kết truy cập trực tiếp không mật khẩu, mở trong trình duyệt máy tính là được!",
                                     )
                                 },
                                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -278,12 +278,12 @@ fun WebChatBridgeDialog(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     RuntimeIcon(RuntimeIconName.Copy, Modifier.size(16.dp))
-                                    Text("一键复制免密直达链接 (免输PIN)")
+                                    Text("Sao chép một chạm link truy cập miễn mật khẩu (miễn nhập PIN)")
                                 }
                             }
 
                             Text(
-                                text = "💡 提示：确保电脑与手机处于同一 Wi-Fi；当前在线设备：${status.activeConnections} 台",
+                                text = "💡 Gợi ý: đảm bảo máy tính và điện thoại ở cùng Wi-Fi; thiết bị online hiện tại: ${status.activeConnections} máy",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

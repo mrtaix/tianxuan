@@ -36,7 +36,7 @@ class WorkflowScheduleRepository(
 
     suspend fun upsert(entity: WorkflowScheduleEntity) {
         val normalized = entity.copy(
-            name = entity.name.trim().ifBlank { "定时计划" },
+            name = entity.name.trim().ifBlank { "Lịch định thời" },
             intervalMinutes = entity.intervalMinutes?.coerceAtLeast(MIN_INTERVAL_MINUTES),
             nextRunAt = if (entity.enabled) computeNextRunAt(entity) else null,
         )

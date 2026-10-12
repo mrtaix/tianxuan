@@ -46,7 +46,7 @@ class RuntimeForegroundService : Service() {
             getString(R.string.tianxuan_runtime_notification_channel),
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
-            description = "用于展示 Linux 沙箱后台运行状态的常驻通知"
+            description = "Thông báo thường trú dùng để hiển thị trạng thái chạy nền của sandbox Linux"
             enableVibration(false)
             setSound(null, null)
             setShowBadge(true)
@@ -123,7 +123,7 @@ class RuntimeForegroundService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.tianxuan_notification)
-            .setContentTitle("Linux 沙箱")
+            .setContentTitle("Sandbox Linux")
             .setContentText(getString(R.string.tianxuan_runtime_running))
             .setOngoing(true)
             .setOnlyAlertOnce(true)

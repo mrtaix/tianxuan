@@ -46,7 +46,7 @@ fun McpMonitorScreen(
     Scaffold(
         topBar = {
             RuntimeTopBar(
-                title = "MCP 服务监控",
+                title = "Giám sát dịch vụ MCP",
                 statusText = null,
                 onBack = onBack,
                 actions = {
@@ -71,12 +71,12 @@ fun McpMonitorScreen(
             ) {
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
-                    "暂无 MCP 服务",
+                    "Hiện chưa có dịch vụ MCP",
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "在 MCP 服务设置中添加并启用服务后，这里会显示连接状态与工具数。",
+                    "Sau khi thêm và bật dịch vụ trong cài đặt dịch vụ MCP, trạng thái kết nối và số công cụ sẽ hiển thị tại đây.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -121,13 +121,13 @@ private fun McpMonitorCard(info: McpManager.McpMonitorInfo) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "工具: ${info.toolCount}",
+                    "Công cụ: ${info.toolCount}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (!info.enabled) {
                     Text(
-                        "已禁用",
+                        "Đã vô hiệu hóa",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -150,10 +150,10 @@ private fun McpMonitorCard(info: McpManager.McpMonitorInfo) {
 @Composable
 private fun StateBadge(state: McpConnectionState, enabled: Boolean) {
     val (text, color) = when (state) {
-        McpConnectionState.ONLINE -> "在线" to MaterialTheme.colorScheme.primary
+        McpConnectionState.ONLINE -> "Trực tuyến" to MaterialTheme.colorScheme.primary
         McpConnectionState.OFFLINE -> "离线" to MaterialTheme.colorScheme.error
-        McpConnectionState.CHECKING -> "检测中…" to MaterialTheme.colorScheme.tertiary
-        McpConnectionState.UNKNOWN -> if (enabled) "未知" to MaterialTheme.colorScheme.onSurfaceVariant else "已禁用" to MaterialTheme.colorScheme.onSurfaceVariant
+        McpConnectionState.CHECKING -> "Đang kiểm tra…" to MaterialTheme.colorScheme.tertiary
+        McpConnectionState.UNKNOWN -> if (enabled) "Không xác định" to MaterialTheme.colorScheme.onSurfaceVariant else "Đã vô hiệu hóa" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Badge(containerColor = color) { Text(text) }
 }

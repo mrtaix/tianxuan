@@ -31,86 +31,86 @@ enum class BeiDou(
 ) {
     /** 天枢：众机之枢，星纪由此推排。 */
     TIAN_SHU(
-        starName = "天枢",
+        starName = "Thiên Khu",
         bayer = "α Dubhe",
-        alias = "贪狼",
+        alias = "Tham Lang",
         order = 1,
         part = DipperPart.KUI,
-        gateName = "智枢",
+        gateName = "Tri Khu",
         gateKey = "agent",
-        rationale = "众机之枢，星纪由此推排",
+        rationale = "Trung tâm của vạn cơ, lịch sao từ đây mà suy diễn",
     ),
 
     /** 天璇：攻玉成器，造作之所。 */
     TIAN_XUAN(
-        starName = "天璇",
+        starName = "Thiên Tuyền",
         bayer = "β Merak",
-        alias = "巨门",
+        alias = "Cự Môn",
         order = 2,
         part = DipperPart.KUI,
-        gateName = "智坊",
+        gateName = "Trí Phường",
         gateKey = "workspace",
-        rationale = "攻玉成器，造作之所",
+        rationale = "Mài ngọc thành khí, nơi chế tác",
     ),
 
     /** 天玑：直面天机，亲执枢要。 */
     TIAN_JI(
-        starName = "天玑",
+        starName = "Thiên Cơ",
         bayer = "γ Phecda",
-        alias = "禄存",
+        alias = "Lộc Tồn",
         order = 3,
         part = DipperPart.KUI,
-        gateName = "终端",
+        gateName = "Terminal",
         gateKey = "terminal",
-        rationale = "直面天机，亲执枢要",
+        rationale = "Đối diện thiên cơ, tự nắm then chốt",
     ),
 
     /** 天权：权衡缓急，分派调度。 */
     TIAN_QUAN(
-        starName = "天权",
+        starName = "Thiên Quyền",
         bayer = "δ Megrez",
-        alias = "文曲",
+        alias = "Văn Khúc",
         order = 4,
         part = DipperPart.KUI,
-        gateName = "工作流",
+        gateName = "Workflow",
         gateKey = "workflow",
-        rationale = "权衡缓急，分派调度",
+        rationale = "Cân nhắc gấp gáp, phân phái điều độ",
     ),
 
     /** 玉衡：北斗最亮之星，平准得失。 */
     YU_HENG(
-        starName = "玉衡",
+        starName = "Ngọc Hành",
         bayer = "ε Alioth",
-        alias = "廉贞",
+        alias = "Liêm Trinh",
         order = 5,
         part = DipperPart.BIAO,
-        gateName = "版本",
+        gateName = "Phiên bản",
         gateKey = "git",
-        rationale = "平准得失，铢两悉称",
+        rationale = "Cân bằng được mất, cân đo chi li",
     ),
 
     /** 开阳：开牖见天，纳四境之光。 */
     KAI_YANG(
-        starName = "开阳",
+        starName = "Khai Dương",
         bayer = "ζ Mizar",
-        alias = "武曲",
+        alias = "Vũ Khúc",
         order = 6,
         part = DipperPart.BIAO,
-        gateName = "浏览器",
+        gateName = "Trình duyệt",
         gateKey = "browser",
-        rationale = "开牖见天，纳四境之光",
+        rationale = "Mở cửa sổ thấy trời, thu ánh sáng bốn phương",
     ),
 
     /** 摇光：摇动枢机，光被全域。 */
     YAO_GUANG(
-        starName = "摇光",
+        starName = "Dao Quang",
         bayer = "η Alkaid",
-        alias = "破军",
+        alias = "Phá Quân",
         order = 7,
         part = DipperPart.BIAO,
-        gateName = "设置",
+        gateName = "Cài đặt",
         gateKey = "settings",
-        rationale = "摇动枢机，光被全域",
+        rationale = "Lay động then chốt, ánh sáng phủ khắp toàn cõi",
     ),
     ;
 
@@ -135,8 +135,8 @@ enum class BeiDou(
 /** 北斗的部位：魁为斗勺（前四星），杓为斗柄（后三星）。 */
 enum class DipperPart(val label: String, val gloss: String) {
     /** 魁：斗勺四星，主承。 */
-    KUI(label = "魁", gloss = "斗勺四星，主承"),
+    KUI(label = "Khôi", gloss = "Đẩu Chước bốn sao, chủ thừa"),
 
     /** 杓：斗柄三星，主施。 */
-    BIAO(label = "杓", gloss = "斗柄三星，主施"),
+    BIAO(label = "Tiêu", gloss = "Chuôi Đẩu ba sao, chủ thi hành"),
 }

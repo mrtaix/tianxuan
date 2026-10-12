@@ -20,7 +20,7 @@ class InstallTransactionManager(
 ) {
     suspend fun begin(distroId: String, toolId: String, preserveExisting: Boolean): InstallTransaction =
         withContext(Dispatchers.IO) {
-            require(SAFE_TOOL_ID.matches(toolId)) { "工具 ID 无效：$toolId" }
+            require(SAFE_TOOL_ID.matches(toolId)) { "ID công cụ không hợp lệ: $toolId" }
             val safeDistro = distroId.lowercase().trim()
             pathManager.ensureDistroDirectories(safeDistro)
             val target = File(pathManager.tianxuanToolsDir(safeDistro), toolId)
@@ -41,7 +41,7 @@ class InstallTransactionManager(
 
     /** Restores the newest orphaned transaction after an app-process crash. */
     suspend fun recover(distroId: String, toolId: String, preserveExisting: Boolean): Boolean = withContext(Dispatchers.IO) {
-        require(SAFE_TOOL_ID.matches(toolId)) { "工具 ID 无效：$toolId" }
+        require(SAFE_TOOL_ID.matches(toolId)) { "ID công cụ không hợp lệ: $toolId" }
         val safeDistro = distroId.lowercase().trim()
         val transactionRoot = File(pathManager.tianxuanRootDir(safeDistro), ".transactions")
         val candidates = transactionRoot.listFiles()
@@ -57,7 +57,7 @@ class InstallTransactionManager(
             if (!restoreTarget.renameTo(target)) {
                 restoreTarget.deleteRecursively()
                 throw IllegalStateException(
-                    "恢复目录重命名失败: ${restoreTarget.absolutePath} -> ${target.absolutePath}"
+                    "Đổi tên thư mục khôi phục thất bại: ${restoreTarget.absolutePath} -> ${target.absolutePath}"
                 )
             }
         } else if (!preserveExisting) {
@@ -84,15 +84,15 @@ class InstallTransactionManager(
         transaction.snapshot?.let { snapshot ->
             runCatching {
                 SafeFileTree.copy(snapshot, transaction.target)
-                check(transaction.target.exists()) { "无法恢复工具程序目录：${transaction.target.name}" }
-            }.onFailure { logger.e("回滚恢复目录失败：${transaction.target.name}", it) }
+                check(transaction.target.exists()) { "Không thể khôi phục thư mục chương trình công cụ: ${transaction.target.name}" }
+            }.onFailure { logger.e("Rollback khôi phục thư mục thất bại: ${transaction.target.name}", it) }
             safeDelete(snapshot, "rollback(${transaction.target.name}) snapshot")
         }
     }
 
     private fun safeDelete(file: File, what: String) {
         runCatching { SafeFileTree.delete(file) }
-            .onFailure { logger.e("清理失败（$what）：$file", it) }
+            .onFailure { logger.e("Dọn thất bại ($what): $file", it) }
     }
 
     private companion object {

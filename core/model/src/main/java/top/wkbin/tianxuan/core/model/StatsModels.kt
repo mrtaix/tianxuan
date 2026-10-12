@@ -62,7 +62,7 @@ data class StatsDateRange(
         }
 
         fun custom(start: LocalDate, end: LocalDate): StatsDateRange {
-            require(!end.isBefore(start)) { "结束日期不能早于起始日期" }
+            require(!end.isBefore(start)) { "Ngày kết thúc không được sớm hơn ngày bắt đầu" }
             return StatsDateRange(
                 preset = StatsDateRangePreset.CUSTOM,
                 start = start,

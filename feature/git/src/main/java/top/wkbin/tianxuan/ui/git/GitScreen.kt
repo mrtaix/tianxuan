@@ -199,7 +199,7 @@ fun GitScreen(
                 }
 
                 PrimaryTabRow(selectedTabIndex = selectedTab) {
-                    // 页签文案统一两字 + 数量角标，防止窄屏下换行（"提交记录"曾折成两行）
+                    // 页签文案统一两字 + 数量角标，防止窄屏下换行（"Lịch sử commit"曾折成两行）
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
@@ -1204,11 +1204,11 @@ private fun ChangeRow(
     onDiscard: () -> Unit,
 ) {
     val (typeLabel, typeTint) = when (change.changeType) {
-        GitManager.ChangeType.ADDED -> "新增" to gitSuccessColor()
-        GitManager.ChangeType.MODIFIED -> "修改" to gitInfoColor()
+        GitManager.ChangeType.ADDED -> "Thêm mới" to gitSuccessColor()
+        GitManager.ChangeType.MODIFIED -> "Sửa đổi" to gitInfoColor()
         GitManager.ChangeType.DELETED -> "删除" to MaterialTheme.colorScheme.error
-        GitManager.ChangeType.UNTRACKED -> "未跟踪" to gitWarningColor()
-        GitManager.ChangeType.CONFLICT -> "冲突" to MaterialTheme.colorScheme.error
+        GitManager.ChangeType.UNTRACKED -> "Chưa theo dõi" to gitWarningColor()
+        GitManager.ChangeType.CONFLICT -> "Xung đột" to MaterialTheme.colorScheme.error
     }
     RuntimeCard(
         containerColor = if (change.staged) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceContainerLow,

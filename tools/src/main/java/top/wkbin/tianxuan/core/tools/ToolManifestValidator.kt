@@ -26,67 +26,67 @@ object ToolManifestValidator {
     private val allowedInstallMethods = setOf("SCRIPT", "LOCAL_PACKAGE")
 
     fun validateAll(manifests: List<ToolManifest>): List<ToolManifest> {
-        require(manifests.isNotEmpty()) { "工具清单不能为空" }
+        require(manifests.isNotEmpty()) { "Danh sách công cụ không được rỗng" }
         manifests.forEach { manifest ->
-            require(manifest.schemaVersion == 1) { "不支持的工具清单 Schema：${manifest.schemaVersion}" }
-            require(idPattern.matches(manifest.id)) { "非法工具 ID：${manifest.id}" }
-            require(manifest.name.isNotBlank()) { "工具名称不能为空：${manifest.id}" }
-            require(manifest.description.isNotBlank()) { "工具描述不能为空：${manifest.id}" }
-            require(manifest.publisher.length <= 128) { "工具发布者名称过长：${manifest.id}" }
-            require(manifest.version.isNotBlank()) { "工具版本不能为空：${manifest.id}" }
+            require(manifest.schemaVersion == 1) { "Schema danh sách công cụ không được hỗ trợ: ${manifest.schemaVersion}" }
+            require(idPattern.matches(manifest.id)) { "ID công cụ bất hợp pháp: ${manifest.id}" }
+            require(manifest.name.isNotBlank()) { "Tên công cụ không được rỗng: ${manifest.id}" }
+            require(manifest.description.isNotBlank()) { "Mô tả công cụ không được rỗng: ${manifest.id}" }
+            require(manifest.publisher.length <= 128) { "Tên nhà phát hành công cụ quá dài: ${manifest.id}" }
+            require(manifest.version.isNotBlank()) { "Phiên bản công cụ không được rỗng: ${manifest.id}" }
             // 锚定匹配：即便版本串两侧被插入空白/控制字符也不会被放行。
             require(versionPattern.matches(manifest.version)) {
-                "非法工具版本：${manifest.id} / ${manifest.version}"
+                "Phiên bản công cụ bất hợp pháp: ${manifest.id} / ${manifest.version}"
             }
             val latest = manifest.latestVersion
             require(latest == null || latest.isNotBlank()) {
-                "工具最新版本不能为空：${manifest.id}"
+                "Phiên bản mới nhất của công cụ không được rỗng: ${manifest.id}"
             }
             require(latest == null || versionPattern.matches(latest)) {
-                "非法工具最新版本：${manifest.id} / $latest"
+                "Phiên bản công cụ mới nhất bất hợp pháp: ${manifest.id} / $latest"
             }
             require(manifest.architectures.any { it.equals("ARM64", ignoreCase = true) }) {
-                "工具不支持 ARM64：${manifest.id}"
+                "Công cụ không hỗ trợ ARM64: ${manifest.id}"
             }
             require(manifest.launchType in allowedLaunchTypes) {
-                "不支持的启动类型：${manifest.launchType}"
+                "Loại khởi chạy không được hỗ trợ: ${manifest.launchType}"
             }
             require(manifest.updateStrategy in allowedUpdateStrategies) {
-                "不支持的更新策略：${manifest.updateStrategy}"
+                "Chiến lược cập nhật không được hỗ trợ: ${manifest.updateStrategy}"
             }
-            require(manifest.installMethod in allowedInstallMethods) { "不支持的安装方式：${manifest.installMethod}" }
-            require(manifest.source in setOf("REMOTE", "LOCAL")) { "不支持的工具来源：${manifest.source}" }
+            require(manifest.installMethod in allowedInstallMethods) { "Phương thức cài đặt không được hỗ trợ: ${manifest.installMethod}" }
+            require(manifest.source in setOf("REMOTE", "LOCAL")) { "Nguồn công cụ không được hỗ trợ: ${manifest.source}" }
             if (manifest.source == "LOCAL") {
-                require(manifest.offlineOnly) { "本地插件必须声明 offlineOnly=true：${manifest.id}" }
-                require(manifest.installMethod == "LOCAL_PACKAGE") { "本地插件必须使用 LOCAL_PACKAGE：${manifest.id}" }
+                require(manifest.offlineOnly) { "Plugin cục bộ bắt buộc khai báo offlineOnly=true: ${manifest.id}" }
+                require(manifest.installMethod == "LOCAL_PACKAGE") { "Plugin cục bộ phải dùng LOCAL_PACKAGE: ${manifest.id}" }
             }
             manifest.permissions.forEach { permission ->
-                require(permission in allowedPermissions) { "不支持的工具权限：$permission" }
+                require(permission in allowedPermissions) { "Quyền công cụ không được hỗ trợ: $permission" }
             }
             manifest.homepage?.let { homepage ->
                 require(homepage.startsWith("https://", ignoreCase = true)) {
-                    "工具主页必须使用 HTTPS：${manifest.id}"
+                    "Trang chủ công cụ phải dùng HTTPS: ${manifest.id}"
                 }
             }
             manifest.servicePort?.let { port ->
-                require(port in 1..65535) { "无效的本地服务端口：${manifest.id}" }
+                require(port in 1..65535) { "Cổng dịch vụ cục bộ không hợp lệ: ${manifest.id}" }
                 require(manifest.launchType in setOf("web", "service")) {
-                    "只有 web/service 工具可以声明本地服务：${manifest.id}"
+                    "Chỉ công cụ web/service mới có thể khai báo dịch vụ cục bộ: ${manifest.id}"
                 }
                 require(manifest.servicePath.startsWith('/') && !manifest.servicePath.contains("..")) {
-                    "本地服务路径不安全：${manifest.id}"
+                    "Đường dẫn dịch vụ cục bộ không an toàn: ${manifest.id}"
                 }
             }
             if (!manifest.offlineOnly) {
                 manifest.dependencies.forEach { dependency ->
                     val parsed = ManifestDependencyParser.parse(dependency)
                     require(parsed != null && parsed.name in allowedDependencies) {
-                        "不支持的依赖类型：$dependency"
+                        "Loại phụ thuộc không được hỗ trợ: $dependency"
                     }
                 }
             }
         }
-        require(manifests.map { it.id }.toSet().size == manifests.size) { "工具 ID 重复" }
+        require(manifests.map { it.id }.toSet().size == manifests.size) { "ID công cụ bị trùng" }
         return manifests
     }
 }

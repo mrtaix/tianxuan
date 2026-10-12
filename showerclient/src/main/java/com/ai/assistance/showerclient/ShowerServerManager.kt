@@ -62,7 +62,7 @@ object ShowerServerManager {
         if (workDir == null) {
             ShowerLog.e(
                 TAG,
-                "无可用工作目录（已尝试 ${ShowerEnvironment.workDirCandidates}）：检查 Shizuku/Root 授权与 SELinux 限制"
+                "Không có thư mục làm việc khả dụng (đã thử ${ShowerEnvironment.workDirCandidates}): kiểm tra cấp quyền Shizuku/Root và giới hạn SELinux"
             )
             return false
         }
@@ -153,12 +153,12 @@ object ShowerServerManager {
                 "if touch $probeFile 2>/dev/null; then rm -f $probeFile; echo $SHOWER_WORKDIR_PROBE_MARK; fi"
             val result = runner.run(cmd, ShellIdentity.SHELL)
             if (result.success && result.stdout.contains(SHOWER_WORKDIR_PROBE_MARK)) {
-                ShowerLog.d(TAG, "resolveWorkDir: 选用 $dir")
+                ShowerLog.d(TAG, "resolveWorkDir: chọn dùng $dir")
                 return dir
             }
             ShowerLog.w(
                 TAG,
-                "resolveWorkDir: $dir 不可写（exit=${result.exitCode}），尝试下一个候选"
+                "resolveWorkDir: $dir không ghi được (exit=${result.exitCode}), thử ứng viên tiếp theo"
             )
         }
         return null
@@ -175,7 +175,7 @@ object ShowerServerManager {
         // mkdirs() 返回 false 可能只是“已存在”，故以 exists() 为准；两者均不满足时
         // 提前给出可定位的原因，而不是让后续 FileOutputStream 报一个抽象错误。
         if (!baseDir.exists() && !baseDir.mkdirs() && !baseDir.exists()) {
-            throw java.io.IOException("无法创建过渡目录：${baseDir.absolutePath}")
+            throw java.io.IOException("Không thể tạo thư mục chuyển tiếp: ${baseDir.absolutePath}")
         }
         val outFile = File(baseDir, LOCAL_JAR_NAME)
         context.assets.open(ASSET_JAR_NAME).use { input ->

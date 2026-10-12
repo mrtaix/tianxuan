@@ -124,9 +124,9 @@ fun SystemDevSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Shield,
-                        title = "厂商后台防杀与权限向导",
-                        subtitle = "自启动、电池无限制、多任务加锁等 OEM 专属配置指引",
-                        value = "查看向导",
+                        title = "Hướng dẫn chống diệt nền và quyền của nhà sản xuất",
+                        subtitle = "Hướng dẫn cấu hình riêng của OEM như tự khởi động, không giới hạn pin, khóa đa nhiệm",
+                        value = "Xem hướng dẫn",
                         onClick = onOpenPermissionGuide,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -141,12 +141,12 @@ fun SystemDevSettingsScreen(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         SettingsRow(
                             icon = RuntimeIconName.Cpu,
-                            title = "$romLabel 快捷自启动跳转",
-                            subtitle = "一键直达厂商系统自启动管理设置项",
-                            value = "前往开启",
+                            title = "Chuyển nhanh tự khởi động $romLabel",
+                            subtitle = "Truy cập trực tiếp một chạm tới mục cài đặt quản lý tự khởi động của hệ thống hãng",
+                            value = "Đi tới để bật",
                             onClick = {
                                 runCatching { RomAutostartHelper.openAutostartSettings(context) }.onFailure {
-                                    Toast.makeText(context, "无法跳转厂商设置，请在系统设置的应用管理中手动配置", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "Không thể nhảy tới cài đặt nhà sản xuất, hãy cấu hình thủ công trong quản lý ứng dụng của cài đặt hệ thống", Toast.LENGTH_LONG).show()
                                 }
                             },
                         )
@@ -173,7 +173,7 @@ fun SystemDevSettingsScreen(
 
             item {
                 Text(
-                    text = "Android 系统调试与日志",
+                    text = "Gỡ lỗi và log hệ thống Android",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -181,9 +181,9 @@ fun SystemDevSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Terminal,
-                        title = "无线 ADB 与日志抓取",
-                        subtitle = "mDNS 自动配对发现、免配对自动重连与 Logcat 实时工作台",
-                        value = "进入工作台",
+                        title = "ADB không dây và bắt nhật ký",
+                        subtitle = "Tự động ghép đôi khám phá mDNS, tự động kết nối lại miễn ghép đôi và bàn làm việc Logcat thời gian thực",
+                        value = "Vào bàn làm việc",
                         onClick = onOpenAdbLogcat,
                     )
                 }
@@ -191,7 +191,7 @@ fun SystemDevSettingsScreen(
 
             item {
                 Text(
-                    text = "天玄自定义迭代与共建",
+                    text = "Tùy biến lặp và cùng xây dựng Thiên Huyền",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -199,8 +199,8 @@ fun SystemDevSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Code,
-                        title = "自定义迭代（TianXuanDev）",
-                        subtitle = "在手机沙盒中调用 AI 开发天玄自身并云端构建 APK",
+                        title = "Lặp tùy chỉnh (TianXuanDev)",
+                        subtitle = "Gọi AI phát triển chính Thien Huyen ngay trong sandbox điện thoại và build APK trên đám mây",
                         onClick = onOpenCustomIteration,
                     )
                 }
@@ -233,11 +233,11 @@ fun SystemDevSettingsScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     ToggleRow(
                         icon = RuntimeIconName.Cpu,
-                        title = "QEMU x86_64 兼容模式",
+                        title = "Chế độ tương thích QEMU x86_64",
                         subtitle = if (qemuCompatibilityReady) {
-                            "允许明确请求的会话使用 QEMU x86_64 user-mode；ARM64 会话不受影响"
+                            "Cho phép phiên được yêu cầu rõ ràng dùng QEMU x86_64 user-mode; phiên ARM64 không bị ảnh hưởng"
                         } else {
-                            "未检测到 QEMU x86_64 兼容环境，请先在插件中心安装 qemu-x86-64-compat 插件"
+                            "Chưa phát hiện môi trường tương thích QEMU x86_64, vui lòng cài plugin qemu-x86-64-compat trong trung tâm plugin trước"
                         },
                         checked = qemuCompatibilityEnabled && qemuCompatibilityReady,
                         enabled = qemuCompatibilityReady,
@@ -245,9 +245,9 @@ fun SystemDevSettingsScreen(
                     )
                     Text(
                         text = qemuCompatibilityMessage ?: if (qemuCompatibilityEnabled) {
-                            "已开启。兼容插件只提供 ARM64 QEMU user-mode 与最小 x86_64 RootFS。"
+                            "Đã bật. Plugin tương thích chỉ cung cấp QEMU user-mode ARM64 và RootFS x86_64 tối thiểu."
                         } else {
-                            "默认关闭，不会下载或使用 x86_64 工具。开启后仅对明确选择兼容环境的第三方项目生效，不会改变 APK 的 arm64-v8a 默认 ABI。"
+                            "Mặc định tắt, sẽ không tải hoặc dùng công cụ x86_64. Sau khi bật chỉ có hiệu lực với dự án bên thứ ba chọn rõ môi trường tương thích, không thay đổi ABI mặc định arm64-v8a của APK."
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = if (qemuCompatibilityReady) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
@@ -319,7 +319,7 @@ private fun BatteryOptimizationDialog(
                                 ),
                             )
                         }.onFailure {
-                            Toast.makeText(context, "无法打开系统设置，请手动进入设置授予电池优化豁免", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Không thể mở cài đặt hệ thống, hãy tự vào cài đặt cấp miễn trừ tối ưu pin", Toast.LENGTH_LONG).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -337,7 +337,7 @@ private fun BatteryOptimizationDialog(
                                 ),
                             )
                         }.onFailure {
-                            Toast.makeText(context, "无法打开应用详情，请手动进入系统设置", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Không thể mở chi tiết ứng dụng, vui lòng vào cài đặt hệ thống thủ công", Toast.LENGTH_LONG).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -432,11 +432,11 @@ private fun PhantomProcessLimitDialog(
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Text(
-                                "最大幽灵进程数：${status.maxPhantomProcesses ?: "系统默认（通常为 32）"}",
+                                "Số tiến trình ma tối đa: ${status.maxPhantomProcesses ?: "系统默认（通常为 32）"}",
                                 style = MaterialTheme.typography.labelSmall,
                             )
                             Text(
-                                "幽灵进程监控：${when (status.monitoringEnabled) { true -> "开启"; false -> "关闭"; null -> "系统默认（开启）" }}",
+                                "Giám sát tiến trình ma: ${when (status.monitoringEnabled) { true -> "开启"; false -> "关闭"; null -> "系统默认（开启）" }}",
                                 style = MaterialTheme.typography.labelSmall,
                             )
                         }

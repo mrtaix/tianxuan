@@ -148,7 +148,7 @@ object AttachmentHelper {
             )
         } catch (e: Exception) {
             // 失败不能静默：记录日志并由 ChatViewModel 统计后以 Toast 上抛给用户
-            android.util.Log.w(TAG, "附件处理失败 uri=$uri", e)
+            android.util.Log.w(TAG, "Xử lý tệp đính kèm thất bại uri=$uri", e)
             null
         }
     }

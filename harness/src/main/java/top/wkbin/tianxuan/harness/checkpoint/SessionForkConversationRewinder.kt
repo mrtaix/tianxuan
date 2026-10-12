@@ -10,7 +10,7 @@ import top.wkbin.tianxuan.core.database.HarnessSessionRepository
  *
  * - 由 [CheckpointStore.anchorMessageIdOf] 拿到该轮用户消息 entry id（锚点）；
  * - 新会话复制主 lane 分支上锚点之前的全部消息（id 重映射、parentId 链重建），
- *   即"撤回该轮及之后对话"——原会话保持不动（会话树本就不可变，丢弃的分支仍留存）；
+ *   即"Thu hồi lượt này và các hội thoại sau đó"——原会话保持不动（会话树本就不可变，丢弃的分支仍留存）；
  * - 新会话继承原会话的模型/工作区/工程类型/审批模式，用户可直接续聊。
  */
 class SessionForkConversationRewinder(
@@ -34,7 +34,7 @@ class SessionForkConversationRewinder(
         sessionDao.upsert(
             source.copy(
                 id = forkedSessionId,
-                title = "${source.title} · 回退分支",
+                title = "${source.title} · Nhánh dự phòng",
                 createdAt = now,
                 updatedAt = now,
             ),

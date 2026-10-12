@@ -43,7 +43,7 @@ data class SshRuntimeConfig(
     val passwordAuthEnabled: Boolean = false,
 ) {
     init {
-        require(port in 1024..65535) { "SSH 端口必须在 1024..65535 之间" }
+        require(port in 1024..65535) { "Cổng SSH phải nằm trong khoảng 1024..65535" }
     }
 
     companion object {
@@ -125,7 +125,7 @@ class SshServiceManager(
     }
 
     suspend fun setPort(port: Int) {
-        require(port in 1024..65535) { "SSH 端口必须在 1024..65535 之间" }
+        require(port in 1024..65535) { "Cổng SSH phải nằm trong khoảng 1024..65535" }
         val distroId = linuxRuntime.activeDistroId.value
         preferences.setPort(distroId, port)
         restartIfRunning(distroId)
@@ -156,10 +156,10 @@ class SshServiceManager(
     suspend fun setPasswordAuthEnabled(enabled: Boolean) {
         val distroId = linuxRuntime.activeDistroId.value
         if (enabled) {
-            check(preferences.passwordConfigured(distroId).first()) { "请先设置 SSH 登录密码" }
+            check(preferences.passwordConfigured(distroId).first()) { "Hãy đặt mật khẩu đăng nhập SSH trước" }
         } else {
             check(preferences.authorizedKeys(distroId).first().isNotBlank() || !preferences.enabled(distroId).first()) {
-                "请先添加 SSH 公钥，或关闭 SSH 服务后再停用密码登录"
+                "Vui lòng thêm khóa công khai SSH trước, hoặc tắt dịch vụ SSH rồi mới vô hiệu hóa đăng nhập mật khẩu"
             }
         }
         preferences.setPasswordAuthEnabled(distroId, enabled)
@@ -191,7 +191,7 @@ class SshServiceManager(
     }
 
     suspend fun start(distroId: String = linuxRuntime.activeDistroId.value) = serviceMutex.withLock {
-        check(linuxRuntime.state.value is RuntimeState.Ready) { "Linux 运行时尚未就绪" }
+        check(linuxRuntime.state.value is RuntimeState.Ready) { "Runtime Linux chưa sẵn sàng" }
         val current = serviceProcess
         if (serviceDistroId == distroId && current?.session?.isAlive == true) return@withLock
         stopLocked()
@@ -200,12 +200,12 @@ class SshServiceManager(
         val authorizedKeys = SshCommandFactory.normalizeAuthorizedKeys(config.authorizedKeys)
         val password = if (config.passwordAuthEnabled) {
             preferences.readPassword(distroId)?.let(SshCommandFactory::normalizePassword)
-                ?: error("请先设置 SSH 登录密码")
+                ?: error("Hãy đặt mật khẩu đăng nhập SSH trước")
         } else {
             null
         }
         check(authorizedKeys.isNotBlank() || password != null) {
-            "请先设置 SSH 登录密码或添加至少一个公钥"
+            "Vui lòng đặt mật khẩu đăng nhập SSH hoặc thêm ít nhất một khóa công khai trước"
         }
 
         try {
@@ -223,7 +223,7 @@ class SshServiceManager(
                     distroId,
                 )
                 check(install.isSuccess) {
-                    (install.stderr.ifBlank { install.stdout }).trim().ifBlank { "OpenSSH 安装失败" }
+                    (install.stderr.ifBlank { install.stdout }).trim().ifBlank { "Cài đặt OpenSSH thất bại" }
                 }
             }
 
@@ -242,7 +242,7 @@ class SshServiceManager(
                 distroId,
             )
             check(configure.isSuccess) {
-                (configure.stderr.ifBlank { configure.stdout }).trim().ifBlank { "SSH 配置校验失败" }
+                (configure.stderr.ifBlank { configure.stdout }).trim().ifBlank { "Kiểm tra cấu hình SSH thất bại" }
             }
 
             // 停止可能残留、仍占用端口的旧 sshd（主机 proot 被杀后，沙盒内的
@@ -274,7 +274,7 @@ class SshServiceManager(
             _state.value = SshServiceState.Running(
                 distroId,
                 config.port,
-                host = localIpv4Address() ?: "设备局域网 IP",
+                host = localIpv4Address() ?: "IP mạng LAN của thiết bị",
             )
             acquireWakeLock()
             acquireWifiLock()
@@ -285,7 +285,7 @@ class SshServiceManager(
         } catch (throwable: Throwable) {
             serviceProcess = null
             serviceDistroId = null
-            _state.value = SshServiceState.Failed(distroId, throwable.message ?: "SSH 服务启动失败")
+            _state.value = SshServiceState.Failed(distroId, throwable.message ?: "Khởi động dịch vụ SSH thất bại")
             throw throwable
         }
     }
@@ -338,7 +338,7 @@ class SshServiceManager(
                 val detail = linuxRuntime.getBackgroundLogs(LOG_ID).takeLast(3).joinToString("\n")
                 _state.value = SshServiceState.Failed(
                     distroId,
-                    detail.ifBlank { "SSH 服务进程已退出" },
+                    detail.ifBlank { "Tiến trình dịch vụ SSH đã thoát" },
                 )
             }
         }
@@ -361,7 +361,7 @@ class SshServiceManager(
             while (isPortBusy(port)) delay(PORT_POLL_INTERVAL_MS)
             true
         }
-        check(freed == true) { "SSH 端口 $port 仍被旧进程占用，无法启动" }
+        check(freed == true) { "Cổng SSH $port vẫn bị tiến trình cũ chiếm, không thể khởi động" }
     }
 
     private suspend fun isPortBusy(port: Int): Boolean = withContext(Dispatchers.IO) {
@@ -489,11 +489,11 @@ internal object SshCommandFactory {
     ): String {
         val keys = normalizeAuthorizedKeys(config.authorizedKeys)
         val normalizedPassword = if (config.passwordAuthEnabled) {
-            normalizePassword(password ?: error("请先设置 SSH 登录密码"))
+            normalizePassword(password ?: error("Hãy đặt mật khẩu đăng nhập SSH trước"))
         } else {
             null
         }
-        check(keys.isNotBlank() || normalizedPassword != null) { "请先设置 SSH 登录密码或添加至少一个公钥" }
+        check(keys.isNotBlank() || normalizedPassword != null) { "Vui lòng đặt mật khẩu đăng nhập SSH hoặc thêm ít nhất một khóa công khai trước" }
         val resolvedListenAddress = listenAddress ?: "0.0.0.0"
         val passwordAuth = if (normalizedPassword != null) "yes" else "no"
         val permitRootLogin = if (normalizedPassword != null) "yes" else "prohibit-password"
@@ -548,20 +548,20 @@ internal object SshCommandFactory {
     }
 
     fun normalizeAuthorizedKeys(value: String): String {
-        require(value.length <= MAX_AUTHORIZED_KEYS_BYTES) { "SSH 公钥内容过长" }
+        require(value.length <= MAX_AUTHORIZED_KEYS_BYTES) { "Nội dung public key SSH quá dài" }
         val lines = value.lineSequence().map(String::trim).filter(String::isNotEmpty).toList()
-        require(lines.size <= MAX_AUTHORIZED_KEYS) { "最多允许 $MAX_AUTHORIZED_KEYS 个 SSH 公钥" }
+        require(lines.size <= MAX_AUTHORIZED_KEYS) { "Cho phép tối đa $MAX_AUTHORIZED_KEYS khóa công khai SSH" }
         lines.forEach { line ->
-            require(AUTHORIZED_KEY.matches(line)) { "SSH 公钥格式无效：${line.take(32)}" }
+            require(AUTHORIZED_KEY.matches(line)) { "Định dạng khóa công khai SSH không hợp lệ: ${line.take(32)}" }
         }
         return lines.distinct().joinToString("\n")
     }
 
     fun normalizePassword(value: String): String {
         require(value.length in MIN_PASSWORD_LENGTH..MAX_PASSWORD_LENGTH) {
-            "SSH 密码长度必须在 $MIN_PASSWORD_LENGTH..$MAX_PASSWORD_LENGTH 个字符之间"
+            "Độ dài mật khẩu SSH phải nằm trong khoảng $MIN_PASSWORD_LENGTH..$MAX_PASSWORD_LENGTH ký tự"
         }
-        require(value.none(Char::isISOControl) && ':' !in value) { "SSH 密码不能包含控制字符或冒号" }
+        require(value.none(Char::isISOControl) && ':' !in value) { "Mật khẩu SSH không được chứa ký tự điều khiển hoặc dấu hai chấm" }
         return value
     }
 

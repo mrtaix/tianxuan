@@ -74,7 +74,7 @@ fun SshSettingsScreen(
     message?.let { current ->
         RuntimeAlertDialog(
             onDismissRequest = viewModel::consumeMessage,
-            title = { Text(if (messageIsError) "SSH 操作未完成" else "SSH 远程访问") },
+            title = { Text(if (messageIsError) "Thao tác SSH chưa hoàn thành" else "Truy cập từ xa SSH") },
             text = { Text(current) },
             confirmButton = { RuntimeTextButton(onClick = viewModel::consumeMessage) { Text("知道了") } },
         )
@@ -97,8 +97,8 @@ fun SshSettingsScreen(
 
     val statusText = when (serviceState) {
         is SshServiceState.Stopped -> "已停止"
-        is SshServiceState.Installing -> "正在安装 OpenSSH"
-        is SshServiceState.Starting -> "正在启动"
+        is SshServiceState.Installing -> "Đang cài đặt OpenSSH"
+        is SshServiceState.Starting -> "Đang khởi động"
         is SshServiceState.Running -> "运行中"
         is SshServiceState.Failed -> "启动失败"
     }
@@ -106,7 +106,7 @@ fun SshSettingsScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { RuntimeTopBar("SSH 远程访问", onBack, statusText = statusText) },
+        topBar = { RuntimeTopBar("Truy cập từ xa SSH", onBack, statusText = statusText) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -115,21 +115,21 @@ fun SshSettingsScreen(
         ) {
             item {
                 NoticeBanner(
-                    text = "SSH 按当前 Linux 发行版独立配置。首次启用会按需安装 OpenSSH；支持传统 root + 密码登录，也可使用公钥。",
+                    text = "SSH được cấu hình độc lập theo bản phân phối Linux hiện tại. Lần đầu bật sẽ cài OpenSSH theo nhu cầu; hỗ trợ đăng nhập root + mật khẩu truyền thống, cũng có thể dùng public key.",
                 )
             }
 
             item {
-                SectionLabel("服务状态")
+                SectionLabel("Trạng thái dịch vụ")
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Server,
-                        title = "启用 SSH 服务",
-                        subtitle = "保持启用并随 Linux 运行时自动启动",
+                        title = "Bật dịch vụ SSH",
+                        subtitle = "Giữ bật và tự động khởi động cùng Linux runtime",
                         value = if (busy) {
                             when (serviceState) {
-                                is SshServiceState.Installing -> "正在安装 OpenSSH"
-                                is SshServiceState.Starting -> "正在等待 SSH 服务就绪"
+                                is SshServiceState.Installing -> "Đang cài đặt OpenSSH"
+                                is SshServiceState.Starting -> "Đang chờ dịch vụ SSH sẵn sàng"
                                 else -> "正在处理"
                             }
                         } else {
@@ -138,7 +138,7 @@ fun SshSettingsScreen(
                                 is SshServiceState.Installing -> "安装中"
                                 is SshServiceState.Starting -> "启动中"
                                 is SshServiceState.Failed -> "失败"
-                                is SshServiceState.Stopped -> if ((serviceState as SshServiceState.Stopped).installed) "已安装" else "未安装"
+                                is SshServiceState.Stopped -> if ((serviceState as SshServiceState.Stopped).installed) "Đã cài đặt" else "未安装"
                             }
                         },
                         trailing = {
@@ -172,27 +172,27 @@ fun SshSettingsScreen(
             }
 
             item {
-                SectionLabel("登录认证")
+                SectionLabel("Xác thực đăng nhập")
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Admin,
-                        title = "登录用户名",
-                        subtitle = "PRoot Linux 沙箱管理员账户",
+                        title = "Tên đăng nhập",
+                        subtitle = "Tài khoản quản trị sandbox PRoot Linux",
                         value = "root",
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Key,
-                        title = "登录密码",
-                        subtitle = if (settings.passwordConfigured) "密码已加密保存，可点击修改或清除" else "尚未设置，使用密码登录前必须配置",
-                        value = if (settings.passwordConfigured) "已设置" else "未设置",
+                        title = "Mật khẩu đăng nhập",
+                        subtitle = if (settings.passwordConfigured) "Mật khẩu đã lưu mã hóa, có thể nhấp để sửa hoặc xóa" else "Chưa đặt, bắt buộc cấu hình trước khi đăng nhập bằng mật khẩu",
+                        value = if (settings.passwordConfigured) "Đã đặt" else "Chưa thiết lập",
                         onClick = { showPasswordDialog = true },
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Shield,
-                        title = "允许密码登录",
-                        subtitle = if (settings.passwordAuthEnabled) "连接时输入 root 对应密码" else "密码认证已关闭",
+                        title = "Cho phép đăng nhập mật khẩu",
+                        subtitle = if (settings.passwordAuthEnabled) "Khi kết nối nhập mật khẩu tương ứng của root" else "Xác thực mật khẩu đã tắt",
                         trailing = {
                             RuntimeSwitch(
                                 checked = settings.passwordAuthEnabled,
@@ -211,7 +211,7 @@ fun SshSettingsScreen(
             }
 
             item {
-                SectionLabel("连接")
+                SectionLabel("Kết nối")
                 RuntimeCard(
                     modifier = Modifier.fillMaxWidth(),
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -224,12 +224,12 @@ fun SshSettingsScreen(
                             color = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "首次连接输入 yes 确认服务器指纹，然后输入 root 登录密码",
+                            text = "Lần đầu kết nối nhập yes để xác nhận vân tay máy chủ, sau đó nhập mật khẩu đăng nhập root",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         RuntimeOutlinedButton(
-                            onClick = { copyToClipboard(context,  settings.connectionCommand, "SSH command",  "SSH 命令已复制") },
+                            onClick = { copyToClipboard(context,  settings.connectionCommand, "SSH command",  "Đã sao chép lệnh SSH") },
                             modifier = Modifier.align(Alignment.End),
                         ) {
                             RuntimeIcon(RuntimeIconName.Copy, Modifier.size(16.dp))
@@ -243,14 +243,14 @@ fun SshSettingsScreen(
             if (vpnActive) {
                 item {
                     NoticeBanner(
-                        text = "检测到手机正处于 VPN 连接中，当前 VPN 会接管本应用流量，同一局域网的电脑连接可能超时。请先关闭 VPN，或将本应用加入 VPN 直连/排除名单。",
+                        text = "Phát hiện điện thoại đang trong kết nối VPN, VPN hiện tại sẽ tiếp quản lưu lượng của ứng dụng này, máy tính trong cùng mạng LAN có thể bị timeout khi kết nối. Hãy tắt VPN trước, hoặc thêm ứng dụng này vào danh sách kết nối trực tiếp/loại trừ của VPN.",
                         isError = true,
                     )
                 }
             }
 
             item {
-                SectionLabel("网络配置")
+                SectionLabel("Cấu hình mạng")
                 SettingsGroup {
                     Row(
                         modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(horizontal = 16.dp, vertical = 10.dp),
@@ -263,12 +263,12 @@ fun SshSettingsScreen(
                         OutlinedTextField(
                             value = portText,
                             onValueChange = { portText = it.filter(Char::isDigit).take(5) },
-                            label = { Text("SSH 端口") },
+                            label = { Text("Cổng SSH") },
                             isError = portText.isNotBlank() && !portValid,
                             supportingText = {
                                 Text(
-                                    if (portText.isNotBlank() && !portValid) "端口需在 1024–65535 范围内"
-                                    else "允许范围：1024–65535",
+                                    if (portText.isNotBlank() && !portValid) "Cổng phải nằm trong khoảng 1024–65535"
+                                    else "Phạm vi cho phép：1024–65535",
                                 )
                             },
                             singleLine = true,
@@ -281,7 +281,7 @@ fun SshSettingsScreen(
             }
 
             item {
-                SectionLabel("公钥登录（可选）")
+                SectionLabel("Đăng nhập khóa công khai (tùy chọn)")
                 RuntimeCard(
                     modifier = Modifier.fillMaxWidth(),
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -289,7 +289,7 @@ fun SshSettingsScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            "无需公钥也可以使用密码登录。需要免密连接时，每行添加一个 OpenSSH 公钥。",
+                            "Không cần public key cũng có thể đăng nhập bằng mật khẩu. Khi cần kết nối không mật khẩu, mỗi dòng thêm một public key OpenSSH.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -311,7 +311,7 @@ fun SshSettingsScreen(
                         ) {
                             RuntimeIcon(RuntimeIconName.Save, Modifier.size(16.dp))
                             Spacer(Modifier.size(6.dp))
-                            Text("保存公钥")
+                            Text("Lưu khóa công khai")
                         }
                     }
                 }
@@ -319,7 +319,7 @@ fun SshSettingsScreen(
 
             if (logs.isNotEmpty()) {
                 item {
-                    SectionLabel("最近日志")
+                    SectionLabel("Log gần nhất")
                     RuntimeCard(
                         modifier = Modifier.fillMaxWidth(),
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -360,7 +360,7 @@ private fun PasswordSettingsDialog(
     val matches = password == confirmation
     RuntimeAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (passwordConfigured) "修改 SSH 登录密码" else "设置 SSH 登录密码") },
+        title = { Text(if (passwordConfigured) "Sửa mật khẩu đăng nhập SSH" else "Đặt mật khẩu đăng nhập SSH") },
         text = {
             Column(
                 modifier = Modifier
@@ -369,15 +369,15 @@ private fun PasswordSettingsDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    "密码将通过 Android Keystore 加密保存，并应用到当前 Linux 发行版的 root 账户。",
+                    "Mật khẩu sẽ được mã hóa lưu qua Android Keystore và áp dụng cho tài khoản root của bản phân phối Linux hiện tại.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it.take(128) },
-                    label = { Text("新密码") },
-                    supportingText = { Text("至少 8 个字符，不能包含冒号") },
+                    label = { Text("Mật khẩu mới") },
+                    supportingText = { Text("Ít nhất 8 ký tự, không được chứa dấu hai chấm") },
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     singleLine = true,
@@ -386,10 +386,10 @@ private fun PasswordSettingsDialog(
                 OutlinedTextField(
                     value = confirmation,
                     onValueChange = { confirmation = it.take(128) },
-                    label = { Text("再次输入密码") },
+                    label = { Text("Nhập lại mật khẩu") },
                     isError = confirmation.isNotEmpty() && !matches,
                     supportingText = {
-                        if (confirmation.isNotEmpty() && !matches) Text("两次输入的密码不一致")
+                        if (confirmation.isNotEmpty() && !matches) Text("Mật khẩu nhập hai lần không khớp")
                     },
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -402,12 +402,12 @@ private fun PasswordSettingsDialog(
             RuntimeButton(
                 onClick = { onSave(password) },
                 enabled = password.length >= 8 && matches && ':' !in password,
-            ) { Text("保存并启用") }
+            ) { Text("Lưu và bật") }
         },
         dismissButton = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (passwordConfigured) {
-                    RuntimeTextButton(onClick = onClear) { Text("清除密码") }
+                    RuntimeTextButton(onClick = onClear) { Text("Xóa mật khẩu") }
                 }
                 RuntimeTextButton(onClick = onDismiss) { Text("取消") }
             }

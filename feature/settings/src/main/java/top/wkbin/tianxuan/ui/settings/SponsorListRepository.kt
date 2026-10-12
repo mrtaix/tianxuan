@@ -17,9 +17,9 @@ import okhttp3.Request
  * sponsors.json 格式（kind/source 均与下方枚举的 @SerialName 对应）：
  * {
  *   "entries": [
- *     { "kind": "funding",      "name": "阿伟",   "source": "qq",    "identifier": "10001" },
- *     { "kind": "resource",     "name": "wkbin",  "source": "github", "identifier": "wkbin", "note": "提供推理 token" },
- *     { "kind": "contribution", "name": "路人甲", "source": "github", "identifier": "lurenjia", "note": "上报多窗口闪退" }
+ *     { "kind": "funding",      "name": "A Vỹ",   "source": "qq",    "identifier": "10001" },
+ *     { "kind": "resource",     "name": "wkbin",  "source": "github", "identifier": "wkbin", "note": "Cung cấp token suy luận" },
+ *     { "kind": "contribution", "name": "Người qua đường", "source": "github", "identifier": "lurenjia", "note": "Báo cáo đa cửa sổ bị sập" }
  *   ]
  * }
  */
@@ -74,11 +74,11 @@ class SponsorListRepository(
                 .build()
             httpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    throw IllegalStateException("名单加载失败 HTTP ${response.code}")
+                    throw IllegalStateException("Nạp danh sách thất bại HTTP ${response.code}")
                 }
                 val body = response.body?.string().orEmpty()
                 if (body.isBlank()) {
-                    throw IllegalStateException("名单内容为空")
+                    throw IllegalStateException("Nội dung danh sách rỗng")
                 }
                 json.decodeFromString(SponsorListDto.serializer(), body).entries
             }

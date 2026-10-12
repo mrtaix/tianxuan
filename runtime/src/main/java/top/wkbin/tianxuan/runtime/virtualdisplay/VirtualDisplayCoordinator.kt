@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * 职责：
  * 1. 构造时把 [TianxuanShowerShellRunner] 装配进 [ShowerEnvironment]——这是 showerclient
- *    "宿主无关"设计的唯一注入点，Koin 单例首次创建即完成装配；
+ *    "Không liên quan host"设计的唯一注入点，Koin 单例首次创建即完成装配；
  * 2. 按 [sessionId] 维护相互独立的虚拟屏会话（每会话一块虚拟屏，可多 Agent 并行）；
  * 3. 对上暴露「确保虚拟屏 → 启动应用 → 截图 / 输入 → 关闭」的完整闭环，
  *    GUI 原语执行见 [VirtualScreenToolkit]，Agent 工具入口见 harness ToolExecutor 的
@@ -35,7 +35,7 @@ class VirtualDisplayCoordinator(
 
     private val sessions = ConcurrentHashMap<String, ShowerController>()
 
-    /** 最近一次虚拟屏操作失败的精确原因（供工具调用回显，替代笼统的"权限不足"）。 */
+    /** 最近一次虚拟屏操作失败的精确原因（供工具调用回显，替代笼统的"Không đủ quyền"）。 */
     @Volatile
     var lastFailureReason: String? = null
 
@@ -83,21 +83,21 @@ class VirtualDisplayCoordinator(
 
         // 1. 先检查宿主特权通道状态：若 effectiveMode 不是 SHIZUKU/ROOT（启动时被降级到
         //    PRoot，或 Shizuku 授权后未重启刷新），所有 shell 命令都会失败，resolveWorkDir
-        //    会误报"候选目录均不可写"。先给出真实原因，避免误导用户查目录权限。
+        //    会误报"Các thư mục ứng viên đều không ghi được"。先给出真实原因，避免误导用户查目录权限。
         val priv = privilegeManager.state.value
         if (priv.availability != PrivilegeAvailability.ACTIVE ||
             priv.effectiveMode == ExecutionMode.PROOT
         ) {
             lastFailureReason = buildString {
-                append("宿主特权通道未生效：当前 effectiveMode=${priv.effectiveMode}，")
-                append("availability=${priv.availability}。原因：${priv.reason}。")
-                append("请在天玄设置 → 系统保活与开发者诊断 → 宿主特权模式中切换到 Shizuku，")
-                append("或重启天玄 App 让特权状态在冷启动时重新校验。")
+                append("Kênh đặc quyền host chưa có hiệu lực: effectiveMode hiện tại=${priv.effectiveMode}, ")
+                append("availability=${priv.availability}. Lý do: ${priv.reason}.")
+                append("Hãy vào Cài đặt Thiên Huyền → Giữ sống hệ thống và chẩn đoán lập trình viên → Chế độ đặc quyền host và chuyển sang Shizuku, ")
+                append("Hoặc khởi động lại Thiên Huyền App để trạng thái đặc quyền được kiểm tra lại khi khởi động nguội.")
                 if (!priv.shizukuAvailable) {
-                    append("（Shizuku 服务当前不可用：请打开 Shizuku App 并确保服务已启动、权限已授予）")
+                    append("(Dịch vụ Shizuku hiện không khả dụng: vui lòng mở Shizuku App và đảm bảo dịch vụ đã khởi động, quyền đã được cấp)")
                 }
             }
-            logger.w("虚拟屏 ensureVirtualDisplay 被拦：特权通道未生效（$priv）")
+            logger.w("Màn hình ảo ensureVirtualDisplay bị chặn: kênh đặc quyền chưa có hiệu lực ($priv)")
             return null
         }
 
@@ -109,18 +109,18 @@ class VirtualDisplayCoordinator(
                 "D=/data/local/tmp; touch \$D/.tianxuan_probe 2>&1; E1=\$?; rm -f \$D/.tianxuan_probe 2>/dev/null; echo PROBE_EXIT=\$E1; touch \$D/.tianxuan_probe2 2>&1; echo PROBE2_EXIT=\$?; rm -f \$D/.tianxuan_probe2",
             )
             lastFailureReason = buildString {
-                append("shower-server 启动失败：特权通道已生效（${priv.effectiveMode}）但工作目录探测均失败。")
-                append("已尝试：${ShowerEnvironment.workDirCandidates}。")
+                append("Khởi động shower-server thất bại: kênh đặc quyền đã có hiệu lực (${priv.effectiveMode}) nhưng dò tìm thư mục làm việc đều thất bại.")
+                append("Đã thử: ${ShowerEnvironment.workDirCandidates}.")
                 if (probe.success) {
-                    append("主动探测 /data/local/tmp 结果：${probe.stdout.take(200)}（exitCode=${probe.exitCode}）。")
-                    append("若 PROBE_EXIT=0 但 server 仍判定不可写，说明 ShowerServerManager 的探测命令在某一步失败，")
-                    append("需查看 logcat（tag: ShowerServerManager）。")
+                    append("Kết quả dò chủ động /data/local/tmp: ${probe.stdout.take(200)} (exitCode=${probe.exitCode}).")
+                    append("Nếu PROBE_EXIT=0 nhưng server vẫn xác định không ghi được, nghĩa là lệnh dò của ShowerServerManager đã thất bại ở một bước nào đó, ")
+                    append("Cần xem logcat (tag: ShowerServerManager).")
                 } else {
-                    append("特权通道执行探测命令失败（exitCode=${probe.exitCode}）：${probe.stderr.take(300)}。")
-                    append("这指向 Shizuku UserService 通道异常（binder 中断/未连接），而非目录权限问题。")
+                    append("Thực thi lệnh thăm dò qua kênh đặc quyền thất bại (exitCode=${probe.exitCode}): ${probe.stderr.take(300)}.")
+                    append("Điều này chỉ ra kênh Shizuku UserService bất thường (binder gián đoạn/chưa kết nối), chứ không phải vấn đề quyền thư mục.")
                 }
             }
-            logger.w("虚拟屏 server 启动失败：工作目录探测均失败；主动探测 exit=${probe.exitCode} stderr=${probe.stderr.take(200)}")
+            logger.w("Khởi động server màn hình ảo thất bại: dò tìm thư mục làm việc đều thất bại; dò chủ động exit=${probe.exitCode} stderr=${probe.stderr.take(200)}")
             return null
         }
         val metrics = context.resources.displayMetrics
@@ -132,8 +132,8 @@ class VirtualDisplayCoordinator(
             bitrateKbps = bitrateKbps,
         )
         if (!ok) {
-            lastFailureReason = "虚拟屏创建失败（shower-server 已启动但 ensureDisplay 失败，session=$sessionId）。可能是屏幕镜像参数不匹配或 Binder 通信中断，请查看 logcat。"
-            logger.w("虚拟屏创建失败（session=$sessionId，server 已启动）")
+            lastFailureReason = "Tạo màn hình ảo thất bại (shower-server đã khởi động nhưng ensureDisplay thất bại, session=$sessionId). Có thể do tham số phản chiếu màn hình không khớp hoặc giao tiếp Binder bị gián đoạn, vui lòng xem logcat."
+            logger.w("Tạo màn hình ảo thất bại (session=$sessionId, server đã khởi động)")
             return null
         }
         lastFailureReason = null
@@ -177,7 +177,7 @@ class VirtualDisplayCoordinator(
         }
         val controller = sessions.remove(sessionId) ?: return
         runCatching { controller.shutdown() }
-            .onFailure { logger.w("关闭虚拟屏会话失败 (session=$sessionId): ${it.message}") }
+            .onFailure { logger.w("Đóng phiên màn hình ảo thất bại (session=$sessionId): ${it.message}") }
     }
 
     /** 关闭全部会话（App 退出或工作流整体结束时使用） */

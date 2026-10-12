@@ -9,30 +9,30 @@ class RootfsValidator(
     private val elfInspector: ElfInspector,
 ) {
     fun validate(rootfs: File): RootfsValidation {
-        require(rootfs.isDirectory) { "RootFS 目录不存在" }
+        require(rootfs.isDirectory) { "Thư mục RootFS không tồn tại" }
         require(
             File(rootfs, "etc/os-release").isFile ||
                 File(rootfs, "usr/lib/os-release").isFile,
-        ) { "RootFS 缺少 os-release" }
+        ) { "RootFS thiếu os-release" }
 
         val bash = resolveFirstExecutable(rootfs, BASH_PATHS)
         val posixShell = resolveFirstExecutable(rootfs, POSIX_SHELL_PATHS)
-            ?: throw IllegalArgumentException("RootFS 缺少可用的 /bin/sh")
+            ?: throw IllegalArgumentException("RootFS thiếu /bin/sh khả dụng")
         val primary = bash ?: posixShell
         val primaryInfo = elfInspector.requireAarch64(primary.file)
         val interpreterPath = primaryInfo.interpreter
             ?.takeIf { it.startsWith('/') }
-            ?: throw IllegalArgumentException("${primary.guestPath} 缺少有效的 ELF 解释器路径")
+            ?: throw IllegalArgumentException("${primary.guestPath} thiếu đường dẫn trình thông dịch ELF hợp lệ")
         val interpreter = resolveGuestPath(rootfs, interpreterPath)
         require(interpreter.isFile) {
-            "${primary.guestPath} 的 ELF 解释器不存在：$interpreterPath"
+            "${primary.guestPath} không tồn tại trình thông dịch ELF: $interpreterPath"
         }
         elfInspector.requireAarch64(interpreter)
 
         if (bash != null) {
             val shInfo = elfInspector.requireAarch64(posixShell.file)
             require(shInfo.interpreter == interpreterPath) {
-                "/bin/sh 与 Bash 使用了不同的 ELF 解释器"
+                "/bin/sh và Bash dùng trình thông dịch ELF khác nhau"
             }
         }
 
@@ -55,7 +55,7 @@ class RootfsValidator(
 
     /** Resolve absolute and relative symlinks as guest paths, never as Android host paths. */
     private fun resolveGuestPath(rootfs: File, guestPath: String): File {
-        require(guestPath.startsWith('/')) { "Guest 路径必须是绝对路径：$guestPath" }
+        require(guestPath.startsWith('/')) { "Đường dẫn Guest phải là đường dẫn tuyệt đối: $guestPath" }
         val root = rootfs.toPath().toAbsolutePath().normalize()
         val pending = ArrayDeque(
             guestPath.split('/').filter { it.isNotBlank() && it != "." },
@@ -64,11 +64,11 @@ class RootfsValidator(
         var symlinkCount = 0
         while (pending.isNotEmpty()) {
             val part = pending.removeFirst()
-            require(part != "..") { "Guest 路径不允许越过 RootFS：$guestPath" }
+            require(part != "..") { "Đường dẫn Guest không được vượt qua RootFS: $guestPath" }
             val candidate = current.resolve(part).normalize()
-            require(candidate.startsWith(root)) { "Guest 路径越过 RootFS：$guestPath" }
+            require(candidate.startsWith(root)) { "Đường dẫn Guest vượt qua RootFS: $guestPath" }
             if (Files.isSymbolicLink(candidate)) {
-                require(++symlinkCount <= MAX_SYMLINK_DEPTH) { "符号链接层级过深：$guestPath" }
+                require(++symlinkCount <= MAX_SYMLINK_DEPTH) { "Liên kết tượng trưng quá sâu: $guestPath" }
                 val link = Files.readSymbolicLink(candidate)
                 val linkParts = link.toString().replace('\\', '/').split('/')
                     .filter { it.isNotBlank() && it != "." }
@@ -84,7 +84,7 @@ class RootfsValidator(
                 current = candidate
             }
         }
-        require(current.startsWith(root)) { "Guest 路径越过 RootFS：$guestPath" }
+        require(current.startsWith(root)) { "Đường dẫn Guest vượt qua RootFS: $guestPath" }
         return current.toFile()
     }
 

@@ -45,7 +45,7 @@ class AndroidInAppBrowserEngine(
         healthy = true,
         capabilities = EngineCapabilities.IN_APP,
         versionTag = "1.0",
-        notes = "内置 WebView；通过 mcp__browser__* 调用。",
+        notes = "WebView tích hợp; gọi qua mcp__browser__*.",
     )
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -281,12 +281,12 @@ class AndroidInAppBrowserEngine(
 
     private fun requireHookStore() =
         pool.hookStore ?: throw UnsupportedOperationException(
-            "hooks disabled (allowHooks=false)，请在浏览器设置中开启后重启"
+            "hooks disabled (allowHooks=false), hãy bật trong cài đặt trình duyệt rồi khởi động lại"
         )
 
     private fun requireHookInstaller() =
         pool.hookInstaller ?: throw UnsupportedOperationException(
-            "hooks disabled (allowHooks=false)，请在浏览器设置中开启后重启"
+            "hooks disabled (allowHooks=false), hãy bật trong cài đặt trình duyệt rồi khởi động lại"
         )
 
     /** 规则变更后推送到受影响的活跃 tab（主线程 evaluate）。 */
@@ -354,7 +354,7 @@ class AndroidInAppBrowserEngine(
             )
             store.addScript(script)
             pushRulesToTabs(tab.tabId)
-            return "persistent script registered: ${script.id}（后续导航自动重放）"
+            return "persistent script registered: ${script.id} (các điều hướng sau tự động phát lại)"
         }
         val view = pool.viewOf(tab) ?: error("tab ${tab.tabId} not found")
         val raw = JsEvaluator.evaluate(view, code) ?: return "no result"
@@ -385,7 +385,7 @@ class AndroidInAppBrowserEngine(
                 appendLine(bodies.responseBody)
             }
             if (bodies == null && captured.source == "js") {
-                appendLine("(body 未捕获：规则需 captureBody=true 或已被 LRU 逐出)")
+                appendLine("(body chưa bắt: quy tắc cần captureBody=true hoặc đã bị LRU đẩy ra)")
             }
         }
     }
@@ -394,12 +394,12 @@ class AndroidInAppBrowserEngine(
 
     private fun requireCdp(): CdpManager =
         pool.cdpManager ?: throw UnsupportedOperationException(
-            "cdp disabled (allowCdp=false)，请在浏览器设置中开启后重启"
+            "cdp disabled (allowCdp=false), vui lòng bật trong cài đặt trình duyệt rồi khởi động lại"
         )
 
     private fun requireDebugConnection(tab: BrowserSessionToken) =
         requireCdp().connectionOf(tab.tabId)
-            ?: throw IllegalStateException("tab ${tab.tabId} 未 attach CDP（先 browser.debug_attach）")
+            ?: throw IllegalStateException("tab ${tab.tabId} chưa attach CDP (hãy browser.debug_attach trước)")
 
     /**
      * 页内工具前置守卫：paused 时 JS 执行被冻结，evaluateJavascript 回调永不到达（工具挂起）。
@@ -411,7 +411,7 @@ class AndroidInAppBrowserEngine(
             ?.let { " ${it.functionName.ifEmpty { "<anonymous>" }} @ ${it.url}:${it.lineNumber + 1}" }
             .orEmpty()
         throw IllegalStateException(
-            "tab ${tab.tabId} 正在断点处暂停（$at）：页内工具被冻结，请先 browser.debug_resume"
+            "tab ${tab.tabId} đang tạm dừng tại breakpoint ($at): công cụ trong trang bị đóng băng, hãy browser.debug_resume"
         )
     }
 
@@ -420,7 +420,7 @@ class AndroidInAppBrowserEngine(
         return buildString {
             appendLine("devtools socket: ${if (status.devToolsSocketActive) "active" else "inactive"}")
             if (status.attachedTabs.isEmpty()) {
-                appendLine("attached: none（用 browser.debug_attach 附加当前 tab）")
+                appendLine("attached: none (dùng browser.debug_attach để gắn tab hiện tại)")
             } else {
                 appendLine("attached: ${status.attachedTabs.size} tab(s)")
                 status.attachedTabs.forEach {
@@ -436,7 +436,7 @@ class AndroidInAppBrowserEngine(
     override suspend fun debugAttach(tab: BrowserSessionToken): String =
         when (val result = requireCdp().attach(tab.tabId)) {
             is CdpManager.AttachResult.Attached ->
-                "attached ${tab.tabId} -> ${result.targetUrl}（断点已重放，Fetch 拦截已启用）"
+                "attached ${tab.tabId} -> ${result.targetUrl} (breakpoint đã phát lại, chặn Fetch đã bật)"
             is CdpManager.AttachResult.AlreadyAttached ->
                 "already attached: ${tab.tabId} -> ${result.targetUrl}"
         }
@@ -500,7 +500,7 @@ class AndroidInAppBrowserEngine(
 
     override suspend fun debugEval(tab: BrowserSessionToken, frame: Int, expression: String): String {
         val state = eventBus.debugPausedOf(tab.tabId)
-            ?: throw IllegalStateException("tab ${tab.tabId} not paused（断点触发后再求值）")
+            ?: throw IllegalStateException("tab ${tab.tabId} not paused (tính giá trị sau khi breakpoint kích hoạt)")
         val callFrame = state.callFrames.getOrNull(frame)
             ?: throw IllegalArgumentException("frame index out of range: $frame (0..${state.callFrames.size - 1})")
         return requireDebugConnection(tab).debug.evaluateOnCallFrame(callFrame.callFrameId, expression)
@@ -508,7 +508,7 @@ class AndroidInAppBrowserEngine(
 
     override suspend fun debugScope(tab: BrowserSessionToken, frame: Int, scope: Int?): String {
         val state = eventBus.debugPausedOf(tab.tabId)
-            ?: throw IllegalStateException("tab ${tab.tabId} not paused（断点触发后再读作用域）")
+            ?: throw IllegalStateException("tab ${tab.tabId} not paused (đọc scope sau khi breakpoint kích hoạt)")
         val callFrame = state.callFrames.getOrNull(frame)
             ?: throw IllegalArgumentException("frame index out of range: $frame (0..${state.callFrames.size - 1})")
         return requireDebugConnection(tab).debug.scopeProperties(callFrame.callFrameId, scope)
@@ -530,7 +530,7 @@ class AndroidInAppBrowserEngine(
         }
         val result = withTimeoutOrNull(timeoutMs) { deferred.await() }
         if (result == null) {
-            android.util.Log.w("TianXuanBrowserEngine", "postMain 超时（${timeoutMs}ms）：操作可能已在页面执行，请勿重试同参数操作")
+            android.util.Log.w("TianXuanBrowserEngine", "postMain timeout (${timeoutMs}ms): thao tác có thể đã thực thi trên trang, đừng thử lại thao tác cùng tham số")
         }
         return result
     }

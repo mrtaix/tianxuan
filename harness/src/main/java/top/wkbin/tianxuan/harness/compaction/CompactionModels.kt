@@ -50,7 +50,7 @@ data class CompactedContext(
     val recallBlocks: Map<String, String> = emptyMap(),
     /**
      * project() 本次读取的分支最大 entry sequence（压缩水位线来源）。compact 锁内以它
-     * 标记"快照覆盖到哪"：重读之后、压缩 entry 落库之前被直写落库的 entry sequence 必然
+     * 标记"Snapshot ghi đè đến đâu"：重读之后、压缩 entry 落库之前被直写落库的 entry sequence 必然
      * 大于它，由 project() 的自愈区间补回。必须与快照出自同一次 branch() 读——分开二次
      * 读会抬高水位线，反而把两次读之间落库的消息排除出自愈区间。
      */

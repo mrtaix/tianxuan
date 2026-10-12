@@ -80,7 +80,7 @@ object AccessibilityGestureBridge {
 }
 
 /**
- * 最近的窗口状态变化时间戳（uptimeMillis），用作"界面是否已经变了"的轻量信号。
+ * 最近的窗口状态变化时间戳（uptimeMillis），用作"Giao diện đã thay đổi chưa"的轻量信号。
  * 复用 service 已订阅的 typeWindowStateChanged，不额外订阅高频的 ContentChanged
  * （滚动时事件量极大，会带来功耗与卡顿），也不抓取任何节点。
  */

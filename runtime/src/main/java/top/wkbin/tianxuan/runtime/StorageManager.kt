@@ -93,12 +93,12 @@ class StorageManager(
     private var plans: Map<String, Plan> = emptyMap()
     private var inspected = false
     private val categoryInfo = linkedMapOf(
-        "projects" to ("项目与个人文件" to "工程、个人目录与项目缓存；源码和导出文件由工作区管理"),
-        "environment" to ("Linux 与开发环境" to "按发行版查看系统、SDK 和共享运行时；通过环境或工具管理卸载"),
-        "plugins" to ("插件与模型数据" to "插件程序、私有数据和模型；重置或卸载请使用所属工具"),
-        "conversations" to ("会话与附件" to "会话数据库、附件和生成文件；删除需检查会话引用"),
-        "cache" to ("缓存与安装资源" to "依赖缓存可按需清理；安装源包、暂存和回滚备份单独保留"),
-        "app_data" to ("应用与诊断" to "配置、Skills、日志和其他数据；推荐清理过期归档日志"),
+        "projects" to ("Tệp dự án và cá nhân" to "Dự án, thư mục cá nhân và cache dự án; mã nguồn và tệp xuất do vùng làm việc quản lý"),
+        "environment" to ("Linux và môi trường phát triển" to "Xem hệ thống, SDK và runtime chia sẻ theo bản phát hành; gỡ cài qua quản lý môi trường hoặc công cụ"),
+        "plugins" to ("Dữ liệu plugin và model" to "Chương trình plugin, dữ liệu riêng tư và model; đặt lại hoặc gỡ cài đặt vui lòng dùng công cụ tương ứng"),
+        "conversations" to ("Phiên và tệp đính kèm" to "Cơ sở dữ liệu phiên, tệp đính kèm và tệp sinh ra; khi xóa cần kiểm tra tham chiếu phiên"),
+        "cache" to ("Cache và tài nguyên cài đặt" to "Cache phụ thuộc có thể dọn theo nhu cầu; gói nguồn cài đặt, bản tạm và sao lưu rollback được giữ riêng"),
+        "app_data" to ("Ứng dụng và chẩn đoán" to "Cấu hình, Skills, log và dữ liệu khác; khuyến nghị dọn log lưu trữ hết hạn"),
     )
 
     suspend fun inspect(): StorageUsage = withContext(Dispatchers.IO) { mutex.withLock { scan() } }
@@ -175,7 +175,7 @@ class StorageManager(
                 id = id, name = info.first, description = info.second, bytes = children.sumOf { it.bytes },
                 cleanable = cleanable.isNotEmpty(),
                 riskLevel = cleanable.maxByOrNull { it.riskLevel.ordinal }?.riskLevel ?: StorageRiskLevel.READONLY,
-                cleanupHint = "仅处理下列可清理项中扫描时已存在且未改变的文件。依赖需重新下载，项目缓存需重新生成；使用中的环境请先停止。",
+                cleanupHint = "Chỉ xử lý các tệp đã tồn tại và không thay đổi khi quét trong các mục có thể dọn dưới đây. Phụ thuộc cần tải lại, cache dự án cần tạo lại; môi trường đang dùng hãy dừng trước.",
                 entries = children, reclaimableBytes = children.sumOf { it.reclaimableBytes },
             )
         }
@@ -196,85 +196,85 @@ class StorageManager(
                     risk: StorageRiskLevel = StorageRiskLevel.READONLY) {
             add(Rule(storagePath(file), category, name, hint, cleanup, risk))
         }
-        val preserve = "由所属功能管理；不直接批量删除文件"
-        addRule(context.filesDir.parentFile!!, "app_data", "应用私有数据", "包含偏好、WebView、备份配置及其他数据，由所属功能管理")
-        addRule(context.filesDir, "app_data", "应用配置与其他文件", preserve)
-        addRule(pathManager.baseDir, "app_data", "运行时元数据与其他文件", preserve)
-        addRule(context.getDatabasePath("tianxuan.db").parentFile!!, "conversations", "会话与应用数据库", "通过会话管理删除记录，保留数据库及 WAL/SHM 文件")
+        val preserve = "Do chức năng sở hữu quản lý; không trực tiếp xóa tệp hàng loạt"
+        addRule(context.filesDir.parentFile!!, "app_data", "Dữ liệu riêng của ứng dụng", "Chứa tùy chọn, WebView, cấu hình sao lưu và dữ liệu khác, do chức năng sở hữu quản lý")
+        addRule(context.filesDir, "app_data", "Cấu hình ứng dụng và các tệp khác", preserve)
+        addRule(pathManager.baseDir, "app_data", "Siêu dữ liệu runtime và các tệp khác", preserve)
+        addRule(context.getDatabasePath("tianxuan.db").parentFile!!, "conversations", "Cơ sở dữ liệu phiên và ứng dụng", "Xóa bản ghi qua quản lý phiên, giữ lại cơ sở dữ liệu và tệp WAL/SHM")
         runCatching { context.cacheDir }.getOrNull()?.let {
-            addRule(it, "cache", "应用导入与系统缓存", "可能包含正在导入的文件，由所属功能管理")
+            addRule(it, "cache", "Nhập ứng dụng và cache hệ thống", "Có thể chứa tệp đang nhập, do chức năng sở hữu quản lý")
         }
         runCatching { context.codeCacheDir }.getOrNull()?.let {
-            addRule(it, "app_data", "应用代码缓存", "由 Android 管理")
+            addRule(it, "app_data", "Cache mã ứng dụng", "Do Android quản lý")
         }
-        addRule(pathManager.cacheDir, "cache", "下载与离线安装归档", "保留离线安装与下载中的文件；应由安装管理确认完成后删除")
-        addRule(File(context.filesDir, "plugins"), "cache", "本地插件源包", "重新安装和插件配方可能依赖源包，请在插件管理中处理")
-        addRule(pathManager.stagingRootfsDir, "cache", "全局安装暂存", "安装事务所有的数据，不参与一键清理")
-        addRule(pathManager.tmpDir, "app_data", "运行临时文件", "可能被 PRoot 和进程使用，不参与一键清理")
-        val logHint = "仅清理超过 7 天且未修改的 .log.gz / .log.数字 归档日志；保留当前日志"
-        addRule(pathManager.logsDir, "app_data", "运行日志", logHint, Cleanup.OLD_LOG, StorageRiskLevel.SAFE)
-        addRule(pathManager.attachmentsDir, "conversations", "会话附件与生成文件", "可能是唯一副本；请在会话或文件管理中核对后删除", risk = StorageRiskLevel.DANGEROUS)
-        addRule(File(pathManager.attachmentsDir, "skills"), "app_data", "自定义 Skills", preserve)
-        addRule(pathManager.workspaceDir, "projects", "工作区其他文件", "包含导出文件和未识别项目；请在工作区管理")
+        addRule(pathManager.cacheDir, "cache", "Tải xuống và lưu trữ cài đặt offline", "Giữ lại tệp cài đặt ngoại tuyến và đang tải; quản lý cài đặt nên xác nhận hoàn tất rồi mới xóa")
+        addRule(File(context.filesDir, "plugins"), "cache", "Gói nguồn plugin cục bộ", "Cài đặt lại và công thức plugin có thể phụ thuộc gói nguồn, vui lòng xử lý trong quản lý plugin")
+        addRule(pathManager.stagingRootfsDir, "cache", "Lưu tạm cài đặt toàn cục", "Tất cả dữ liệu của giao dịch cài đặt, không tham gia dọn dẹp một chạm")
+        addRule(pathManager.tmpDir, "app_data", "Tệp tạm khi chạy", "Có thể bị PRoot và tiến trình sử dụng, không tham gia dọn một chạm")
+        val logHint = "Chỉ dọn nhật ký lưu trữ .log.gz / .log.số quá 7 ngày và chưa sửa đổi; giữ lại nhật ký hiện tại"
+        addRule(pathManager.logsDir, "app_data", "Log chạy", logHint, Cleanup.OLD_LOG, StorageRiskLevel.SAFE)
+        addRule(pathManager.attachmentsDir, "conversations", "Tệp đính kèm và tệp tạo của hội thoại", "Có thể là bản sao duy nhất; vui lòng đối chiếu trong hội thoại hoặc quản lý tệp trước khi xóa", risk = StorageRiskLevel.DANGEROUS)
+        addRule(File(pathManager.attachmentsDir, "skills"), "app_data", "Skills tùy chỉnh", preserve)
+        addRule(pathManager.workspaceDir, "projects", "Các tệp khác trong vùng làm việc", "Bao gồm tệp đã xuất và mục chưa nhận dạng; vui lòng quản lý trong workspace")
         children(pathManager.workspaceDir).filter { it.isDirectory }.forEach { project ->
-            addRule(project, "projects", "项目 ${project.name} · 文件", "源码、依赖和产物；不凭 build/dist/out/target 名称自动删除")
+            addRule(project, "projects", "Dự án ${project.name} · tệp", "Mã nguồn, phụ thuộc và sản phẩm; không tự xóa dựa trên tên build/dist/out/target")
             // 只识别有工程标志的专用缓存，不推断自定义构建输出路径。
             val gradle = File(project, "settings.gradle").isFile || File(project, "settings.gradle.kts").isFile ||
                 File(project, "build.gradle").isFile || File(project, "build.gradle.kts").isFile
-            if (gradle) addRule(File(project, ".gradle"), "projects", "项目 ${project.name} · Gradle 缓存",
-                "清理项目 .gradle 缓存；下次构建会重新生成。保留 build、dist、out、target 及源码", Cleanup.PROJECT_CACHE, StorageRiskLevel.CAUTION)
-            if (File(project, "pubspec.yaml").isFile) addRule(File(project, ".dart_tool"), "projects", "项目 ${project.name} · Dart 缓存",
-                "清理 .dart_tool；需要重新执行 pub get 和构建", Cleanup.PROJECT_CACHE, StorageRiskLevel.CAUTION)
+            if (gradle) addRule(File(project, ".gradle"), "projects", "Dự án ${project.name} · Cache Gradle",
+                "Dọn cache .gradle của dự án; lần build sau sẽ tạo lại. Giữ lại build, dist, out, target và mã nguồn", Cleanup.PROJECT_CACHE, StorageRiskLevel.CAUTION)
+            if (File(project, "pubspec.yaml").isFile) addRule(File(project, ".dart_tool"), "projects", "Dự án ${project.name} · Cache Dart",
+                "Dọn .dart_tool; cần chạy lại pub get và build", Cleanup.PROJECT_CACHE, StorageRiskLevel.CAUTION)
         }
         children(pathManager.distrosDir).filter { it.isDirectory }.forEach { distro ->
             val id = distro.name
             val rfs = pathManager.rootfsDir(id)
             val home = pathManager.homeDir(id)
             val tianxuan = pathManager.tianxuanRootDir(id)
-            addRule(distro, "environment", "$id · 系统与其他环境文件", "包含 Linux 系统和自行安装的软件，大小会随使用变化")
-            addRule(home, "projects", "$id · 个人目录 /root", "独立持久化 home 挂载；包含个人文件、配置和未识别依赖")
-            addRule(File(rfs, "root"), "environment", "$id · 镜像内原始 /root", "该目录被独立 home 挂载覆盖，保留镜像原始数据")
-            addRule(File(rfs, "home"), "projects", "$id · 其他用户目录", preserve)
-            addRule(pathManager.rootfsPreviousDir(id), "cache", "$id · 升级回滚备份", "删除会失去回滚能力；由升级事务确认并处理", risk = StorageRiskLevel.DANGEROUS)
-            addRule(pathManager.stagingRootfsDir(id), "cache", "$id · 安装暂存", "可能正在安装或等待恢复，不参与一键清理")
-            addRule(File(tianxuan, "imports"), "cache", "$id · 插件安装资源", "可能被配方或安装事务使用，不参与一键清理")
-            addRule(File(tianxuan, "flutter-cache-arm64"), "cache", "$id · Flutter 安装资源", "由安装管理确认完成后处理")
-            addRule(File(rfs, "tmp"), "app_data", "$id · 临时文件", "进程运行数据，不参与一键清理")
-            addRule(File(rfs, "var/tmp"), "app_data", "$id · 持久临时文件", "可能需要跨重启保留，不参与一键清理")
-            addRule(File(rfs, "var/log"), "app_data", "$id · 系统日志", logHint, Cleanup.OLD_LOG, StorageRiskLevel.SAFE)
+            addRule(distro, "environment", "$id · Hệ thống và tệp môi trường khác", "Bao gồm hệ thống Linux và phần mềm tự cài, dung lượng thay đổi theo sử dụng")
+            addRule(home, "projects", "$id · Thư mục cá nhân /root", "Mount home bền vững độc lập; chứa tệp cá nhân, cấu hình và phụ thuộc chưa nhận diện")
+            addRule(File(rfs, "root"), "environment", "$id · /root gốc trong image", "Thư mục này bị mount home độc lập đè lên, giữ dữ liệu gốc của image")
+            addRule(File(rfs, "home"), "projects", "$id · Thư mục người dùng khác", preserve)
+            addRule(pathManager.rootfsPreviousDir(id), "cache", "$id · Sao lưu rollback nâng cấp", "Xóa sẽ mất khả năng rollback; do transaction nâng cấp xác nhận và xử lý", risk = StorageRiskLevel.DANGEROUS)
+            addRule(pathManager.stagingRootfsDir(id), "cache", "$id · Lưu tạm cài đặt", "Có thể đang cài đặt hoặc chờ khôi phục, không tham gia dọn một chạm")
+            addRule(File(tianxuan, "imports"), "cache", "$id · Tài nguyên cài đặt plugin", "Có thể đang được công thức hoặc giao dịch cài đặt sử dụng, không tham gia dọn một chạm")
+            addRule(File(tianxuan, "flutter-cache-arm64"), "cache", "$id · Tài nguyên cài đặt Flutter", "Do quản lý cài đặt xác nhận hoàn tất rồi xử lý")
+            addRule(File(rfs, "tmp"), "app_data", "$id · Tệp tạm", "Dữ liệu chạy tiến trình, không tham gia dọn một chạm")
+            addRule(File(rfs, "var/tmp"), "app_data", "$id · Tệp tạm bền vững", "Có thể cần giữ qua khởi động lại, không tham gia dọn dẹp một chạm")
+            addRule(File(rfs, "var/log"), "app_data", "$id · Log hệ thống", logHint, Cleanup.OLD_LOG, StorageRiskLevel.SAFE)
             listOf(pathManager.tianxuanToolsDir(id), pathManager.tianxuanDataDir(id)).forEach { dir ->
                 addRule(dir, "plugins", "$id · ${dir.name}", preserve)
                 children(dir).forEach { plugin ->
                     addRule(plugin, "plugins", "$id · ${plugin.name} · ${if (dir.name == "data") "数据与模型" else "程序"}",
-                        "请通过插件功能卸载或重置，以维护引用和注册表一致性")
+                        "Vui lòng gỡ cài hoặc reset qua chức năng plugin để duy trì nhất quán tham chiếu và registry")
                 }
             }
             listOf(File(tianxuan, "toolchains"), pathManager.tianxuanRuntimesDir(id), File(tianxuan, "compat"), File(rfs, "opt")).forEach { dir ->
                 children(dir).filter { it.name != "tianxuan" }.forEach { sdk ->
-                    addRule(sdk, "environment", "$id · ${sdk.name}", "开发套件或共享运行时；卸载前需检查插件和项目引用")
+                    addRule(sdk, "environment", "$id · ${sdk.name}", "Bộ công cụ phát triển hoặc runtime chia sẻ; trước khi gỡ cần kiểm tra tham chiếu plugin và dự án")
                 }
             }
             listOf(".rustup", ".nvm", ".sdkman", ".pyenv").forEach {
-                addRule(File(home, it), "environment", "$id · $it", "用户安装的语言环境，由对应版本管理器管理")
+                addRule(File(home, it), "environment", "$id · $it", "Môi trường ngôn ngữ do người dùng cài, do trình quản lý phiên bản tương ứng quản lý")
             }
-            addRule(File(home, ".gradle/wrapper/dists"), "environment", "$id · Gradle Wrapper 分发版",
-                "含已解压运行组件和安装标记；按完整版本管理，不能仅删除其中的旧文件")
-            addRule(File(home, ".gradle/caches"), "cache", "$id · Gradle 转换与其他缓存",
-                "部分缓存含完整性元数据，由 Gradle 管理；下载依赖单独列出")
-            addRule(File(home, ".cache/yarn"), "cache", "$id · Yarn 缓存",
-                "可能包含已解压包及完整性标记，请通过 Yarn 管理")
-            val dependencyHint = "仅删除超过 7 天且未修改的缓存文件；需要联网重新下载，离线构建可能受影响。请先停止终端、构建和服务"
+            addRule(File(home, ".gradle/wrapper/dists"), "environment", "$id · Bản phân phối Gradle Wrapper",
+                "Chứa thành phần chạy đã giải nén và dấu cài đặt; quản lý theo phiên bản đầy đủ, không thể chỉ xóa các tệp cũ trong đó")
+            addRule(File(home, ".gradle/caches"), "cache", "$id · Chuyển đổi Gradle và cache khác",
+                "Một phần cache chứa siêu dữ liệu toàn vẹn, do Gradle quản lý; phụ thuộc tải xuống được liệt kê riêng")
+            addRule(File(home, ".cache/yarn"), "cache", "$id · Cache Yarn",
+                "Có thể chứa gói đã giải nén và dấu toàn vẹn, vui lòng quản lý qua Yarn")
+            val dependencyHint = "Chỉ xóa các tệp cache quá 7 ngày và chưa sửa đổi; cần tải lại qua mạng, xây dựng ngoại tuyến có thể bị ảnh hưởng. Vui lòng dừng terminal, xây dựng và dịch vụ trước"
             // 仅归档/下载缓存；不清理 pub 全局激活、npm npx 环境、Go 解压源码或 pnpm store。
             listOf(
-                ".gradle/caches/modules-2/files-2.1" to "Gradle 下载依赖",
-                ".cache/pip" to "Pip 下载缓存",
-                ".npm/_cacache" to "NPM 下载缓存",
-                ".cargo/registry/cache" to "Cargo 下载归档",
-                "go/pkg/mod/cache/download" to "Go 下载缓存",
+                ".gradle/caches/modules-2/files-2.1" to "Gradle tải phụ thuộc",
+                ".cache/pip" to "Cache tải xuống Pip",
+                ".npm/_cacache" to "Cache tải NPM",
+                ".cargo/registry/cache" to "Cargo tải lưu trữ",
+                "go/pkg/mod/cache/download" to "Cache tải Go",
             ).forEach { (relative, name) ->
                 addRule(File(home, relative), "cache", "$id · $name", dependencyHint, Cleanup.DEPENDENCY, StorageRiskLevel.CAUTION)
             }
-            addRule(File(rfs, "var/cache/apt/archives"), "cache", "$id · APT 已下载软件包",
+            addRule(File(rfs, "var/cache/apt/archives"), "cache", "$id · Gói phần mềm APT đã tải",
                 dependencyHint, Cleanup.DEPENDENCY, StorageRiskLevel.CAUTION)
         }
     }
@@ -285,8 +285,8 @@ class StorageManager(
 
     /** lstat inspects the entry itself, including dangling links, without following its target. */
     private fun scanFailureDetails(path: Path, error: IOException?): String = buildString {
-        append("未完整读取：").append(path)
-        append("\n错误：").append(error?.javaClass?.simpleName ?: "未知读取错误")
+        append("Chưa đọc đầy đủ:").append(path)
+        append("\nLỗi:").append(error?.javaClass?.simpleName ?: "Lỗi đọc không xác định")
         (error as? FileSystemException)?.reason?.takeIf { it.isNotBlank() }?.let {
             append(" · ").append(it)
         }
@@ -294,19 +294,19 @@ class StorageManager(
         // No chmod: a scan must not alter guest permissions or expose app-private files.
         runCatching {
             val stat = Os.lstat(path.toString())
-            append("\n权限：").append(Integer.toOctalString(stat.st_mode and 0xFFF))
+            append("\nQuyền:").append(Integer.toOctalString(stat.st_mode and 0xFFF))
             append(" · UID：").append(stat.st_uid).append(" · GID：").append(stat.st_gid)
-            append(" · 应用 UID：").append(android.os.Process.myUid())
+            append(" · UID ứng dụng:").append(android.os.Process.myUid())
             if (OsConstants.S_ISLNK(stat.st_mode)) {
-                append("\n链接目标：").append(Os.readlink(path.toString()))
+                append("\nMục tiêu liên kết:").append(Os.readlink(path.toString()))
             } else if (OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == android.os.Process.myUid()) {
                 val needed = OsConstants.S_IRUSR or OsConstants.S_IXUSR
                 if (stat.st_mode and needed != needed) {
-                    append("\n该目录的所有者权限缺少读取或进入权限；与共享存储授权不同。")
+                    append("\nQuyền sở hữu thư mục này thiếu quyền đọc hoặc truy cập; khác với cấp quyền lưu trữ chia sẻ.")
                 }
             }
         }.onFailure {
-            append("\n元数据读取失败：").append(it.javaClass.simpleName)
+            append("\nĐọc metadata thất bại:").append(it.javaClass.simpleName)
             it.message?.let { message -> append(" · ").append(message) }
         }
     }
@@ -374,9 +374,9 @@ class StorageManager(
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 try {
-                    check(inspected) { "请先刷新存储占用并查看清理范围" }
+                    check(inspected) { "Hãy làm mới mức chiếm dụng lưu trữ và xem phạm vi dọn trước" }
                     val selected = plans.values.filter(select)
-                    check(!requireMatch || selected.isNotEmpty()) { "此项不可直接清理或已失效，请刷新后重试" }
+                    check(!requireMatch || selected.isNotEmpty()) { "Mục này không thể dọn trực tiếp hoặc đã mất hiệu lực, hãy làm mới rồi thử lại" }
                     var released = 0L
                     var skipped = 0
                     var failed = 0
@@ -384,7 +384,7 @@ class StorageManager(
                         for (plan in selected) for (target in plan.targets) {
                             currentCoroutineContext().ensureActive()
                             try {
-                                check(target.path.startsWith(plan.rule.root) && safePath(target.path)) { "路径已改变" }
+                                check(target.path.startsWith(plan.rule.root) && safePath(target.path)) { "Đường dẫn đã thay đổi" }
                                 if (!Files.exists(target.path, NOFOLLOW_LINKS)) { skipped++; continue }
                                 val attrs = Files.readAttributes(target.path, BasicFileAttributes::class.java, NOFOLLOW_LINKS)
                                 if (!attrs.isRegularFile || attrs.isSymbolicLink || attrs.size() != target.size ||
@@ -402,11 +402,11 @@ class StorageManager(
                     inspected = false
                     // 部分完成不能伪装成成功，保留明确结果供 UI 呈现。
                     if (failed > 0 || skipped > 0) AppResult.Failure(AppError(ErrorCode.IO,
-                        "已删除 $released 字节；跳过 $skipped 个已改变或不存在的文件，失败 $failed 个。请刷新查看剩余占用"))
+                        "Đã xóa $released byte; bỏ qua $skipped tệp đã thay đổi hoặc không tồn tại, thất bại $failed tệp. Vui lòng làm mới để xem dung lượng còn lại"))
                     else AppResult.Success(released)
                 } catch (cancelled: CancellationException) { throw cancelled
                 } catch (error: Exception) {
-                    AppResult.Failure(AppError(ErrorCode.IO, error.message ?: "清理失败", error))
+                    AppResult.Failure(AppError(ErrorCode.IO, error.message ?: "Dọn thất bại", error))
                 }
             }
         }

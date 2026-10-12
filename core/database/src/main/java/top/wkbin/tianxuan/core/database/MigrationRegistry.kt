@@ -83,25 +83,25 @@ fun assertMigrationChainIsContinuous(
     migrations: List<Migration>,
     currentSchemaVersion: Int,
 ) {
-    require(migrations.isNotEmpty()) { "迁移链为空：数据库版本 $currentSchemaVersion 无任何迁移可走" }
+    require(migrations.isNotEmpty()) { "Chuỗi migration rỗng: phiên bản cơ sở dữ liệu $currentSchemaVersion không có migration nào để chạy" }
 
     val first = migrations.first()
     check(first.startVersion == MIGRATION_CHAIN_START_VERSION) {
-        "迁移链起点是 ${first.startVersion}，与声明的 $MIGRATION_CHAIN_START_VERSION 不符"
+        "Điểm bắt đầu chuỗi migration là ${first.startVersion}, không khớp với $MIGRATION_CHAIN_START_VERSION đã khai báo"
     }
 
     migrations.zipWithNext { prev, next ->
         check(next.startVersion == prev.endVersion) {
-            "迁移链断裂：${describe(prev)} 之后应当是 $MIGRATION_CHAIN_START_VERSION..${next.endVersion} 的迁移，" +
-                "实际下一条是 ${describe(next)}。补上 ${prev.endVersion}→${next.startVersion} 的迁移，" +
-                "或把它加进 ALL_MIGRATIONS"
+            "Chuỗi migration đứt gãy: sau ${describe(prev)} đáng lẽ phải là migration $MIGRATION_CHAIN_START_VERSION..${next.endVersion}," +
+                "Thực tế mục kế tiếp là ${describe(next)}. Hãy bổ sung di trú ${prev.endVersion}→${next.startVersion}, " +
+                "Hoặc thêm nó vào ALL_MIGRATIONS"
         }
     }
 
     val last = migrations.last()
     check(last.endVersion == currentSchemaVersion) {
-        "迁移链终点是 ${last.endVersion}，但 AppDatabase 当前版本是 $currentSchemaVersion。" +
-            "数据库已升到 $currentSchemaVersion 却没有对应迁移，升级必然失败"
+        "Điểm cuối của chuỗi migration là ${last.endVersion}, nhưng phiên bản hiện tại của AppDatabase là $currentSchemaVersion." +
+            "Cơ sở dữ liệu đã nâng lên $currentSchemaVersion nhưng không có migration tương ứng, nâng cấp chắc chắn thất bại"
     }
 }
 

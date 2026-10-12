@@ -72,7 +72,7 @@ class CheckpointStore() {
     /**
      * 开启一个新的用户轮次 checkpoint，并关闭上一轮（若有）。
      *
-     * 轮号在**开轮时**即分配并立刻提交，而不是等关轮时由"有写入"的轮次提交：
+     * 轮号在**开轮时**即分配并立刻提交，而不是等关轮时由"Có ghi vào"的轮次提交：
      * 只读轮（问一句、模型只回文本、无 write/edit）不产生 checkpoint，此时轮号若只在
      * 关轮且有写入时才递增，下一轮就会**复用**同一轮号。而 [planCodeRewind] 按轮号比较、
      * [anchorMessageIdOf] 按轮号取锚点、UI 按 `anchorMessageId` 定位后拿到
@@ -85,13 +85,13 @@ class CheckpointStore() {
         state.activeTurn = state.lastTurn + 1
         // 先提交轮号再开轮：空轮同样占用轮号，保证 lastTurn 单调、不与其他轮撞号。
         state.lastTurn = state.activeTurn
-        state.activePrompt = prompt.ifBlank { "（空白输入）" }
+        state.activePrompt = prompt.ifBlank { "(Nhập trống)" }
         state.activeAnchorMessageId = anchorMessageId
         state.active = LinkedHashMap()
         state.open = true
     }
 
-    /** 记录某路径在该轮"触碰前"的内容；无活动轮或路径已记录时忽略。 */
+    /** 记录某路径在该轮"Trước khi chạm"的内容；无活动轮或路径已记录时忽略。 */
     @Synchronized
     fun capture(sessionId: String, path: String, before: String?): Boolean {
         val active = sessions[sessionId]?.active ?: return false
@@ -127,7 +127,7 @@ class CheckpointStore() {
 
     /**
      * 某路径**最后改动后凭据**：活动轮优先，其余按关闭轮新→旧取第一个。
-     * restore 的冲突检测用它判断"当前文件是否被外部改动过"；null = 无凭据（不检测）。
+     * restore 的冲突检测用它判断"Tệp hiện tại có bị sửa đổi từ bên ngoài không"；null = 无凭据（不检测）。
      */
     @Synchronized
     fun latestAfterImage(sessionId: String, path: String): String? {
@@ -144,7 +144,7 @@ class CheckpointStore() {
     }
 
     // 删除走同一单线程执行器排队：先于它的待写任务先落盘、随后被整体删除——
-    // 消除"异步写在 dropSession 之后执行、write() 的 mkdirs 复活已删目录"的竞态
+    // 消除"Ghi bất đồng bộ thực thi sau dropSession, mkdirs của write() làm sống lại thư mục đã xóa"的竞态
     @Synchronized
     fun dropSession(sessionId: String) {
         sessions.remove(sessionId)
@@ -165,7 +165,7 @@ class CheckpointStore() {
         stateOf(sessionId).checkpoints.firstOrNull { it.turn == turn }?.anchorMessageId
 
     /**
-     * 规划"代码回滚"：撤回到 [turn]，即撤销该轮及之后的所有写改动。
+     * 规划"Rollback mã"：撤回到 [turn]，即撤销该轮及之后的所有写改动。
      * 对每路径取 [turn] 起最早的轮初内容；路径本身是 [turn] 前创建的、
      * 之后仅被改动，则该最早快照即 [turn] 的轮初内容。
      */
@@ -230,7 +230,7 @@ class CheckpointStore() {
             state.checkpoints.add(checkpoint)
             while (state.checkpoints.size > MAX_KEPT) state.checkpoints.removeAt(0)
             // 轮号已在 beginTurn 提交（含空轮），此处不再回写 lastTurn：既不重复提交，
-            // 也不至于在空轮时把"已分配但无 checkpoint"的轮号从单调序列里抹掉。
+            // 也不至于在空轮时把"Đã phân bổ nhưng không có checkpoint"的轮号从单调序列里抹掉。
             // 异步落盘（checkpoint 不可变，可安全移交）：失败只放弃持久化不影响内存态
             persistence?.let { disk ->
                 diskWriteExecutor.execute { runCatching { disk.write(sessionId, checkpoint) } }
@@ -269,7 +269,7 @@ class FileCheckpointPersistence(
         val files: Map<Int, String> = emptyMap(),
         /** seq -> 快照原始路径。 */
         val paths: Map<Int, String> = emptyMap(),
-        /** 记录 content==null 的 seq（恢复时区分"不存在"与"空内容文件"）。 */
+        /** 记录 content==null 的 seq（恢复时区分"Không tồn tại"与"Tệp nội dung rỗng"）。 */
         val absent: List<Int> = emptyList(),
         /** seq -> 改动后凭据文件名（旧索引无此字段，恢复时按无凭据处理）。 */
         val afterFiles: Map<Int, String> = emptyMap(),
@@ -361,11 +361,11 @@ class FileCheckpointPersistence(
                 val snaps = entry.paths.keys.sorted().mapNotNull { seq ->
                     val path = entry.paths.getValue(seq)
                     if (seq in entry.absent) {
-                        // 显式记录的"文件当时不存在"：null 内容是 rewind 执行删除的合法信号
+                        // 显式记录的"Tệp lúc đó không tồn tại"：null 内容是 rewind 执行删除的合法信号
                         return@mapNotNull FileSnap(path, null)
                     }
                     // 索引条目或内容文件缺失 = 快照损坏：整体跳过（路径不进回滚方案，文件保持原样）。
-                    // 绝不能映射为 null 内容——那会被 RewindController 当作"当时不存在"而误删现存文件。
+                    // 绝不能映射为 null 内容——那会被 RewindController 当作"Lúc đó không tồn tại"而误删现存文件。
                     val fileName = entry.files[seq] ?: return@mapNotNull null
                     val snapFile = File(sessionDir, "${entry.turn}/$fileName")
                     if (!snapFile.isFile) return@mapNotNull null

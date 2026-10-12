@@ -9,7 +9,7 @@ package top.wkbin.tianxuan.harness.text
  * - CRLF 与 LF 换行符混淆。
  *
  * 严格的 `content.indexOf(oldText)` 遇到任何偏差都会失败。本引擎定义了
- * `Exact -> LineTrimmed -> BlockAnchor` 三级降级责任链，在保持"唯一匹配"
+ * `Exact -> LineTrimmed -> BlockAnchor` 三级降级责任链，在保持"Khớp duy nhất"
  * 安全语义的前提下大幅提升编辑成功率：
  * 1. [ExactReplacer]       严格子串匹配（最快、最准确）；
  * 2. [LineTrimmedReplacer] 行级去空白匹配 + 按真实缩进自动重排 newText；
@@ -191,14 +191,14 @@ object TextReplacerEngine {
         newText: String,
         chain: List<TextReplacer> = defaultChain,
     ): ReplaceTextResult {
-        require(oldText.isNotEmpty()) { "oldText 不能为空" }
+        require(oldText.isNotEmpty()) { "oldText không được để trống" }
         chain.forEach { replacer ->
             val matches = replacer.findMatches(content, oldText, newText)
             if (matches.isEmpty()) return@forEach
             if (matches.size > 1) {
                 throw TextReplacementException(
-                    "oldText 在文件中匹配 ${matches.size} 处（策略：${replacer.name}），" +
-                        "请提供更精确的上下文或唯一锚点后重试",
+                    "oldText khớp ${matches.size} chỗ trong tệp (chiến lược: ${replacer.name}), " +
+                        "Vui lòng cung cấp ngữ cảnh chính xác hơn hoặc điểm neo duy nhất rồi thử lại",
                 )
             }
             val match = matches.first()
@@ -210,8 +210,8 @@ object TextReplacerEngine {
             return ReplaceTextResult(updated, 1, 1, replacer.name)
         }
         throw TextReplacementException(
-            "oldText 未找到（已尝试策略：${chain.joinToString("/") { it.name }}）。" +
-                "请先用 read 工具确认原文后重试，避免凭记忆猜测代码",
+            "oldText không tìm thấy (các chiến lược đã thử: ${chain.joinToString("/") { it.name }}）。" +
+                "Hãy dùng công cụ read xác nhận bản gốc trước rồi thử lại, tránh đoán mò theo trí nhớ về mã",
         )
     }
 }

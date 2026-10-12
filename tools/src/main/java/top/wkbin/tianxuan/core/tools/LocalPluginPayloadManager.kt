@@ -38,7 +38,7 @@ class LocalPluginPayloadManager(
         val importsRoot = File(pathManager.tianxuanRootDir(distroId), "imports").apply { mkdirs() }
         val target = File(importsRoot, toolId)
         val canonicalRoot = importsRoot.canonicalFile
-        require(target.canonicalFile.toPath().startsWith(canonicalRoot.toPath())) { "非法插件 ID：$toolId" }
+        require(target.canonicalFile.toPath().startsWith(canonicalRoot.toPath())) { "ID plugin bất hợp pháp: $toolId" }
         target.deleteRecursively()
 
         val sourceFiles = source.walkTopDown().filter { it.isFile }.toList()
@@ -62,7 +62,7 @@ class LocalPluginPayloadManager(
                         if (copiedBytes >= nextProgressReport || copiedBytes == totalBytes) {
                             emit(
                                 LocalPluginPreparationEvent.Copying(
-                                    message = "[COPY] 正在复制到沙盒目录：$relativePath · " +
+                                    message = "[COPY] Đang sao chép vào thư mục sandbox: $relativePath · " +
                                         "${formatBytes(copiedBytes)}/${formatBytes(totalBytes)}",
                                     bytesCopied = copiedBytes,
                                     totalBytes = totalBytes,

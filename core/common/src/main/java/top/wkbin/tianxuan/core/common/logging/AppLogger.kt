@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 /**
  * 应用日志：普通运行日志与智能体调试日志统一写入公共 Download/TianXuan 目录（自动创建），
- * 便于用户直接从文件管理器取走日志。未授予"所有文件访问"或公共目录写入失败时，
+ * 便于用户直接从文件管理器取走日志。未授予"Truy cập tất cả tệp"或公共目录写入失败时，
  * 回退到应用私有 files/logs 目录，保证日志永不静默丢失。
  */
 class AppLogger(
@@ -88,22 +88,22 @@ class AppLogger(
         return if (publicFile != null && publicFile.exists()) {
             publicFile.absolutePath
         } else if (Environment.isExternalStorageManager()) {
-            "${publicFile?.absolutePath}（尚未创建）"
+            "${publicFile?.absolutePath} (chưa được tạo)"
         } else {
-            fallbackLogFile(AGENT_LOG_FILE).absolutePath + "（未授予所有文件访问）"
+            fallbackLogFile(AGENT_LOG_FILE).absolutePath + "(Chưa cấp quyền truy cập mọi tệp)"
         }
     }
 
     fun readAgentLogs(maxChars: Int = 100_000): String = runCatching {
         val file = existingLogFile(AGENT_LOG_FILE)
-            ?: return@runCatching "暂无智能体本地日志"
+            ?: return@runCatching "Hiện chưa có nhật ký Agent cục bộ"
         val text = safe(file.readText(Charsets.UTF_8))
         when {
-            text.isEmpty() -> "暂无智能体本地日志"
+            text.isEmpty() -> "Hiện chưa có nhật ký Agent cục bộ"
             text.length > maxChars -> text.takeLast(maxChars)
             else -> text
         }
-    }.getOrDefault("读取日志失败")
+    }.getOrDefault("Đọc log thất bại")
 
     fun getAgentLogSizeBytes(): Long = runCatching {
         existingLogFile(AGENT_LOG_FILE)?.length() ?: 0L

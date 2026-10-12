@@ -119,7 +119,7 @@ fun SettingsScreen(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "搜索全局功能与设置选项...",
+                            text = "Tìm kiếm chức năng và tùy chọn cài đặt toàn cục...",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                             modifier = Modifier.weight(1f),
@@ -149,7 +149,7 @@ fun SettingsScreen(
                     accent = MaterialTheme.colorScheme.primary,
                     title = "智能体与 AI 模型",
                     subtitle = "模型档案 · 插件工具中心 · 技能与 MCP 生态",
-                    badge = if (models.isEmpty()) "未配置模型" else "${models.size} 个模型 · ${skills.count { it.isEnabled }} 技能",
+                    badge = if (models.isEmpty()) "未配置模型" else "${models.size} model · ${skills.count { it.isEnabled }} kỹ năng",
                     onClick = onOpenAgentEco,
                 )
             }
@@ -161,7 +161,7 @@ fun SettingsScreen(
                     accent = MaterialTheme.colorScheme.tertiary,
                     title = "Linux 容器与存储",
                     subtitle = "多发行版管理 · 宿主存储映射 · 运行特权模式",
-                    badge = "${installedDistros.size} 套系统 · ${effectiveExecutionMode.shortLabel}",
+                    badge = "${installedDistros.size} hệ thống · ${effectiveExecutionMode.shortLabel}",
                     onClick = onOpenLinuxEnv,
                 )
             }
@@ -196,9 +196,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Sparkles,
                     accent = MaterialTheme.colorScheme.tertiary,
-                    title = "A2UI 渲染器 PoC",
-                    subtitle = "智能体把回答画成原生界面卡片 · 点开可体验示例",
-                    badge = "实验功能",
+                    title = "Renderer A2UI PoC",
+                    subtitle = "Agent vẽ câu trả lời thành thẻ giao diện native · Nhấp mở để trải nghiệm ví dụ",
+                    badge = "Tính năng thử nghiệm",
                     onClick = onOpenA2uiPoc,
                 )
             }
@@ -209,9 +209,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Document,
                     accent = MaterialTheme.colorScheme.secondary,
-                    title = "RAG 知识库",
-                    subtitle = "向量化检索增强 · 自动注入对话上下文 · 支持 @kb:文档名 手动引用",
-                    badge = "AI 增强",
+                    title = "Kho tri thức RAG",
+                    subtitle = "Truy xuất tăng cường vector hoá · tự động tiêm ngữ cảnh hội thoại · hỗ trợ @kb:tên_tài_liệu tham chiếu thủ công",
+                    badge = "AI tăng cường",
                     onClick = onOpenKnowledge,
                 )
             }
@@ -223,7 +223,7 @@ fun SettingsScreen(
                     accent = MaterialTheme.colorScheme.secondary,
                     title = "关于、更新与官方社区",
                     subtitle = "检查新版本 · GitHub 开源仓库 · 官方 QQ 交流群",
-                    badge = if (appVersionName == "unknown") "版本号未知 · 稳定版" else "v$appVersionName 稳定版",
+                    badge = if (appVersionName == "unknown") "Số phiên bản không rõ · Bản ổn định" else "v$appVersionName bản ổn định",
                     onClick = onOpenAboutCommunity,
                 )
             }

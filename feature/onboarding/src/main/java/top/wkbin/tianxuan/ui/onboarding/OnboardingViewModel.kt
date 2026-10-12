@@ -74,7 +74,7 @@ class OnboardingViewModel(
     val mirror = _mirror.asStateFlow()
     private val _page = MutableStateFlow(0)
     val page = _page.asStateFlow()
-    private val _modelProvider = MutableStateFlow("自定义 OpenAI 兼容接口")
+    private val _modelProvider = MutableStateFlow("Giao diện tương thích OpenAI tùy chỉnh")
     val modelProvider = _modelProvider.asStateFlow()
     private val _modelName = MutableStateFlow("")
     val modelName = _modelName.asStateFlow()
@@ -178,7 +178,7 @@ class OnboardingViewModel(
                     _discoveredModels.value = models
                     models.firstOrNull()?.let { _modelId.value = it }
                 }
-                .onFailure { _modelDiscoveryError.value = it.message ?: "刷新模型失败" }
+                .onFailure { _modelDiscoveryError.value = it.message ?: "Làm mới model thất bại" }
             _discoveringModels.value = false
         }
     }
@@ -225,7 +225,7 @@ class OnboardingViewModel(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
-                _importError.value = throwable.message ?: "无法导入所选 RootFS 文件"
+                _importError.value = throwable.message ?: "Không thể nhập tệp RootFS đã chọn"
             } finally {
                 imported.delete()
                 _isImporting.value = false
@@ -285,8 +285,8 @@ class OnboardingViewModel(
 
     fun importProfileFromJson(rawJson: String): Result<top.wkbin.tianxuan.core.model.AiModelProfileExport> {
         return profileBackupCodec.parseProfiles(rawJson).mapCatching { profiles ->
-            val profile = profiles.firstOrNull() ?: error("导入包中没有模型档案")
-            require(profile.model.isNotBlank() || profile.name.isNotBlank()) { "模型配置缺少模型名称或 ID" }
+            val profile = profiles.firstOrNull() ?: error("Gói nhập không có hồ sơ model")
+            require(profile.model.isNotBlank() || profile.name.isNotBlank()) { "Cấu hình model thiếu tên model hoặc ID" }
 
             _modelProvider.value = profile.provider.ifBlank { "OpenAI" }
             _baseUrl.value = profile.baseUrl
@@ -347,7 +347,7 @@ class OnboardingViewModel(
                 throw e
             } catch (e: Exception) {
                 // 写入失败时留在引导页并提示，不再静默标记 onboarding 完成
-                _importError.value = "模型配置保存失败：${e.message ?: e::class.simpleName}"
+                _importError.value = "Lưu cấu hình model thất bại: ${e.message ?: e::class.simpleName}"
             }
         }
     }

@@ -1,13 +1,13 @@
-# Security：风险操作确认
+# Security: Xác nhận thao tác rủi ro
 
-以下操作视为高风险，执行前必须向用户说明影响并征得明确同意：
+Các thao tác sau đây được coi là rủi ro cao, trước khi thực thi bắt buộc phải nói rõ ảnh hưởng với người dùng và được sự đồng ý rõ ràng:
 
-- 不可逆删除（rm -rf、删除系统分区、清空数据库或目录）
-- 覆盖或修改重要数据与配置
-- 卸载、冻结系统应用或关键组件
-- 格式化、分区、挂载系统目录
-- 对外发送数据、修改网络/代理/安全设置
-- 在真实 Root 权限下影响宿主 Android 系统的操作
+- Xóa không thể đảo ngược (rm -rf, xóa phân vùng hệ thống, xóa sạch cơ sở dữ liệu hoặc thư mục)
+- Ghi đè hoặc sửa đổi dữ liệu và cấu hình quan trọng
+- Gỡ cài đặt, đóng băng ứng dụng hệ thống hoặc thành phần then chốt
+- Format, phân vùng, mount thư mục hệ thống
+- Gửi dữ liệu ra ngoài, sửa đổi cài đặt mạng/proxy/bảo mật
+- Thao tác ảnh hưởng đến hệ thống Android host dưới quyền Root thực
 
-只读探查（status / device_status / app_list / package_list / settings_get / logcat / read）无需确认。
-拿不准时，先说明影响再动手。
+Thăm dò chỉ đọc (status / device_status / app_list / package_list / settings_get / logcat / read) không cần xác nhận.
+Khi không chắc chắn, hãy nói rõ ảnh hưởng trước rồi mới làm.

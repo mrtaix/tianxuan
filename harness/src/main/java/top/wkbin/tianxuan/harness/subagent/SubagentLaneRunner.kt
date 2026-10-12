@@ -37,7 +37,7 @@ data class SubagentLaneResult(
     val success: Boolean,
     val summary: String,
     val toolCallCount: Int,
-    /** 终止原因。父层据此区分"真完成"与"收场但没做完"，不再只看 [success]。 */
+    /** 终止原因。父层据此区分"Hoàn thành thật"与"Kết thúc nhưng chưa làm xong"，不再只看 [success]。 */
     val termination: SubagentTermination = SubagentTermination.CONCLUDED,
     /** 需要审批因而未执行的调用，必须由主智能体在主会话重发。 */
     val pendingApprovals: List<SubagentApprovalHandoff> = emptyList(),
@@ -76,7 +76,7 @@ class SubagentLaneRunner(
          *
          * null（默认）= 不启用闸门，保留给不经 [SubagentOrchestrator] 编排的调用方
          * （双智能体执行者 Lane、workflow 推理节点）——它们没有写租约契约，
-         * 闸门会把所有写入误拦成"未声明 write_paths 的只读任务"。
+         * 闸门会把所有写入误拦成"Nhiệm vụ chỉ đọc chưa khai báo write_paths"。
          */
         writePaths: List<String>? = null,
     ): SubagentLaneResult {
@@ -84,13 +84,13 @@ class SubagentLaneRunner(
         val operationId = operations.acceptRun(sessionId, user, laneName)
         var toolCalls = 0
         var finalText = ""
-        // 需要审批而被跳过的调用、被写租约拦截的写入：两者都会让"看起来收场了"实际没做完，
+        // 需要审批而被跳过的调用、被写租约拦截的写入：两者都会让"Có vẻ đã kết thúc"实际没做完，
         // 因此必须跨轮累计，并参与最终的完成判定。
         val deferredApprovals = mutableListOf<SubagentApprovalHandoff>()
         val blockedWrites = mutableListOf<String>()
         // 写过但最后一次尝试仍失败的目标（同目标后续写成功会移除）。
-        // 这是"声称已落盘、其实没写成"的结构化证据；靠在结论文本里匹配"写入失败"会误伤
-        // 只读审计任务（"检查为什么 X 服务写入失败"的合法结论里也有这些词）。
+        // 这是"Tuyên bố đã ghi đĩa, thực ra chưa ghi thành"的结构化证据；靠在结论文本里匹配"Ghi thất bại"会误伤
+        // 只读审计任务（"Kiểm tra tại sao dịch vụ X ghi thất bại"的合法结论里也有这些词）。
         val failedWrites = linkedMapOf<String, String>()
         return try {
             val configuredModel = modelConfig ?: providerClient.resolveConfigured(modelId, modelVariant)
@@ -154,10 +154,10 @@ class SubagentLaneRunner(
                     operations.providerSettled(operationId, null, usage = usageEntity, round = round)
                 }
                 if (roundCalls.isEmpty() && !forceFinalAnswer && textNormalization.hasUnresolvedMarkers) {
-                    operations.finish(sessionId, "failed", details = "无法解析文本工具调用", laneName = laneName)
+                    operations.finish(sessionId, "failed", details = "Không thể phân giải lời gọi công cụ dạng văn bản", laneName = laneName)
                     return SubagentLaneResult(
                         success = false,
-                        summary = "模型返回了无法解析的文本工具调用，未将其误判为任务完成",
+                        summary = "Model trả về lời gọi công cụ dạng văn bản không phân giải được, không nhận nhầm là nhiệm vụ hoàn thành",
                         toolCallCount = toolCalls,
                         termination = SubagentTermination.UNPARSEABLE_TOOL_CALL,
                         pendingApprovals = deferredApprovals.toList(),
@@ -165,7 +165,7 @@ class SubagentLaneRunner(
                     )
                 }
                 // 收场判定：最后一轮，或普通轮次里模型不再调用工具。
-                // 两条路径都必须走同一套判定——"没有工具调用"本身不是完成的证据：
+                // 两条路径都必须走同一套判定——"Không có lời gọi công cụ"本身不是完成的证据：
                 // 空输出、仍在输出工具协议、自述未完成、有待审批或被拦截的写入，都不算完成。
                 if (forceFinalAnswer || roundCalls.isEmpty()) {
                     val verdict = judgeSubagentConclusion(
@@ -207,7 +207,7 @@ class SubagentLaneRunner(
                             ToolReplayPolicy.forTool(tool, rawName),
                             round,
                         )
-                        val failed = ToolResult(UUID.randomUUID().toString(), now(), callId, false, "工具参数不是 JSON 对象：${it.message}")
+                        val failed = ToolResult(UUID.randomUUID().toString(), now(), callId, false, "Tham số công cụ không phải đối tượng JSON: ${it.message}")
                         operations.toolSettled(operationId, failed, round, toolName = rawName)
                         continue
                     }
@@ -217,7 +217,7 @@ class SubagentLaneRunner(
                         operations.toolIntent(operationId, call, spec.argumentsJson, ToolReplayPolicy.forTool(tool, rawName), round)
                         val rejected = ToolResult(
                             UUID.randomUUID().toString(), now(), callId, false,
-                            "工具参数校验未通过：${schemaProblems.joinToString("；")}。请修正参数后重新调用。",
+                            "Kiểm tra tham số công cụ không qua: ${schemaProblems.joinToString("；")}. Hãy sửa tham số rồi gọi lại.",
                         )
                         operations.toolSettled(operationId, rejected, round, toolName = rawName)
                         continue
@@ -237,7 +237,7 @@ class SubagentLaneRunner(
                     val writeRejection = writePaths?.let { subagentWriteScopeRejection(tool, args, it) }
                     val outcome = when {
                         tool == HarnessTool.SUBAGENT ->
-                            ToolResult(UUID.randomUUID().toString(), now(), call.id, false, "子智能体 Lane 禁止再次派发子智能体")
+                            ToolResult(UUID.randomUUID().toString(), now(), call.id, false, "Lane Agent con cấm phái Agent con lần nữa")
                         writeRejection != null -> {
                             blockedWrites += subagentWriteTargetLabel(rawName, args)
                             ToolResult(UUID.randomUUID().toString(), now(), call.id, false, writeRejection)
@@ -257,7 +257,7 @@ class SubagentLaneRunner(
                             reason = outcome.output.lineSequence().firstOrNull()?.take(200).orEmpty(),
                         )
                     } else if (writeRejection == null && tool in LANE_WRITE_TOOLS) {
-                        // 被租约拦截或待审批的写入已分别记账，这里只追踪"真的执行了但失败"。
+                        // 被租约拦截或待审批的写入已分别记账，这里只追踪"Thật sự đã thực thi nhưng thất bại"。
                         val target = subagentWriteTargetLabel(rawName, args)
                         if (outcome.success) {
                             failedWrites.remove(target)
@@ -273,9 +273,9 @@ class SubagentLaneRunner(
             SubagentLaneResult(
                 success = false,
                 summary = buildString {
-                    append("⚠️ 子智能体用尽 $toolRounds 轮工具预算仍未收束，未产出最终结论。")
+                    append("⚠️ Agent con dùng hết $toolRounds lượt ngân sách công cụ vẫn chưa thu lại, chưa cho ra kết luận cuối.")
                     if (finalText.isNotBlank()) {
-                        append("\n\n最后阶段输出：\n")
+                        append("\n\nĐầu ra giai đoạn cuối:\n")
                         append(finalText)
                     }
                 },
@@ -289,14 +289,14 @@ class SubagentLaneRunner(
             // 否则 lane operation 永远停留在 RUNNING，形成僵尸行。
             // finish 自身是挂起点，需在 NonCancellable 下落盘（与主循环清理链同一模式）。
             withContext(kotlinx.coroutines.NonCancellable) {
-                operations.finish(sessionId, "aborted", details = "已取消", laneName = laneName)
+                operations.finish(sessionId, "aborted", details = "Đã hủy", laneName = laneName)
             }
             throw cancellation
         } catch (throwable: Throwable) {
             operations.finish(sessionId, "failed", details = throwable.message, laneName = laneName)
             SubagentLaneResult(
                 success = false,
-                summary = throwable.message ?: "子智能体执行失败",
+                summary = throwable.message ?: "Agent con thực thi thất bại",
                 toolCallCount = toolCalls,
                 termination = SubagentTermination.FAILED,
                 pendingApprovals = deferredApprovals.toList(),
@@ -306,7 +306,7 @@ class SubagentLaneRunner(
     }
 
     /**
-     * Lane 历史的 token 预算。子循环没有主循环那套压缩管线，只做"够用就不动、超了才收紧"，
+     * Lane 历史的 token 预算。子循环没有主循环那套压缩管线，只做"Đủ dùng thì không động, vượt thì mới thắt chặt"，
      * 并给系统提示词、工具 schema 与本轮输出留出余量。
      */
     private suspend fun laneHistoryBudget(model: top.wkbin.tianxuan.harness.ModelConfig): Int {
@@ -379,7 +379,7 @@ class SubagentLaneRunner(
 
         /**
          * 工具轮数上限。原为 30，复杂编码类子任务会被强行截断在中途；
-         * 真正的兜底是编排层超时，轮数上限只用来拦住"漫游式只读遍历"。
+         * 真正的兜底是编排层超时，轮数上限只用来拦住"Duyệt chỉ đọc kiểu roaming"。
          */
         private const val MAX_MAX_ROUNDS = 60
         private const val NETWORK_ATTEMPTS = 2
@@ -404,27 +404,27 @@ internal fun laneSummary(
 ): String {
     if (verdict.accepted) return roundText
     return buildString {
-        appendLine("⚠️ 子任务未确认完成：${verdict.reason}")
+        appendLine("⚠️ Nhiệm vụ con chưa xác nhận hoàn thành: ${verdict.reason}")
         if (deferredApprovals.isNotEmpty()) {
             appendLine()
-            appendLine("**需要主智能体在主会话重新发起并完成审批的调用**（后台 Lane 无法暂停等待审批）：")
+            appendLine("**Lời gọi cần Agent chính phát lại ở phiên chính và hoàn tất phê duyệt** (Lane nền không thể tạm dừng chờ phê duyệt):")
             deferredApprovals.forEach { handoff ->
-                appendLine("- `${handoff.toolName}` 参数：${handoff.argumentsJson}")
+                appendLine("- `${handoff.toolName}` tham số: ${handoff.argumentsJson}")
             }
         }
         if (blockedWrites.isNotEmpty()) {
             appendLine()
-            appendLine("**被写租约拦截、实际未落盘的写入**：${blockedWrites.joinToString("、")}")
-            appendLine("重新派发时请为该子任务声明 write_paths，或由主智能体自行写入。")
+            appendLine("**Ghi bị write lease chặn, thực tế chưa ghi vào đĩa**: ${blockedWrites.joinToString("、")}")
+            appendLine("Khi phái lại hãy khai báo write_paths cho nhiệm vụ con đó, hoặc do Agent chính tự ghi.")
         }
         if (failedWrites.isNotEmpty()) {
             appendLine()
-            appendLine("**尝试写入但最终失败的目标**（这些文件并不存在或未更新）：")
+            appendLine("**Các mục tiêu đã thử ghi nhưng cuối cùng thất bại** (các tệp này không tồn tại hoặc chưa được cập nhật):")
             failedWrites.forEach { (target, reason) -> appendLine("- $target → $reason") }
         }
         if (roundText.isNotBlank()) {
             appendLine()
-            appendLine("子智能体最后输出：")
+            appendLine("Đầu ra cuối cùng của Agent con:")
             append(roundText)
         }
     }.trim()
@@ -435,7 +435,7 @@ internal fun laneSummary(
  *
  * 与主循环的 ApiContextAssembler 对齐两件事：
  * - JSON_TEXT 模式必须把 tool_call / tool_result 转成文本形态（这类接口不认识 tool 角色，
- *   原生形态会让"首轮正常、执行一次工具后下一轮 400"）；
+ *   原生形态会让"Lượt đầu bình thường, sau khi chạy công cụ một lần thì lượt sau 400"）；
  * - 历史按 token 预算收紧，避免几次大文件读取就把子循环上下文撑满。
  */
 internal fun isolatedProviderMessages(
@@ -446,7 +446,7 @@ internal fun isolatedProviderMessages(
     historyBudgetTokens: Int = 0,
 ): List<ApiMessage> = buildList {
     val finalInstruction = if (forceFinalAnswer) {
-        "\n这是最后一轮。禁止继续调用工具，请根据已有结果直接输出结论；信息不完整时明确说明限制。"
+        "\nĐây là vòng cuối cùng. Cấm tiếp tục gọi công cụ, hãy xuất kết luận trực tiếp theo kết quả hiện có; khi thông tin không đầy đủ hãy nêu rõ giới hạn."
     } else {
         ""
     }
@@ -479,7 +479,7 @@ internal fun isolatedProviderMessages(
             toolCallMode == ToolCallMode.JSON_TEXT && message is ToolResult -> add(
                 ApiMessage(
                     role = "user",
-                    content = "【工具 ${toolNames[message.toolCallId] ?: "工具"} 执行结果·" +
+                    content = "【Công cụ ${toolNames[message.toolCallId] ?: "工具"} kết quả thực thi·" +
                         "${if (message.success) "成功" else "失败"}】\n${message.output}",
                 ),
             )

@@ -39,9 +39,9 @@ object DanglingToolCallPlanner {
                     Replay(call)
                 } else {
                     val note = if (interrupted) {
-                        "用户停止了本次执行，工具被中断。"
+                        "Người dùng đã dừng lần thực thi này, công cụ bị gián đoạn."
                     } else {
-                        "工具执行期间应用进程中断。该工具不可自动重放，未再次执行；如仍需要请重新发起。"
+                        "Tiến trình ứng dụng bị gián đoạn trong khi thực thi công cụ. Công cụ này không thể tự phát lại, chưa thực thi lại; nếu vẫn cần hãy khởi tạo lại."
                     }
                     Stubbed(call, note)
                 }

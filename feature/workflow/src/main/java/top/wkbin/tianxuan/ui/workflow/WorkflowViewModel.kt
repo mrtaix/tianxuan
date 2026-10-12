@@ -173,7 +173,7 @@ class WorkflowViewModel(
             _viewingRunId.value = result.executionId
             _historySnapshot.value = null
             if (!Settings.canDrawOverlays(appContext)) {
-                _error.value = "未授予悬浮窗权限，工作流进度仅在应用内显示。可在系统设置中开启「显示在其他应用上层」。"
+                _error.value = "Chưa cấp quyền cửa sổ nổi, tiến độ workflow chỉ hiển thị trong ứng dụng. Có thể bật \"Hiển thị trên các ứng dụng khác\" trong cài đặt hệ thống."
             }
         }
     }
@@ -213,12 +213,12 @@ class WorkflowViewModel(
         openEditor(
             WorkflowDefinition(
                 id = "workflow_$suffix",
-                name = "新工作流",
-                description = "在画布中添加并连接节点",
+                name = "Workflow mới",
+                description = "Thêm và nối nút trong canvas",
                 category = "自定义",
                 trigger = WorkflowTrigger.Manual(),
                 nodes = listOf(
-                    WorkflowNode("start", WorkflowNodeType.TRIGGER, "手动触发", canvasX = 80f, canvasY = 160f),
+                    WorkflowNode("start", WorkflowNodeType.TRIGGER, "Kích hoạt thủ công", canvasX = 80f, canvasY = 160f),
                     WorkflowNode("done", WorkflowNodeType.TERMINAL_OUTPUT, "完成", canvasX = 420f, canvasY = 160f),
                 ),
                 edges = listOf(WorkflowEdge("edge_start_done", "start", "output", "done")),
@@ -233,7 +233,7 @@ class WorkflowViewModel(
             openEditor(
                 definition.copy(
                     id = "workflow_$suffix",
-                    name = "${definition.name} 副本",
+                    name = "${definition.name} bản sao",
                     isBuiltin = false,
                     trigger = WorkflowTrigger.Manual(),
                     createdAt = 0L,
@@ -372,7 +372,7 @@ class WorkflowViewModel(
                     publishEditor(history, selectedNodeId = _editorState.value?.selectedNodeId, message = "已保存")
                 }
                 .onFailure { error ->
-                    _editorState.value = _editorState.value?.copy(isSaving = false, message = error.message ?: "保存失败")
+                    _editorState.value = _editorState.value?.copy(isSaving = false, message = error.message ?: "Lưu thất bại")
                 }
         }
     }
@@ -390,7 +390,7 @@ class WorkflowViewModel(
                 publishEditor(history, selectedNodeId)
             }
             .onFailure { error ->
-                _editorState.value = _editorState.value?.copy(message = error.message ?: "编辑失败")
+                _editorState.value = _editorState.value?.copy(message = error.message ?: "Chỉnh sửa thất bại")
             }
     }
 
@@ -416,27 +416,27 @@ class WorkflowViewModel(
 }
 
 private fun WorkflowNodeType.defaultTitle(): String = when (this) {
-    WorkflowNodeType.TRIGGER -> "触发器"
+    WorkflowNodeType.TRIGGER -> "Trigger"
     WorkflowNodeType.BASH_COMMAND -> "执行命令"
-    WorkflowNodeType.PROCESS_SERVICE -> "启动服务"
-    WorkflowNodeType.AGENT_INFERENCE -> "智能体推理"
-    WorkflowNodeType.SUBAGENT_DELEGATE -> "委派子智能体"
-    WorkflowNodeType.TIANXUAN_BUILD -> "天玄构建"
-    WorkflowNodeType.CONDITION_BRANCH -> "条件分支"
-    WorkflowNodeType.HUMAN_APPROVAL -> "人工审批"
-    WorkflowNodeType.HOST_ACTION -> "宿主动作"
-    WorkflowNodeType.DELAY -> "延时等待"
-    WorkflowNodeType.SET_VARIABLE -> "设置变量"
-    WorkflowNodeType.TERMINAL_OUTPUT -> "输出结果"
+    WorkflowNodeType.PROCESS_SERVICE -> "Khởi động dịch vụ"
+    WorkflowNodeType.AGENT_INFERENCE -> "Suy luận Agent"
+    WorkflowNodeType.SUBAGENT_DELEGATE -> "Ủy thác Agent con"
+    WorkflowNodeType.TIANXUAN_BUILD -> "Build Thiên Huyền"
+    WorkflowNodeType.CONDITION_BRANCH -> "Nhánh điều kiện"
+    WorkflowNodeType.HUMAN_APPROVAL -> "Phê duyệt thủ công"
+    WorkflowNodeType.HOST_ACTION -> "Hành động host"
+    WorkflowNodeType.DELAY -> "Chờ trễ"
+    WorkflowNodeType.SET_VARIABLE -> "Đặt biến"
+    WorkflowNodeType.TERMINAL_OUTPUT -> "Kết quả đầu ra"
 }
 
 private fun WorkflowNodeType.defaultConfig(): Map<String, String> = when (this) {
     WorkflowNodeType.AGENT_INFERENCE -> mapOf(
-        "prompt" to "请分析以下上游结果并给出明确结论：\n\${previous.output}",
+        "prompt" to "Hãy phân tích kết quả bước trước dưới đây và đưa ra kết luận rõ ràng:\n\${previous.output}",
     )
     WorkflowNodeType.SUBAGENT_DELEGATE -> mapOf(
-        "taskName" to "工作流子任务",
-        "prompt" to "请完成以下任务并返回结果：\n\${previous.output}",
+        "taskName" to "Nhiệm vụ con workflow",
+        "prompt" to "Hãy hoàn thành nhiệm vụ sau và trả về kết quả:\n\${previous.output}",
         "role" to "",
         "writePaths" to "",
     )

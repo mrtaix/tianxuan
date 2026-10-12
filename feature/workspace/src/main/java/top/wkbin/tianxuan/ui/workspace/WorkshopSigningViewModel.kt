@@ -63,7 +63,7 @@ class WorkshopSigningViewModel(
                 organization = draft.organization,
             )
             val errMsg = result.errorOrNull()?.message
-            _message.value = errMsg ?: "签名创建成功：${draft.name.trim()}"
+            _message.value = errMsg ?: "Tạo chữ ký thành công: ${draft.name.trim()}"
             _busy.value = false
             if (result.isSuccess) {
                 onSuccess()
@@ -89,7 +89,7 @@ class WorkshopSigningViewModel(
                 keyPassword = draft.keyPassword,
             )
             val errMsg = result.errorOrNull()?.message
-            _message.value = errMsg ?: "签名导入成功：${draft.name.trim()}"
+            _message.value = errMsg ?: "Nhập chữ ký thành công: ${draft.name.trim()}"
             _busy.value = false
             if (result.isSuccess) {
                 onSuccess()
@@ -104,7 +104,7 @@ class WorkshopSigningViewModel(
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             _busy.value = true
             val result = signingManager.deleteKeystore(keystore.id)
-            _message.value = result.errorOrNull()?.message ?: "已删除签名：${keystore.name}"
+            _message.value = result.errorOrNull()?.message ?: "Đã xóa chữ ký: ${keystore.name}"
             _busy.value = false
         }
     }

@@ -142,7 +142,7 @@ class McpServerRuntime(
                 val bindOk = runCatching {
                     runBlocking { withTimeout(bindConfirmTimeoutMs) { srv.engine.resolvedConnectors() } }
                 }.onFailure { t ->
-                    Log.w(TAG, "bind $bindHost:$candidate 失败: ${t.message}")
+                    Log.w(TAG, "bind $bindHost:$candidate thất bại: ${t.message}")
                     runCatching { srv.stop(100, 300) }
                 }.isSuccess
                 if (bindOk) {
@@ -152,12 +152,12 @@ class McpServerRuntime(
                     // 运行时类不再直接写自环访问点：同进程可能并存多个实例（浏览器 8787 / 被控 8890），
                     // 在此处写死会互相覆盖。
                     if (attempt > 0) {
-                        Log.w(TAG, "端口 $port 被占用，已顺延使用 $candidate")
+                        Log.w(TAG, "Cổng $port bị chiếm, đã chuyển tiếp dùng $candidate")
                     }
                     return true
                 }
             } catch (t: Throwable) {
-                Log.w(TAG, "start(port=$candidate) 失败: ${t.message}")
+                Log.w(TAG, "start(port=$candidate) thất bại: ${t.message}")
                 runCatching { srv.stop(100, 300) }
             }
         }
@@ -187,7 +187,7 @@ class McpServerRuntime(
         val req = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject
             ?: return jsonrpcError(null, -32700, "bad-json")
         val method = (req["method"] as? JsonPrimitive)?.content ?: ""
-        // B11: 区分"id 字段缺失"（notification，不回响应体）与"id 显式为 null"（按 JSON-RPC 规范
+        // B11: 区分"Thiếu trường id"（notification，不回响应体）与"id tường minh là null"（按 JSON-RPC 规范
         // 属无效请求，回 -32600）；id 原样保留（数字/字符串都按原始 JsonElement 回显）
         if (!req.containsKey("id")) return null
         val id = req["id"]?.takeUnless { it is kotlinx.serialization.json.JsonNull }

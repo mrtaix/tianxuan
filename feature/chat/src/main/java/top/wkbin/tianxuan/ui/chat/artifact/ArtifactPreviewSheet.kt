@@ -139,7 +139,7 @@ fun ArtifactPreviewSheet(
                 context.contentResolver.openOutputStream(uri)?.use { output ->
                     output.write(editableContent.toByteArray(Charsets.UTF_8))
                     output.flush()
-                } ?: error("无法打开目标文件流")
+                } ?: error("Không thể mở luồng tệp đích")
             }.onSuccess {
                 Toast.makeText(context, context.getString(R.string.chat_artifact_export_success), Toast.LENGTH_SHORT).show()
             }.onFailure { err ->

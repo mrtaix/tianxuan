@@ -48,7 +48,7 @@ fun CustomIterationScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { RuntimeTopBar(title = "自定义迭代（实验）", onBack = onBack) }
+        topBar = { RuntimeTopBar(title = "Lặp tùy chỉnh (thử nghiệm)", onBack = onBack) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -62,13 +62,13 @@ fun CustomIterationScreen(
             RuntimeCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "全面自定义专属的 TianXuanDev",
+                        text = "Tùy biến toàn diện TianXuanDev chuyên thuộc",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "天玄（TianXuan）是一款致力于构建手机端 Linux 运行时与自主 Agent 的开源基础设施。通过「自定义迭代」，你可以在掌中调用天玄 AI 修改天玄自身、通过云端 GitHub Actions 自动化编译出独立的 TianXuanDev APK，并与社区开发者共同交流贡献。",
+                        text = "Thiên Huyền (TianXuan) là hạ tầng mã nguồn mở hướng tới xây dựng runtime Linux trên điện thoại và Agent tự chủ. Thông qua «Tùy biến lặp», bạn có thể gọi AI Thiên Huyền ngay trong lòng bàn tay để sửa đổi chính Thiên Huyền, tự động biên dịch ra APK TianXuanDev độc lập qua GitHub Actions trên đám mây, và cùng giao lưu đóng góp với cộng đồng lập trình viên.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 22.sp
@@ -77,33 +77,33 @@ fun CustomIterationScreen(
             }
 
             // 特性清单
-            SectionHeader(title = "核心能力矩阵", subtitle = "一次准备，持续共建")
+            SectionHeader(title = "Ma trận năng lực lõi", subtitle = "Chuẩn bị một lần, cùng xây dựng liên tục")
 
             IterationFeatureItem(
-                title = "隔离迭代工作区",
-                description = "独立路径 ~/custom_tianxuan，所有修改与宿主环境完全物理隔离。",
+                title = "Workspace lặp cách ly",
+                description = "Đường dẫn độc lập ~/custom_tianxuan, mọi sửa đổi hoàn toàn cách ly vật lý với môi trường máy chủ.",
                 badgeColor = MaterialTheme.colorScheme.primary
             )
 
             IterationFeatureItem(
-                title = "专属 Agent 规范 Skill",
-                description = "内置 tianxuan-custom-iteration Skill，严格遵循多模块、Compose 与安全规则。",
+                title = "Skill quy chuẩn Agent chuyên dụng",
+                description = "Skill tianxuan-custom-iteration tích hợp, tuân thủ nghiêm ngặt đa module, Compose và quy tắc bảo mật.",
                 badgeColor = MaterialTheme.colorScheme.secondary
             )
 
             IterationFeatureItem(
-                title = "GitHub Actions 云端 CI 构建",
-                description = "免去手机端繁琐编译，自动化生成 TianXuanDev（top.wkbin.tianxuan.dev）独立 APK。",
+                title = "Build CI đám mây GitHub Actions",
+                description = "Miễn phải biên dịch rườm rà trên điện thoại, tự động tạo APK độc lập TianXuanDev (top.wkbin.tianxuan.dev).",
                 badgeColor = MaterialTheme.colorScheme.tertiary
             )
 
             IterationFeatureItem(
-                title = "双包共存与开源 PR 闭环",
-                description = "测试版与正式版完美共存，功能验证完毕后一键提交标准 PR 参与社区共建。",
+                title = "Hai gói cùng tồn tại và vòng khép kín PR mã nguồn mở",
+                description = "Bản thử nghiệm và bản chính thức cùng tồn tại hoàn hảo, sau khi xác minh tính năng xong có thể gửi PR chuẩn bằng một chạm để tham gia xây dựng cộng đồng.",
                 badgeColor = MaterialTheme.colorScheme.primary
             )
 
-            // 错误提示：可关闭，不再常驻；重试走下方"开启自定义迭代"按钮
+            // 错误提示：可关闭，不再常驻；重试走下方"Bật lặp tùy chỉnh"按钮
             if (uiState.errorMessage != null) {
                 NoticeBanner(
                     text = uiState.errorMessage ?: "",
@@ -134,10 +134,10 @@ fun CustomIterationScreen(
                         strokeWidth = 2.dp,
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("正在准备迭代工作区…")
+                    Text("Đang chuẩn bị workspace lặp…")
                 } else {
                     Text(
-                        text = "开启自定义迭代",
+                        text = "Bật lặp tùy chỉnh",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold
                     )

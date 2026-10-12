@@ -29,7 +29,7 @@ interface LinuxRuntime {
     suspend fun importDistro(request: RuntimeInstallRequest, archive: File): AppResult<Unit> =
         AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(
             top.wkbin.tianxuan.core.common.result.ErrorCode.INSTALLATION_FAILED,
-            "当前运行时不支持导入 RootFS",
+            "Runtime hiện tại không hỗ trợ nhập RootFS",
         ))
     suspend fun uninstallDistro(distroId: String): AppResult<Unit>
     /** Remove the active distro and its installed tools while preserving /workspace. */
@@ -46,7 +46,7 @@ interface LinuxRuntime {
     suspend fun buildInteractiveLaunch(
         config: SessionConfig = SessionConfig(),
         distroId: String? = null,
-    ): InteractiveLaunchSpec = error("当前运行时不支持交互式终端启动规格")
+    ): InteractiveLaunchSpec = error("Runtime hiện tại không hỗ trợ quy cách khởi động terminal tương tác")
 
     suspend fun startBackground(
         id: String,
@@ -66,7 +66,7 @@ interface LinuxRuntime {
     suspend fun shutdown()
     /** Execute file cleanup only while runtime launches and installation are excluded. */
     suspend fun withStorageCleanup(block: suspend () -> Unit) {
-        error("当前运行时不支持安全存储清理")
+        error("Runtime hiện tại không hỗ trợ dọn lưu trữ an toàn")
     }
     fun rootfsPath(distroId: String? = null): File
     fun rootfsVersion(distroId: String? = null): String? = null

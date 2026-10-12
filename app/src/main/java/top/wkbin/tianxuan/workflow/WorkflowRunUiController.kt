@@ -50,11 +50,11 @@ class WorkflowRunUiController(
 
     private fun publish(state: WorkflowRuntimeState) {
         when (state.status) {
-            WorkflowRunStatus.SUCCESS -> hud.finish(true, "全部节点完成")
-            WorkflowRunStatus.FAILED -> hud.finish(false, state.error ?: "工作流失败")
+            WorkflowRunStatus.SUCCESS -> hud.finish(true, "Tất cả node hoàn thành")
+            WorkflowRunStatus.FAILED -> hud.finish(false, state.error ?: "Luồng công việc thất bại")
             WorkflowRunStatus.CANCELLED -> {
                 if (!hud.isStopRequested(state.executionId)) {
-                    hud.cancelled(state.error ?: "已取消")
+                    hud.cancelled(state.error ?: "Đã hủy")
                 }
             }
             else -> {

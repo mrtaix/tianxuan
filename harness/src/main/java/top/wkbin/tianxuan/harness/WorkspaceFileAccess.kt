@@ -40,7 +40,7 @@ class WorkspaceFileAccess(
     suspend fun list(path: String): AppResult<List<WorkspaceEntry>> = withContext(Dispatchers.IO) {
         try {
             val directory = resolveRequired(path)
-            check(directory.isDirectory) { "不是目录：${display(path)}" }
+            check(directory.isDirectory) { "Không phải thư mục: ${display(path)}" }
             val entries = Files.newDirectoryStream(directory.toPath()).use { stream ->
                 val iterator = stream.iterator()
                 buildList {
@@ -67,12 +67,12 @@ class WorkspaceFileAccess(
     suspend fun read(path: String, offset: Int? = null, limit: Int? = null): AppResult<String> = withContext(Dispatchers.IO) {
         try {
             val file = resolveRequired(path)
-            check(file.isFile) { "不是文件：${display(path)}" }
+            check(file.isFile) { "Không phải tệp: ${display(path)}" }
             val pagedSpillRead = isPagedSpillRead(path, offset, limit)
             val readLimit = if (pagedSpillRead) MAX_HARNESS_ARTIFACT_BYTES.toLong() else MAX_READ_BYTES
             check(file.length() <= readLimit) {
-                "文件过大（${file.length()} 字节，上限 ${if (pagedSpillRead) MAX_HARNESS_ARTIFACT_BYTES else MAX_READ_BYTES}）。" +
-                    "请用 base 执行 grep -n 定位关键行号，再用 read(path, offset, limit) 分段精读。"
+                "Tệp quá lớn (${file.length()} byte, giới hạn ${if (pagedSpillRead) MAX_HARNESS_ARTIFACT_BYTES else MAX_READ_BYTES})." +
+                    "Hãy dùng base chạy grep -n để định vị số dòng then chốt, rồi dùng read(path, offset, limit) để đọc kỹ theo từng đoạn."
             }
             if (pagedSpillRead) {
                 AppResult.Success(readPagedLines(file, path, offset!!, limit!!))
@@ -103,9 +103,9 @@ class WorkspaceFileAccess(
     suspend fun readRawBytes(path: String): AppResult<ByteArray> = withContext(Dispatchers.IO) {
         try {
             val file = resolveRequired(path)
-            check(file.isFile) { "不是文件：${display(path)}" }
+            check(file.isFile) { "Không phải tệp: ${display(path)}" }
             check(file.length() <= MAX_IMAGE_BYTES) {
-                "图片过大（${file.length()} 字节，上限 $MAX_IMAGE_BYTES），请先压缩或改用文字/图表描述"
+                "Ảnh quá lớn (${file.length()} byte, giới hạn $MAX_IMAGE_BYTES), hãy nén trước hoặc chuyển sang mô tả bằng văn bản/biểu đồ"
             }
             AppResult.Success(file.readBytes())
         } catch (throwable: Throwable) {
@@ -116,7 +116,7 @@ class WorkspaceFileAccess(
     suspend fun write(path: String, content: String): AppResult<Unit> = withContext(Dispatchers.IO) {
         try {
             val contentBytes = content.toByteArray(Charsets.UTF_8).size
-            require(contentBytes <= MAX_WRITE_BYTES) { "内容过长（$contentBytes 字节，上限 $MAX_WRITE_BYTES）" }
+            require(contentBytes <= MAX_WRITE_BYTES) { "Nội dung quá dài ($contentBytes byte, giới hạn $MAX_WRITE_BYTES)" }
             val file = resolveWritable(path)
             file.parentFile?.mkdirs()
             val temporary = File(file.parentFile, ".${file.name}.tmp-${System.nanoTime()}")
@@ -143,7 +143,7 @@ class WorkspaceFileAccess(
         try {
             val bytes = content.toByteArray(Charsets.UTF_8)
             require(bytes.size <= MAX_HARNESS_ARTIFACT_BYTES) {
-                "Harness 产物过大（${bytes.size} 字节，上限 $MAX_HARNESS_ARTIFACT_BYTES）"
+                "Sản phẩm Harness quá lớn (${bytes.size} byte, giới hạn $MAX_HARNESS_ARTIFACT_BYTES)"
             }
             val file = resolveWritable(path)
             file.parentFile?.mkdirs()
@@ -173,11 +173,11 @@ class WorkspaceFileAccess(
     suspend fun editDetailed(path: String, oldText: String, newText: String): AppResult<WorkspaceEditOutcome> =
         withContext(Dispatchers.IO) {
             try {
-                require(oldText.isNotEmpty()) { "oldText 不能为空" }
+                require(oldText.isNotEmpty()) { "oldText không được để trống" }
                 val file = resolveWritable(path)
-                check(file.isFile) { "不是文件：${display(path)}" }
+                check(file.isFile) { "Không phải tệp: ${display(path)}" }
                 check(file.length() <= MAX_EDIT_BYTES) {
-                    "文件过大（${file.length()} 字节，上限 $MAX_EDIT_BYTES），请使用 base 的流式文本工具进行定点修改"
+                    "Tệp quá lớn (${file.length()} byte, giới hạn $MAX_EDIT_BYTES), hãy dùng công cụ văn bản dòng của base để sửa định điểm"
                 }
                 val content = file.readText(Charsets.UTF_8)
                 val result = TextReplacerEngine.replace(content, oldText, newText)
@@ -198,9 +198,9 @@ class WorkspaceFileAccess(
     /** 解析路径并强制其位于工作区内；目录可以不存在（用于写入）。 */
     private fun resolveWritable(path: String): File {
         val resolved = resolve(path)
-            ?: throw IllegalArgumentException("路径越界：${display(path)}")
+            ?: throw IllegalArgumentException("Đường dẫn vượt phạm vi: ${display(path)}")
         if (resolved.exists() && resolved.isDirectory) {
-            throw IllegalArgumentException("是目录：${display(path)}")
+            throw IllegalArgumentException("Là thư mục: ${display(path)}")
         }
         return resolved
     }
@@ -208,8 +208,8 @@ class WorkspaceFileAccess(
     /** 解析路径，且要求目标存在。 */
     private fun resolveRequired(path: String): File {
         val resolved = resolve(path)
-            ?: throw IllegalArgumentException("路径越界：${display(path)}")
-        check(resolved.exists()) { "不存在：${display(path)}" }
+            ?: throw IllegalArgumentException("Đường dẫn vượt phạm vi: ${display(path)}")
+        check(resolved.exists()) { "Không tồn tại：${display(path)}" }
         return resolved
     }
 
@@ -323,8 +323,8 @@ class WorkspaceFileAccess(
     }
 
     private fun rangeHeader(path: String, totalLines: Int, start: Int, end: Int): String = buildString {
-        append("[文件 ${display(path)} 共 $totalLines 行，当前显示第 ${start + 1}-$end 行")
-        if (end < totalLines) append("；内容未完，继续读取请用 offset=${end + 1}")
+        append("[Tệp ${display(path)} tổng $totalLines dòng, hiện hiển thị dòng ${start + 1}-$end")
+        if (end < totalLines) append("; nội dung chưa hết, tiếp tục đọc dùng offset=${end + 1}")
         append("]\n")
     }
 

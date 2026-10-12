@@ -39,7 +39,7 @@ class GenericRecipeInstaller(
             checkReady()
 
             val localPayload = if (manifest.source == "LOCAL") {
-                emit(InstallEvent.Progress(toolId, "正在装载本地插件资源", 0.05f, InstallEvent.Phase.PREPARING))
+                emit(InstallEvent.Progress(toolId, "Đang nạp tài nguyên plugin cục bộ", 0.05f, InstallEvent.Phase.PREPARING))
                 var preparedPath: String? = null
                 localPluginPayloadManager?.prepare(toolId, linuxRuntime.activeDistroId.value)?.collect { event ->
                     when (event) {
@@ -53,12 +53,12 @@ class GenericRecipeInstaller(
                         )
                         is top.wkbin.tianxuan.core.tools.LocalPluginPreparationEvent.Ready -> preparedPath = event.payloadPath
                     }
-                } ?: error("本地插件 payload 管理器不可用")
-                preparedPath ?: error("本地插件 payload 不存在")
+                } ?: error("Trình quản lý payload plugin cục bộ không khả dụng")
+                preparedPath ?: error("payload plugin cục bộ không tồn tại")
             } else null
 
             // 1. 准备前置依赖
-            emit(InstallEvent.Progress(toolId, "正在解析并准备工具依赖...", 0.15f, InstallEvent.Phase.INSTALLING_DEPENDENCY))
+            emit(InstallEvent.Progress(toolId, "Đang phân giải và chuẩn bị phụ thuộc công cụ...", 0.15f, InstallEvent.Phase.INSTALLING_DEPENDENCY))
             for (depString in manifest.dependencies.takeUnless { manifest.offlineOnly }.orEmpty()) {
                 val parsed = ManifestDependencyParser.parse(depString)
                 if (parsed != null) {
@@ -77,7 +77,7 @@ class GenericRecipeInstaller(
             }
 
             // 2. 准备隔离目录与环境变量
-            emit(InstallEvent.Progress(toolId, "正在配置沙箱隔离环境...", 0.35f, InstallEvent.Phase.RUNNING_INSTALLER))
+            emit(InstallEvent.Progress(toolId, "Đang cấu hình môi trường cách ly sandbox...", 0.35f, InstallEvent.Phase.RUNNING_INSTALLER))
             val toolDir = ToolLayout.toolDirectory(toolId)
             val toolDataDir = ToolLayout.toolDataDirectory(toolId)
             // The framework may install compatibility helpers before the plugin recipe runs,
@@ -97,7 +97,7 @@ class GenericRecipeInstaller(
                     ShellCommand(commandLine = unzipShim, environment = baseEnvironment),
                 )
                 if (!shimResult.isSuccess) {
-                    error(shimResult.stderr.ifBlank { shimResult.stdout }.ifBlank { "无法准备 ZIP 解压兼容层" })
+                    error(shimResult.stderr.ifBlank { shimResult.stdout }.ifBlank { "Không thể chuẩn bị lớp tương thích giải nén ZIP" })
                 }
             }
 
@@ -106,9 +106,9 @@ class GenericRecipeInstaller(
             linuxRuntime.execute(ShellCommand(commandLine = preflightCmd, environment = baseEnvironment))
 
             // 3. 执行安装配方脚本
-            emit(InstallEvent.Progress(toolId, "正在执行 ${manifest.name} 安装配方...", 0.55f, InstallEvent.Phase.RUNNING_INSTALLER))
+            emit(InstallEvent.Progress(toolId, "Đang thực thi công thức cài đặt ${manifest.name}...", 0.55f, InstallEvent.Phase.RUNNING_INSTALLER))
             val script = manifest.installScript?.trimIndent()
-                ?: error("工具 ${manifest.id} 未配置有效安装步骤 (installSteps)")
+                ?: error("Công cụ ${manifest.id} chưa cấu hình bước cài đặt hợp lệ (installSteps)")
 
             var result = executeAndReport(
                 linuxRuntime.execute(
@@ -129,7 +129,7 @@ class GenericRecipeInstaller(
                 result.stderr.contains("Could not get lock") ||
                 result.stderr.contains("is locked")
             )) {
-                emit(InstallEvent.Progress(toolId, "检测到 dpkg 事务损坏或残留锁，正在自愈修复并重试...", 0.60f, InstallEvent.Phase.RUNNING_INSTALLER))
+                emit(InstallEvent.Progress(toolId, "Phát hiện giao dịch dpkg hỏng hoặc còn khóa tàn dư, đang tự chữa và thử lại...", 0.60f, InstallEvent.Phase.RUNNING_INSTALLER))
                 val fixCmd = "rm -rf /var/lib/dpkg/updates/* /var/lib/dpkg/lock* /var/lib/apt/lists/lock /var/cache/apt/archives/lock 2>/dev/null || true; DEBIAN_FRONTEND=noninteractive dpkg --configure -a; DEBIAN_FRONTEND=noninteractive apt-get --fix-broken install -y 2>/dev/null || true"
                 executeAndReport(linuxRuntime.execute(ShellCommand(commandLine = fixCmd, environment = baseEnvironment, timeoutMs = 120_000L)))
                 result = executeAndReport(
@@ -144,11 +144,11 @@ class GenericRecipeInstaller(
             }
 
             if (!result.isSuccess) {
-                error(result.stderr.ifBlank { result.stdout }.ifBlank { "安装配方执行失败" })
+                error(result.stderr.ifBlank { result.stdout }.ifBlank { "Thực thi công thức cài đặt thất bại" })
             }
 
             // 4. 创建命令入口软链接
-            emit(InstallEvent.Progress(toolId, "正在生成命令入口链接...", 0.80f, InstallEvent.Phase.VERIFYING_INSTALLATION))
+            emit(InstallEvent.Progress(toolId, "Đang tạo liên kết điểm vào lệnh...", 0.80f, InstallEvent.Phase.VERIFYING_INSTALLATION))
             val links = if (manifest.commandLinks.isNotEmpty()) {
                 manifest.commandLinks
             } else {
@@ -165,7 +165,7 @@ class GenericRecipeInstaller(
             }
 
             // 5. 验证安装
-            emit(InstallEvent.Progress(toolId, "正在验证安装结果...", 0.90f, InstallEvent.Phase.VERIFYING_INSTALLATION))
+            emit(InstallEvent.Progress(toolId, "Đang xác minh kết quả cài đặt...", 0.90f, InstallEvent.Phase.VERIFYING_INSTALLATION))
             val verifyCmd = manifest.verifyCommand ?: "${links.first()} --version"
             val versionResult = executeAndReport(
                 linuxRuntime.execute(ShellCommand(commandLine = verifyCmd, environment = baseEnvironment, timeoutMs = 60_000L)),
@@ -177,7 +177,7 @@ class GenericRecipeInstaller(
                 // 否则 poisoned 状态会被标记为 INSTALLED 并反复触发重装。
                 if (versionResult.exitCode == VERIFY_TIMEOUT_EXIT_CODE) {
                     error(
-                        "验证命令超时挂起 ($verifyCmd)，疑似安装产物损坏（如启动器 exec 回环），已回滚整个事务",
+                        "Lệnh xác minh quá thời gian và treo ($verifyCmd), nghi ngờ sản phẩm cài đặt bị hỏng (như exec vòng lặp của launcher), đã rollback toàn bộ giao dịch",
                     )
                 }
                 // 兜底检查：验证命令以真实退出码快速失败（如工具不认识 --version
@@ -188,13 +188,13 @@ class GenericRecipeInstaller(
                     checkRes.isSuccess
                 }
                 if (!anyBinaryExists) {
-                    error("验证命令失败 ($verifyCmd): ${versionResult.stderr.ifBlank { versionResult.stdout }}")
+                    error("Lệnh xác minh thất bại ($verifyCmd): ${versionResult.stderr.ifBlank { versionResult.stdout }}")
                 }
             }
 
             // 6. 安装验证成功后自动清理沙箱内的重量级安装包暂存 (/opt/tianxuan/imports/<toolId>/archives)，即时释放 1~2GB 存储
             if (manifest.source == "LOCAL") {
-                emit(InstallEvent.Progress(toolId, "正在清理安装包暂存...", 0.95f, InstallEvent.Phase.VERIFYING_INSTALLATION))
+                emit(InstallEvent.Progress(toolId, "Đang dọn khu lưu tạm gói cài...", 0.95f, InstallEvent.Phase.VERIFYING_INSTALLATION))
                 linuxRuntime.execute(ShellCommand("rm -rf /opt/tianxuan/imports/$toolId/archives 2>/dev/null || true", environment = baseEnvironment))
             }
 
@@ -257,13 +257,13 @@ class GenericRecipeInstaller(
 
         return ToolActionResult(
             success = directoryResult.isSuccess,
-            message = if (directoryResult.isSuccess) "卸载完成" else directoryResult.stderr.ifBlank { "卸载失败" },
+            message = if (directoryResult.isSuccess) "Gỡ cài đặt hoàn tất" else directoryResult.stderr.ifBlank { "Gỡ cài thất bại" },
         )
     }
 
     private suspend fun acquire(name: RuntimeName, toolId: String, constraint: String? = null) {
         val result = dependencyManager.acquire(RuntimeRequirement(name, constraint), toolId)
-        if (result.isFailure) error(result.errorOrNull()?.message ?: "依赖安装失败：$name")
+        if (result.isFailure) error(result.errorOrNull()?.message ?: "Cài đặt phụ thuộc thất bại：$name")
     }
 
     private suspend fun execute(command: String) = linuxRuntime.execute(
@@ -355,7 +355,7 @@ class GenericRecipeInstaller(
     ): CommandResult = executeAndReport(execute(command))
 
     private fun checkReady() = check(linuxRuntime.state.value is top.wkbin.tianxuan.core.model.RuntimeState.Ready) {
-        "Linux Runtime 未就绪，请先初始化 Linux"
+        "Linux Runtime chưa sẵn sàng, hãy khởi tạo Linux trước"
     }
 
     private companion object {

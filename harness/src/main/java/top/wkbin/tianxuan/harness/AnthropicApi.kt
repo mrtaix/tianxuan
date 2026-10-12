@@ -265,7 +265,7 @@ internal class AnthropicApi(
         } catch (io: IOException) {
             if (firstEventState.get() == ProviderClient.FIRST_EVENT_TIMED_OUT) {
                 throw SocketTimeoutException(
-                    "等待模型首个响应超过 ${firstEventTimeoutMs / 1000}s",
+                    "Chờ phản hồi đầu tiên của model quá ${firstEventTimeoutMs / 1000}s",
                 ).apply { initCause(io) }
             }
             throw io
@@ -327,7 +327,7 @@ internal class AnthropicApi(
                                         url.startsWith("http://", ignoreCase = true)
                                     ) {
                                         // Messages API 支持 url 类型 source：https 图片直接透传，
-                                        // 不再无声丢弃（本地无图可发时用户会以为模型"看不见"图）
+                                        // 不再无声丢弃（本地无图可发时用户会以为模型"Không thấy"图）
                                         add(
                                             buildJsonObject {
                                                 put("type", "image")
@@ -435,7 +435,7 @@ internal class AnthropicApi(
             put("stream", stream)
             if (!model.pureChatMode && model.toolCallMode == ToolCallMode.JSON_TEXT && dynamicTools.isNotEmpty()) {
                 // JSON 文本模式：工具定义写进 system，模型用文本输出工具调用
-                systemPrompt.append("\n\n## 可用工具 JSON 定义（必须严格按此 name 与参数输出）\n")
+                systemPrompt.append("\n\n## Định nghĩa JSON công cụ khả dụng (phải xuất đúng name và tham số này)\n")
                     .append(ProviderClient.buildToolsTextDescription(dynamicTools))
             }
             if (!model.pureChatMode && systemPrompt.isNotEmpty()) {
@@ -617,7 +617,7 @@ internal class AnthropicApi(
     /** 非 429/5xx 的 HTTP 错误：413 与上下文超限文案走可自愈类型，供引擎紧急压缩后重试。 */
     private fun httpError(code: Int, body: String): Exception {
         val detail = extractError(body)
-        val message = "Claude 请求失败 HTTP $code：$detail"
+        val message = "Yêu cầu Claude thất bại HTTP $code: $detail"
         return when (ProviderClient.contextOverflowException(code, body)) {
             is LlmContextOverflowException -> LlmContextOverflowException(message)
             is LlmInvalidOutputTokensException -> LlmInvalidOutputTokensException(message)

@@ -157,11 +157,11 @@ class ProcessShellExecutor(
             buildString {
                 append(kept.toString(Charsets.UTF_8.name()))
                 if (totalBytes > kept.size()) {
-                    append("\n\n[进程输出已截断：共 ")
+                    append("\n\n[Đầu ra tiến trình đã bị cắt bớt：tổng cộng ")
                     append(totalBytes)
-                    append(" 字节，仅保留前 ")
+                    append(" byte, chỉ giữ phần đầu ")
                     append(kept.size())
-                    append(" 字节]")
+                    append(" byte]")
                 }
             }
         }

@@ -174,7 +174,7 @@ class CompactionManager(
             } catch (throwable: Throwable) {
                 Log.w(
                     "ContextCompaction",
-                    "LLM 结构化摘要失败，回退机械摘要：${throwable.message}",
+                    "LLM tóm tắt có cấu trúc thất bại, lùi về tóm tắt cơ học: ${throwable.message}",
                 )
                 null
             }
@@ -196,7 +196,7 @@ class CompactionManager(
                 .mergedWith(FileOperations.extractFrom(collapsedForSummary)),
         )
 
-        // "重读-对账-落库"在 laneLock 内原子完成：调用方传入的 context 是锁外快照，若期间有
+        // "Đọc lại-đối soát-vào kho"在 laneLock 内原子完成：调用方传入的 context 是锁外快照，若期间有
         // 消息落库而直接折叠旧快照，新消息的 sequence 会小于压缩 entry、被投影的 afterMessages
         // 过滤，从 provider 视角永久丢失。重读必须走 project() 的投影口径（而非裸 branch），
         // 否则已压缩过的会话前缀对不上，增量压缩会被误判为分支漂移而跳过。
@@ -247,11 +247,11 @@ class CompactionManager(
             _compactionRevision.update { it + 1 }
             Log.d(
                 "ContextCompaction",
-                "压缩会话 $sessionId：折叠 ${collapsed.size} 条（累计 ${payload.cumulativeCompactedMessageCount}），" +
-                    "保留 ${retained.size} 条，摘要 ${summary.length} 字符" +
+                "Nén phiên $sessionId: gộp ${collapsed.size} mục (tổng cộng ${payload.cumulativeCompactedMessageCount}), " +
+                    "Giữ ${retained.size} mục, tóm tắt ${summary.length} ký tự" +
                     "（${if (llmSummary != null) "LLM 结构化" else "机械回退"}），" +
-                    "折叠分支摘要 ${context.branchSummaries.size} 份，" +
-                    "压缩前估算 ${payload.estimatedTokensBefore} tokens",
+                    "Tóm tắt nhánh đã gộp ${context.branchSummaries.size} bản, " +
+                    "Ước tính trước khi nén ${payload.estimatedTokensBefore} tokens",
             )
             // recallBlocks 从锁内重投影透传：保留窗口里的历史用户轮仍携带各自的召回后缀
             CompactedContext(summary, retained, recallBlocks = fresh.recallBlocks)
@@ -307,7 +307,7 @@ class CompactionManager(
         if (old.isBlank()) return newest.takeLast(MAX_SUMMARY_CHARS)
         if (newest.isBlank()) return old.take(MAX_SUMMARY_CHARS)
 
-        val marker = "\n\n[较早摘要中段已省略]\n\n"
+        val marker = "\n\n[Phần giữa của tóm tắt sớm hơn đã được bỏ qua]\n\n"
         val newestBudget = minOf(newest.length, MAX_SUMMARY_CHARS / 2)
         val oldBudget = (MAX_SUMMARY_CHARS - marker.length - newestBudget).coerceAtLeast(0)
         val oldHead = old.take((oldBudget + 1) / 2)
@@ -329,12 +329,12 @@ class CompactionManager(
     ): CompressAnchorResult {
         val normalizedMode = mode.trim().lowercase()
         if (normalizedMode !in setOf("before", "after")) {
-            return CompressAnchorResult.Invalid("mode 必须是 before（压缩锚点轮之前）或 after（压缩除当前轮外的全部已完成历史）")
+            return CompressAnchorResult.Invalid("mode phải là before (nén trước lượt mốc neo) hoặc after (nén toàn bộ lịch sử đã hoàn thành ngoại trừ lượt hiện tại)")
         }
         val trimmedAnchor = anchor.trim()
         if (trimmedAnchor.length < MIN_COMPRESS_ANCHOR_CHARS) {
             return CompressAnchorResult.Invalid(
-                "anchor 必须原样摘自某条用户消息且足够独特（至少 $MIN_COMPRESS_ANCHOR_CHARS 字符），用于唯一定位压缩边界",
+                "anchor phải trích nguyên văn từ một tin nhắn người dùng và đủ độc đáo (ít nhất $MIN_COMPRESS_ANCHOR_CHARS ký tự), dùng để định vị duy nhất ranh giới nén",
             )
         }
         val anchorIndexes = messages.withIndex().mapNotNull { (index, message) ->
@@ -342,13 +342,13 @@ class CompactionManager(
         }
         if (anchorIndexes.isEmpty()) {
             return CompressAnchorResult.Invalid(
-                "锚点在当前上下文中没有匹配到任何用户消息。" +
-                    "若该轮已被折叠进既有摘要则无法再以它为锚点，请改用更近的轮次；否则请原样复制消息中的一段文字重试",
+                "Mốc neo không khớp với bất kỳ tin nhắn người dùng nào trong ngữ cảnh hiện tại." +
+                    "Nếu lượt đó đã bị gộp vào tóm tắt hiện có thì không thể dùng nó làm mốc neo, hãy đổi sang lượt gần hơn; nếu không hãy sao chép nguyên văn một đoạn trong tin nhắn để thử lại",
             )
         }
         if (anchorIndexes.size > 1) {
             return CompressAnchorResult.Invalid(
-                "锚点匹配到 ${anchorIndexes.size} 条用户消息，请提供更长、更独特的摘录以唯一定位",
+                "Anchor khớp ${anchorIndexes.size} tin nhắn người dùng, hãy cung cấp đoạn trích dài hơn, độc đáo hơn để định vị duy nhất",
             )
         }
         val keepFromIndex = when (normalizedMode) {
@@ -356,10 +356,10 @@ class CompactionManager(
             else -> messages.indexOfLast { it is UserMessage }
         }
         if (keepFromIndex < 1) {
-            return CompressAnchorResult.Invalid("锚点之前没有可压缩的内容（它已是当前上下文的第一条消息）")
+            return CompressAnchorResult.Invalid("Trước anchor không có nội dung nén được (nó đã là tin nhắn đầu tiên của context hiện tại)")
         }
         if (keepFromIndex > messages.size) {
-            return CompressAnchorResult.Invalid("压缩边界越界，请重试")
+            return CompressAnchorResult.Invalid("Nén vượt giới hạn, hãy thử lại")
         }
         return CompressAnchorResult.Resolved(keepFromIndex)
     }

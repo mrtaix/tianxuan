@@ -192,7 +192,7 @@ class ToolDetailViewModel(
                 _gatewayRunning.value = toolManager.isGatewayRunning(currentId)
             } catch (e: Exception) {
                 logger.w("Failed to start gateway for $currentId: ${e.message}", e)
-                _error.value = "网关启动失败：${e.message}"
+                _error.value = "Khởi động gateway thất bại: ${e.message}"
             } finally {
                 _gatewayOperating.value = false
             }
@@ -211,7 +211,7 @@ class ToolDetailViewModel(
                 _gatewayRunning.value = toolManager.isGatewayRunning(currentId)
             } catch (e: Exception) {
                 logger.w("Failed to stop gateway for $currentId: ${e.message}", e)
-                _error.value = "网关停止失败：${e.message}"
+                _error.value = "Dừng gateway thất bại: ${e.message}"
             } finally {
                 _gatewayOperating.value = false
             }
@@ -228,7 +228,7 @@ class ToolDetailViewModel(
                 logger.w("Failed to set auto-start for $currentId: ${e.message}", e)
                 // 保存失败必须上抛 UI，避免 Switch 显示“假成功”
                 withContext(Dispatchers.Main.immediate) {
-                    _error.value = "自启动设置保存失败，请稍后重试"
+                    _error.value = "Lưu cài đặt tự khởi động thất bại, vui lòng thử lại sau"
                 }
             }
         }
@@ -254,7 +254,7 @@ class ToolDetailViewModel(
                 }
             } catch (e: Exception) {
                 logger.w("Failed to generate token for $currentId: ${e.message}", e)
-                _error.value = "重新生成 Token 失败：${e.message}"
+                _error.value = "Tạo lại Token thất bại: ${e.message}"
             }
         }
     }
@@ -299,7 +299,7 @@ class ToolDetailViewModel(
                 }
             } catch (e: Exception) {
                 logger.w("Failed to apply model ${model.name} for $currentId: ${e.message}", e)
-                _error.value = "应用模型失败：${e.message}"
+                _error.value = "Áp dụng model thất bại: ${e.message}"
             } finally {
                 _applyingModel.value = false
             }
@@ -325,7 +325,7 @@ class ToolDetailViewModel(
                 toolManager.verify(currentId)
             } catch (e: Exception) {
                 logger.w("Tool verification failed: $currentId, ${e.message}", e)
-                _error.value = "自检失败：${e.message}"
+                _error.value = "Tự kiểm tra thất bại: ${e.message}"
             }
         }
     }
@@ -338,7 +338,7 @@ class ToolDetailViewModel(
                 toolManager.uninstall(currentId)
             } catch (e: Exception) {
                 logger.w("Tool uninstall failed: $currentId, ${e.message}", e)
-                _error.value = "卸载失败：${e.message}"
+                _error.value = "Gỡ cài đặt thất bại: ${e.message}"
             }
         }
     }

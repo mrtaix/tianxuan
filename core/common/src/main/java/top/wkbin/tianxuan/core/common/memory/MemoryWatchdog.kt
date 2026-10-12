@@ -10,12 +10,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * 内存水位哨兵：低频采样 Java 堆水位，越过高水位线时执行"可再生数据"释放钩子并打点留痕
+ * 内存水位哨兵：低频采样 Java 堆水位，越过高水位线时执行"Dữ liệu có thể tái tạo"释放钩子并打点留痕
  * ——目标是把慢性内存增长拦截在 OOM 闪退之前，而不是在崩溃报告里猜根因。
  *
  * 设计要点：
  * - 纯 Kotlin 无 Android 依赖；释放什么由装配层注册（视频等待缓冲、图片内存缓存等），
- *   钩子必须是"丢了能自动重建"的可再生数据，不得承载有序状态；
+ *   钩子必须是"Mất thì có thể tự tái tạo"的可再生数据，不得承载有序状态；
  * - 迟滞 + 冷却：≥[WatermarkPolicy.fireRatio] 触发并 disarm，回落到 rearmRatio 以下
  *   才重新武装，且两次触发间隔不短于 cooldownMs，避免 GC 抖动导致打点刷屏；
  * - 触发前后各读一次水位，释放效果写进日志可审计（log 回调由装配层接到 AppLogger 等）。
@@ -87,16 +87,16 @@ class MemoryWatchdog(
     internal fun fire(maxBytes: Long, usedBytes: Long, ratio: Double) {
         val names = releasers.joinToString { it.name }
         log(
-            "内存水位哨兵：堆 ${percent(ratio)}（${mb(usedBytes)}/${mb(maxBytes)}MB）越过高水位，" +
-                "执行释放钩子 [${names.ifBlank { "无" }}]",
+            "Lính canh mức bộ nhớ: heap ${percent(ratio)} (${mb(usedBytes)}/${mb(maxBytes)}MB) vượt mức cao," +
+                "Thực thi hook giải phóng [${names.ifBlank { "无" }}]",
         )
         releasers.forEach { releaser ->
             runCatching { releaser.action() }
-                .onFailure { log("内存水位哨兵：释放钩子 ${releaser.name} 失败：${it.message.orEmpty()}") }
+                .onFailure { log("Lính canh mức bộ nhớ: giải phóng hook ${releaser.name} thất bại: ${it.message.orEmpty()}") }
         }
         val runtime = Runtime.getRuntime()
         val afterBytes = runtime.totalMemory() - runtime.freeMemory()
-        log("内存水位哨兵：释放后堆 ${percent(afterBytes.toDouble() / maxBytes)}（${mb(afterBytes)}MB）")
+        log("Lính canh mức bộ nhớ: heap sau khi giải phóng ${percent(afterBytes.toDouble() / maxBytes)} (${mb(afterBytes)}MB)")
     }
 
     /**

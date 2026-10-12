@@ -65,7 +65,7 @@ class GitViewModel(
                 workspaceManager.listProjects().firstOrNull { it.name == projectName }
             }.getOrNull()
             if (project == null) {
-                _uiState.update { it.copy(loading = false, error = "未找到工作区项目：$projectName") }
+                _uiState.update { it.copy(loading = false, error = "Không tìm thấy dự án vùng làm việc: $projectName") }
                 return@launch
             }
             val isRepo = gitManager.isRepository(project.path)
@@ -264,8 +264,8 @@ class GitViewModel(
             val commitSummary = (commitResult as GitOpResult.Ok).message
             handleOpResult(
                 when (pushResult) {
-                    is GitOpResult.Ok -> GitOpResult.Ok("$commitSummary，已推送")
-                    is GitOpResult.Failed -> GitOpResult.Failed("$commitSummary，但推送失败：${pushResult.message}")
+                    is GitOpResult.Ok -> GitOpResult.Ok("$commitSummary, đã push")
+                    is GitOpResult.Failed -> GitOpResult.Failed("$commitSummary, nhưng push thất bại: ${pushResult.message}")
                 },
             )
         }
@@ -382,13 +382,13 @@ class GitViewModel(
                     ),
                 )
                 val text = result.content?.trim().orEmpty()
-                check(text.isNotBlank()) { "模型返回了空内容" }
+                check(text.isNotBlank()) { "Model trả về nội dung rỗng" }
                 text
             }.onSuccess { message ->
                 _uiState.update { it.copy(operation = null, commitMessageDraft = message) }
             }.onFailure { failure ->
                 _uiState.update {
-                    it.copy(operation = null, error = "AI 生成失败：${failure.message ?: "请检查模型配置"}")
+                    it.copy(operation = null, error = "Tạo AI thất bại: ${failure.message ?: "请检查模型配置"}")
                 }
             }
         }
@@ -408,14 +408,14 @@ class GitViewModel(
                 .onSuccess {
                     _uiState.update { state ->
                         state.copy(
-                            notice = "已保存 $host 的凭据",
+                            notice = "Đã lưu thông tin xác thực của $host",
                             credentialHosts = (state.credentialHosts + host.trim().lowercase()).distinct().sorted(),
                         )
                     }
                     onDone()
                 }
                 .onFailure { failure ->
-                    _uiState.update { it.copy(error = "凭据保存失败：${failure.message}") }
+                    _uiState.update { it.copy(error = "Lưu thông tin xác thực thất bại: ${failure.message}") }
                 }
         }
     }

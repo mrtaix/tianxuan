@@ -45,7 +45,7 @@ class BrowserRegistryImpl(override val eventBus: BrowserEventBus) : BrowserRegis
                     displayName = "Chrome Custom Tabs",
                     healthy = false,
                     capabilities = setOf(BrowserCapability.OPEN),
-                    notes = "v1.1+ 计划项；当前不可用。"
+                    notes = "Mục kế hoạch v1.1+; hiện không khả dụng."
                 )
             )
             add(
@@ -54,7 +54,7 @@ class BrowserRegistryImpl(override val eventBus: BrowserEventBus) : BrowserRegis
                     displayName = "Remote Chromium DevTools",
                     healthy = false,
                     capabilities = emptySet(),
-                    notes = "v1.1+ 计划项；当前不可用。"
+                    notes = "Mục kế hoạch v1.1+; hiện không khả dụng."
                 )
             )
         }
@@ -74,7 +74,7 @@ class BrowserRegistryImpl(override val eventBus: BrowserEventBus) : BrowserRegis
         val selection = BrowserSelectionPolicy.decide(
             requested = null, urlHint = url, prefs = BrowserPreferences.DEFAULT, families = families
         )
-        return get(selection.family) ?: inAppEngine.firstOrNull() ?: error("in-app engine 未注册")
+        return get(selection.family) ?: inAppEngine.firstOrNull() ?: error("in-app engine chưa đăng ký")
     }
 
     override fun getDefault(prefs: BrowserPreferences): BrowserEngine {
@@ -82,7 +82,7 @@ class BrowserRegistryImpl(override val eventBus: BrowserEventBus) : BrowserRegis
         val selection = BrowserSelectionPolicy.decide(
             requested = null, urlHint = null, prefs = prefs, families = families
         )
-        return get(selection.family) ?: inAppEngine.firstOrNull() ?: error("in-app engine 未注册")
+        return get(selection.family) ?: inAppEngine.firstOrNull() ?: error("in-app engine chưa đăng ký")
     }
 
     override suspend fun verify(family: BrowserFamily): Boolean = when (family) {

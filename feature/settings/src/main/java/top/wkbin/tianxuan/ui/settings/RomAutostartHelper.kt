@@ -36,7 +36,7 @@ object RomAutostartHelper {
         val intents = buildIntents(context, brand)
         for (intent in intents) {
             if (tryStart(context, intent)) {
-                Log.i(TAG, "成功跳转到 ${brand.label} 自启动设置页: ${intent.component}")
+                Log.i(TAG, "Chuyển thành công tới trang cài đặt tự khởi động ${brand.label}: ${intent.component}")
                 return true
             }
         }
@@ -111,17 +111,17 @@ object RomAutostartHelper {
         context.startActivity(intent)
         true
     }.getOrElse {
-        Log.w(TAG, "跳转失败: ${intent.component}", it)
+        Log.w(TAG, "Nhảy chuyển thất bại: ${intent.component}", it)
         false
     }
 
     private enum class RomBrand(val label: String) {
-        XIAOMI("小米 / Redmi / POCO"),
-        HUAWEI("华为 / 荣耀"),
-        OPPO("OPPO / realme / 一加"),
+        XIAOMI("Xiaomi / Redmi / POCO"),
+        HUAWEI("Huawei / Honor"),
+        OPPO("OPPO / realme / OnePlus"),
         VIVO("vivo / iQOO"),
-        MEIZU("魅族"),
-        SAMSUNG("三星"),
-        OTHER("其他"),
+        MEIZU("Meizu"),
+        SAMSUNG("Samsung"),
+        OTHER("Khác"),
     }
 }

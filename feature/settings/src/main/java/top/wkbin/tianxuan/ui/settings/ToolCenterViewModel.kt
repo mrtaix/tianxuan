@@ -75,7 +75,7 @@ class ToolCenterViewModel(
                 toolManager.syncRegistry()
             } catch (e: Exception) {
                 logger.w("Failed to sync tool registry: ${e.message}", e)
-                _operationError.value = "刷新插件目录失败，请检查网络后重试"
+                _operationError.value = "Làm mới thư mục plugin thất bại, hãy kiểm tra mạng rồi thử lại"
             } finally {
                 _isSyncing.value = false
             }
@@ -87,7 +87,7 @@ class ToolCenterViewModel(
             ?.substringAfterLast('/')
             ?.substringAfterLast(':')
             ?.takeIf { it.isNotBlank() }
-            ?: "本地插件包"
+            ?: "Gói plugin cục bộ"
         toolManager.startLocalPluginImport(uri, fileName)
     }
 
@@ -123,7 +123,7 @@ class ToolCenterViewModel(
                 toolManager.uninstall(toolId)
             } catch (e: Exception) {
                 logger.w("Tool uninstall failed: $toolId, ${e.message}", e)
-                _operationError.value = "卸载「$toolId」失败，请稍后重试；可查看日志了解详情"
+                _operationError.value = "Gỡ cài 「$toolId」 thất bại, vui lòng thử lại sau; có thể xem nhật ký để biết chi tiết"
             }
         }
     }

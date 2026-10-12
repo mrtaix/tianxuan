@@ -57,8 +57,8 @@ class HarnessToolRoundRunner(
                 args = buildJsonObject {},
                 reasoning = reasoning,
                 rawToolName = spec.name.trim(),
-                output = "本回合工具调用数量（${allCalls.size}）超过单轮上限（$maxToolsPerRound），已跳过本次多余的 $dropped 个调用。" +
-                    "请拆分任务、分步调用工具，避免一次性发起过多工具请求。",
+                output = "Số lượng gọi công cụ trong lượt này (${allCalls.size}) vượt giới hạn trên mỗi lượt ($maxToolsPerRound), đã bỏ qua $dropped lời gọi dư thừa lần này." +
+                    "Hãy chia nhỏ nhiệm vụ, gọi công cụ theo từng bước, tránh phát quá nhiều yêu cầu công cụ một lúc.",
             )
         }
         return allCalls.take(maxToolsPerRound)
@@ -125,7 +125,7 @@ class HarnessToolRoundRunner(
             val tool = HarnessApiMapper.toolByName(spec.name)
             val toolNameTrimmed = spec.name.trim()
             // 工具名校验必须在参数解析之前：名字未知时（哪怕参数为空/非法）
-            // 也要第一时间回写真实工具清单，否则模型会在"解析失败"上盲目重试。
+            // 也要第一时间回写真实工具清单，否则模型会在"Phân giải thất bại"上盲目重试。
             if (toolNameTrimmed.lowercase() !in KNOWN_TOOL_NAMES && !toolNameTrimmed.startsWith("mcp__")) {
                 appendToolCallAndResult(
                     sessId = sessId,
@@ -150,7 +150,7 @@ class HarnessToolRoundRunner(
                     args = buildJsonObject {},
                     reasoning = reasoning,
                     rawToolName = toolNameTrimmed,
-                    output = "工具参数 JSON 解析失败（${friendly(parseError)}）。请重新发起完整的工具调用，参数必须是合法的 JSON 对象。",
+                    output = "Phân giải JSON tham số công cụ thất bại (${friendly(parseError)}). Vui lòng phát lại lời gọi công cụ đầy đủ, tham số phải là đối tượng JSON hợp lệ.",
                 )
                 loopDetector.recordSettled(toolNameTrimmed, buildJsonObject {}, success = false)
                 metrics.toolCallRecorded(failed = true)
@@ -169,7 +169,7 @@ class HarnessToolRoundRunner(
             if (schemaProblems.isNotEmpty()) {
                 // 常见错配定向提示：模型想把 url 交给通用 shell 时，直接指向正确的专用工具
                 val urlHint = if (args.containsKey("url") && tool != HarnessTool.DOWNLOAD) {
-                    "提示：url 是 download 工具的参数，下载网页/图片/文件请调用 download(url, destination)。"
+                    "Gợi ý: url là tham số của công cụ download, để tải trang web/ảnh/tệp hãy gọi download(url, destination)."
                 } else ""
                 appendToolCallAndResult(
                     sessId = sessId,
@@ -178,8 +178,8 @@ class HarnessToolRoundRunner(
                     args = args,
                     reasoning = reasoning,
                     rawToolName = toolNameTrimmed,
-                    output = "工具参数校验未通过：${schemaProblems.joinToString("；")}。" +
-                        "请按工具定义修正参数后重新调用，必填字段不可省略。$urlHint",
+                    output = "Kiểm tra tham số công cụ không qua: ${schemaProblems.joinToString("；")}。" +
+                        "Hãy sửa tham số theo định nghĩa công cụ rồi gọi lại, các trường bắt buộc không được lược bỏ. $urlHint",
                 )
                 loopDetector.recordSettled(toolNameTrimmed, args, success = false)
                 metrics.toolCallRecorded(failed = true)
@@ -260,7 +260,7 @@ class HarnessToolRoundRunner(
                     createdAt = now(),
                     toolCallId = toolCall.id,
                     success = false,
-                    output = "工具执行异常：${friendly(throwable)}",
+                    output = "Thực thi công cụ lỗi: ${friendly(throwable)}",
                 )
             }
             val duration = now() - toolStart
@@ -270,9 +270,9 @@ class HarnessToolRoundRunner(
                 if (outcome.awaitingApproval) {
                     metrics.approvalRequested()
                     operationCoordinator.waitingApproval(operationId)
-                    stateMirrors.setStatus(sessId, "等待用户批准")
+                    stateMirrors.setStatus(sessId, "Chờ người dùng phê chuẩn")
                     // 触发审批暂停：中止本回合尚未开始的调用，在途调用自然完成后统一暂停，
-                    // 与原串行实现"中途暂停、后续调用不执行"的语义一致。
+                    // 与原串行实现"Tạm dừng giữa chừng, các lần gọi sau không thực thi"的语义一致。
                     pause.abort()
                     approvalPauseRequested.set(true)
                 }
@@ -297,7 +297,7 @@ class HarnessToolRoundRunner(
         val nativeTools = KNOWN_TOOL_NAMES.sorted()
         val mcpTools = model.dynamicMcpTools
         val mcpList = if (mcpTools.isEmpty()) {
-            "（当前没有已启用的 MCP 工具）"
+            "(Hiện không có công cụ MCP nào được bật)"
         } else {
             mcpTools.joinToString("；") { tool ->
                 "${McpToolApiName.encode(tool)}（${tool.serverName}·${tool.name}）"
@@ -312,10 +312,10 @@ class HarnessToolRoundRunner(
             .minByOrNull { it.second }
             ?.first
         return buildString {
-            append("未知工具：$called。工具名不可编造或猜测，必须从下列清单中原样选取。")
-            append("原生工具：${nativeTools.joinToString(" / ")}。")
-            append("已启用 MCP 工具：$mcpList。")
-            nearest?.let { append("最接近的候选是 $it，是否想调用它？") }
+            append("Công cụ không xác định: $called Tên công cụ không được bịa hoặc đoán, phải chọn nguyên văn từ danh sách dưới đây.")
+            append("Công cụ native: ${nativeTools.joinToString(" / ")}。")
+            append("Đã bật công cụ MCP: $mcpList.")
+            nearest?.let { append("Ứng viên gần nhất là $it, bạn có muốn gọi nó không?") }
         }
     }
 
@@ -356,7 +356,7 @@ class HarnessToolRoundRunner(
         internal fun parseArguments(json: Json, raw: String): JsonObject =
             if (raw.isBlank()) buildJsonObject {} else {
                 json.parseToJsonElement(raw) as? JsonObject
-                    ?: throw IllegalArgumentException("参数不是 JSON 对象")
+                    ?: throw IllegalArgumentException("Tham số không phải đối tượng JSON")
             }
 
         /**

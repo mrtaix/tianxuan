@@ -25,32 +25,32 @@ enum class Enclosure(
 ) {
     /** 紫微垣：天帝居所，众星环拱之中枢 —— 核心记忆。 */
     ZI_WEI(
-        label = "紫微垣",
-        gloss = "天帝居所，众星环拱之中枢",
-        memoryLayer = "核心记忆",
-        retention = "永久驻留，不压缩、不外置",
-        writePolicy = "身份设定、长期偏好、用户画像、不可动摇的规则",
-        readPolicy = "每轮必读，常驻系统提示词",
+        label = "Tử Vi Viên",
+        gloss = "Nơi ở của Thiên Đế, trung tâm được các vì sao vây quanh",
+        memoryLayer = "Ký ức cốt lõi",
+        retention = "Thường trú vĩnh viễn, không nén, không đưa ra ngoài",
+        writePolicy = "Thiết lập danh tính, sở thích dài hạn, chân dung người dùng, quy tắc bất di bất dịch",
+        readPolicy = "Phải đọc mỗi lượt, prompt hệ thống thường trú",
     ),
 
     /** 太微垣：朝廷政务，主施行 —— 工作记忆。 */
     TAI_WEI(
-        label = "太微垣",
-        gloss = "朝廷政务，主施行",
-        memoryLayer = "工作记忆",
-        retention = "会话结束可归档，超期转入紫微垣或天市垣",
-        writePolicy = "当前会话、执行计划、任务检查点、中间产物",
-        readPolicy = "任务进行中按需读取，会话切换时归档",
+        label = "Thái Vi Viên",
+        gloss = "Chính vụ triều đình, chủ thi hành",
+        memoryLayer = "Bộ nhớ công việc",
+        retention = "Phiên kết thúc có thể lưu trữ, quá hạn chuyển vào Tử Vi Viên hoặc Thiên Thị Viên",
+        writePolicy = "Phiên hiện tại, kế hoạch thực thi, checkpoint nhiệm vụ, sản phẩm trung gian",
+        readPolicy = "Đọc theo nhu cầu khi nhiệm vụ đang chạy, lưu trữ khi chuyển hội thoại",
     ),
 
     /** 天市垣：天上街市，主交易流通 —— 检索记忆。 */
     TIAN_SHI(
-        label = "天市垣",
-        gloss = "天上街市，主交易流通",
-        memoryLayer = "检索记忆",
-        retention = "按需进出，命中即用、不命中不驻留",
-        writePolicy = "外部知识、历史归档、可外置的语料",
-        readPolicy = "语义召回后注入，用毕即退",
+        label = "Thiên Thị Viên",
+        gloss = "Thiên thượng nhai thị, chủ lưu thông giao dịch",
+        memoryLayer = "Truy xuất bộ nhớ",
+        retention = "Vào ra theo nhu cầu, trúng thì dùng, không trúng thì không thường trú",
+        writePolicy = "Tri thức ngoài, lưu trữ lịch sử, ngữ liệu có thể để ngoài",
+        readPolicy = "Tiêm vào sau khi truy xuất ngữ nghĩa, dùng xong thì thoát",
     ),
     ;
 

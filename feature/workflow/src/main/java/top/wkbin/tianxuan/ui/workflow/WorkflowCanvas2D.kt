@@ -327,7 +327,7 @@ fun WorkflowCanvas2D(
         )
 
         Text(
-            text = "双指缩放 · 拖动画布 · 双击适配",
+            text = "Zoom hai ngón · kéo canvas · nhấp đúp để vừa khung",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 14.dp, bottom = 10.dp),
@@ -440,7 +440,7 @@ fun WorkflowNodeType.visualTheme(): NodeVisualTheme = when (this) {
     WorkflowNodeType.TRIGGER -> NodeVisualTheme(
         accentColor = Color(0xFF10B981), // 翡翠绿
         icon = RuntimeIconName.Play,
-        tag = "触发器",
+        tag = "Trigger",
     )
     WorkflowNodeType.BASH_COMMAND -> NodeVisualTheme(
         accentColor = Color(0xFF06B6D4), // 终端青
@@ -450,52 +450,52 @@ fun WorkflowNodeType.visualTheme(): NodeVisualTheme = when (this) {
     WorkflowNodeType.PROCESS_SERVICE -> NodeVisualTheme(
         accentColor = Color(0xFF818CF8), // 守护紫
         icon = RuntimeIconName.Settings,
-        tag = "常驻服务",
+        tag = "Dịch vụ thường trú",
     )
     WorkflowNodeType.AGENT_INFERENCE -> NodeVisualTheme(
         accentColor = Color(0xFFA855F7), // 智能紫
         icon = RuntimeIconName.Sparkles,
-        tag = "AI 推理",
+        tag = "Suy luận AI",
     )
     WorkflowNodeType.SUBAGENT_DELEGATE -> NodeVisualTheme(
         accentColor = Color(0xFF3B82F6), // 协同蓝
         icon = RuntimeIconName.Hub,
-        tag = "子智能体",
+        tag = "Agent con",
     )
     WorkflowNodeType.TIANXUAN_BUILD -> NodeVisualTheme(
         accentColor = Color(0xFFF59E0B), // 构建琥珀
         icon = RuntimeIconName.Package,
-        tag = "离线构建",
+        tag = "Xây dựng ngoại tuyến",
     )
     WorkflowNodeType.CONDITION_BRANCH -> NodeVisualTheme(
         accentColor = Color(0xFFEAB308), // 分支黄
         icon = RuntimeIconName.Link,
-        tag = "条件分支",
+        tag = "Nhánh điều kiện",
     )
     WorkflowNodeType.HUMAN_APPROVAL -> NodeVisualTheme(
         accentColor = Color(0xFFF43F5E), // 审批红
         icon = RuntimeIconName.Alert,
-        tag = "人工把关",
+        tag = "Kiểm soát thủ công",
     )
     WorkflowNodeType.HOST_ACTION -> NodeVisualTheme(
         accentColor = Color(0xFF14B8A6), // 宿主青
         icon = RuntimeIconName.Android,
-        tag = "宿主系统",
+        tag = "Hệ thống máy chủ",
     )
     WorkflowNodeType.DELAY -> NodeVisualTheme(
         accentColor = Color(0xFF94A3B8),
         icon = RuntimeIconName.Speed,
-        tag = "延时等待",
+        tag = "Chờ trễ",
     )
     WorkflowNodeType.SET_VARIABLE -> NodeVisualTheme(
         accentColor = Color(0xFF2DD4BF),
         icon = RuntimeIconName.Tune,
-        tag = "设置变量",
+        tag = "Đặt biến",
     )
     WorkflowNodeType.TERMINAL_OUTPUT -> NodeVisualTheme(
         accentColor = Color(0xFF0EA5E9), // 归档天蓝
         icon = RuntimeIconName.Check,
-        tag = "结果输出",
+        tag = "Đầu ra kết quả",
     )
 }
 
@@ -609,7 +609,7 @@ private fun WorkflowNodeCard(
                             modifier = Modifier.weight(1f),
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 4.dp)) {
-                                Text("⚙ 调参", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                                Text("⚙ Tinh chỉnh tham số", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
                             }
                         }
                         Surface(
@@ -619,7 +619,7 @@ private fun WorkflowNodeCard(
                             modifier = Modifier.weight(1f),
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 4.dp)) {
-                                Text("🔗 连线", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                                Text("🔗 Kết nối", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
                             }
                         }
                         Surface(
@@ -629,7 +629,7 @@ private fun WorkflowNodeCard(
                             modifier = Modifier.weight(1f),
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 4.dp)) {
-                                Text("🗑 删除", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, maxLines = 1)
+                                Text("🗑 Xóa", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, maxLines = 1)
                             }
                         }
                     }
@@ -644,7 +644,7 @@ private fun WorkflowNodeCard(
                             WorkflowNodeType.CONDITION_BRANCH -> "🔀 ${node.config["expression"]?.trim() ?: "exitCode == 0"}"
                             WorkflowNodeType.AGENT_INFERENCE -> "✨ ${node.config["prompt"]?.trim()?.take(20) ?: "AI 提示词"}"
                             WorkflowNodeType.TIANXUAN_BUILD -> "📦 ${node.config["projectType"] ?: "android"} · ${node.config["task"] ?: "assemble"}"
-                            WorkflowNodeType.HUMAN_APPROVAL -> "🛡️ 需要人工确认"
+                            WorkflowNodeType.HUMAN_APPROVAL -> "🛡️ Cần xác nhận thủ công"
                             WorkflowNodeType.HOST_ACTION -> "📱 ${node.config["action"] ?: "status"}"
                             WorkflowNodeType.DELAY -> "⏱ ${node.config["seconds"] ?: "1"}s"
                             WorkflowNodeType.SET_VARIABLE -> "🔤 ${node.config["variables"]?.lineSequence()?.firstOrNull() ?: "KEY=value"}"
@@ -689,7 +689,7 @@ private fun ViewportControls(
             RuntimeIconButton(
                 onClick = onZoomOut,
                 modifier = Modifier.size(32.dp),
-                contentDescription = "缩小",
+                contentDescription = "Thu nhỏ",
             ) {
                 Text("−", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
@@ -703,14 +703,14 @@ private fun ViewportControls(
             RuntimeIconButton(
                 onClick = onFit,
                 modifier = Modifier.size(32.dp),
-                contentDescription = "适配视口",
+                contentDescription = "Thích ứng viewport",
             ) {
-                Text("适配", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                Text("Thích ứng", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
             }
             RuntimeIconButton(
                 onClick = onZoomIn,
                 modifier = Modifier.size(32.dp),
-                contentDescription = "放大",
+                contentDescription = "Phóng to",
             ) {
                 RuntimeIcon(RuntimeIconName.Plus, Modifier.size(15.dp))
             }
@@ -796,16 +796,16 @@ internal fun resolveNodePositions(
 }.toMap()
 
 private fun WorkflowNodeType.displayName(): String = when (this) {
-    WorkflowNodeType.TRIGGER -> "触发器"
-    WorkflowNodeType.BASH_COMMAND -> "命令"
-    WorkflowNodeType.PROCESS_SERVICE -> "后台服务"
-    WorkflowNodeType.AGENT_INFERENCE -> "智能体推理"
-    WorkflowNodeType.SUBAGENT_DELEGATE -> "子智能体"
-    WorkflowNodeType.TIANXUAN_BUILD -> "天玄构建"
-    WorkflowNodeType.CONDITION_BRANCH -> "条件分支"
-    WorkflowNodeType.HUMAN_APPROVAL -> "人工审批"
-    WorkflowNodeType.HOST_ACTION -> "宿主动作"
-    WorkflowNodeType.DELAY -> "延时"
-    WorkflowNodeType.SET_VARIABLE -> "变量"
-    WorkflowNodeType.TERMINAL_OUTPUT -> "输出"
+    WorkflowNodeType.TRIGGER -> "Trigger"
+    WorkflowNodeType.BASH_COMMAND -> "Lệnh"
+    WorkflowNodeType.PROCESS_SERVICE -> "Dịch vụ nền"
+    WorkflowNodeType.AGENT_INFERENCE -> "Suy luận Agent"
+    WorkflowNodeType.SUBAGENT_DELEGATE -> "Agent con"
+    WorkflowNodeType.TIANXUAN_BUILD -> "Build Thiên Huyền"
+    WorkflowNodeType.CONDITION_BRANCH -> "Nhánh điều kiện"
+    WorkflowNodeType.HUMAN_APPROVAL -> "Phê duyệt thủ công"
+    WorkflowNodeType.HOST_ACTION -> "Hành động host"
+    WorkflowNodeType.DELAY -> "Độ trễ"
+    WorkflowNodeType.SET_VARIABLE -> "Biến"
+    WorkflowNodeType.TERMINAL_OUTPUT -> "Đầu ra"
 }

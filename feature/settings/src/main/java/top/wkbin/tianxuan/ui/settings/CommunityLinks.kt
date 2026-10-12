@@ -17,7 +17,7 @@ internal fun openBrowser(context: Context, url: String) {
         // 本文件原有一个同名私有 `Context.copyToClipboard(label, text)` 重载，
         // 与公共函数同名不同签名且静默吞掉失败——同一仓库出现两套行为不一致的
         // 同名实现，正是 ClipboardSupport 注释里要消除的重复。
-        copyToClipboard(context, url, "URL", "已复制链接：$url")
+        copyToClipboard(context, url, "URL", "Đã sao chép liên kết: $url")
     }
 }
 
@@ -34,7 +34,7 @@ internal fun joinQqGroup(context: Context) {
             context,
             Community.QQ_GROUP_ID,
             "天玄官方交流群",
-            "已复制 QQ 群号：${Community.QQ_GROUP_ID}，可打开 QQ 搜索加入",
+            "Đã sao chép số nhóm QQ: ${Community.QQ_GROUP_ID}, có thể mở QQ tìm kiếm để tham gia",
         )
     }
 }

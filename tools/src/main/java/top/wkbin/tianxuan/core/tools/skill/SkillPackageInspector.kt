@@ -46,8 +46,8 @@ class SkillPackageInspector {
                     AuditFinding(
                         level = level,
                         ruleId = "PERM-001",
-                        title = "未声明的敏感权限: ${missing.label}",
-                        detail = "技能包内包含涉权操作（${missing.description}），但 manifest.permissions 中未声明该权限",
+                        title = "Quyền nhạy cảm chưa khai báo: ${missing.label}",
+                        detail = "Gói kỹ năng chứa thao tác liên quan đến quyền (${missing.description}), nhưng manifest.permissions chưa khai báo quyền đó",
                     ),
                 )
             }
@@ -78,8 +78,8 @@ class SkillPackageInspector {
                     AuditFinding(
                         level = AuditLevel.BLOCKED,
                         ruleId = "SEC-001",
-                        title = "检测到 Zip Slip 路径穿越",
-                        detail = "文件路径试图越过目标目录: $path",
+                        title = "Phát hiện xuyên đường dẫn Zip Slip",
+                        detail = "Đường dẫn tệp cố vượt khỏi thư mục mục tiêu: $path",
                         targetFile = path,
                     ),
                 )
@@ -91,8 +91,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.BLOCKED,
                     ruleId = "SEC-002",
-                    title = "压缩包条目数超限",
-                    detail = "技能包文件数 (${pkg.rawFiles.size}) 超过安全阈值 (${SkillPackageParser.MAX_ZIP_ENTRIES})",
+                    title = "Số mục gói nén vượt giới hạn",
+                    detail = "Số tệp trong gói kỹ năng (${pkg.rawFiles.size}) vượt ngưỡng an toàn (${SkillPackageParser.MAX_ZIP_ENTRIES})",
                 ),
             )
         }
@@ -103,8 +103,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.BLOCKED,
                     ruleId = "SEC-003",
-                    title = "解压体积过大 (疑似 Zip Bomb)",
-                    detail = "解压体积达到 $totalSize 字节，超过安全阈值 ${SkillPackageParser.MAX_ZIP_TOTAL_BYTES} 字节",
+                    title = "Dung lượng giải nén quá lớn (nghi ngờ Zip Bomb)",
+                    detail = "Kích thước giải nén đạt $totalSize byte, vượt ngưỡng an toàn ${SkillPackageParser.MAX_ZIP_TOTAL_BYTES} byte",
                 ),
             )
         }
@@ -118,8 +118,8 @@ class SkillPackageInspector {
                     AuditFinding(
                         level = AuditLevel.DANGER,
                         ruleId = "BIN-001",
-                        title = "包含潜在危险的可执行或库文件",
-                        detail = "检测到具有原生执行风险的扩展名: .$ext",
+                        title = "Chứa tệp thực thi hoặc thư viện có nguy cơ tiềm ẩn",
+                        detail = "Phát hiện phần mở rộng có rủi ro thực thi gốc: .$ext",
                         targetFile = path,
                     ),
                 )
@@ -136,8 +136,8 @@ class SkillPackageInspector {
                     AuditFinding(
                         level = AuditLevel.DANGER,
                         ruleId = "BIN-002",
-                        title = "包含未签名的 Linux ELF 二进制文件",
-                        detail = "技能包应当以提示词和通用脚本为主，内置 ELF 二进制无法在 Android/PRoot 跨架构安全保障",
+                        title = "Chứa tệp nhị phân ELF Linux chưa ký",
+                        detail = "Gói skill nên lấy prompt và script thông dụng làm chính, ELF nhị phân tích hợp không thể đảm bảo an toàn đa kiến trúc trên Android/PRoot",
                         targetFile = path,
                     ),
                 )
@@ -185,8 +185,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.BLOCKED,
                     ruleId = "INJ-001",
-                    title = "检测到恶意 Prompt 注入或越狱指令",
-                    detail = "命中高危注入模式: \"${match.value.take(40)}\"",
+                    title = "Phát hiện tiêm Prompt độc hại hoặc chỉ thị jailbreak",
+                    detail = "Trúng mẫu tiêm nguy hiểm cao: \"${match.value.take(40)}\"",
                     targetFile = filename,
                     snippet = extractSnippet(text, match.range.first),
                 )
@@ -198,8 +198,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.DANGER,
                     ruleId = "INJ-002",
-                    title = "可疑的系统提示词泄露探针",
-                    detail = "检测到尝试提取模型 System Prompt 或隐藏指令的诱导语句",
+                    title = "Thăm dò nghi ngờ rò rỉ system prompt",
+                    detail = "Phát hiện câu dẫn dụ nhằm trích xuất System Prompt của model hoặc chỉ thị ẩn",
                     targetFile = filename,
                     snippet = extractSnippet(text, match.range.first),
                 )
@@ -214,8 +214,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.WARNING,
                     ruleId = "INJ-003",
-                    title = "检测到异常零宽不可见字符 ($zeroWidthCount 处)",
-                    detail = "文本中存在大量零宽空格/隐藏 Unicode 字符，可能用于绕过静态过滤或实施隐写攻击",
+                    title = "Phát hiện ký tự vô hình rộng bằng 0 bất thường ($zeroWidthCount chỗ)",
+                    detail = "Trong văn bản tồn tại nhiều khoảng trắng rộng bằng 0/ký tự Unicode ẩn, có thể dùng để lách bộ lọc tĩnh hoặc thực hiện tấn công giấu tin",
                     targetFile = filename,
                 ),
             )
@@ -228,8 +228,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.BLOCKED,
                     ruleId = "CMD-001",
-                    title = "破坏性沙箱或系统命令",
-                    detail = "检测到可能导致系统/沙箱损坏的危险指令: \"${match.value.trim()}\"",
+                    title = "Lệnh sandbox hoặc hệ thống mang tính phá hủy",
+                    detail = "Phát hiện lệnh nguy hiểm có thể làm hỏng hệ thống/sandbox: \"${match.value.trim()}\"",
                     targetFile = filename,
                     snippet = extractSnippet(text, match.range.first),
                 )
@@ -242,8 +242,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.WARNING,
                     ruleId = "CMD-004",
-                    title = "检测到可疑的指令混淆或编码变体",
-                    detail = "文本包含常见混淆执行模式（base64 解码管道 / eval 嵌套 / \${IFS} 拼接 / 十六进制编码 / 引号拆分），静态审计无法判定其真实意图: \"${match.value.trim().take(60)}\"",
+                    title = "Phát hiện làm rối lệnh hoặc biến thể mã hóa đáng ngờ",
+                    detail = "Văn bản chứa mẫu thực thi làm rối thường gặp (giải mã base64 qua pipe / lồng eval / ghép \${IFS} / mã hóa hex / tách dấu nháy), kiểm toán tĩnh không thể xác định ý đồ thực sự: \"${match.value.trim().take(60)}\"",
                     targetFile = filename,
                     snippet = extractSnippet(text, match.range.first),
                 )
@@ -257,8 +257,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.BLOCKED,
                     ruleId = "CMD-002",
-                    title = "恶意反弹 Shell 或外部脚本静默管道",
-                    detail = "检测到高危网络远程执行指令: \"${match.value.trim()}\"",
+                    title = "Reverse Shell độc hại hoặc pipe im lặng script bên ngoài",
+                    detail = "Phát hiện lệnh thực thi từ xa qua mạng nguy hiểm cao: \"${match.value.trim()}\"",
                     targetFile = filename,
                     snippet = extractSnippet(text, match.range.first),
                 )
@@ -272,8 +272,8 @@ class SkillPackageInspector {
                 AuditFinding(
                     level = AuditLevel.DANGER,
                     ruleId = "CMD-003",
-                    title = "宿主/沙箱私密敏感文件嗅探",
-                    detail = "检测到尝试读取 SSH 私钥、凭证或系统敏感密码文件的指令",
+                    title = "Đánh hơi tệp nhạy cảm riêng tư host/sandbox",
+                    detail = "Phát hiện chỉ thị cố đọc khóa riêng SSH, thông tin xác thực hoặc tệp mật khẩu nhạy cảm hệ thống",
                     targetFile = filename,
                     snippet = extractSnippet(text, match.range.first),
                 )
@@ -389,7 +389,7 @@ class SkillPackageInspector {
             Regex("""(?i)\beval\s+["']?\$\("""),
             Regex("""\$\{?IFS\}?"""),
             Regex("""(?i)printf\s+['"](\\x[0-9a-f]{2}){4,}"""),
-            Regex("""\b[a-z]{1,6}(['"])\s*\1[a-z]{1,6}\b"""), // 相邻引号片段拆分命令名: r""m → rm
+            Regex("""\b[a-z]{1,6}(['"])\s*\1[a-z]{1,6}\b"""), // Phân tách tên lệnh bằng đoạn dấu ngoặc kề nhau: r""m → rm
         )
 
         private val SENSITIVE_PROBE_PATTERNS = listOf(

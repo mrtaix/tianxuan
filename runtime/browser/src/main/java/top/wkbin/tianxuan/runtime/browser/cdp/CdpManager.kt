@@ -80,9 +80,9 @@ class CdpManager(
                 is CdpTargetMatcher.TargetMatch.Matched -> match.target
                 is CdpTargetMatcher.TargetMatch.NotFound -> throw IllegalStateException(
                     buildString {
-                        append("cdp attach 失败（tab $tabId）: ").append(match.message)
+                        append("cdp attach thất bại (tab $tabId): ").append(match.message)
                         if (match.candidates.isNotEmpty()) {
-                            append("; 候选: ").append(
+                            append("; ứng viên: ").append(
                                 match.candidates.joinToString { "${it.type} ${it.url}" }
                             )
                         }
@@ -99,7 +99,7 @@ class CdpManager(
             } catch (e: Exception) {
                 connections.remove(tabId)
                 runCatching { conn.detach() }
-                throw IllegalStateException("cdp setup 失败（tab $tabId）: ${e.message}", e)
+                throw IllegalStateException("cdp setup thất bại (tab $tabId): ${e.message}", e)
             }
             AttachResult.Attached(target.url)
         } catch (e: Exception) {
@@ -118,7 +118,7 @@ class CdpManager(
             ids.forEach { detachLocked(it) }
             ids.size
         } else {
-            require(connections.containsKey(tabId)) { "tab $tabId 未 attach CDP（先 browser.debug_attach）" }
+            require(connections.containsKey(tabId)) { "tab $tabId chưa attach CDP (hãy browser.debug_attach trước)" }
             detachLocked(tabId)
             1
         }
@@ -185,8 +185,8 @@ class CdpManager(
             if (attempt < 2) delay(300)
         }
         throw java.io.IOException(
-            "webview devtools socket 连接失败（已重试 3 次；" +
-                "候选=${discovery.candidates}; /proc/net/unix=${discovery.scanError ?: "readable"}; " +
+            "Kết nối socket webview devtools thất bại (đã thử lại 3 lần;" +
+                "Ứng viên=${discovery.candidates}; /proc/net/unix=${discovery.scanError ?: "readable"}; " +
                 "${WebViewDebugging.diagnostics()}）: ${lastError?.message}",
             lastError,
         )

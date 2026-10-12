@@ -7,15 +7,15 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
 /**
- * 会话内审批授权表（"本会话内记住"语义）。
+ * 会话内审批授权表（"Nhớ trong phiên này"语义）。
  *
- * 用户批准某个待审批操作时可以勾选"本会话内同类操作不再询问"：host 把该操作的
+ * 用户批准某个待审批操作时可以勾选"Trong hội thoại này không hỏi lại thao tác cùng loại"：host 把该操作的
  * **规范化类别**（不是精确参数）写入本表，同类后续操作免审批直接执行。
  *
- * 安全边界（刻意保守，遵循"无永久授权"原则）：
+ * 安全边界（刻意保守，遵循"Không ủy quyền vĩnh viễn"原则）：
  * - 纯内存、per-session：进程退出即消失，会话删除即清理，**没有跨会话/永久授权**；
  * - critical 风险的请求调用方不得写入（双重防线：UI 隐藏 + HarnessLoop 拒绝）；
- * - 类别键只到"命令前缀 / 目标目录 / MCP server / 精确参数"粒度，绝不按工具名一揽子放行；
+ * - 类别键只到"Tiền tố lệnh / thư mục mục tiêu / MCP server / tham số chính xác"粒度，绝不按工具名一揽子放行；
  * - 显式 deny 与策略引擎的其余分支不受影响——本表只在 `decision.required` 之后做豁免。
  *
  * 键类别：

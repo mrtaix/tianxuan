@@ -5,7 +5,7 @@ import top.wkbin.tianxuan.core.browser.BrowserFamily
 import top.wkbin.tianxuan.core.browser.TianXuanNewTab
 
 /**
- * 一个浏览器 tab 的"逻辑身份"。Harness 工具的 args 中传 `tab: String`（字符串 ID），
+ * 一个浏览器 tab 的"Danh tính logic"。Harness 工具的 args 中传 `tab: String`（字符串 ID），
  * registry 反查回 token。
  */
 @Serializable

@@ -1,40 +1,40 @@
-# Memory：三垣记忆体系
+# Memory: Hệ thống bộ nhớ Tam Viên
 
-天玄的记忆分三垣。三垣（紫微垣、太微垣、天市垣）与二十八宿合称「三垣二十八宿」：
-紫微为天帝居所，太微为朝廷政务，天市为天上街市。**先判断该往哪一垣写，再动笔。**
+Bộ nhớ của Thien Huyen chia làm ba Viên. Tam Viên (Tu Vi Vien, Thai Vi Vien, Thien Thi Vien) cùng với Nhị thập bát tú gọi chung là「Tam Viên Nhị thập bát tú」:
+Tu Vi là nơi ở của Thiên Đế, Thai Vi là chính vụ triều đình, Thien Thi là chợ phố trên trời. **Trước tiên phán đoán nên ghi vào Viên nào, rồi mới hạ bút.**
 
-| 垣 | 对应层 | scope / kind | 生命周期 | 何时读 |
+| Viên | Tầng tương ứng | scope / kind | Vòng đời | Khi nào đọc |
 |---|---|---|---|---|
-| **紫微垣** | 核心记忆 | `global` + `preference` / `rule` | 永久驻留，不压缩、不外置 | 每轮常驻，不可被对话冲掉 |
-| **太微垣** | 工作记忆 | `project` / `session` + `fact` / `project_info` | 会话结束可归档 | 任务进行中按需读取 |
-| **天市垣** | 检索记忆 | 历史归档、外置语料 | 按需进出，用毕即退 | 语义召回后注入 |
+| **Tu Vi Vien** | Bộ nhớ cốt lõi | `global` + `preference` / `rule` | Thường trú vĩnh viễn, không nén, không ngoại trữ | Thường trú mỗi vòng, không bị đối thoại cuốn trôi |
+| **Thai Vi Vien** | Bộ nhớ công việc | `project` / `session` + `fact` / `project_info` | Kết thúc phiên có thể lưu trữ | Trong khi làm nhiệm vụ đọc theo nhu cầu |
+| **Thien Thi Vien** | Bộ nhớ truy xuất | Lưu trữ lịch sử, ngữ liệu ngoại trữ | Ra vào theo nhu cầu, dùng xong thì rút | Tiêm vào sau khi gọi lại theo ngữ nghĩa |
 
-## 写入判定
+## Phán định ghi vào
 
-**入紫微垣**（核心，永久）：
-- 用户明确表达的长期偏好：语言、风格、沟通方式、工作流
-- 项目架构规范、构建约定、关键配置
-- 反复确认过的稳定事实，以及用户说「记住 / 以后都这样 / 这是规范」的内容
+**Vào Tu Vi Vien** (cốt lõi, vĩnh viễn):
+- Sở thích lâu dài người dùng nêu rõ: ngôn ngữ, phong cách, cách giao tiếp, workflow
+- Quy chuẩn kiến trúc dự án, quy ước build, cấu hình then chốt
+- Sự thật ổn định đã xác nhận nhiều lần, cùng những nội dung người dùng nói「ghi nhớ / sau này đều thế / đây là quy chuẩn」
 
-**入太微垣**（工作，可归档）：
-- 当前会话的执行计划、任务看板进度
-- 中间产物、待验证假设、检查点
-- 尚未定论、随时可能被推翻的过程信息
+**Vào Thai Vi Vien** (công việc, có thể lưu trữ):
+- Kế hoạch thực thi của phiên hiện tại, tiến độ bảng kanban nhiệm vụ
+- Sản phẩm trung gian, giả thuyết chờ xác minh, checkpoint
+- Thông tin quá trình chưa định luận, có thể bị lật bất cứ lúc nào
 
-**入天市垣**（检索，按需）：
-- 外部知识、历史会话归档、不常驻的大段语料
+**Vào Thien Thi Vien** (truy xuất, theo nhu cầu):
+- Tri thức ngoài, lưu trữ phiên lịch sử, ngữ liệu lớn không thường trú
 
-## 不得入任何垣
+## Không được vào bất kỳ Viên nào
 
-- 临时状态、一次性命令输出、可随时重新读取的内容
-- 敏感信息：Token、API Key、密码、私钥
-- 未经验证的猜测（先标为未验证，验证通过后再入垣）
+- Trạng thái tạm thời, đầu ra lệnh dùng một lần, nội dung có thể đọc lại bất cứ lúc nào
+- Thông tin nhạy cảm: Token, API Key, mật khẩu, khóa riêng
+- Suy đoán chưa xác minh (trước đánh dấu là chưa xác minh, sau khi xác minh thông qua rồi mới vào Viên)
 
-## 行为准则
+## Chuẩn tắc hành vi
 
-1. 用户说「记住 / 以后都这样 / 这是规范」→ 立即 `memory(action="save", scope="global", kind="preference"|"rule")`，入紫微垣。
-2. 开任务前先看太微垣有无未完成计划；任务推进时同步更新，结束时归档或清空。
-3. 紫微垣内容若与新指令冲突，以用户当轮明确指令为准，并在回复中点明冲突——**不静默覆盖核心记忆**。
-4. 二十八宿可作为语义槽位索引：长期记忆按宿分类入藏，检索时按宿召回，避免语义漂移。
+1. Người dùng nói「ghi nhớ / sau này đều thế / đây là quy chuẩn」→ lập tức `memory(action="save", scope="global", kind="preference"|"rule")`, vào Tu Vi Vien.
+2. Trước khi mở nhiệm vụ xem Thai Vi Vien có kế hoạch chưa hoàn thành không; khi đẩy nhiệm vụ thì cập nhật đồng bộ, kết thúc thì lưu trữ hoặc xóa.
+3. Nội dung Tu Vi Vien nếu xung đột với chỉ thị mới, lấy chỉ thị rõ ràng của người dùng vòng hiện tại làm chuẩn, và chỉ ra xung đột trong phản hồi——**không ghi đè bộ nhớ cốt lõi trong im lặng**.
+4. Nhị thập bát tú có thể làm chỉ mục slot ngữ nghĩa: bộ nhớ lâu dài phân loại theo tú để lưu, khi truy xuất gọi lại theo tú, tránh trôi dạt ngữ nghĩa.
 
-保存调用：`memory(action="save", scope=..., kind=..., ...)`。
+Lời gọi lưu: `memory(action="save", scope=..., kind=..., ...)`.

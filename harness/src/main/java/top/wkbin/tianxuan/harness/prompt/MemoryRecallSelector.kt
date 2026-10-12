@@ -8,9 +8,9 @@ import top.wkbin.tianxuan.core.database.AgentMemoryEntity
  * 逐轮记忆召回器（低权威背景资料层）。
  *
  * 检索：BM25 + **CJK 字符 bigram**（要求真实词重叠，而非散落常用字误命中；拉丁词按整词小写）。
- * project 事实小幅加权；stale 按 updatedAt 年龄降权（降权不删除）；泛化轮次（"继续""ok"）
+ * project 事实小幅加权；stale 按 updatedAt 年龄降权（降权不删除）；泛化轮次（"Tiếp tục""ok"）
  * 不触发召回。命中按预算截断（≤[MAX_RECALL_FACTS] 条，块总量 ≤[MAX_RECALL_BLOCK_CHARS] 字符）。
- * 与旧 LIKE 方案的行为差异：不再"无命中就注入最近记忆"——不相关记忆是噪声与 token 浪费，
+ * 与旧 LIKE 方案的行为差异：不再"Không trúng thì chèn ký ức gần nhất"——不相关记忆是噪声与 token 浪费，
  * 必须常驻的指令应 pinned（pinned 走 system prompt 稳定前缀）。
  *
  * 关键契约：块内容（记忆召回 + 计划看板）**每用户轮只计算一次并持久化**
@@ -87,9 +87,9 @@ class MemoryRecallSelector(
         val steps = plan.stepsJson.trim().take(MAX_PLAN_STEPS_CHARS)
         return buildString {
             appendLine("<task_plan>")
-            appendLine("以下为本会话当前的活跃任务计划与进度（背景资料，供接续执行；实际进度以 plan 工具返回为准）：")
-            appendLine("目标：$goal")
-            appendLine("步骤与状态：$steps")
+            appendLine("Dưới đây là kế hoạch và tiến độ nhiệm vụ đang hoạt động hiện tại của phiên này (tư liệu nền, dùng để thực thi tiếp; tiến độ thực tế lấy theo kết quả trả về của công cụ plan): ")
+            appendLine("Mục tiêu: $goal")
+            appendLine("Bước và trạng thái: $steps")
             append("</task_plan>")
         }
     }
@@ -127,8 +127,8 @@ class MemoryRecallSelector(
             return buildString {
                 appendLine("<recalled_memory>")
                 appendLine(
-                    "以下为按本条消息检索到的长期记忆（低权威背景资料）：可能过期或不完整，仅在相关时参考；" +
-                        "与当前请求或系统规则冲突时，以当前请求与系统规则为准。",
+                    "Dưới đây là bộ nhớ dài hạn truy xuất theo tin nhắn này (tài liệu nền mức thẩm quyền thấp): có thể lỗi thời hoặc không đầy đủ, chỉ tham khảo khi liên quan; " +
+                        "Khi xung đột với yêu cầu hiện tại hoặc quy tắc hệ thống, lấy yêu cầu hiện tại và quy tắc hệ thống làm chuẩn.",
                 )
                 append(body)
                 append("</recalled_memory>")
@@ -139,16 +139,16 @@ class MemoryRecallSelector(
         private const val K1 = 1.2
         private const val B = 0.75
 
-        /** 泛化短语：短消息整体命中即不触发召回（"继续帮我改代码"不受影响）。 */
+        /** 泛化短语：短消息整体命中即不触发召回（"Tiếp tục giúp tôi sửa mã"不受影响）。 */
         private val GENERIC_PHRASES = listOf(
-            "继续", "接着来", "然后呢", "好的", "收到", "可以", "开始吧", "行", "嗯", "哦",
+            "Tiếp tục", "Tiếp tục", "Rồi sao nữa", "Được rồi", "Đã nhận", "Có thể", "Bắt đầu thôi", "Hành", "Ừm", "Ồ",
             "continue", "go on", "keep going", "ok", "okay", "next", "yes",
         )
 
         /** 泛化 token：分词后逐个剔除，剩下的信息词才是有效查询。 */
         private val GENERIC_TERMS = setOf(
-            "继续", "好的", "收到", "可以", "开始", "然后", "一下", "这个", "那个", "怎么", "什么",
-            "帮忙", "请", "我", "你", "的", "了", "吗", "吧", "呢", "看", "讲", "说",
+            "Tiếp tục", "Được rồi", "Đã nhận", "Có thể", "Bắt đầu", "Sau đó", "Một chút", "Cái này", "Cái đó", "Thế nào", "Gì",
+            "Giúp đỡ", "Thỉnh", "Ngã", "Bạn", "Đích", "Liễu", "Ư", "Nhé", "Ni", "Khán", "Giảng", "Thuyết",
             "continue", "please", "the", "and", "what", "how",
         )
 
@@ -202,8 +202,8 @@ class MemoryRecallSelector(
 
         /**
          * 分词：拉丁/数字按整词小写；CJK 连续段切 2-gram（单字段保留单字）。
-         * bigram 让"调用链"命中"调用链路分析"这类真实词重叠，同时避免
-         * LIKE '%测试%' 被"测试服"这类散字误命中。
+         * bigram 让"Chuỗi gọi"命中"Phân tích chuỗi gọi"这类真实词重叠，同时避免
+         * LIKE '%测试%' 被"Máy chủ test"这类散字误命中。
          */
         internal fun tokenize(text: String): List<String> {
             val terms = mutableListOf<String>()

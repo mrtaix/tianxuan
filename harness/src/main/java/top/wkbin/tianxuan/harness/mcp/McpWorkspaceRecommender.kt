@@ -35,30 +35,30 @@ class McpWorkspaceRecommender() {
         if (entries.any { it.isDirectory && it.name == ".git" }) {
             recommendations += Recommendation(
                 presetId = "mcp_git",
-                presetName = "Git 仓库协同中心",
-                reason = "检测到 Git 仓库（.git），启用后 Agent 可直接分析提交历史、分支与 Diff",
+                presetName = "Trung tâm cộng tác kho Git",
+                reason = "Phát hiện kho Git (.git), sau khi bật Agent có thể trực tiếp phân tích lịch sử commit, nhánh và Diff",
             )
         }
         if (entries.any { it.isFile && it.extension.lowercase() in SQLITE_EXTENSIONS }) {
             recommendations += Recommendation(
                 presetId = "mcp_sqlite",
-                presetName = "SQLite 数据库探索器",
-                reason = "检测到 SQLite 数据库文件，启用后 Agent 可直接查询与分析数据",
+                presetName = "Trình khám phá cơ sở dữ liệu SQLite",
+                reason = "Phát hiện tệp cơ sở dữ liệu SQLite, sau khi bật Agent có thể truy vấn và phân tích dữ liệu trực tiếp",
             )
         }
         if (entries.any { it.isFile && it.extension.lowercase() == "apk" }) {
             recommendations += Recommendation(
                 presetId = "mcp_apktool",
-                presetName = "Android 逆向与 APK 审计",
-                reason = "检测到 APK 文件，启用后 Agent 可反编译、分析清单权限与 Smali 代码",
+                presetName = "Dịch ngược Android và kiểm toán APK",
+                reason = "Phát hiện tệp APK, sau khi bật Agent có thể dịch ngược, phân tích quyền trong manifest và mã Smali",
             )
         }
         val codeFileCount = entries.count { it.isFile && it.extension.lowercase() in CODE_EXTENSIONS }
         if (codeFileCount >= CODE_FILE_THRESHOLD) {
             recommendations += Recommendation(
                 presetId = "mcp_codegraph",
-                presetName = "CodeGraph 代码知识图谱",
-                reason = "检测到 $codeFileCount 个代码文件，启用后可建立符号索引，减少代码探索的调用轮次",
+                presetName = "Đồ thị tri thức mã CodeGraph",
+                reason = "Phát hiện $codeFileCount tệp mã, sau khi bật có thể lập chỉ mục ký hiệu, giảm số lượt gọi khi khám phá mã",
             )
         }
         recommendations

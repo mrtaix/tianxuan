@@ -58,7 +58,7 @@ object WebViewClients {
                 handleUrlLoading(view, Uri.parse(url))
 
             /**
-             * 拦截非 web scheme 的导航：移动站常带"唤起 App"深链（baiduboxapp:// 等），
+             * 拦截非 web scheme 的导航：移动站常带"Đánh thức App"深链（baiduboxapp:// 等），
              * WebView 默认尝试加载会失败并可能把页面劫持跳走。
              *  - http/https/about/data/blob/javascript 交给 WebView 默认处理（返回 false）；
              *  - intent:// 提取 browser_fallback_url 兜底加载；
@@ -72,7 +72,7 @@ object WebViewClients {
                     eventBus.publish(
                         BrowserEvent.ConsoleLogged(
                             token.tabId, "WARNING",
-                            "已拦截深链跳转: $scheme (页面留在原地)",
+                            "Đã chặn nhảy deep link: $scheme (trang giữ nguyên tại chỗ)",
                             System.currentTimeMillis(),
                         )
                     )

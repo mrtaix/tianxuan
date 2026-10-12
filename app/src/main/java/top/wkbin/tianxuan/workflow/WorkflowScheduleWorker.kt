@@ -25,16 +25,16 @@ class WorkflowScheduleWorker(
     override suspend fun doWork(): Result {
         val scheduleId = inputData.getString(KEY_SCHEDULE_ID)
         if (scheduleId == null) {
-            Log.w(TAG, "缺少 scheduleId 输入，丢弃本次触发")
+            Log.w(TAG, "Thiếu đầu vào scheduleId, loại bỏ lần kích hoạt này")
             return Result.failure()
         }
         val schedule = scheduleRepository.findSchedule(scheduleId)
-            ?: return Result.failure().also { Log.w(TAG, "计划不存在（可能已删除）：$scheduleId") }
+            ?: return Result.failure().also { Log.w(TAG, "Kế hoạch không tồn tại (có thể đã xóa): $scheduleId") }
         if (!schedule.enabled) return Result.success()
 
         val definition = scheduleRepository.findDefinition(schedule.workflowId)
         if (definition == null) {
-            Log.w(TAG, "工作流定义缺失：${schedule.workflowId}")
+            Log.w(TAG, "Thiếu định nghĩa workflow: ${schedule.workflowId}")
             return Result.failure()
         }
 
@@ -49,12 +49,12 @@ class WorkflowScheduleWorker(
             // updateRunInfo 会把 ONCE 计划 setEnabled(false) + cancel，若此处照样调用，
             // 一次性计划会在一次失败后被永久停用且不再重试，而用户只会看到计划「消失」。
             // 故失败时只记日志、不推进 nextRunAt；由 WorkManager 按重试策略再次投递。
-            Log.w(TAG, "定时计划 ${schedule.name} 启动失败：${result.failureReason}（保留下次触发，不回写运行信息）")
+            Log.w(TAG, "Kế hoạch định giờ ${schedule.name} khởi động thất bại: ${result.failureReason} (giữ lần kích hoạt kế tiếp, không ghi lại thông tin chạy)")
             // Result.retry() 无上限（退避最长可达 5 小时），沙箱长期未就绪时会无限重试、反复落失败日志。
             // 触顶后：ONCE 计划自动停用（UI 可见、可手动重启），周期计划保持启用、由下个周期自愈。
             if (runAttemptCount >= MAX_START_RETRIES) {
                 if (schedule.repeatType == WorkflowScheduleRepeat.ONCE.name) {
-                    Log.e(TAG, "定时计划 ${schedule.name} 重试 $MAX_START_RETRIES 次仍未启动成功，自动停用")
+                    Log.e(TAG, "Kế hoạch định giờ ${schedule.name} thử lại $MAX_START_RETRIES lần vẫn chưa khởi động thành công, tự động vô hiệu hóa")
                     scheduleRepository.setEnabled(scheduleId, false)
                 }
                 return Result.failure()

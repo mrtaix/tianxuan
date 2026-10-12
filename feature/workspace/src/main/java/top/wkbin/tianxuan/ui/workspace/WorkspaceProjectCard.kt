@@ -156,7 +156,7 @@ internal fun ProjectCard(
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text("运行工作流") },
+                            text = { Text("Chạy workflow") },
                             leadingIcon = {
                                 RuntimeIcon(RuntimeIconName.Hub, Modifier.size(17.dp))
                             },
@@ -202,7 +202,7 @@ internal fun ProjectCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End,
             ) {
-                // 只有可编译运行工程（Android / Flutter）显示"运行到手机"按钮；逆向/通用工程走终端
+                // 只有可编译运行工程（Android / Flutter）显示"Chạy lên điện thoại"按钮；逆向/通用工程走终端
                 if (project.projectType == ProjectType.ANDROID ||
                     project.projectType == ProjectType.FLUTTER
                 ) {

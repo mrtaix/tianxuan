@@ -28,7 +28,7 @@ class WorkflowGuiHudBridge() {
         val workflowName: String,
         val nodeTitle: String = "",
         val phase: Phase = Phase.THINKING,
-        val stepLabel: String = "准备中",
+        val stepLabel: String = "Đang chuẩn bị",
         val detail: String = "",
         /** When false the overlay window must be detached (screen ops in progress). */
         val overlayVisible: Boolean = true,
@@ -50,7 +50,7 @@ class WorkflowGuiHudBridge() {
             executionId = executionId,
             workflowName = workflowName,
             phase = Phase.THINKING,
-            stepLabel = "工作流已启动",
+            stepLabel = "Luồng công việc đã khởi động",
             overlayVisible = true,
             active = true,
         )
@@ -90,7 +90,7 @@ class WorkflowGuiHudBridge() {
      * Hide overlay before screen dump / input. Nested calls are refcounted.
      * First enter waits briefly so WindowManager can detach the view.
      */
-    suspend fun beginScreenOp(stepLabel: String = "操作屏幕中…") {
+    suspend fun beginScreenOp(stepLabel: String = "Đang thao tác màn hình…") {
         val depth = screenOpDepth.incrementAndGet()
         _session.update { current ->
             current?.copy(
@@ -123,7 +123,7 @@ class WorkflowGuiHudBridge() {
         _session.update { current ->
             current?.copy(
                 phase = if (success) Phase.SUCCESS else Phase.FAILED,
-                stepLabel = if (success) "已完成" else "失败",
+                stepLabel = if (success) "Đã hoàn thành" else "失败",
                 detail = message.take(280),
                 overlayVisible = true,
                 active = false,
@@ -150,7 +150,7 @@ class WorkflowGuiHudBridge() {
         val id = _session.value?.executionId ?: return
         stopRequestedFor.set(id)
         cancelAction.getAndSet(null)?.invoke()
-        cancelled("用户点击停止")
+        cancelled("Người dùng nhấp dừng")
     }
 
     fun isStopRequested(): Boolean {

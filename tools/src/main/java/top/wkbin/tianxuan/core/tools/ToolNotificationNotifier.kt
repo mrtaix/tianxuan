@@ -39,10 +39,10 @@ class ToolNotificationNotifier(
     private fun createChannel() {
         val channel = NotificationChannel(
             channelId,
-            "插件与工具安装进度",
+            "Tiến độ cài đặt plugin và công cụ",
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
-            description = "展示天玄 PRoot 沙箱内 AI 工具与插件的安装与更新进度"
+            description = "Hiển thị tiến độ cài đặt và cập nhật các công cụ AI và plugin trong sandbox PRoot Thien Huyen"
             setShowBadge(false)
         }
         val systemManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -58,7 +58,7 @@ class ToolNotificationNotifier(
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(context.applicationInfo.icon)
-            .setContentTitle("正在安装 $toolName")
+            .setContentTitle("Đang cài đặt $toolName")
             .setContentText(message)
             .setLargeIcon(appLogo)
             .setOngoing(true)
@@ -80,8 +80,8 @@ class ToolNotificationNotifier(
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(context.applicationInfo.icon)
-            .setContentTitle("$toolName 安装完成")
-            .setContentText("版本 ${version ?: "已就绪"}，可在控制台或工具中心直接使用")
+            .setContentTitle("$toolName cài đặt hoàn tất")
+            .setContentText("Phiên bản ${version ?: "已就绪"}，có thể dùng trực tiếp trong bảng điều khiển hoặc trung tâm công cụ")
             .setLargeIcon(appLogo)
             .setOngoing(false)
             .setAutoCancel(true)
@@ -100,7 +100,7 @@ class ToolNotificationNotifier(
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(context.applicationInfo.icon)
-            .setContentTitle("$toolName 安装失败")
+            .setContentTitle("$toolName cài đặt thất bại")
             .setContentText(error.take(120))
             .setLargeIcon(appLogo)
             .setOngoing(false)
@@ -131,10 +131,10 @@ class ToolNotificationNotifier(
     private fun createBuildChannel() {
         val channel = NotificationChannel(
             buildChannelId,
-            "智坊工程构建结果",
+            "Kết quả build dự án Tri Phuong",
             NotificationManager.IMPORTANCE_DEFAULT,
         ).apply {
-            description = "展示天玄智坊中 Android / Flutter 工程的编译完成或失败结果"
+            description = "Hiển thị kết quả biên dịch hoàn tất hoặc thất bại của dự án Android / Flutter trong Thiên Huyền Tri Phường"
             setShowBadge(true)
         }
         val systemManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -146,7 +146,7 @@ class ToolNotificationNotifier(
         val pendingIntent = getLaunchIntent()
         val builder = NotificationCompat.Builder(context, buildChannelId)
             .setSmallIcon(context.applicationInfo.icon)
-            .setContentTitle("🔨 正在编译 $projectName")
+            .setContentTitle("🔨 Đang biên dịch $projectName")
             .setContentText(step)
             .setLargeIcon(appLogo)
             .setOngoing(true)
@@ -165,8 +165,8 @@ class ToolNotificationNotifier(
         val pendingIntent = apkPath?.let { getApkInstallIntent(File(it)) } ?: getLaunchIntent()
         val builder = NotificationCompat.Builder(context, buildChannelId)
             .setSmallIcon(context.applicationInfo.icon)
-            .setContentTitle("✅ $projectName 编译成功")
-            .setContentText(if (apkPath != null) "APK 已生成，点击安装到手机" else "构建已完成")
+            .setContentTitle("✅ $projectName biên dịch thành công")
+            .setContentText(if (apkPath != null) "APK đã được tạo, nhấp để cài đặt vào điện thoại" else "Xây dựng đã hoàn tất")
             .setLargeIcon(appLogo)
             .setOngoing(false)
             .setAutoCancel(true)
@@ -189,7 +189,7 @@ class ToolNotificationNotifier(
         val pendingIntent = getLaunchIntent()
         val builder = NotificationCompat.Builder(context, buildChannelId)
             .setSmallIcon(context.applicationInfo.icon)
-            .setContentTitle("❌ $projectName 编译失败")
+            .setContentTitle("❌ $projectName biên dịch thất bại")
             .setContentText(error.take(120))
             .setLargeIcon(appLogo)
             .setOngoing(false)
@@ -258,7 +258,7 @@ class ToolNotificationNotifier(
             .forEach { it.delete() }
         val staged = File(dir, "${apk.nameWithoutExtension}-$now-${apk.length()}.apk")
         apk.inputStream().use { input -> staged.outputStream().use { output -> input.copyTo(output) } }
-        check(staged.isFile && staged.length() == apk.length()) { "APK 临时副本不完整" }
+        check(staged.isFile && staged.length() == apk.length()) { "Bản sao tạm APK không đầy đủ" }
         return staged
     }
 }

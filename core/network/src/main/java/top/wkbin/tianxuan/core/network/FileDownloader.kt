@@ -51,17 +51,17 @@ class ResumableFileDownloader(
 ) : FileDownloader {
     override fun download(request: DownloadRequest): Flow<DownloadEvent> = flow {
         if (!request.url.startsWith("https://", ignoreCase = true)) {
-            throw DownloadError.Security("下载地址必须使用 HTTPS：${request.url}")
+            throw DownloadError.Security("Địa chỉ tải xuống phải dùng HTTPS: ${request.url}")
         }
-        require(request.maxAttempts > 0) { "maxAttempts 必须大于 0" }
-        require(request.maxBytes > 0) { "maxBytes 必须大于 0" }
+        require(request.maxAttempts > 0) { "maxAttempts phải lớn hơn 0" }
+        require(request.maxBytes > 0) { "maxBytes phải lớn hơn 0" }
         val destinationParent = request.destination.parentFile
         if (destinationParent != null && !destinationParent.exists() && !destinationParent.mkdirs()) {
-            throw DownloadError.Storage("无法创建下载目录：${destinationParent.absolutePath}")
+            throw DownloadError.Storage("Không thể tạo thư mục tải xuống: ${destinationParent.absolutePath}")
         }
         val partialParent = request.partialFile.parentFile
         if (partialParent != null && !partialParent.exists() && !partialParent.mkdirs()) {
-            throw DownloadError.Storage("无法创建临时下载目录：${partialParent.absolutePath}")
+            throw DownloadError.Storage("Không thể tạo thư mục tải tạm: ${partialParent.absolutePath}")
         }
         emit(DownloadEvent.Started)
 
@@ -111,7 +111,7 @@ class ResumableFileDownloader(
             }
         }
         throw DownloadError.RetryExhausted(
-            "下载失败（${request.url}）：${lastError?.message ?: "未知错误"}",
+            "Tải thất bại (${request.url}): ${lastError?.message ?: "未知错误"}",
             lastError,
         )
     }.flowOn(Dispatchers.IO)
@@ -122,7 +122,7 @@ class ResumableFileDownloader(
     ) {
         val existingBytes = request.partialFile.takeIf { it.isFile }?.length() ?: 0L
         if (existingBytes > request.maxBytes) {
-            throw DownloadError.Storage("临时下载文件超过大小限制：${request.maxBytes} bytes")
+            throw DownloadError.Storage("Tệp tải xuống tạm vượt giới hạn kích thước: ${request.maxBytes} bytes")
         }
         httpClient.prepareGet(request.url) {
             // 图床/CDN 普遍对无 UA 的裸请求做反爬（返回统一占位图），模拟浏览器并带上站点根 Referer。
@@ -133,7 +133,7 @@ class ResumableFileDownloader(
             }
         }.execute { response ->
             if (response.request.url.protocol != URLProtocol.HTTPS) {
-                throw DownloadError.Security("下载被重定向到非 HTTPS 地址")
+                throw DownloadError.Security("Tải bị chuyển hướng tới địa chỉ không phải HTTPS")
             }
             if (response.status.value == 416 && existingBytes > 0L) {
                 throw RestartFromZeroException()
@@ -158,7 +158,7 @@ class ResumableFileDownloader(
                 if (advertised > request.maxBytes - baseBytes) request.maxBytes + 1 else advertised + baseBytes
             }
             if (totalBytes != null && totalBytes > request.maxBytes) {
-                throw DownloadError.Storage("下载文件超过大小限制：${request.maxBytes} bytes")
+                throw DownloadError.Storage("Tệp tải vượt giới hạn kích thước: ${request.maxBytes} bytes")
             }
             var downloadedBytes = baseBytes
             onProgress(downloadedBytes, totalBytes)
@@ -172,7 +172,7 @@ class ResumableFileDownloader(
                     output.write(buffer, 0, read)
                     downloadedBytes += read
                     if (downloadedBytes > request.maxBytes) {
-                        throw DownloadError.Storage("下载文件超过大小限制：${request.maxBytes} bytes")
+                        throw DownloadError.Storage("Tệp tải vượt giới hạn kích thước: ${request.maxBytes} bytes")
                     }
                     onProgress(downloadedBytes, totalBytes)
                 }
@@ -197,7 +197,7 @@ class ResumableFileDownloader(
             }
         } catch (throwable: Throwable) {
             throw DownloadError.Storage(
-                "无法提交下载文件：${request.destination.absolutePath}",
+                "Không thể nộp tệp tải: ${request.destination.absolutePath}",
                 throwable,
             )
         }

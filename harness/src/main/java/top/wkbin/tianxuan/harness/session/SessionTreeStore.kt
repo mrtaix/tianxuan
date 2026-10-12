@@ -137,7 +137,7 @@ class SessionTreeStore(
     }
 
     /**
-     * 供压缩等"读快照-落库"协作方复用同一把 per-lane 锁：保证 compaction entry 的
+     * 供压缩等"Đọc snapshot-lưu kho"协作方复用同一把 per-lane 锁：保证 compaction entry 的
      * 重读与写入和本 lane 的 append 串行化。锁内不得执行长耗时挂起调用（如 LLM）。
      */
     suspend fun <T> withLaneLock(sessionId: String, laneName: String = MAIN_LANE, block: suspend () -> T): T =

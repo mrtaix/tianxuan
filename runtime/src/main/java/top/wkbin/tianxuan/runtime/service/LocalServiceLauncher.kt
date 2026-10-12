@@ -24,14 +24,14 @@ data class LocalServiceSpec(
     val pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
 ) {
     init {
-        require(SERVICE_ID.matches(serviceId)) { "本地服务 ID 无效：$serviceId" }
+        require(SERVICE_ID.matches(serviceId)) { "ID dịch vụ cục bộ không hợp lệ: $serviceId" }
     }
     init {
-        require(port in 1..65535) { "本地服务端口无效：$port" }
-        require(path.startsWith('/')) { "本地服务路径必须以 / 开头" }
-        require(path.length <= 512 && path.none(Char::isISOControl)) { "本地服务路径无效" }
-        require(startupTimeoutMs > 0) { "本地服务启动超时必须大于 0" }
-        require(pollIntervalMs > 0) { "本地服务轮询间隔必须大于 0" }
+        require(port in 1..65535) { "Cổng dịch vụ cục bộ không hợp lệ: $port" }
+        require(path.startsWith('/')) { "Đường dẫn dịch vụ cục bộ phải bắt đầu bằng /" }
+        require(path.length <= 512 && path.none(Char::isISOControl)) { "Đường dẫn dịch vụ cục bộ không hợp lệ" }
+        require(startupTimeoutMs > 0) { "Timeout khởi động dịch vụ cục bộ phải lớn hơn 0" }
+        require(pollIntervalMs > 0) { "Khoảng poll dịch vụ cục bộ phải lớn hơn 0" }
     }
 
     companion object {
@@ -77,7 +77,7 @@ class LocalServiceLauncherImpl(
         val process = try {
             startProcess()
         } catch (throwable: Throwable) {
-            throw LocalServiceStartException("无法启动本地服务：${spec.serviceId}", throwable)
+            throw LocalServiceStartException("Không thể khởi động dịch vụ cục bộ: ${spec.serviceId}", throwable)
         }
 
         try {
@@ -86,7 +86,7 @@ class LocalServiceLauncherImpl(
         } catch (timeout: TimeoutCancellationException) {
             linuxRuntime.stopBackground(process.id)
             throw LocalServiceStartException(
-                "本地服务未在 ${spec.startupTimeoutMs / 1000} 秒内就绪：${spec.serviceId}",
+                "Dịch vụ cục bộ chưa sẵn sàng trong ${spec.startupTimeoutMs / 1000} giây: ${spec.serviceId}",
                 timeout,
             )
         } catch (cancellation: CancellationException) {
@@ -96,7 +96,7 @@ class LocalServiceLauncherImpl(
             linuxRuntime.stopBackground(process.id)
             if (throwable is LocalServiceStartException) throw throwable
             throw LocalServiceStartException(
-                "本地服务未在 ${spec.startupTimeoutMs / 1000} 秒内就绪：${spec.serviceId}",
+                "Dịch vụ cục bộ chưa sẵn sàng trong ${spec.startupTimeoutMs / 1000} giây: ${spec.serviceId}",
                 throwable,
             )
         }
@@ -122,7 +122,7 @@ class LocalServiceLauncherImpl(
             while (true) {
                 coroutineContext.ensureActive()
                 if (!process.session.isAlive) {
-                    throw LocalServiceStartException("本地服务进程已退出：${spec.serviceId}")
+                    throw LocalServiceStartException("Tiến trình dịch vụ cục bộ đã thoát: ${spec.serviceId}")
                 }
                 if (isPortOpen(spec.port)) return@withTimeout
                 delay(spec.pollIntervalMs.milliseconds)

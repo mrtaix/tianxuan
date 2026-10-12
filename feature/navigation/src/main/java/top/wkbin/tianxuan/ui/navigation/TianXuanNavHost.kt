@@ -262,7 +262,7 @@ fun TianXuanNavHost(
                         // 内嵌终端面板非独立导航节点，无返回目标：隐藏顶栏返回箭头，避免点击无反馈
                         terminalPane = { project -> TerminalScreen(onBack = {}, project = project, showBackButton = false) },
                         // 内嵌浏览器面板：与独立浏览器页共享 Activity 级 BrowserViewModel，
-                        // 手机端左右滑动切换对话/浏览器，宽屏双栏可切"终端/浏览器"
+                        // 手机端左右滑动切换对话/浏览器，宽屏双栏可切"Terminal/trình duyệt"
                         browserPane = { onExit ->
                             top.wkbin.tianxuan.ui.browser.BrowserPane(
                                 viewModel = browserViewModel,
@@ -598,7 +598,7 @@ fun TianXuanNavHost(
                         onOpenToolDetail = { toolId -> activeStack.push(ToolCenterDestination, ToolDetailDestination(toolId = toolId)) },
                         onStartAiHealing = { toolId, toolName, logs ->
                             val prompt = top.wkbin.tianxuan.ui.settings.ToolSelfHealingHelper.buildHealingPrompt(toolId, toolName, logs)
-                            pendingHealingTask = HealingTask("🔧 自愈: $toolName", prompt)
+                            pendingHealingTask = HealingTask("🔧 Tự chữa: $toolName", prompt)
                             selectedMain = MainDestination.Agent
                         },
                     )
@@ -618,7 +618,7 @@ fun TianXuanNavHost(
                             runCatching {
                                 context.startActivity(intent)
                             }.onFailure {
-                                android.widget.Toast.makeText(context, "无法唤起外部浏览器: ${it.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, "Không thể gọi trình duyệt bên ngoài: ${it.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         },
                     )
@@ -632,7 +632,7 @@ fun TianXuanNavHost(
                         onLaunchTerminal = { toolId -> activeStack.push(destination, TerminalDestination(toolId = toolId)) },
                         onStartAiHealing = { toolId, toolName, logs ->
                             val prompt = top.wkbin.tianxuan.ui.settings.ToolSelfHealingHelper.buildHealingPrompt(toolId, toolName, logs)
-                            pendingHealingTask = HealingTask("🔧 自愈: $toolName", prompt)
+                            pendingHealingTask = HealingTask("🔧 Tự chữa: $toolName", prompt)
                             selectedMain = MainDestination.Agent
                         },
                     )
@@ -748,7 +748,7 @@ fun TianXuanNavHost(
                     CustomIterationScreen(
                         onBack = ::popBack,
                         onNavigateToChat = { prompt ->
-                            pendingHealingTask = HealingTask("🚀 自定义迭代", prompt)
+                            pendingHealingTask = HealingTask("🚀 Tùy biến lặp", prompt)
                             selectedMain = MainDestination.Agent
                         },
                     )

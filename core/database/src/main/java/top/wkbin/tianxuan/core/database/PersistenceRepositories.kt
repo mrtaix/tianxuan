@@ -98,7 +98,7 @@ class RoomBuildScriptRepository(
     override suspend fun upsertScript(script: BuildScriptEntity) = dao.upsertScript(script)
     override suspend fun deleteScript(id: String) = dao.deleteScriptAndBindings(id)
     override suspend fun bind(projectName: String, scriptId: String) {
-        requireNotNull(findScript(scriptId)) { "构建脚本不存在：$scriptId" }
+        requireNotNull(findScript(scriptId)) { "Script build không tồn tại：$scriptId" }
         dao.upsertBinding(ProjectBuildScriptBindingEntity(projectName, scriptId, System.currentTimeMillis()))
     }
     override suspend fun unbind(projectName: String) = dao.deleteBinding(projectName)
@@ -109,8 +109,8 @@ class RoomBuildScriptRepository(
         val builtins = listOf(
             BuildScriptEntity(
                 id = "builtin-android",
-                name = "标准 Android",
-                description = "天玄内置 Android 构建脚本，可复制后适配旧版或新版依赖。",
+                name = "Android chuẩn",
+                description = "Thien Huyen tích hợp script build Android, có thể sao chép rồi thích ứng cho phụ thuộc cũ hoặc mới.",
                 projectType = "ANDROID",
                 content = androidScript.ifBlank { DEFAULT_BUILTIN_ANDROID_SCRIPT },
                 isBuiltin = true,
@@ -119,8 +119,8 @@ class RoomBuildScriptRepository(
             ),
             BuildScriptEntity(
                 id = "builtin-flutter",
-                name = "标准 Flutter",
-                description = "天玄内置 Flutter APK 构建脚本，可复制后定制。",
+                name = "Flutter tiêu chuẩn",
+                description = "Thien Huyen tích hợp script build Flutter APK, có thể sao chép rồi tùy biến.",
                 projectType = "FLUTTER",
                 content = flutterScript.ifBlank { DEFAULT_BUILTIN_FLUTTER_SCRIPT },
                 isBuiltin = true,
@@ -144,10 +144,10 @@ class RoomBuildScriptRepository(
 
     companion object {
         const val DEFAULT_BUILTIN_ANDROID_SCRIPT =
-            "#!/bin/sh\n# 天玄标准 Android 构建脚本入口\n# 默认调度 /opt/tianxuan/scripts/tianxuan-build.sh 执行完整环境加载、AAPT2 架构对齐与 Gradle 编译\nset -eu\n\nPROJECT_DIR=\"\${1:-.}\"\nTASK=\"\${2:-assembleDebug}\"\n\nexec /bin/sh /opt/tianxuan/scripts/tianxuan-build.sh android \"\$PROJECT_DIR\" \"\$TASK\"\n"
+            "#!/bin/sh\n# Kịch bản build Android chuẩn Thiên Huyền\n# Mặc định điều phối /opt/tianxuan/scripts/tianxuan-build.sh để nạp môi trường đầy đủ, căn chỉnh kiến trúc AAPT2 và biên dịch Gradle\nset -eu\n\nPROJECT_DIR=\"\${1:-.}\"\nTASK=\"\${2:-assembleDebug}\"\n\nexec /bin/sh /opt/tianxuan/scripts/tianxuan-build.sh android \"\$PROJECT_DIR\" \"\$TASK\"\n"
 
         const val DEFAULT_BUILTIN_FLUTTER_SCRIPT =
-            "#!/bin/sh\n# 天玄标准 Flutter 构建脚本入口\n# 默认调度 /opt/tianxuan/scripts/tianxuan-build.sh 执行完整跨端工具链校验与 Flutter APK 构建\nset -eu\n\nPROJECT_DIR=\"\${1:-.}\"\nTARGET=\"\${2:-apk --debug --target-platform android-arm64}\"\n\nexec /bin/sh /opt/tianxuan/scripts/tianxuan-build.sh flutter \"\$PROJECT_DIR\" \$TARGET\n"
+            "#!/bin/sh\n# Điểm vào script xây dựng Flutter chuẩn Thiên Huyền\n# Mặc định điều phối /opt/tianxuan/scripts/tianxuan-build.sh thực thi kiểm tra toàn bộ chuỗi công cụ đa nền và xây dựng Flutter APK\nset -eu\n\nPROJECT_DIR=\"\${1:-.}\"\nTARGET=\"\${2:-apk --debug --target-platform android-arm64}\"\n\nexec /bin/sh /opt/tianxuan/scripts/tianxuan-build.sh flutter \"\$PROJECT_DIR\" \$TARGET\n"
     }
 }
 
@@ -306,9 +306,9 @@ class RoomQuickPhraseRepository(
         val defaultQuickPhrases = listOf(
             QuickPhrase(
                 id = "builtin_run",
-                title = "运行代码",
+                title = "Chạy mã",
                 content = "/run ",
-                description = "执行当前工作区的入口代码（如 python main.py / npm start）",
+                description = "Thực thi mã điểm vào của workspace hiện tại (như python main.py / npm start)",
                 iconName = "Play",
                 targetProjectType = null,
                 isEnabled = true,
@@ -317,9 +317,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_install",
-                title = "安装依赖",
+                title = "Cài đặt phụ thuộc",
                 content = "/install ",
-                description = "在 Linux 沙箱中安装系统或语言依赖（apt / pip / npm）",
+                description = "Cài đặt phụ thuộc hệ thống hoặc ngôn ngữ trong sandbox Linux (apt / pip / npm)",
                 iconName = "Package",
                 targetProjectType = null,
                 isEnabled = true,
@@ -328,9 +328,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_init",
-                title = "初始化项目",
+                title = "Khởi tạo dự án",
                 content = "/init ",
-                description = "创建新的项目骨架模板（Python, Node.js, C/C++, HTML）",
+                description = "Tạo mẫu khung dự án mới (Python, Node.js, C/C++, HTML)",
                 iconName = "Plus",
                 targetProjectType = null,
                 isEnabled = true,
@@ -339,9 +339,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_git",
-                title = "Git 状态",
+                title = "Trạng thái Git",
                 content = "/git status",
-                description = "查看状态、提交或拉取版本控制仓库",
+                description = "Xem trạng thái, commit hoặc pull kho quản lý phiên bản",
                 iconName = "Code",
                 targetProjectType = null,
                 isEnabled = true,
@@ -350,9 +350,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_test",
-                title = "运行测试",
+                title = "Chạy test",
                 content = "/test ",
-                description = "执行单元测试与代码验证",
+                description = "Thực thi unit test và xác minh mã",
                 iconName = "Check",
                 targetProjectType = null,
                 isEnabled = true,
@@ -361,9 +361,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_help",
-                title = "环境与帮助",
+                title = "Môi trường và trợ giúp",
                 content = "/help",
-                description = "查看当前 Linux PRoot 沙箱环境与 Agent 工具说明",
+                description = "Xem môi trường sandbox PRoot Linux hiện tại và mô tả công cụ Agent",
                 iconName = "Alert",
                 targetProjectType = null,
                 isEnabled = true,
@@ -372,9 +372,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_android_check",
-                title = "检查 Android 工程",
-                content = "请检查当前 Android 工程结构、Gradle 配置、Manifest、包名和构建环境；发现问题直接编辑文件修复并验证。",
-                description = "检查 Gradle、Manifest、包名和当前构建环境",
+                title = "Kiểm tra dự án Android",
+                content = "Vui lòng kiểm tra cấu trúc dự án Android hiện tại, cấu hình Gradle, Manifest, tên gói và môi trường build; phát hiện vấn đề thì trực tiếp sửa tệp và xác minh.",
+                description = "Kiểm tra Gradle, Manifest, tên gói và môi trường build hiện tại",
                 iconName = "Check",
                 targetProjectType = "ANDROID",
                 isEnabled = true,
@@ -383,9 +383,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_android_build",
-                title = "编译并安装到手机",
-                content = "请构建当前 Android 工程，成功后将 APK 导出到手机并调起安装器；优先使用当前工作区的构建脚本和 tianxuan-host install-apk。",
-                description = "构建 Debug APK，导出并调起手机安装器",
+                title = "Biên dịch và cài đặt lên điện thoại",
+                content = "Hãy build dự án Android hiện tại, sau khi thành công thì export APK ra điện thoại và gọi trình cài đặt; ưu tiên dùng script build của workspace hiện tại và tianxuan-host install-apk.",
+                description = "Xây dựng Debug APK, xuất và gọi trình cài đặt điện thoại",
                 iconName = "Play",
                 targetProjectType = "ANDROID",
                 isEnabled = true,
@@ -394,9 +394,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_android_debug",
-                title = "排查 Android 构建",
-                content = "请读取最近一次 Android 构建日志，定位真实错误并直接编辑脚本或工程文件修复，然后重新验证。",
-                description = "定位 Gradle、Kotlin、AAPT2 或安装问题",
+                title = "Điều tra xây dựng Android",
+                content = "Hãy đọc log build Android gần nhất, định vị lỗi thật và trực tiếp sửa script hoặc tệp dự án, rồi xác minh lại.",
+                description = "Định vị vấn đề Gradle, Kotlin, AAPT2 hoặc cài đặt",
                 iconName = "Alert",
                 targetProjectType = "ANDROID",
                 isEnabled = true,
@@ -405,9 +405,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_flutter_check",
-                title = "检查 Flutter 工程",
-                content = "请检查当前 Flutter 工程的 pubspec.yaml、Dart 入口和 Android Gradle 配置，发现问题直接修复并验证。",
-                description = "检查 pubspec、Dart 入口和 Android 宿主配置",
+                title = "Kiểm tra dự án Flutter",
+                content = "Hãy kiểm tra pubspec.yaml, điểm vào Dart và cấu hình Android Gradle của dự án Flutter hiện tại, phát hiện vấn đề thì sửa trực tiếp và xác minh.",
+                description = "Kiểm tra pubspec, entry Dart và cấu hình host Android",
                 iconName = "Check",
                 targetProjectType = "FLUTTER",
                 isEnabled = true,
@@ -416,9 +416,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_flutter_build",
-                title = "编译并安装 Flutter",
-                content = "请执行 Flutter 依赖检查和 Debug APK 构建，成功后将 APK 导出到手机并调起 tianxuan-host install-apk。",
-                description = "拉取依赖、构建 APK 并调起安装器",
+                title = "Biên dịch và cài đặt Flutter",
+                content = "Vui lòng thực hiện kiểm tra phụ thuộc Flutter và xây dựng Debug APK, sau khi thành công xuất APK ra điện thoại và gọi tianxuan-host install-apk.",
+                description = "Kéo phụ thuộc, build APK và gọi trình cài đặt",
                 iconName = "Play",
                 targetProjectType = "FLUTTER",
                 isEnabled = true,
@@ -427,9 +427,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_flutter_debug",
-                title = "排查 Flutter 构建",
-                content = "请读取 Flutter 最近一次构建错误，定位依赖、Gradle 或 AAPT2 根因，直接修改工程并重新验证。",
-                description = "定位依赖、Gradle 或 AAPT2 错误",
+                title = "Khắc phục sự cố build Flutter",
+                content = "Vui lòng đọc lỗi xây dựng Flutter gần nhất, định vị căn nguyên phụ thuộc, Gradle hoặc AAPT2, sửa trực tiếp dự án và xác minh lại.",
+                description = "Định vị lỗi phụ thuộc, Gradle hoặc AAPT2",
                 iconName = "Alert",
                 targetProjectType = "FLUTTER",
                 isEnabled = true,
@@ -438,9 +438,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_reverse_analyze",
-                title = "分析 APK 工程",
-                content = "请读取当前逆向工程的 apk-info.properties 和 REVERSE.md，使用 jadx/apktool 分析 APK 并汇报关键发现。",
-                description = "读取清单、DEX、资源和加固特征",
+                title = "Phân tích dự án APK",
+                content = "Hãy đọc apk-info.properties và REVERSE.md của dự án dịch ngược hiện tại, dùng jadx/apktool phân tích APK và báo cáo các phát hiện then chốt.",
+                description = "Đọc manifest, DEX, tài nguyên và đặc trưng gia cố",
                 iconName = "Search",
                 targetProjectType = "REVERSE",
                 isEnabled = true,
@@ -449,9 +449,9 @@ class RoomQuickPhraseRepository(
             ),
             QuickPhrase(
                 id = "builtin_reverse_decode",
-                title = "解包并反编译",
-                content = "请对当前工程内的原始 APK 执行安全解包和反编译，保留原始文件并把产物写入新的输出目录。",
-                description = "执行 JADX 或 apktool 解包流程",
+                title = "Giải nén và dịch ngược",
+                content = "Hãy thực hiện giải gói và dịch ngược an toàn APK gốc trong dự án hiện tại, giữ lại tệp gốc và ghi sản phẩm vào thư mục đầu ra mới.",
+                description = "Thực thi quy trình giải nén JADX hoặc apktool",
                 iconName = "Code",
                 targetProjectType = "REVERSE",
                 isEnabled = true,

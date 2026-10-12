@@ -80,14 +80,14 @@ class StatsRepository(
             val sessionModelId = session?.modelId
             val modelEntity = sessionModelId?.let { allModels[it] }
 
-            val providerName = modelEntity?.provider?.ifBlank { "默认" } ?: "内置"
-            val modelName = modelEntity?.name ?: sessionModelId ?: "通用助手"
+            val providerName = modelEntity?.provider?.ifBlank { "Mặc định" } ?: "Tích hợp sẵn"
+            val modelName = modelEntity?.name ?: sessionModelId ?: "Trợ lý đa năng"
 
             // 统计助手/工作区维度
             val workspaceLabel = session?.workspace?.takeIf { it.isNotBlank() }
                 ?.substringAfterLast('/')?.ifBlank { null }
                 ?: session?.title?.takeIf { it.isNotBlank() }
-                ?: "默认工程"
+                ?: "Dự án mặc định"
             assistantUsageCounts[workspaceLabel] = (assistantUsageCounts[workspaceLabel] ?: 0) + row.entryCount
             sessionEntryCounts[row.sessionId] = (sessionEntryCounts[row.sessionId] ?: 0) + row.entryCount
 
@@ -120,7 +120,7 @@ class StatsRepository(
             val msgDate = LocalDate.ofEpochDay(row.localEpochDay)
             if (msgDate.isBefore(trendStart) || msgDate.isAfter(trendEnd)) continue
             val session = allSessions[row.sessionId]
-            val providerName = session?.modelId?.let { allModels[it] }?.provider?.ifBlank { "默认" } ?: "内置"
+            val providerName = session?.modelId?.let { allModels[it] }?.provider?.ifBlank { "Mặc định" } ?: "Tích hợp sẵn"
             val dayMap = trendBuckets.getOrPut(msgDate) { mutableMapOf() }
             val bucket = dayMap[providerName] ?: StatsTokenBucket()
             val tokens = tokenContributionFromAggregate(
@@ -162,7 +162,7 @@ class StatsRepository(
         val topicRank = topicRankRows.map {
             StatsRankItem(
                 id = it.key,
-                label = allSessions[it.key]?.title?.ifBlank { "未命名会话" } ?: "未命名会话",
+                label = allSessions[it.key]?.title?.ifBlank { "Hội thoại chưa đặt tên" } ?: "Hội thoại chưa đặt tên",
                 value = it.value,
             )
         }

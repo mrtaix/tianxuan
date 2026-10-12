@@ -75,8 +75,8 @@ class WorkflowApprovalNotifier(
         runCatching {
             val manager = context.getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "工作流审批", NotificationManager.IMPORTANCE_HIGH).apply {
-                    description = "工作流执行到人工审批节点时的提醒"
+                NotificationChannel(CHANNEL_ID, "Phê duyệt luồng công việc", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "Nhắc nhở khi workflow chạy tới node phê duyệt thủ công"
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 },
             )
@@ -111,21 +111,21 @@ class WorkflowApprovalNotifier(
             )
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(top.wkbin.tianxuan.R.drawable.tianxuan_notification)
-                .setContentTitle("工作流等待审批")
-                .setContentText(title.ifBlank { "节点 $nodeId 需要你批准后继续执行" })
+                .setContentTitle("Workflow chờ phê duyệt")
+                .setContentText(title.ifBlank { "Nút $nodeId cần bạn phê duyệt rồi mới tiếp tục thực thi" })
                 .setStyle(
                     NotificationCompat.BigTextStyle()
-                        .bigText(title.ifBlank { "节点 $nodeId 需要你批准后继续执行" }),
+                        .bigText(title.ifBlank { "Nút $nodeId cần bạn phê duyệt rồi mới tiếp tục thực thi" }),
                 )
                 .setContentIntent(openRun)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
-                .addAction(NotificationCompat.Action(top.wkbin.tianxuan.R.drawable.tianxuan_notification, "批准", approvePending))
-                .addAction(NotificationCompat.Action(top.wkbin.tianxuan.R.drawable.tianxuan_notification, "拒绝", denyPending))
+                .addAction(NotificationCompat.Action(top.wkbin.tianxuan.R.drawable.tianxuan_notification, "Phê chuẩn", approvePending))
+                .addAction(NotificationCompat.Action(top.wkbin.tianxuan.R.drawable.tianxuan_notification, "Từ chối", denyPending))
                 .build()
             manager.notify(notificationId(executionId), notification)
-        }.onFailure { Log.w(TAG, "发布审批通知失败", it) }
+        }.onFailure { Log.w(TAG, "Gửi thông báo phê duyệt phát hành thất bại", it) }
     }
 
     private fun revoke(context: Context, executionId: String) {

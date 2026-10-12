@@ -77,7 +77,7 @@ object SafeFileTree {
                 }
             }
         }
-        throw lastError ?: IllegalStateException("无法删除目录：$file")
+        throw lastError ?: IllegalStateException("Không thể xóa thư mục: $file")
     }
 
     private fun walkDelete(path: Path) {

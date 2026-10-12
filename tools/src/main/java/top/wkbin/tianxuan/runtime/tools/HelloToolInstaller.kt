@@ -27,23 +27,23 @@ class HelloToolInstaller(
         val stagingDir = File(pathManager.tianxuanRootDir(distroId), ".staging-$toolId")
         try {
             if (linuxRuntime.state.value !is top.wkbin.tianxuan.core.model.RuntimeState.Ready) {
-                throw IllegalStateException("Linux Runtime 未就绪，请先初始化 Linux")
+                throw IllegalStateException("Linux Runtime chưa sẵn sàng, hãy khởi tạo Linux trước")
             }
-            emit(InstallEvent.Progress(toolId, "创建安装事务", 0.25f, InstallEvent.Phase.PREPARING))
+            emit(InstallEvent.Progress(toolId, "Tạo transaction cài đặt", 0.25f, InstallEvent.Phase.PREPARING))
             SafeFileTree.delete(stagingDir)
             val binDir = File(stagingDir, "bin")
             binDir.mkdirs()
             val executable = File(binDir, "hello")
             executable.writeText("#!/bin/sh\necho 'Hello TianXuan'\n")
             executable.setExecutable(true, false)
-            emit(InstallEvent.Progress(toolId, "验证 hello 命令", 0.85f, InstallEvent.Phase.VERIFYING_INSTALLATION))
+            emit(InstallEvent.Progress(toolId, "Xác minh lệnh hello", 0.85f, InstallEvent.Phase.VERIFYING_INSTALLATION))
             SafeFileTree.delete(targetDir)
             if (!stagingDir.renameTo(targetDir)) {
-                throw IllegalStateException("无法提交安装事务")
+                throw IllegalStateException("Không thể nộp giao dịch cài đặt")
             }
             val result = linuxRuntime.execute(ShellCommand(ToolLayout.toolBinary(toolId, "hello")))
             if (!result.isSuccess || result.stdout.trim() != "Hello TianXuan") {
-                throw IllegalStateException("验证失败：${result.stderr.ifBlank { "输出不匹配" }}")
+                throw IllegalStateException("Xác minh thất bại: ${result.stderr.ifBlank { "输出不匹配" }}")
             }
             emit(InstallEvent.Completed(toolId))
         } catch (cancellation: CancellationException) {
@@ -61,8 +61,8 @@ class HelloToolInstaller(
     override suspend fun uninstall(deleteData: Boolean): ToolActionResult = runCatching {
         SafeFileTree.delete(File(pathManager.tianxuanToolsDir(linuxRuntime.activeDistroId.value), "hello-tool"))
     }.fold(
-        onSuccess = { ToolActionResult(true, "卸载完成") },
-        onFailure = { ToolActionResult(false, "卸载 hello-tool 失败：${it.message.orEmpty()}") },
+        onSuccess = { ToolActionResult(true, "Gỡ cài đặt hoàn tất") },
+        onFailure = { ToolActionResult(false, "Gỡ cài đặt hello-tool thất bại: ${it.message.orEmpty()}") },
     )
 
     override suspend fun launch() = linuxRuntime.execute(

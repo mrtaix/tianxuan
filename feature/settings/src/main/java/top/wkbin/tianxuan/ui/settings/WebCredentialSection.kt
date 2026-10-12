@@ -39,7 +39,7 @@ internal fun WebCredentialSection(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "Web 控制台访问凭据 (HTTP Basic 认证)",
+            text = "Thông tin truy cập Web Console (xác thực HTTP Basic)",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -48,11 +48,11 @@ internal fun WebCredentialSection(
             RuntimeTextButton(
                 onClick = {
                     val creds = "$username / $password"
-                    copyToClipboard(context, creds, "CC-Switch 凭据", "已复制控制台凭据")
+                    copyToClipboard(context, creds, "Thông tin truy cập CC-Switch", "Đã sao chép thông tin xác thực console")
                 },
                 contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
             ) {
-                Text("一键复制", style = MaterialTheme.typography.labelSmall)
+                Text("Sao chép một chạm", style = MaterialTheme.typography.labelSmall)
             }
             RuntimeTextButton(
                 // 过去这个按钮把口令直接打回 admin123，等于留了一条一键降级到
@@ -60,7 +60,7 @@ internal fun WebCredentialSection(
                 onClick = onRotatePassword,
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
             ) {
-                Text("生成强口令", style = MaterialTheme.typography.labelSmall)
+                Text("Tạo mật khẩu mạnh", style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -70,11 +70,11 @@ internal fun WebCredentialSection(
     if (CcSwitchCredentials.isKnownWeakPassword(password)) {
         Text(
             text = if (password.isBlank()) {
-                "尚未生成访问口令，点「生成强口令」创建。该中枢在同一局域网内可达，" +
-                    "控制台里存放着模型 API Key，请勿使用简单口令。"
+                "Chưa tạo mã truy cập, nhấp 「Tạo mật khẩu mạnh」 để tạo. Trung khu này có thể truy cập trong cùng LAN, " +
+                    "Bảng điều khiển lưu trữ API Key của model, vui lòng không dùng mật khẩu đơn giản."
             } else {
-                "当前使用的是历史默认口令，同一局域网内的设备均可登录。" +
-                    "控制台里存放着模型 API Key，请点「生成强口令」更换。"
+                "Hiện đang dùng mật khẩu mặc định lịch sử, mọi thiết bị trong cùng mạng LAN đều có thể đăng nhập." +
+                    "Trong bảng điều khiển lưu API Key của model, hãy nhấp 「Tạo mật khẩu mạnh」 để thay."
             },
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.error,
@@ -87,12 +87,12 @@ internal fun WebCredentialSection(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "账号：$username",
+            text = "Tài khoản: $username",
             style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = "密码：${password.ifBlank { "未生成" }}",
+            text = "Mật khẩu: ${password.ifBlank { "未生成" }}",
             style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
             fontWeight = FontWeight.Bold,
             color = if (password.isBlank()) {

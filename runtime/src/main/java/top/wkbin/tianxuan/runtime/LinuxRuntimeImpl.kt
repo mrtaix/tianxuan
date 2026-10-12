@@ -91,7 +91,7 @@ class LinuxRuntimeImpl(
                     "opensuse" -> "zypper"
                     else -> "apt"
                 },
-                statusText = if (id.equals(active, ignoreCase = true)) "当前主系统" else "已就绪",
+                statusText = if (id.equals(active, ignoreCase = true)) "Hệ thống chính hiện tại" else "已就绪",
             )
         }
         _installedDistros.value = list
@@ -101,7 +101,7 @@ class LinuxRuntimeImpl(
         val safeId = distroId.lowercase().trim()
         if (!pathManager.isDistroInstalled(safeId)) {
             return@withLock AppResult.Failure(
-                AppError(ErrorCode.RUNTIME_NOT_INITIALIZED, "系统未安装或文件不完整：$safeId"),
+                AppError(ErrorCode.RUNTIME_NOT_INITIALIZED, "Hệ thống chưa cài hoặc tệp không đầy đủ: $safeId"),
             )
         }
         pathManager.ensureDistroDirectories(safeId)
@@ -140,15 +140,15 @@ class LinuxRuntimeImpl(
     ): AppResult<Unit> = initializeMutex.withLock {
         withContext(Dispatchers.IO) {
             try {
-                updateInitializing("校验设备环境", 0.05f)
+                updateInitializing("Kiểm tra môi trường thiết bị", 0.05f)
                 val architecture = detectArchitecture()
                 if (architecture != CpuArch.ARM64) {
-                    val error = AppError(ErrorCode.UNSUPPORTED_ARCHITECTURE, "手动导入仅支持 ARM64 RootFS")
+                    val error = AppError(ErrorCode.UNSUPPORTED_ARCHITECTURE, "Nhập thủ công chỉ hỗ trợ RootFS ARM64")
                     failInitialization(error)
                     return@withContext AppResult.Failure(error)
                 }
                 checkStorage()
-                updateInitializing("导入 Linux RootFS", 0.2f, archive.name)
+                updateInitializing("Nhập Linux RootFS", 0.2f, archive.name)
                 pathManager.ensureDirectories()
                 val prootResult = prootInstaller.install()
                 prootResult.errorOrNull()?.let { error ->
@@ -168,7 +168,7 @@ class LinuxRuntimeImpl(
                 createWorkspace()
                 val health = healthChecker.check()
                 if (!health.isHealthy) {
-                    val error = AppError(ErrorCode.INSTALLATION_FAILED, "导入后的 Linux 环境健康检查失败：${health.detail.orEmpty()}")
+                    val error = AppError(ErrorCode.INSTALLATION_FAILED, "Kiểm tra sức khỏe môi trường Linux sau khi nhập thất bại: ${health.detail.orEmpty()}")
                     failInitialization(error)
                     return@withContext AppResult.Failure(error)
                 }
@@ -182,8 +182,8 @@ class LinuxRuntimeImpl(
                 _state.value = RuntimeState.NotInitialized
                 throw cancellation
             } catch (throwable: Throwable) {
-                failInitialization(AppError(ErrorCode.INSTALLATION_FAILED, throwable.message ?: "导入失败", throwable))
-                AppResult.Failure(AppError(ErrorCode.INSTALLATION_FAILED, throwable.message ?: "导入失败", throwable))
+                failInitialization(AppError(ErrorCode.INSTALLATION_FAILED, throwable.message ?: "Nhập thất bại", throwable))
+                AppResult.Failure(AppError(ErrorCode.INSTALLATION_FAILED, throwable.message ?: "Nhập thất bại", throwable))
             }
         }
     }
@@ -194,7 +194,7 @@ class LinuxRuntimeImpl(
             val installed = pathManager.listInstalledDistroIds()
             if (installed.size <= 1) {
                 return@withContext AppResult.Failure(
-                    AppError(ErrorCode.INSTALLATION_FAILED, "不能卸载唯一的 Linux 系统，请先安装其他系统后再卸载"),
+                    AppError(ErrorCode.INSTALLATION_FAILED, "Không thể gỡ hệ thống Linux duy nhất, hãy cài hệ thống khác trước rồi mới gỡ"),
                 )
             }
             closeInteractiveSessions(safeId)
@@ -251,11 +251,11 @@ class LinuxRuntimeImpl(
                             error?.cause ?: IllegalStateException(error?.message ?: "Linux 环境重置失败"),
                         )
                     }
-                    AppResult.Failure(error ?: AppError(ErrorCode.INSTALLATION_FAILED, "重置 Linux 环境失败"))
+                    AppResult.Failure(error ?: AppError(ErrorCode.INSTALLATION_FAILED, "Đặt lại môi trường Linux thất bại"))
                 }
             } catch (throwable: Throwable) {
                 logger.e("Failed to reset sandbox distro $safeId", throwable)
-                AppResult.Failure(AppError(ErrorCode.IO, "重置 Linux 环境失败：${throwable.message}", throwable))
+                AppResult.Failure(AppError(ErrorCode.IO, "Đặt lại môi trường Linux thất bại: ${throwable.message}", throwable))
             }
         }
     }
@@ -284,7 +284,7 @@ class LinuxRuntimeImpl(
                 pathManager.ensureDirectories()
                 pathManager.cleanupStalePtyMarkers(request.distributionId)
 
-                updateInitializing("校验运行引擎", 0.15f, "校验 PRoot 主程序、外置 loader 与 ARM64 架构")
+                updateInitializing("Kiểm tra engine chạy", 0.15f, "Kiểm tra chương trình chính PRoot, loader ngoài và kiến trúc ARM64")
                 val prootResult = prootInstaller.install()
                 val prootError = prootResult.errorOrNull()
                 if (prootError != null) {
@@ -294,11 +294,11 @@ class LinuxRuntimeImpl(
 
                 val distroId = request.distributionId.lowercase().trim()
                 val distribution = DistributionCatalog.require(distroId)
-                updateInitializing("下载 ${distribution.displayName}", 0.2f, "通过 proot-distro 5.9.0 OCI 机制下载 linux/arm64 镜像")
+                updateInitializing("Tải ${distribution.displayName}", 0.2f, "Tải mirror linux/arm64 qua cơ chế OCI của proot-distro 5.9.0")
                 val rootfsResult = rootfsInstaller.installOci(
                     distribution,
                     request.registryRoute,
-                ) { progress -> updateDownloadProgress("下载 ${distribution.displayName}", 0.2f, 0.55f, progress) }
+                ) { progress -> updateDownloadProgress("Tải ${distribution.displayName}", 0.2f, 0.55f, progress) }
                 val rootfsError = rootfsResult.errorOrNull()
                 if (rootfsError != null) {
                     failInitialization(rootfsError)
@@ -367,7 +367,7 @@ class LinuxRuntimeImpl(
             return@withContext false
         }
         if (!pathManager.isProotInstalled()) {
-            val message = "已安装的 Linux 环境无法恢复：PRoot 运行组件不完整（APK 内 native 库缺失或不可读）"
+            val message = "Môi trường Linux đã cài không thể khôi phục: thành phần chạy PRoot không đầy đủ (thư viện native trong APK thiếu hoặc không đọc được)"
             logger.e("Restore failed: $message")
             _state.value = RuntimeState.Error(IllegalStateException(message))
             return@withContext false
@@ -389,7 +389,7 @@ class LinuxRuntimeImpl(
             return@withContext false
         }
         if (!health.isHealthy) {
-            val message = "已安装的 Linux 环境健康检查未通过：${health.detail.orEmpty()}"
+            val message = "Kiểm tra sức khỏe môi trường Linux đã cài đặt không qua: ${health.detail.orEmpty()}"
             logger.e("Restore failed: $message")
             _state.value = RuntimeState.Error(IllegalStateException(message))
             return@withContext false
@@ -411,18 +411,18 @@ class LinuxRuntimeImpl(
         withContext(Dispatchers.IO) {
             if (_state.value !is RuntimeState.Ready) {
                 return@withContext AppResult.Failure(
-                    AppError(ErrorCode.INSTALLATION_FAILED, "只有已就绪的 Linux Runtime 才能更新"),
+                    AppError(ErrorCode.INSTALLATION_FAILED, "Chỉ Linux Runtime đã sẵn sàng mới có thể cập nhật"),
                 )
             }
             try {
                 val targetDistro = distroId?.lowercase()?.trim() ?: _activeDistroId.value
                 processRegistry.stopAll()
-                updateInitializing("更新 RootFS", 0.05f, "保留 /root 和 /opt/tianxuan 用户数据")
+                updateInitializing("更新 RootFS", 0.05f, "Giữ lại dữ liệu người dùng /root và /opt/tianxuan")
                 val distribution = DistributionCatalog.require(targetDistro)
                 val result = rootfsInstaller.updateOci(
                     distribution,
                     RegistryRoute.AUTO,
-                ) { progress -> updateDownloadProgress("更新 ${distribution.displayName}", 0.1f, 0.65f, progress) }
+                ) { progress -> updateDownloadProgress("Cập nhật ${distribution.displayName}", 0.1f, 0.65f, progress) }
                 result.errorOrNull()?.let { error ->
                     _state.value = RuntimeState.Error(error.cause ?: IllegalStateException(error.message))
                     return@withContext AppResult.Failure(error)
@@ -437,12 +437,12 @@ class LinuxRuntimeImpl(
                 if (!health.isHealthy) {
                     rootfsInstaller.rollbackPendingUpdate(targetDistro)
                     _state.value = RuntimeState.Error(
-                        IllegalStateException("更新后健康检查失败：${health.detail.orEmpty()}"),
+                        IllegalStateException("Kiểm tra sức khỏe sau cập nhật thất bại: ${health.detail.orEmpty()}"),
                     )
                     return@withContext AppResult.Failure(
                         AppError(
                             ErrorCode.INSTALLATION_FAILED,
-                            "RootFS 更新后的健康检查失败，已恢复旧版本",
+                            "Kiểm tra sức khỏe sau khi cập nhật RootFS thất bại, đã khôi phục phiên bản cũ",
                         ),
                     )
                 }
@@ -453,7 +453,7 @@ class LinuxRuntimeImpl(
             } catch (cancellation: CancellationException) {
                 val targetDistro = distroId?.lowercase()?.trim() ?: _activeDistroId.value
                 rootfsInstaller.rollbackPendingUpdate(targetDistro)
-                _state.value = RuntimeState.Error(IllegalStateException("RootFS 更新已取消，旧版本已恢复"))
+                _state.value = RuntimeState.Error(IllegalStateException("Cập nhật RootFS đã hủy, phiên bản cũ đã được khôi phục"))
                 throw cancellation
             } catch (throwable: Throwable) {
                 val targetDistro = distroId?.lowercase()?.trim() ?: _activeDistroId.value
@@ -461,7 +461,7 @@ class LinuxRuntimeImpl(
                 logger.e("Linux runtime update failed", throwable)
                 _state.value = RuntimeState.Error(throwable)
                 AppResult.Failure(
-                    AppError(ErrorCode.INSTALLATION_FAILED, throwable.message ?: "RootFS 更新失败", throwable),
+                    AppError(ErrorCode.INSTALLATION_FAILED, throwable.message ?: "Cập nhật RootFS thất bại", throwable),
                 )
             }
         }
@@ -471,7 +471,7 @@ class LinuxRuntimeImpl(
         withContext(Dispatchers.IO) {
             if (_state.value !is RuntimeState.Ready) {
                 return@withContext AppResult.Failure(
-                    AppError(ErrorCode.INSTALLATION_FAILED, "只有已就绪的 Linux Runtime 才能检查更新"),
+                    AppError(ErrorCode.INSTALLATION_FAILED, "Chỉ Linux Runtime đã sẵn sàng mới có thể kiểm tra cập nhật"),
                 )
             }
             val targetDistro = distroId?.lowercase()?.trim() ?: _activeDistroId.value
@@ -480,7 +480,7 @@ class LinuxRuntimeImpl(
                 onSuccess = { AppResult.Success(it) },
                 onFailure = {
                     logger.e("Linux runtime RootFS update check failed", it)
-                    AppResult.Failure(AppError(ErrorCode.NETWORK, "RootFS 更新检查失败：${it.message}", it))
+                    AppResult.Failure(AppError(ErrorCode.NETWORK, "Kiểm tra cập nhật RootFS thất bại: ${it.message}", it))
                 },
             )
         }
@@ -521,11 +521,11 @@ class LinuxRuntimeImpl(
             return ExecutionLayout(pathManager.rootfsDir(distroId), null, pathManager.tianxuanRootDir(distroId))
         }
         check(settingsDataStore.qemuCompatibilityEnabled.first()) {
-            "QEMU 兼容模式未开启，请先在设置中打开兼容开关"
+            "Chế độ tương thích QEMU chưa bật, hãy bật công tắc tương thích trong cài đặt trước"
         }
         val tianxuanRoot = pathManager.tianxuanRootDir(distroId)
         check(QemuCompatibilityLayout.isReady(tianxuanRoot)) {
-            "QEMU 兼容环境未就绪，请先安装并验证 qemu-x86-64-compat 插件"
+            "Môi trường tương thích QEMU chưa sẵn sàng, hãy cài và xác minh plugin qemu-x86-64-compat trước"
         }
         return ExecutionLayout(
             rootfsDir = QemuCompatibilityLayout.guestRootfs(tianxuanRoot),
@@ -657,13 +657,13 @@ class LinuxRuntimeImpl(
                 hostGroupIds = hostSupplementaryGroupIds(),
             )
         }.onFailure {
-            logger.w("同步宿主补充组到 /etc/group 失败，登录时可能出现 groups 警告", it)
+            logger.w("Đồng bộ nhóm bổ sung của máy chủ sang /etc/group thất bại, khi đăng nhập có thể xuất hiện cảnh báo groups", it)
         }
         if (effectiveConfig.showBanner) {
             runCatching {
                 File(pathManager.tianxuanRootDir(safeDistro), "motd").writeText(terminalBanner())
             }.onFailure {
-                logger.w("写入终端横幅失败，本次会话将无横幅", it)
+                logger.w("Ghi banner terminal thất bại, phiên này sẽ không có banner", it)
             }
         }
         val command = prootCommandBuilder.buildInteractive(
@@ -705,7 +705,7 @@ class LinuxRuntimeImpl(
         val sharedEnabled = settingsDataStore.mountSharedStorageEnabled.first()
         val sharedDir = File("/storage/emulated/0")
         if (sharedEnabled && sharedDir.isDirectory && sharedDir.canRead()) {
-            add(StorageMountBinding("system-shared", "共享存储", "/storage/emulated/0", "/sdcard", true, true))
+            add(StorageMountBinding("system-shared", "Lưu trữ chia sẻ", "/storage/emulated/0", "/sdcard", true, true))
         }
         val downloadDir = File("/storage/emulated/0/Download")
         if (!sharedEnabled && settingsDataStore.mountDownloadEnabled.first() && downloadDir.isDirectory && downloadDir.canRead()) {
@@ -713,7 +713,7 @@ class LinuxRuntimeImpl(
         }
         val documentsDir = File("/storage/emulated/0/Documents")
         if (!sharedEnabled && settingsDataStore.mountDocumentsEnabled.first() && documentsDir.isDirectory && documentsDir.canRead()) {
-            add(StorageMountBinding("system-documents", "文档", "/storage/emulated/0/Documents", "/sdcard/Documents", true, true))
+            add(StorageMountBinding("system-documents", "Tài liệu", "/storage/emulated/0/Documents", "/sdcard/Documents", true, true))
         }
         // 自定义绑定来自用户可编辑的 Room 表，历史版本可能存入越界路径。
         // 这里必须先行过滤并告警，绝不能让非法绑定流入 ProotCommandBuilder 导致会话启动崩溃；
@@ -724,7 +724,7 @@ class LinuxRuntimeImpl(
             if (error == null) {
                 add(binding)
             } else {
-                logger.w("忽略非法存储挂载绑定（请在存储挂载设置中删除后重建） id=${binding.id} " +
+                logger.w("Bỏ qua ràng buộc mount lưu trữ không hợp lệ (hãy xóa trong cài đặt mount lưu trữ rồi tạo lại) id=${binding.id} " +
                     "host=${binding.hostPath} guest=${binding.guestPath}: $error")
             }
         }
@@ -800,13 +800,13 @@ class LinuxRuntimeImpl(
     }
 
     override suspend fun withStorageCleanup(block: suspend () -> Unit) {
-        check(initializeMutex.tryLock()) { "正在安装、更新或管理环境，请完成后再清理" }
+        check(initializeMutex.tryLock()) { "Đang cài đặt, cập nhật hoặc quản lý môi trường, hãy hoàn thành rồi mới dọn dẹp" }
         try {
             storageActivities.cleanup {
                 check(interactiveSessions.keys.none { it.isAlive } && processRegistry.list().none { it.session.isAlive }) {
-                    "请先关闭终端并停止后台服务，再清理存储"
+                    "Hãy đóng terminal và dừng dịch vụ nền trước, rồi mới dọn lưu trữ"
                 }
-                check(_state.value !is RuntimeState.Initializing) { "环境正在初始化，请稍后再清理" }
+                check(_state.value !is RuntimeState.Initializing) { "Môi trường đang khởi tạo, vui lòng dọn dẹp sau" }
                 block()
             }
         } finally {
@@ -901,7 +901,7 @@ class LinuxRuntimeImpl(
         val detail = if (progress.totalMegabytes != null) {
             "${progress.downloadedMegabytes} / ${progress.totalMegabytes} MB"
         } else {
-            "已下载 ${progress.downloadedMegabytes} MB"
+            "Đã tải ${progress.downloadedMegabytes} MB"
         }
         updateInitializing(step, scaled, detail)
     }

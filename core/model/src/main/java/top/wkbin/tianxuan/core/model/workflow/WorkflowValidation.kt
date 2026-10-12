@@ -5,19 +5,19 @@ data class WorkflowValidationIssue(val field: String, val message: String)
 object WorkflowValidator {
     fun validate(definition: WorkflowDefinition): List<WorkflowValidationIssue> {
         val issues = mutableListOf<WorkflowValidationIssue>()
-        if (definition.id.isBlank()) issues += WorkflowValidationIssue("id", "工作流 ID 不能为空")
-        if (definition.name.isBlank()) issues += WorkflowValidationIssue("name", "工作流名称不能为空")
-        if (definition.nodes.isEmpty()) issues += WorkflowValidationIssue("nodes", "工作流至少需要一个节点")
+        if (definition.id.isBlank()) issues += WorkflowValidationIssue("id", "ID workflow không được rỗng")
+        if (definition.name.isBlank()) issues += WorkflowValidationIssue("name", "Tên workflow không được rỗng")
+        if (definition.nodes.isEmpty()) issues += WorkflowValidationIssue("nodes", "Workflow cần ít nhất một nút")
 
         val nodeIds = definition.nodes.map { it.id }
         if (nodeIds.size != nodeIds.distinct().size) {
-            issues += WorkflowValidationIssue("nodes", "节点 ID 必须唯一")
+            issues += WorkflowValidationIssue("nodes", "ID nút phải duy nhất")
         }
         definition.nodes.forEach { node ->
-            if (node.id.isBlank()) issues += WorkflowValidationIssue("nodes", "节点 ID 不能为空")
-            if (node.title.isBlank()) issues += WorkflowValidationIssue("nodes.${node.id}.title", "节点标题不能为空")
+            if (node.id.isBlank()) issues += WorkflowValidationIssue("nodes", "ID nút không được để trống")
+            if (node.title.isBlank()) issues += WorkflowValidationIssue("nodes.${node.id}.title", "Tiêu đề nút không được để trống")
             if (node.timeoutSeconds !in 1..3600) {
-                issues += WorkflowValidationIssue("nodes.${node.id}.timeoutSeconds", "超时必须在 1–3600 秒之间")
+                issues += WorkflowValidationIssue("nodes.${node.id}.timeoutSeconds", "Thời gian chờ phải nằm giữa 1–3600 giây")
             }
             if (node.type == WorkflowNodeType.CONDITION_BRANCH) {
                 val expression = node.config["expression"] ?: node.config["condition"]
@@ -31,14 +31,14 @@ object WorkflowValidator {
                 if (def == null && node.config["command"].isNullOrBlank()) {
                     issues += WorkflowValidationIssue(
                         "nodes.${node.id}.action",
-                        "未知宿主动作：$action（可改用已知动作，或提供 command 作为逃逸舱）",
+                        "Động tác máy chủ không rõ: $action (có thể đổi sang động tác đã biết, hoặc cung cấp command làm cổng thoát)",
                     )
                 }
                 def?.fields?.filter { it.required }?.forEach { field ->
                     if (node.config[field.key].isNullOrBlank()) {
                         issues += WorkflowValidationIssue(
                             "nodes.${node.id}.${field.key}",
-                            "宿主动作「${def.label}」缺少必填参数：${field.label}",
+                            "Thao tác máy chủ 「${def.label}」 thiếu tham số bắt buộc: ${field.label}",
                         )
                     }
                 }
@@ -46,7 +46,7 @@ object WorkflowValidator {
             if (node.type == WorkflowNodeType.DELAY) {
                 val seconds = node.config["seconds"] ?: node.config["delaySeconds"]
                 if (seconds != null && seconds.toDoubleOrNull() == null) {
-                    issues += WorkflowValidationIssue("nodes.${node.id}.seconds", "等待秒数必须是数字")
+                    issues += WorkflowValidationIssue("nodes.${node.id}.seconds", "Số giây chờ phải là số")
                 }
             }
         }
@@ -54,15 +54,15 @@ object WorkflowValidator {
         val known = nodeIds.toSet()
         val edgeIds = definition.edges.map { it.id }
         if (edgeIds.size != edgeIds.distinct().size) {
-            issues += WorkflowValidationIssue("edges", "连接 ID 必须唯一")
+            issues += WorkflowValidationIssue("edges", "ID kết nối phải duy nhất")
         }
         definition.edges.forEach { edge ->
-            if (edge.id.isBlank()) issues += WorkflowValidationIssue("edges", "连接 ID 不能为空")
+            if (edge.id.isBlank()) issues += WorkflowValidationIssue("edges", "ID kết nối không được rỗng")
             if (edge.fromNodeId !in known || edge.toNodeId !in known) {
-                issues += WorkflowValidationIssue("edges.${edge.id}", "边引用了不存在的节点")
+                issues += WorkflowValidationIssue("edges.${edge.id}", "Cạnh tham chiếu nút không tồn tại")
             }
             if (edge.fromNodeId == edge.toNodeId) {
-                issues += WorkflowValidationIssue("edges.${edge.id}", "节点不能连接到自身")
+                issues += WorkflowValidationIssue("edges.${edge.id}", "Node không thể kết nối tới chính nó")
             }
             WorkflowEdgeCondition.validationError(edge)?.let { message ->
                 issues += WorkflowValidationIssue("edges.${edge.id}.condition", message)
@@ -70,7 +70,7 @@ object WorkflowValidator {
         }
 
         if (known.isNotEmpty() && containsCycle(definition)) {
-            issues += WorkflowValidationIssue("edges", "工作流必须是无环图（DAG）")
+            issues += WorkflowValidationIssue("edges", "Workflow phải là đồ thị không chu trình (DAG)")
         }
         return issues
     }

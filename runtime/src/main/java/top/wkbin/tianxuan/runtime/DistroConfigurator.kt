@@ -306,7 +306,7 @@ class DistroConfigurator(
         val findCommand = "find /usr /bin /sbin -xdev -type f -perm /6000 -exec chmod ug-s {} +"
         val cleanupTmp = "rm -f /bin/*.dpkg-tmp /usr/bin/*.dpkg-tmp /usr/sbin/*.dpkg-tmp /sbin/*.dpkg-tmp 2>/dev/null || true"
         File(hookDir, "99tianxuan-strip-setuid").writeText(
-            "// PRoot 沙箱：setuid 不生效，保留会导致 dpkg 升级卡死（见 tianxuan-runtime 文档）。\n" +
+            "// Sandbox PRoot: setuid không có tác dụng, giữ lại sẽ khiến dpkg nâng cấp bị treo (xem tài liệu tianxuan-runtime).\n" +
                 "DPkg::Pre-Invoke { \"$cleanupTmp\"; };\n" +
                 "DPkg::Post-Invoke { \"$findCommand\"; };\n",
         )

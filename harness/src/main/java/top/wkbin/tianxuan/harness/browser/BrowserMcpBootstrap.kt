@@ -44,7 +44,7 @@ class BrowserMcpBootstrap(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "初始化 WebView 调试开关失败", e)
+                Log.e(TAG, "Khởi tạo công tắc gỡ lỗi WebView thất bại", e)
             }
             // hooksEnabled/cdpEnabled/vConsoleEnabled 与 desktopUserAgent 一样：池级开关，切换需重启（或新引擎注册）才生效
             val pool = WebViewTabPool(
@@ -69,10 +69,10 @@ class BrowserMcpBootstrap(
             // 自环客户端须以实际绑定端口为准替换静态预设 URL 中的端口。
             BuiltinBrowserMcpAccess.port = server.port
             val host = if (allowRemote) "0.0.0.0" else McpServerRuntime.loopbackHost
-            Log.i(TAG, "BrowserMcpServer 已启动 http://$host:${server.port}/mcp（Bearer 认证已启用）")
+            Log.i(TAG, "BrowserMcpServer đã khởi động http://$host:${server.port}/mcp (đã bật xác thực Bearer)")
         } else {
             BuiltinBrowserMcpAccess.port = null
-            Log.w(TAG, "BrowserMcpServer 启动失败：候选端口 ${McpServerRuntime.defaultPort}..${McpServerRuntime.defaultPort + 9} 均不可用")
+            Log.w(TAG, "BrowserMcpServer khởi động thất bại: cổng ứng viên ${McpServerRuntime.defaultPort}..${McpServerRuntime.defaultPort + 9} đều không khả dụng")
         }
         return ok
     }

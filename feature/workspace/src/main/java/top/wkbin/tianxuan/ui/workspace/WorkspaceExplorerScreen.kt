@@ -99,7 +99,7 @@ fun WorkspaceExplorerScreen(
     val allFilesPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
-        // 从系统"所有文件访问"授权页返回（无论是否授权）都重新评估并刷新
+        // 从系统"Truy cập tất cả tệp"授权页返回（无论是否授权）都重新评估并刷新
         viewModel.refreshAfterPermissionReturn()
     }
     val legacyStoragePermissionLauncher = rememberLauncherForActivityResult(
@@ -227,7 +227,7 @@ fun WorkspaceExplorerScreen(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // 共享存储"所有文件访问"权限缺失横幅：系统会过滤其他应用的文件（只显示文件夹）
+            // 共享存储"Truy cập tất cả tệp"权限缺失横幅：系统会过滤其他应用的文件（只显示文件夹）
             if (sharedStorageAccessLimited) {
                 SharedStoragePermissionBanner(
                     onAuthorize = {

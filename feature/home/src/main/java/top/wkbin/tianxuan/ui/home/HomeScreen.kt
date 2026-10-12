@@ -898,7 +898,7 @@ private fun RuntimeEngineStatusCard(
                 onClick = onOpenModeSettings,
             )
 
-            // 活跃进程与运行时长（并入主状态卡，替代原独立卡片，避免与下方"打开控制台"按钮重复）
+            // 活跃进程与运行时长（并入主状态卡，替代原独立卡片，避免与下方"Mở console"按钮重复）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

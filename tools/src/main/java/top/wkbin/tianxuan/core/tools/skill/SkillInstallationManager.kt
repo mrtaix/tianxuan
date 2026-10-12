@@ -25,7 +25,7 @@ data class SkillInstallInspection(
 
 class SkillSecurityBlockedException(
     val report: SecurityAuditReport,
-    message: String = "技能包未能通过端侧静态安全审查，已被系统阻断安装",
+    message: String = "Gói kỹ năng không qua rà soát an toàn tĩnh phía thiết bị, đã bị hệ thống chặn cài đặt",
 ) : SecurityException(message)
 
 /**
@@ -45,14 +45,14 @@ class SkillInstallationManager(
     suspend fun prepareMarketSkill(skillId: String): AppResult<SkillInstallInspection> {
         val downloadRes = clawHubClient.downloadPackage(skillId)
         if (downloadRes !is AppResult.Success) {
-            return AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(top.wkbin.tianxuan.core.common.result.ErrorCode.DOWNLOAD, "下载市场技能包失败"))
+            return AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(top.wkbin.tianxuan.core.common.result.ErrorCode.DOWNLOAD, "Tải gói kỹ năng từ chợ thất bại"))
         }
 
         return runCatching {
             val inspection = inspectZipBytes(downloadRes.data, fallbackId = skillId)
             AppResult.Success(inspection)
         }.getOrElse { err ->
-            AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(top.wkbin.tianxuan.core.common.result.ErrorCode.SECURITY, err.message ?: "审查失败", err))
+            AppResult.Failure(top.wkbin.tianxuan.core.common.result.AppError(top.wkbin.tianxuan.core.common.result.ErrorCode.SECURITY, err.message ?: "Rà soát thất bại", err))
         }
     }
 
@@ -112,7 +112,7 @@ class SkillInstallationManager(
 
         val skillId = pkg.manifest.id
         if (!SKILL_ID_PATTERN.matches(skillId)) {
-            throw SecurityException("技能 id 含非法字符，已拒绝安装: $skillId")
+            throw SecurityException("Skill id chứa ký tự bất hợp pháp, đã từ chối cài đặt: $skillId")
         }
 
         // 先写入独立暂存目录，成功后整体重命名：回滚时只需删除暂存目录，绝不触碰其他技能
@@ -127,7 +127,7 @@ class SkillInstallationManager(
                 val destFile = File(stagingDir, safePath)
                 val canonicalDest = destFile.canonicalPath
                 if (!canonicalDest.startsWith(canonicalTarget + File.separator)) {
-                    throw SecurityException("检测到非法的文件写入逃逸: $relPath")
+                    throw SecurityException("Phát hiện thoát ghi tệp bất hợp pháp: $relPath")
                 }
                 destFile.parentFile?.mkdirs()
                 destFile.writeBytes(bytes)
@@ -137,11 +137,11 @@ class SkillInstallationManager(
             // rename 失败可回滚，避免「先删旧再 rename 失败」导致旧技能数据永久丢失。
             val legacyDir = File(targetDir.parentFile, "${targetDir.name}.legacy-${System.currentTimeMillis()}")
             if (targetDir.exists() && !targetDir.renameTo(legacyDir)) {
-                throw java.io.IOException("技能目录备份失败: ${targetDir.absolutePath}")
+                throw java.io.IOException("Sao lưu thư mục kỹ năng thất bại: ${targetDir.absolutePath}")
             }
             if (!stagingDir.renameTo(targetDir)) {
                 if (legacyDir.exists()) legacyDir.renameTo(targetDir)
-                throw java.io.IOException("技能目录暂存重命名失败: ${stagingDir.absolutePath} -> ${targetDir.absolutePath}")
+                throw java.io.IOException("Đổi tên tạm thư mục kỹ năng thất bại: ${stagingDir.absolutePath} -> ${targetDir.absolutePath}")
             }
             if (legacyDir.exists()) legacyDir.deleteRecursively()
             renamed = true

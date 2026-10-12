@@ -56,13 +56,13 @@ data class StorageMountBinding(
          * 保证三处规则永不漂移。
          */
         fun validationError(binding: StorageMountBinding): String? {
-            if (':' in binding.hostPath || '\u0000' in binding.hostPath) return "宿主挂载路径包含非法字符"
-            if (':' in binding.guestPath || '\u0000' in binding.guestPath) return "容器挂载路径包含非法字符"
-            if (!binding.guestPath.startsWith('/')) return "容器挂载路径必须是绝对路径"
+            if (':' in binding.hostPath || '\u0000' in binding.hostPath) return "Đường dẫn mount host chứa ký tự không hợp lệ"
+            if (':' in binding.guestPath || '\u0000' in binding.guestPath) return "Đường dẫn mount container chứa ký tự bất hợp pháp"
+            if (!binding.guestPath.startsWith('/')) return "Đường dẫn gắn kết container phải là đường dẫn tuyệt đối"
             val segments = binding.guestPath.split('/').filter { it.isNotBlank() && it != "." }
-            if (segments.any { it == ".." }) return "容器挂载路径不允许包含 .."
-            if (!isGuestPathAllowed(binding.guestPath)) return "容器挂载仅允许位于 /mnt 或 /sdcard 内"
-            if (!isHostPathAllowed(binding.hostPath)) return "宿主挂载仅允许位于 $SHARED_STORAGE_ROOT 内"
+            if (segments.any { it == ".." }) return "Đường dẫn mount container không được chứa .."
+            if (!isGuestPathAllowed(binding.guestPath)) return "Mount container chỉ cho phép nằm trong /mnt hoặc /sdcard"
+            if (!isHostPathAllowed(binding.hostPath)) return "Mount máy chủ chỉ cho phép nằm trong $SHARED_STORAGE_ROOT"
             return null
         }
     }

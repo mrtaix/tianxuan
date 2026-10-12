@@ -56,8 +56,8 @@ class BrowserMcpTools(
 
     suspend fun invoke(toolName: String, args: JsonObject): InvokeResult {
         val spec = TOOLS.firstOrNull { it.name == toolName }
-            ?: return InvokeResult.error("未知工具：$toolName")
-        val engine = pickEngine(explicitTokenOf(args)) ?: return InvokeResult.error("无浏览器引擎")
+            ?: return InvokeResult.error("Công cụ không xác định：$toolName")
+        val engine = pickEngine(explicitTokenOf(args)) ?: return InvokeResult.error("Không có engine trình duyệt")
         return when (toolName) {
             "browser.open" -> {
                 val url = sanitizeUrl(args["url"]?.asString()).ifEmpty { prefs.homeUrl }
@@ -66,7 +66,7 @@ class BrowserMcpTools(
             }
             "browser.navigate" -> {
                 val url = sanitizeUrl(args["url"]?.asString())
-                if (url.isBlank()) InvokeResult.error("缺少 url 参数") else {
+                if (url.isBlank()) InvokeResult.error("Thiếu tham số url") else {
                 engine.navigate(tokenOf(args, engine), url); InvokeResult.okMessage("navigated=$url")
                 }
             }
@@ -102,8 +102,8 @@ class BrowserMcpTools(
                 val exp = args["expression"]?.asString().orEmpty()
                 when {
                     // 安全门禁：allowEvalJs 默认 false，未显式开启时不执行任何脚本
-                    !prefs.allowEvalJs -> InvokeResult.error("evaluate 被禁用（allowEvalJs=false），请在浏览器设置中开启")
-                    exp.isEmpty() -> InvokeResult.error("缺少 expression")
+                    !prefs.allowEvalJs -> InvokeResult.error("evaluate bị vô hiệu (allowEvalJs=false), hãy bật trong cài đặt trình duyệt")
+                    exp.isEmpty() -> InvokeResult.error("Thiếu expression")
                     else -> engine.evaluate(tokenOf(args, engine), exp)?.let { InvokeResult.okMessage(it) }
                         // 引擎侧 evaluate 超时/失败返回 null：不能再伪装成成功（空串）
                         ?: InvokeResult.error("evaluation failed or timed out")
@@ -163,7 +163,7 @@ class BrowserMcpTools(
             "browser.debug_state" -> handleDebugState(engine, args)
             "browser.debug_eval" -> handleDebugEval(engine, args)
             "browser.debug_scope" -> handleDebugScope(engine, args)
-            else -> InvokeResult.error("工具未实现：$toolName")
+            else -> InvokeResult.error("Công cụ chưa triển khai: $toolName")
         }
     }
 
@@ -216,7 +216,7 @@ class BrowserMcpTools(
         action: suspend (BrowserEngine, BrowserSessionToken, String) -> Boolean,
     ): InvokeResult {
         val ref = args["ref"]?.asString().orEmpty()
-        if (ref.isBlank()) return InvokeResult.error("缺少 ref")
+        if (ref.isBlank()) return InvokeResult.error("Thiếu ref")
         val ok = action(engine, tokenOf(args, engine), ref)
         return if (ok) InvokeResult.okMessage("ok=$ref") else InvokeResult.error("failed=$ref")
     }
@@ -227,7 +227,7 @@ class BrowserMcpTools(
     private suspend fun handleType(engine: BrowserEngine, args: JsonObject): InvokeResult {
         val ref = args["ref"]?.asString().orEmpty()
         val text = args["text"]?.asString().orEmpty()
-        if (ref.isBlank() || text.isEmpty()) return InvokeResult.error("缺少 ref 或 text")
+        if (ref.isBlank() || text.isEmpty()) return InvokeResult.error("Thiếu ref hoặc text")
         val ok = engine.typeInto(tokenOf(args, engine), ref, text) { _, r -> "[data-tianxuan-ref='$r']" }
         return if (ok) InvokeResult.okMessage("typed=${text.length}") else InvokeResult.error("type-failed=$ref")
     }
@@ -235,7 +235,7 @@ class BrowserMcpTools(
     private suspend fun handlePress(engine: BrowserEngine, args: JsonObject): InvokeResult {
         val ref = args["ref"]?.asString()
         val key = args["key"]?.asString().orEmpty()
-        if (key.isEmpty()) return InvokeResult.error("缺少 key")
+        if (key.isEmpty()) return InvokeResult.error("Thiếu key")
         val ok = engine.press(tokenOf(args, engine), ref, key) { _, r -> ref?.let { "[data-tianxuan-ref='$r']" } ?: "" }
         return if (ok) InvokeResult.okMessage("pressed=$key") else InvokeResult.error("press-failed=$key")
     }
@@ -268,7 +268,7 @@ class BrowserMcpTools(
 
     private suspend fun handleKvGet(engine: BrowserEngine, args: JsonObject, session: Boolean): InvokeResult {
         val key = args["key"]?.asString().orEmpty()
-        if (key.isEmpty()) return InvokeResult.error("缺少 key")
+        if (key.isEmpty()) return InvokeResult.error("Thiếu key")
         val tab = tokenOf(args, engine)
         val v = if (session) engine.sessionGet(tab, key) else engine.localGet(tab, key)
         return InvokeResult.okMessage(v ?: "")
@@ -277,7 +277,7 @@ class BrowserMcpTools(
     private suspend fun handleKvSet(engine: BrowserEngine, args: JsonObject, session: Boolean): InvokeResult {
         val key = args["key"]?.asString().orEmpty()
         val v = args["value"]?.asString().orEmpty()
-        if (key.isEmpty()) return InvokeResult.error("缺少 key")
+        if (key.isEmpty()) return InvokeResult.error("Thiếu key")
         val tab = tokenOf(args, engine)
         if (session) engine.sessionSet(tab, key, v) else engine.localSet(tab, key, v)
         return InvokeResult.okMessage("ok")
@@ -285,7 +285,7 @@ class BrowserMcpTools(
 
     private suspend fun handleKvDelete(engine: BrowserEngine, args: JsonObject, session: Boolean): InvokeResult {
         val key = args["key"]?.asString().orEmpty()
-        if (key.isEmpty()) return InvokeResult.error("缺少 key")
+        if (key.isEmpty()) return InvokeResult.error("Thiếu key")
         val tab = tokenOf(args, engine)
         if (session) engine.sessionDelete(tab, key) else engine.localDelete(tab, key)
         return InvokeResult.okMessage("ok")
@@ -304,36 +304,36 @@ class BrowserMcpTools(
      */
     private fun hookGate(): InvokeResult? =
         if (!prefs.allowHooks && !prefs.allowCdp) {
-            InvokeResult.error("hook 规则工具被禁用（allowHooks 与 allowCdp 均为 false），请在浏览器设置中开启后重启")
+            InvokeResult.error("Công cụ quy tắc hook bị vô hiệu hóa (allowHooks và allowCdp đều là false), vui lòng bật trong cài đặt trình duyệt rồi khởi động lại")
         } else null
 
     /** CDP debug 工具门禁：独立 allowCdp 开关（与 allowHooks 解耦）。 */
     private fun debugGate(): InvokeResult? =
         if (!prefs.allowCdp) {
-            InvokeResult.error("debug 工具被禁用（allowCdp=false），请在浏览器设置中开启后重启")
+            InvokeResult.error("Công cụ debug bị vô hiệu hóa (allowCdp=false), vui lòng bật trong cài đặt trình duyệt rồi khởi động lại")
         } else null
 
     /** 引擎侧 hooks/cdp 未启用（如 in-app 池开关为 false）时抛 UnsupportedOperationException → 转友好错误。 */
     private suspend fun runGatedTool(block: suspend () -> InvokeResult): InvokeResult =
         runCatching { block() }.getOrElse { e ->
-            InvokeResult.error(e.message ?: "操作失败")
+            InvokeResult.error(e.message ?: "Thao tác thất bại")
         }
 
     private suspend fun handleHookCreate(engine: BrowserEngine, args: JsonObject): InvokeResult {
         hookGate()?.let { return it }
         val typeRaw = args["type"]?.asString()
-            ?: return InvokeResult.error("缺少 type（fetch/xhr/websocket/function/method/property/storage/cookie/console/timer/crypto）")
+            ?: return InvokeResult.error("Thiếu type (fetch/xhr/websocket/function/method/property/storage/cookie/console/timer/crypto)")
         val type = HookType.entries.firstOrNull { it.name.equals(typeRaw, ignoreCase = true) }
-            ?: return InvokeResult.error("未知 hook type：$typeRaw")
-        val target = args["target"]?.asString() ?: return InvokeResult.error("缺少 target")
+            ?: return InvokeResult.error("hook type không xác định: $typeRaw")
+        val target = args["target"]?.asString() ?: return InvokeResult.error("Thiếu target")
         val actions: List<HookAction> = when (val actionsEl = args["actions"]) {
             null -> listOf(HookAction.Log())
             is JsonArray -> runCatching {
                 hookJson.decodeFromJsonElement(ListSerializer(HookAction.serializer()), actionsEl)
-            }.getOrElse { return InvokeResult.error("actions 解析失败：${it.message}") }
-            else -> return InvokeResult.error("actions 必须是数组，如 [{\"type\":\"log\"}]")
+            }.getOrElse { return InvokeResult.error("Phân giải actions thất bại: ${it.message}") }
+            else -> return InvokeResult.error("actions phải là mảng, ví dụ [{\"type\":\"log\"}]")
         }
-        if (actions.isEmpty()) return InvokeResult.error("actions 不能为空")
+        if (actions.isEmpty()) return InvokeResult.error("actions không được rỗng")
         val rule = HookRule(
             id = "hr_" + java.util.UUID.randomUUID().toString().substring(0, 8),
             type = type,
@@ -370,7 +370,7 @@ class BrowserMcpTools(
 
     private suspend fun handleHookRemove(engine: BrowserEngine, args: JsonObject): InvokeResult {
         hookGate()?.let { return it }
-        val id = args["id"]?.asString() ?: return InvokeResult.error("缺少 id")
+        val id = args["id"]?.asString() ?: return InvokeResult.error("Thiếu id")
         return runGatedTool {
             if (engine.hookRemove(id)) InvokeResult.okMessage("hook removed: $id")
             else InvokeResult.error("hook not found: $id")
@@ -404,10 +404,10 @@ class BrowserMcpTools(
     private suspend fun handleInjectScript(engine: BrowserEngine, args: JsonObject): InvokeResult {
         // inject_script 是页内注入，维持 allowHooks-only（CDP 开关不包含注入能力）
         if (!prefs.allowHooks) {
-            return InvokeResult.error("inject_script 被禁用（allowHooks=false），请在浏览器设置中开启后重启")
+            return InvokeResult.error("inject_script bị vô hiệu (allowHooks=false), hãy bật trong cài đặt trình duyệt rồi khởi động lại")
         }
-        val code = args["code"]?.asString() ?: return InvokeResult.error("缺少 code")
-        if (code.isBlank()) return InvokeResult.error("code 不能为空")
+        val code = args["code"]?.asString() ?: return InvokeResult.error("Thiếu code")
+        if (code.isBlank()) return InvokeResult.error("code không được rỗng")
         val persistent = args["persistent"]?.asBool() ?: false
         val name = args["name"]?.asString() ?: ""
         return runGatedTool {
@@ -417,10 +417,10 @@ class BrowserMcpTools(
 
     /** 不受 allowHooks 门禁：hooks 关闭时 body 天然不存在，仅元数据可见。 */
     private suspend fun handleNetworkDetail(engine: BrowserEngine, args: JsonObject): InvokeResult {
-        val id = args["id"]?.asString() ?: return InvokeResult.error("缺少 id")
+        val id = args["id"]?.asString() ?: return InvokeResult.error("Thiếu id")
         return runGatedTool {
             engine.networkDetail(id)?.let { InvokeResult.okMessage(it) }
-                ?: InvokeResult.error("network request not found: $id（id 来自 browser.network_list 输出末尾）")
+                ?: InvokeResult.error("network request not found: $id (id lấy từ cuối đầu ra browser.network_list)")
         }
     }
 
@@ -448,8 +448,8 @@ class BrowserMcpTools(
     private suspend fun handleDebugSetBreakpoint(engine: BrowserEngine, args: JsonObject): InvokeResult {
         debugGate()?.let { return it }
         val url = sanitizeUrl(args["url"]?.asString())
-        if (url.isEmpty()) return InvokeResult.error("缺少 url（脚本 URL，如 https://x.test/app.js）")
-        val line = args["line"]?.asInt() ?: return InvokeResult.error("缺少 line（0-based 行号）")
+        if (url.isEmpty()) return InvokeResult.error("Thiếu url (URL script, như https://x.test/app.js)")
+        val line = args["line"]?.asInt() ?: return InvokeResult.error("Thiếu line (số dòng bắt đầu từ 0)")
         val column = args["column"]?.asInt() ?: 0
         val condition = args["condition"]?.asString()
         return runGatedTool {
@@ -463,7 +463,7 @@ class BrowserMcpTools(
 
     private suspend fun handleDebugRemoveBreakpoint(engine: BrowserEngine, args: JsonObject): InvokeResult {
         debugGate()?.let { return it }
-        val id = args["id"]?.asString() ?: return InvokeResult.error("缺少 id（来自 debug_list_breakpoints）")
+        val id = args["id"]?.asString() ?: return InvokeResult.error("Thiếu id (từ debug_list_breakpoints)")
         return runGatedTool {
             if (engine.debugRemoveBreakpoint(tokenOf(args, engine), id)) InvokeResult.okMessage("breakpoint removed: $id")
             else InvokeResult.error("breakpoint not found: $id")
@@ -491,23 +491,23 @@ class BrowserMcpTools(
             val n = engine.debugResume(tab)
             InvokeResult.okMessage(
                 if (n > 0) "resumed $n tab(s)"
-                else "no paused tabs（省略 tab 参数时恢复全部 paused 的 tab）"
+                else "no paused tabs (khi lược bỏ tham số tab sẽ khôi phục tất cả tab đang paused)"
             )
         }
     }
 
     private suspend fun handleDebugStep(engine: BrowserEngine, args: JsonObject): InvokeResult {
         debugGate()?.let { return it }
-        val stepRaw = args["step"]?.asString() ?: return InvokeResult.error("缺少 step（over/into/out）")
+        val stepRaw = args["step"]?.asString() ?: return InvokeResult.error("Thiếu step (over/into/out)")
         val step = when (stepRaw.lowercase()) {
             "over" -> DebugStep.OVER
             "into" -> DebugStep.INTO
             "out" -> DebugStep.OUT
-            else -> return InvokeResult.error("未知 step：$stepRaw（可选 over/into/out）")
+            else -> return InvokeResult.error("step không xác định: $stepRaw (tùy chọn over/into/out)")
         }
         return runGatedTool {
             engine.debugStep(tokenOf(args, engine), step)
-            InvokeResult.okMessage("stepped $stepRaw（下一暂停点见 browser.debug_state）")
+            InvokeResult.okMessage("stepped $stepRaw (điểm tạm dừng kế tiếp xem browser.debug_state)")
         }
     }
 
@@ -518,8 +518,8 @@ class BrowserMcpTools(
 
     private suspend fun handleDebugEval(engine: BrowserEngine, args: JsonObject): InvokeResult {
         debugGate()?.let { return it }
-        val expression = args["expression"]?.asString() ?: return InvokeResult.error("缺少 expression")
-        if (expression.isBlank()) return InvokeResult.error("expression 不能为空")
+        val expression = args["expression"]?.asString() ?: return InvokeResult.error("Thiếu expression")
+        if (expression.isBlank()) return InvokeResult.error("expression không được rỗng")
         val frame = args["frame"]?.asInt() ?: 0
         return runGatedTool {
             InvokeResult.okMessage(engine.debugEval(tokenOf(args, engine), frame, expression))
@@ -676,61 +676,61 @@ class BrowserMcpTools(
             mapOf("frame" to intT, "scope" to intT, "tab" to strT),
         )
         private val TOOLS: List<ToolSpec> = listOf(
-            ToolSpec("browser.open", BrowserRisk.MEDIUM, BrowserCapability.OPEN, "打开新 tab；返回 tab ID", URL),
-            ToolSpec("browser.navigate", BrowserRisk.MEDIUM, BrowserCapability.NAVIGATE, "当前或指定 tab 跳转到 URL", URL),
-            ToolSpec("browser.back", BrowserRisk.LOW, BrowserCapability.NAVIGATE, "后退", NO_ARGS),
-            ToolSpec("browser.forward", BrowserRisk.LOW, BrowserCapability.NAVIGATE, "前进", NO_ARGS),
+            ToolSpec("browser.open", BrowserRisk.MEDIUM, BrowserCapability.OPEN, "Mở tab mới; trả về tab ID", URL),
+            ToolSpec("browser.navigate", BrowserRisk.MEDIUM, BrowserCapability.NAVIGATE, "Tab hiện tại hoặc chỉ định chuyển tới URL", URL),
+            ToolSpec("browser.back", BrowserRisk.LOW, BrowserCapability.NAVIGATE, "Quay lại", NO_ARGS),
+            ToolSpec("browser.forward", BrowserRisk.LOW, BrowserCapability.NAVIGATE, "Tiến tới", NO_ARGS),
             ToolSpec("browser.refresh", BrowserRisk.LOW, BrowserCapability.NAVIGATE, "刷新", NO_ARGS),
-            ToolSpec("browser.list_tabs", BrowserRisk.LOW, BrowserCapability.LIST_TABS, "列出 tab", schema()),
-            ToolSpec("browser.close_tab", BrowserRisk.LOW, BrowserCapability.CLOSE_TAB, "关闭当前或指定 tab", NO_ARGS),
-            ToolSpec("browser.snapshot", BrowserRisk.LOW, BrowserCapability.SNAPSHOT, "提取 ref + 页面元信息", schema(mapOf("tab" to "string", "maxElements" to "integer"))),
-            ToolSpec("browser.click", BrowserRisk.HIGH, BrowserCapability.CLICK, "按 snapshot ref 点击元素", REF),
-            ToolSpec("browser.type", BrowserRisk.HIGH, BrowserCapability.TYPE, "按 snapshot ref 键入文本", schema(mapOf("ref" to "string", "text" to "string", "tab" to "string"), listOf("ref", "text"))),
-            ToolSpec("browser.press", BrowserRisk.HIGH, BrowserCapability.PRESS, "向当前焦点或指定 ref 发送按键", schema(mapOf("ref" to "string", "key" to "string", "tab" to "string"), listOf("key"))),
-            ToolSpec("browser.scroll", BrowserRisk.LOW, BrowserCapability.SCROLL, "滚动当前页", schema(mapOf("deltaY" to "integer", "tab" to "string"))),
-            ToolSpec("browser.screenshot", BrowserRisk.LOW, BrowserCapability.SCREENSHOT, "截图当前页", NO_ARGS),
-            ToolSpec("browser.current_url", BrowserRisk.LOW, BrowserCapability.PAGE_SOURCE, "取当前 URL", NO_ARGS),
-            ToolSpec("browser.title", BrowserRisk.LOW, BrowserCapability.PAGE_SOURCE, "取当前 title", NO_ARGS),
-            ToolSpec("browser.page_source", BrowserRisk.MEDIUM, BrowserCapability.PAGE_SOURCE, "页面 HTML", schema(mapOf("maxBytes" to "integer", "tab" to "string"))),
-            ToolSpec("browser.evaluate", BrowserRisk.CRITICAL, BrowserCapability.EVALUATE_JS, "执行 JS", schema(mapOf("expression" to "string", "tab" to "string"), listOf("expression"))),
-            ToolSpec("browser.console_list", BrowserRisk.LOW, BrowserCapability.CONSOLE_READ, "最近 console 日志", NO_ARGS),
-            ToolSpec("browser.console_clear", BrowserRisk.MEDIUM, BrowserCapability.CONSOLE_READ, "清空 console", NO_ARGS),
-            ToolSpec("browser.network_list", BrowserRisk.LOW, BrowserCapability.NETWORK_INTERCEPT, "已捕获网络请求", NO_ARGS),
-            ToolSpec("browser.cookies_get", BrowserRisk.CRITICAL, BrowserCapability.COOKIES_RW, "读 Cookie", schema(mapOf("url" to "string", "tab" to "string"))),
-            ToolSpec("browser.cookies_set", BrowserRisk.HIGH, BrowserCapability.COOKIES_RW, "写 Cookie", schema(mapOf("url" to "string", "header" to "string", "tab" to "string"), listOf("url", "header"))),
-            ToolSpec("browser.cookies_delete", BrowserRisk.HIGH, BrowserCapability.COOKIES_RW, "删 Cookie", schema(mapOf("url" to "string", "name" to "string", "tab" to "string"), listOf("url", "name"))),
-            ToolSpec("browser.local_get", BrowserRisk.HIGH, BrowserCapability.LOCAL_RW, "读 localStorage", schema(mapOf("key" to "string", "tab" to "string"), listOf("key"))),
-            ToolSpec("browser.local_set", BrowserRisk.HIGH, BrowserCapability.LOCAL_RW, "写 localStorage", schema(mapOf("key" to "string", "value" to "string", "tab" to "string"), listOf("key", "value"))),
-            ToolSpec("browser.local_delete", BrowserRisk.HIGH, BrowserCapability.LOCAL_RW, "删 localStorage", schema(mapOf("key" to "string", "tab" to "string"), listOf("key"))),
-            ToolSpec("browser.local_keys", BrowserRisk.MEDIUM, BrowserCapability.LOCAL_RW, "列 localStorage keys", NO_ARGS),
-            ToolSpec("browser.session_get", BrowserRisk.HIGH, BrowserCapability.SESSION_RW, "读 sessionStorage", schema(mapOf("key" to "string", "tab" to "string"), listOf("key"))),
-            ToolSpec("browser.session_set", BrowserRisk.HIGH, BrowserCapability.SESSION_RW, "写 sessionStorage", schema(mapOf("key" to "string", "value" to "string", "tab" to "string"), listOf("key", "value"))),
-            ToolSpec("browser.session_delete", BrowserRisk.HIGH, BrowserCapability.SESSION_RW, "删 sessionStorage", schema(mapOf("key" to "string", "tab" to "string"), listOf("key"))),
-            ToolSpec("browser.session_keys", BrowserRisk.MEDIUM, BrowserCapability.SESSION_RW, "列 sessionStorage keys", NO_ARGS),
+            ToolSpec("browser.list_tabs", BrowserRisk.LOW, BrowserCapability.LIST_TABS, "Liệt kê tab", schema()),
+            ToolSpec("browser.close_tab", BrowserRisk.LOW, BrowserCapability.CLOSE_TAB, "Đóng tab hiện tại hoặc chỉ định", NO_ARGS),
+            ToolSpec("browser.snapshot", BrowserRisk.LOW, BrowserCapability.SNAPSHOT, "Trích xuất ref + thông tin meta trang", schema(mapOf("tab" to "string", "maxElements" to "integer"))),
+            ToolSpec("browser.click", BrowserRisk.HIGH, BrowserCapability.CLICK, "Nhấp phần tử theo snapshot ref", REF),
+            ToolSpec("browser.type", BrowserRisk.HIGH, BrowserCapability.TYPE, "Gõ văn bản theo snapshot ref", schema(mapOf("ref" to "string", "text" to "string", "tab" to "string"), listOf("ref", "text"))),
+            ToolSpec("browser.press", BrowserRisk.HIGH, BrowserCapability.PRESS, "Gửi phím tới focus hiện tại hoặc ref chỉ định", schema(mapOf("ref" to "string", "key" to "string", "tab" to "string"), listOf("key"))),
+            ToolSpec("browser.scroll", BrowserRisk.LOW, BrowserCapability.SCROLL, "Cuộn trang hiện tại", schema(mapOf("deltaY" to "integer", "tab" to "string"))),
+            ToolSpec("browser.screenshot", BrowserRisk.LOW, BrowserCapability.SCREENSHOT, "Chụp trang hiện tại", NO_ARGS),
+            ToolSpec("browser.current_url", BrowserRisk.LOW, BrowserCapability.PAGE_SOURCE, "Lấy URL hiện tại", NO_ARGS),
+            ToolSpec("browser.title", BrowserRisk.LOW, BrowserCapability.PAGE_SOURCE, "Lấy title hiện tại", NO_ARGS),
+            ToolSpec("browser.page_source", BrowserRisk.MEDIUM, BrowserCapability.PAGE_SOURCE, "HTML trang", schema(mapOf("maxBytes" to "integer", "tab" to "string"))),
+            ToolSpec("browser.evaluate", BrowserRisk.CRITICAL, BrowserCapability.EVALUATE_JS, "Thực thi JS", schema(mapOf("expression" to "string", "tab" to "string"), listOf("expression"))),
+            ToolSpec("browser.console_list", BrowserRisk.LOW, BrowserCapability.CONSOLE_READ, "Log console gần nhất", NO_ARGS),
+            ToolSpec("browser.console_clear", BrowserRisk.MEDIUM, BrowserCapability.CONSOLE_READ, "Xóa console", NO_ARGS),
+            ToolSpec("browser.network_list", BrowserRisk.LOW, BrowserCapability.NETWORK_INTERCEPT, "Đã bắt yêu cầu mạng", NO_ARGS),
+            ToolSpec("browser.cookies_get", BrowserRisk.CRITICAL, BrowserCapability.COOKIES_RW, "Đọc Cookie", schema(mapOf("url" to "string", "tab" to "string"))),
+            ToolSpec("browser.cookies_set", BrowserRisk.HIGH, BrowserCapability.COOKIES_RW, "Ghi Cookie", schema(mapOf("url" to "string", "header" to "string", "tab" to "string"), listOf("url", "header"))),
+            ToolSpec("browser.cookies_delete", BrowserRisk.HIGH, BrowserCapability.COOKIES_RW, "Xóa Cookie", schema(mapOf("url" to "string", "name" to "string", "tab" to "string"), listOf("url", "name"))),
+            ToolSpec("browser.local_get", BrowserRisk.HIGH, BrowserCapability.LOCAL_RW, "Đọc localStorage", schema(mapOf("key" to "string", "tab" to "string"), listOf("key"))),
+            ToolSpec("browser.local_set", BrowserRisk.HIGH, BrowserCapability.LOCAL_RW, "Ghi localStorage", schema(mapOf("key" to "string", "value" to "string", "tab" to "string"), listOf("key", "value"))),
+            ToolSpec("browser.local_delete", BrowserRisk.HIGH, BrowserCapability.LOCAL_RW, "Xóa localStorage", schema(mapOf("key" to "string", "tab" to "string"), listOf("key"))),
+            ToolSpec("browser.local_keys", BrowserRisk.MEDIUM, BrowserCapability.LOCAL_RW, "Liệt kê localStorage keys", NO_ARGS),
+            ToolSpec("browser.session_get", BrowserRisk.HIGH, BrowserCapability.SESSION_RW, "Đọc sessionStorage", schema(mapOf("key" to "string", "tab" to "string"), listOf("key"))),
+            ToolSpec("browser.session_set", BrowserRisk.HIGH, BrowserCapability.SESSION_RW, "Ghi sessionStorage", schema(mapOf("key" to "string", "value" to "string", "tab" to "string"), listOf("key", "value"))),
+            ToolSpec("browser.session_delete", BrowserRisk.HIGH, BrowserCapability.SESSION_RW, "Xóa sessionStorage", schema(mapOf("key" to "string", "tab" to "string"), listOf("key"))),
+            ToolSpec("browser.session_keys", BrowserRisk.MEDIUM, BrowserCapability.SESSION_RW, "Liệt kê sessionStorage keys", NO_ARGS),
             // ===== 注入式 Hook 引擎（阶段 1）=====
             ToolSpec(
                 "browser.hook_create", BrowserRisk.CRITICAL, BrowserCapability.INSTALL_HOOK,
-                "安装 hook 规则（网页逆向核心工具）。target 依 type：fetch/xhr/websocket→URL glob（* ? 通配）；function/method→对象路径；property→属性路径；storage→local/session；cookie→cookie 名或 *；console→逗号分隔 level；timer→setInterval/setTimeout；crypto→random/uuid。actions 为动作数组，item.type 可选 log/block/redirect(仅 fetch/xhr)/mock(仅 fetch/xhr)/modify_headers(仅 fetch/xhr)/replace(仅 function/method)/fake_value(仅 property)，各动作可用字段见 schema；多个动作按优先级 block>mock>redirect>modify_headers>log 判定。建议先 log 观察再改写",
+                "Cài đặt quy tắc hook (công cụ cốt lõi reverse web). target tùy theo type: fetch/xhr/websocket→URL glob (* ? ký tự đại diện); function/method→đường dẫn đối tượng; property→đường dẫn thuộc tính; storage→local/session; cookie→tên cookie hoặc *; console→level phân tách bằng dấu phẩy; timer→setInterval/setTimeout; crypto→random/uuid. actions là mảng động tác, item.type có thể chọn log/block/redirect(chỉ fetch/xhr)/mock(chỉ fetch/xhr)/modify_headers(chỉ fetch/xhr)/replace(chỉ function/method)/fake_value(chỉ property), các trường khả dụng của mỗi động tác xem schema; nhiều động tác quyết định theo thứ tự ưu tiên block>mock>redirect>modify_headers>log. Khuyến nghị log quan sát trước rồi mới chỉnh sửa",
                 HOOK_CREATE_SCHEMA,
             ),
-            ToolSpec("browser.hook_list", BrowserRisk.LOW, BrowserCapability.INSTALL_HOOK, "列出已安装 hook 规则与命中计数", schema(mapOf("tab" to "string"))),
-            ToolSpec("browser.hook_remove", BrowserRisk.MEDIUM, BrowserCapability.INSTALL_HOOK, "按 id 移除 hook 规则", schema(mapOf("id" to "string"), listOf("id"))),
-            ToolSpec("browser.hook_reset", BrowserRisk.HIGH, BrowserCapability.INSTALL_HOOK, "清空 hook 规则/持久脚本/命中记录/body（tab 省略时全局）", schema(mapOf("tab" to "string"))),
-            ToolSpec("browser.hook_hits", BrowserRisk.MEDIUM, BrowserCapability.INSTALL_HOOK, "最近 hook 命中记录（函数参数摘要/属性读值等）", schema(mapOf("tab" to "string", "limit" to "integer"))),
-            ToolSpec("browser.inject_script", BrowserRisk.CRITICAL, BrowserCapability.INSTALL_HOOK, "注入 JS 到页面。persistent=false 立即执行一次；persistent=true 注册为持久脚本，每次导航自动重放（适合重定义函数/改原型）。需 allowEvalJs 思路同 evaluate：代码直接作用于真实页面，请谨慎", INJECT_SCHEMA),
-            ToolSpec("browser.network_detail", BrowserRisk.MEDIUM, BrowserCapability.NETWORK_INTERCEPT, "查询单条网络请求的元数据与请求/响应 body（id 来自 network_list；body 需规则 captureBody=true 捕获）", schema(mapOf("id" to "string"), listOf("id"))),
+            ToolSpec("browser.hook_list", BrowserRisk.LOW, BrowserCapability.INSTALL_HOOK, "Liệt kê quy tắc hook đã cài và số lần khớp", schema(mapOf("tab" to "string"))),
+            ToolSpec("browser.hook_remove", BrowserRisk.MEDIUM, BrowserCapability.INSTALL_HOOK, "Xóa quy tắc hook theo id", schema(mapOf("id" to "string"), listOf("id"))),
+            ToolSpec("browser.hook_reset", BrowserRisk.HIGH, BrowserCapability.INSTALL_HOOK, "Xóa quy tắc hook/script thường trú/bản ghi trúng/body (khi bỏ qua tab thì toàn cục)", schema(mapOf("tab" to "string"))),
+            ToolSpec("browser.hook_hits", BrowserRisk.MEDIUM, BrowserCapability.INSTALL_HOOK, "Bản ghi trúng hook gần đây (tóm tắt tham số hàm/giá trị thuộc tính đọc được v.v.)", schema(mapOf("tab" to "string", "limit" to "integer"))),
+            ToolSpec("browser.inject_script", BrowserRisk.CRITICAL, BrowserCapability.INSTALL_HOOK, "Tiêm JS vào trang. persistent=false thực thi ngay một lần; persistent=true đăng ký thành script bền vững, tự động phát lại mỗi lần điều hướng (phù hợp để định nghĩa lại hàm/sửa prototype). Cần allowEvalJs, tư duy giống evaluate: mã tác động trực tiếp lên trang thật, xin thận trọng", INJECT_SCHEMA),
+            ToolSpec("browser.network_detail", BrowserRisk.MEDIUM, BrowserCapability.NETWORK_INTERCEPT, "Truy vấn metadata và body yêu cầu/phản hồi của một yêu cầu mạng đơn (id lấy từ network_list; body cần quy tắc captureBody=true để bắt)", schema(mapOf("id" to "string"), listOf("id"))),
             // ===== CDP 调试引擎（阶段 2）=====
-            ToolSpec("browser.debug_status", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "CDP attach 会话总览：各 tab 的 target/paused/断点数/worker 数", schema()),
-            ToolSpec("browser.debug_attach", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "attach tab 开启 CDP 调试（真断点 + Worker 级 Fetch 拦截）。重复 attach 幂等；断点在 detach 后重 attach 自动重放", NO_ARGS),
-            ToolSpec("browser.debug_detach", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "分离 CDP 连接（tab 省略=全部）。detach 前自动 resume 防页面冻结", NO_ARGS),
-            ToolSpec("browser.debug_set_breakpoint", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "在脚本 URL 的指定行设断点（line/column 均 0-based）。触发后页面暂停，用 debug_state 看调用栈、debug_eval 看变量；**调试完必须 debug_resume**。condition 为可选条件表达式", DEBUG_SET_BP_SCHEMA),
-            ToolSpec("browser.debug_remove_breakpoint", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "按 id 移除断点（id 来自 debug_list_breakpoints）", schema(mapOf("id" to "string", "tab" to "string"), listOf("id"))),
-            ToolSpec("browser.debug_list_breakpoints", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "列出当前 tab 的断点", schema(mapOf("tab" to "string"))),
-            ToolSpec("browser.debug_resume", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "恢复执行（tab 省略=恢复全部 paused 的 tab）。暂停期间页内工具（evaluate/snapshot/click 等）会被冻结拒绝", NO_ARGS),
-            ToolSpec("browser.debug_step", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "单步执行：over（跳过函数）/into（进入函数）/out（跳出函数）；多 tab 同时 paused 时必须指定 tab", DEBUG_STEP_SCHEMA),
-            ToolSpec("browser.debug_state", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "查看暂停状态：调用栈（帧/函数名/位置/作用域类型）或 running", schema(mapOf("tab" to "string"))),
-            ToolSpec("browser.debug_eval", BrowserRisk.HIGH, BrowserCapability.CDP_DEBUG, "在暂停帧上求值表达式（可读写局部变量；returnByValue）。frame 默认 0（栈顶）；结果超长截断 64KB", DEBUG_EVAL_SCHEMA),
-            ToolSpec("browser.debug_scope", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "读取暂停帧的作用域变量：scope 省略时输出全部作用域摘要（类型+变量名列表），指定时输出该作用域的变量名=值明细", DEBUG_SCOPE_SCHEMA),
+            ToolSpec("browser.debug_status", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "Tổng quan phiên CDP attach: target/paused/số breakpoint/số worker của từng tab", schema()),
+            ToolSpec("browser.debug_attach", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "attach tab để bật gỡ lỗi CDP (breakpoint thật + chặn Fetch cấp Worker). attach lặp lại là idempotent; breakpoint sẽ tự phát lại khi re-attach sau detach", NO_ARGS),
+            ToolSpec("browser.debug_detach", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "Tách kết nối CDP (lược bỏ tab=tất cả). Tự động resume trước detach để chống đóng băng trang", NO_ARGS),
+            ToolSpec("browser.debug_set_breakpoint", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "Đặt breakpoint tại dòng chỉ định của URL script (line/column đều bắt đầu từ 0). Khi kích hoạt trang sẽ tạm dừng, dùng debug_state xem call stack, debug_eval xem biến; **gỡ lỗi xong bắt buộc debug_resume**. condition là biểu thức điều kiện tùy chọn", DEBUG_SET_BP_SCHEMA),
+            ToolSpec("browser.debug_remove_breakpoint", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "Gỡ breakpoint theo id (id lấy từ debug_list_breakpoints)", schema(mapOf("id" to "string", "tab" to "string"), listOf("id"))),
+            ToolSpec("browser.debug_list_breakpoints", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "Liệt kê breakpoint của tab hiện tại", schema(mapOf("tab" to "string"))),
+            ToolSpec("browser.debug_resume", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "Tiếp tục thực thi (bỏ qua tab = khôi phục tất cả tab đang paused). Trong thời gian tạm dừng, các công cụ trong trang (evaluate/snapshot/click v.v.) sẽ bị đóng băng và từ chối", NO_ARGS),
+            ToolSpec("browser.debug_step", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "Thực thi từng bước: over (bỏ qua hàm)/into (vào hàm)/out (ra khỏi hàm); khi nhiều tab cùng paused phải chỉ định tab", DEBUG_STEP_SCHEMA),
+            ToolSpec("browser.debug_state", BrowserRisk.LOW, BrowserCapability.CDP_DEBUG, "Xem trạng thái tạm dừng: ngăn xếp gọi (frame/tên hàm/vị trí/loại scope) hoặc running", schema(mapOf("tab" to "string"))),
+            ToolSpec("browser.debug_eval", BrowserRisk.HIGH, BrowserCapability.CDP_DEBUG, "Tính giá trị biểu thức trên frame tạm dừng (có thể đọc ghi biến cục bộ; returnByValue). frame mặc định 0 (đỉnh stack); kết quả quá dài sẽ cắt còn 64KB", DEBUG_EVAL_SCHEMA),
+            ToolSpec("browser.debug_scope", BrowserRisk.MEDIUM, BrowserCapability.CDP_DEBUG, "Đọc biến phạm vi của khung tạm dừng: khi lược bỏ scope thì xuất tóm tắt toàn bộ phạm vi (kiểu + danh sách tên biến), khi chỉ định thì xuất chi tiết tên biến=giá trị của phạm vi đó", DEBUG_SCOPE_SCHEMA),
         )
     }
 }

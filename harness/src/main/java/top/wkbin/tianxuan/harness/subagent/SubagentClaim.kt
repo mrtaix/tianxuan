@@ -168,39 +168,39 @@ internal fun adjudicateSubagentClaim(
                 val claimed = normalizeCommand(criterion.command)
                 when {
                     claimed.isBlank() -> SubagentCriterionVerdict(
-                        criterion, false, "未提供可核验的命令文本，host 无法凭据背书",
+                        criterion, false, "Chưa cung cấp văn bản lệnh có thể kiểm chứng, host không thể bảo chứng",
                     )
                     // 精确相等任意长度可背书；子串匹配要求足够长（"test" 这类短串会误匹配 echo test）。
                     receipts.commands.any { it == claimed || (claimed.length >= 8 && it.contains(claimed)) } ->
-                        SubagentCriterionVerdict(criterion, true, "host 记录到匹配命令的成功执行")
+                        SubagentCriterionVerdict(criterion, true, "host ghi nhận việc thực thi thành công của lệnh khớp")
                     else -> SubagentCriterionVerdict(
-                        criterion, false, "host 未记录到该命令的成功执行（成功命令 ${receipts.commands.size} 条）",
+                        criterion, false, "host chưa ghi nhận lệnh này thực thi thành công (lệnh thành công ${receipts.commands.size} lệnh)",
                     )
                 }
             }
             "files" -> {
                 if (criterion.paths.isEmpty()) {
-                    SubagentCriterionVerdict(criterion, false, "未提供可核验的路径")
+                    SubagentCriterionVerdict(criterion, false, "Chưa cung cấp đường dẫn có thể kiểm chứng")
                 } else {
                     val unbacked = criterion.paths.filter { path ->
                         normalizeWritePath(path) !in receipts.writtenPaths
                     }
                     if (unbacked.isEmpty()) {
-                        SubagentCriterionVerdict(criterion, true, "host 观察到全部路径的成功写入")
+                        SubagentCriterionVerdict(criterion, true, "host đã quan sát toàn bộ đường dẫn ghi thành công")
                     } else {
                         SubagentCriterionVerdict(
                             criterion, false,
-                            "host 未观察到以下路径的成功写入：${unbacked.joinToString("、")}" +
-                                if (receipts.writtenPaths.isEmpty()) "（本 Lane 没有任何成功写入记录）" else "",
+                            "host chưa quan sát thấy việc ghi thành công các đường dẫn sau: ${unbacked.joinToString("、")}" +
+                                if (receipts.writtenPaths.isEmpty()) "(Lane này không có bất kỳ bản ghi ghi thành công nào)" else "",
                         )
                     }
                 }
             }
             "manual" -> SubagentCriterionVerdict(
-                criterion, false, "manual 条目无法由 host 凭据背书，只能由用户验证",
+                criterion, false, "Mục manual không thể được bảo chứng bởi thông tin xác thực host, chỉ có thể do người dùng xác minh",
             )
             else -> SubagentCriterionVerdict(
-                criterion, false, "未知验收标准类型「${criterion.type}」，host 不予背书",
+                criterion, false, "Loại tiêu chuẩn nghiệm thu không xác định \"${criterion.type}\", host không bảo chứng",
             )
         }
     }
@@ -226,9 +226,9 @@ internal fun stripSubagentClaimBlock(finalText: String, claim: SubagentClaim): S
 
 /** 父汇总中的裁定段：状态、逐条核验、host 凭据摘要。 */
 internal fun renderSubagentClaimAdjudication(adjudication: SubagentClaimAdjudication): String = buildString {
-    append("- **完成主张核验**：自报 ${statusLabel(adjudication.claimedStatus)} → host 裁定 ")
+    append("- **Kiểm chứng tuyên bố hoàn thành**: tự báo ${statusLabel(adjudication.claimedStatus)} → host phán quyết ")
     append("**${statusLabel(adjudication.adjudicatedStatus)}**")
-    if (adjudication.downgraded) append("（凭据不背书，已降级）")
+    if (adjudication.downgraded) append("(Thông tin xác thực không bảo chứng, đã hạ cấp)")
     append("\n")
     adjudication.verdicts.forEach { verdict ->
         val icon = if (verdict.backed) "✓" else "✗"

@@ -9,7 +9,7 @@ data class WorkflowDefinition(
     val name: String,
     val description: String = "",
     val iconName: String = "Play",
-    val category: String = "通用",
+    val category: String = "Chung",
     val isBuiltin: Boolean = false,
     val trigger: WorkflowTrigger = WorkflowTrigger.Manual(),
     val nodes: List<WorkflowNode> = emptyList(),

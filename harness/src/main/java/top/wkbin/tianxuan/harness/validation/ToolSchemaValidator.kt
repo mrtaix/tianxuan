@@ -210,7 +210,7 @@ object ToolSchemaValidator {
 
         (schema["required"] as? JsonArray)?.forEach { element ->
             val name = (element as? JsonPrimitive)?.contentOrNull ?: return@forEach
-            if (!obj.containsKey(name)) problems += "缺少必填参数 ${prefix}${name}"
+            if (!obj.containsKey(name)) problems += "Thiếu tham số bắt buộc ${prefix}${name}"
         }
 
         alternatives.takeIf { it.isNotEmpty() }?.let { alternatives ->
@@ -228,11 +228,11 @@ object ToolSchemaValidator {
                 }.filter { it.isNotBlank() }
                 if (combos.isNotEmpty()) {
                     val hint = if (combos.size == 1) {
-                        "至少提供 ${combos.single()}"
+                        "Cung cấp ít nhất ${combos.single()}"
                     } else {
-                        "${combos.joinToString(" 或 ")} 至少提供其中一组"
+                        "${combos.joinToString(" 或 ")} cung cấp ít nhất một trong các nhóm đó"
                     }
-                    problems += "参数组合不满足要求：$hint"
+                    problems += "Tổ hợp tham số không đáp ứng yêu cầu：$hint"
                 }
             }
         }
@@ -249,9 +249,9 @@ object ToolSchemaValidator {
         (schema["properties"] as? JsonObject)?.let { properties ->
             val unknown = obj.keys.filter { it !in allowedProperties }
             if (unknown.isNotEmpty() && !allowExtra) {
-                val at = if (prefix.isEmpty()) "" else "（位于 $prefix 层）"
-                problems += "不接受参数 ${unknown.joinToString("、")}$at" +
-                    "（该工具可用参数: ${properties.keys.joinToString("、").ifEmpty { "无" }}）"
+                val at = if (prefix.isEmpty()) "" else "(nằm ở tầng $prefix)"
+                problems += "Không chấp nhận tham số ${unknown.joinToString("、")}$at" +
+                    " (tham số khả dụng của công cụ này: ${properties.keys.joinToString("、").ifEmpty { "无" }}）"
             }
         }
         return problems
@@ -262,14 +262,14 @@ object ToolSchemaValidator {
         val type = schema["type"]?.jsonPrimitive?.contentOrNull
 
         if (type != null && !matchesType(type, value)) {
-            problems += "参数 $label 类型错误：应为 $type，实际是${typeName(value)}"
+            problems += "Tham số $label sai kiểu: cần $type, thực tế là ${typeName(value)}"
             return problems // 类型不对，后续约束没有意义
         }
 
         (schema["enum"] as? JsonArray)?.takeIf { it.isNotEmpty() }?.let { allowed ->
             val content = (value as? JsonPrimitive)?.content
             if (allowed.none { (it as? JsonPrimitive)?.content == content }) {
-                problems += "参数 $label 的值 \"$content\" 不在允许范围内：${allowed.joinToString("/") { (it as? JsonPrimitive)?.content.orEmpty() }}"
+                problems += "Giá trị \"$content\" của tham số $label không nằm trong khoảng cho phép: ${allowed.joinToString("/") { (it as? JsonPrimitive)?.content.orEmpty() }}"
             }
         }
 
@@ -280,11 +280,11 @@ object ToolSchemaValidator {
                 val max = schema["maximum"]?.jsonPrimitive?.contentOrNull?.toDoubleOrNull()
                 when {
                     min != null && max != null && (number < min || number > max) ->
-                        problems += "参数 $label 的值 ${formatNumber(number)} 超出允许范围 [${formatNumber(min)}, ${formatNumber(max)}]"
+                        problems += "Giá trị ${formatNumber(number)} của tham số $label vượt khoảng cho phép [${formatNumber(min)}, ${formatNumber(max)}]"
                     min != null && number < min ->
-                        problems += "参数 $label 的值 ${formatNumber(number)} 小于最小允许值 ${formatNumber(min)}"
+                        problems += "Giá trị ${formatNumber(number)} của tham số $label nhỏ hơn giá trị tối thiểu cho phép ${formatNumber(min)}"
                     max != null && number > max ->
-                        problems += "参数 $label 的值 ${formatNumber(number)} 大于最大允许值 ${formatNumber(max)}"
+                        problems += "Tham số $label có giá trị ${formatNumber(number)} lớn hơn giá trị tối đa cho phép ${formatNumber(max)}"
                 }
             }
         }
@@ -298,7 +298,7 @@ object ToolSchemaValidator {
                     pattern.none { it == '(' || it == ')' || it == '|' } &&
                     pattern.count { it == '*' || it == '+' || it == '?' || it == '{' } <= 2
                 val matches = if (safe) runCatching { Regex(pattern).containsMatchIn(value.content) }.getOrDefault(true) else true
-                if (!matches) problems += "参数 $label 格式不符合要求（需匹配 $pattern）"
+                if (!matches) problems += "Tham số $label không đúng định dạng yêu cầu (cần khớp $pattern)"
             }
         }
 
@@ -341,14 +341,14 @@ object ToolSchemaValidator {
     }
 
     private fun typeName(value: JsonElement): String = when (value) {
-        is JsonObject -> "对象"
-        is JsonArray -> "数组"
+        is JsonObject -> "Đối tượng"
+        is JsonArray -> "Mảng"
         is JsonNull -> "null"
         is JsonPrimitive -> when {
-            value.isString -> "字符串"
-            value.content == "true" || value.content == "false" -> "布尔值"
-            value.contentOrNull?.toDoubleOrNull() != null -> "数字"
-            else -> "未知类型"
+            value.isString -> "Chuỗi ký tự"
+            value.content == "true" || value.content == "false" -> "Giá trị boolean"
+            value.contentOrNull?.toDoubleOrNull() != null -> "Chữ số"
+            else -> "Loại không xác định"
         }
     }
 }

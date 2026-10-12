@@ -61,7 +61,7 @@ fun AppManagementScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { RuntimeTopBar("应用管理", onBack, statusText = if (syncing) "正在同步" else "普通读取 · 特权增强") },
+        topBar = { RuntimeTopBar("Quản lý ứng dụng", onBack, statusText = if (syncing) "Đang đồng bộ" else "Đọc thường · Tăng cường đặc quyền") },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -71,18 +71,18 @@ fun AppManagementScreen(
             item {
                 RuntimeCard(contentPadding = PaddingValues(16.dp)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("受控应用索引", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Chỉ mục ứng dụng bị điều khiển", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(
-                            "任何模式均可读取应用并写入 Room；以后进入只增量对比包名。Shizuku/Root 会额外读取冻结和后台联网限制状态，冻结或授权等执行操作在 PRoot 模式会提示权限不足。",
+                            "Mọi chế độ đều có thể đọc ứng dụng và ghi vào Room; lần sau vào chỉ so sánh tăng dần tên gói. Shizuku/Root sẽ đọc thêm trạng thái đóng băng và giới hạn kết nối mạng nền; các thao tác thực thi như đóng băng hoặc cấp quyền ở chế độ PRoot sẽ báo không đủ quyền.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             RuntimeButton(onClick = viewModel::synchronize, enabled = !syncing) {
                                 if (syncing) RuntimeCircularProgressIndicator(Modifier.size(18.dp)) else RuntimeIcon(RuntimeIconName.Refresh, Modifier.size(18.dp))
-                                Text(if (syncing) "同步中" else "立即同步", modifier = Modifier.padding(start = 8.dp))
+                                Text(if (syncing) "Đang đồng bộ" else "Đồng bộ ngay", modifier = Modifier.padding(start = 8.dp))
                             }
-                            Text("共 ${apps.size} 个", style = MaterialTheme.typography.labelLarge)
+                            Text("Tổng ${apps.size}", style = MaterialTheme.typography.labelLarge)
                         }
                         message?.let {
                             Text(it, color = if (messageIsError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
@@ -95,7 +95,7 @@ fun AppManagementScreen(
                     // 纯计数标签：不可交互，避免伪装成可点击的 FilterChip
                     Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)) {
                         Text(
-                            "用户应用 (${userApps.size})",
+                            "Ứng dụng người dùng (${userApps.size})",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -104,18 +104,18 @@ fun AppManagementScreen(
                     FilterChip(
                         selected = showSystemApps,
                         onClick = { showSystemApps = !showSystemApps },
-                        label = { Text("显示系统应用 (${systemApps.size})") },
+                        label = { Text("Hiển thị ứng dụng hệ thống (${systemApps.size})") },
                     )
                 }
             }
             if (userApps.isEmpty() && !syncing) {
-                item { Text("暂无应用数据，请执行一次同步。", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                item { Text("Chưa có dữ liệu ứng dụng, hãy thực hiện đồng bộ một lần.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
             items(userApps, key = { it.packageName }) { app -> AndroidAppRow(app) }
             if (showSystemApps && systemApps.isNotEmpty()) {
                 item {
                     Text(
-                        "系统应用",
+                        "Ứng dụng hệ thống",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -151,14 +151,14 @@ private fun AndroidAppRow(app: AndroidAppEntity) {
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    if (app.isEnabled) "已开启" else "已冻结",
+                    if (app.isEnabled) "Đã bật" else "Đã đóng băng",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (app.isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                 )
                 if (app.isNetworkRestricted) {
                     // 「已冻结」已由上方状态文案表达，此处只补充联网受限信息，避免重复
                     Text(
-                        "联网受限",
+                        "Kết nối mạng bị hạn chế",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )

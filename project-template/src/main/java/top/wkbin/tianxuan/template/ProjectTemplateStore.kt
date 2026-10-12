@@ -43,13 +43,13 @@ class ProjectTemplateStore(
                 validateManifest(manifest, allowBuiltinId = true)
                 listOf(manifest.hooks.beforeCreate, manifest.hooks.afterCreate).filter(String::isNotBlank).forEach { hookPath ->
                     context.assets.open("templates/$relativePath/$hookPath").use { input ->
-                        require(input.readBytes().size <= MAX_HOOK_BYTES) { "模板脚本过大：$hookPath" }
+                        require(input.readBytes().size <= MAX_HOOK_BYTES) { "Script mẫu quá lớn: $hookPath" }
                     }
                 }
                 val syncedDirectory = File(templatesDir, relativePath)
                 fun bundledPreview(path: String): File {
                     require(path.substringAfterLast('.', "").lowercase() in PREVIEW_EXTENSIONS) {
-                        "模板预览图仅支持 PNG、JPEG、WebP 或 GIF"
+                        "Ảnh xem trước template chỉ hỗ trợ PNG, JPEG, WebP hoặc GIF"
                     }
                     val previewFile = File(syncedDirectory, path).takeIf(File::isFile) ?: run {
                         val suffix = path.substringAfterLast('.', "png")
@@ -61,7 +61,7 @@ class ProjectTemplateStore(
                         }
                         cached
                     }
-                    require(previewFile.length() <= MAX_PREVIEW_BYTES) { "模板预览图过大" }
+                    require(previewFile.length() <= MAX_PREVIEW_BYTES) { "Ảnh xem trước template quá lớn" }
                     validatePreviewDimensions(previewFile)
                     return previewFile
                 }
@@ -87,7 +87,7 @@ class ProjectTemplateStore(
     fun find(id: String): InstalledProjectTemplate? = list().firstOrNull { it.manifest.id == id }
 
     fun hookScripts(id: String): List<Pair<String, String>> {
-        val template = find(id) ?: error("模板不存在：$id")
+        val template = find(id) ?: error("Mẫu không tồn tại: $id")
         return listOf(template.manifest.hooks.beforeCreate, template.manifest.hooks.afterCreate)
             .filter(String::isNotBlank)
             .distinct()
@@ -96,16 +96,16 @@ class ProjectTemplateStore(
                 require(!normalized.startsWith('/') && !WINDOWS_ABSOLUTE_PATH.containsMatchIn(normalized) &&
                     normalized.startsWith("template-hooks/") && normalized.split('/').none { it == ".." }
                 ) {
-                    "模板脚本路径无效"
+                    "Đường dẫn script mẫu không hợp lệ"
                 }
                 val bytes = template.bundledAssetPath?.let { root ->
                     context.assets.open("$root/$normalized").use { it.readBytes() }
                 } ?: File(template.directory, normalized).canonicalFile.also { file ->
                     require(file.path.startsWith(template.directory.canonicalPath + File.separator) && file.isFile) {
-                        "模板脚本不存在：$relativePath"
+                        "Script mẫu không tồn tại: $relativePath"
                     }
                 }.readBytes()
-                require(bytes.size <= MAX_HOOK_BYTES) { "模板脚本过大：$relativePath" }
+                require(bytes.size <= MAX_HOOK_BYTES) { "Script mẫu quá lớn: $relativePath" }
                 relativePath to bytes.toString(Charsets.UTF_8)
             }
     }
@@ -113,7 +113,7 @@ class ProjectTemplateStore(
     fun importZip(input: InputStream): InstalledProjectTemplate {
         templatesDir.mkdirs()
         val staging = File(templatesDir, ".import-${UUID.randomUUID()}").canonicalFile
-        check(staging.mkdirs()) { "无法创建模板导入暂存目录" }
+        check(staging.mkdirs()) { "Không thể tạo thư mục tạm nhập mẫu" }
         try {
             extractSafely(input, staging)
             val roots = staging.listFiles().orEmpty().filterNot { it.name == "__MACOSX" }
@@ -121,17 +121,17 @@ class ProjectTemplateStore(
                 if (File(nested, ProjectTemplateManifest.MANIFEST_PATH).isFile) nested else staging
             } ?: staging
             val installed = readInstalledTemplate(packageRoot)
-            require(ID_PATTERN.matches(installed.manifest.id)) { "模板 id 不合法：${installed.manifest.id}" }
-            require(!installed.manifest.id.startsWith(BUILTIN_ID_PREFIX)) { "模板 id 不能使用保留前缀：$BUILTIN_ID_PREFIX" }
+            require(ID_PATTERN.matches(installed.manifest.id)) { "id mẫu không hợp lệ: ${installed.manifest.id}" }
+            require(!installed.manifest.id.startsWith(BUILTIN_ID_PREFIX)) { "id mẫu không được dùng tiền tố dành riêng: $BUILTIN_ID_PREFIX" }
             require(installed.manifest.schemaVersion == ProjectTemplateManifest.CURRENT_SCHEMA_VERSION) {
-                "不支持的模板规范版本：${installed.manifest.schemaVersion}"
+                "Phiên bản quy chuẩn mẫu không được hỗ trợ: ${installed.manifest.schemaVersion}"
             }
             val typeDirectory = installed.manifest.projectType.name.lowercase()
             val target = File(templatesDir, "$typeDirectory/${installed.manifest.id}").canonicalFile
-            check(target.path.startsWith(templatesDir.canonicalPath + File.separator)) { "模板目标路径越界" }
+            check(target.path.startsWith(templatesDir.canonicalPath + File.separator)) { "Đường dẫn mục tiêu template vượt giới hạn" }
             target.parentFile?.mkdirs()
-            check(!target.exists()) { "模板已存在：${installed.manifest.id}" }
-            check(packageRoot.renameTo(target)) { "无法安装模板：${installed.manifest.id}" }
+            check(!target.exists()) { "Mẫu đã tồn tại: ${installed.manifest.id}" }
+            check(packageRoot.renameTo(target)) { "Không thể cài mẫu: ${installed.manifest.id}" }
             return readInstalledTemplate(target)
         } finally {
             SafeFileTree.delete(staging)
@@ -139,7 +139,7 @@ class ProjectTemplateStore(
     }
 
     fun exportZip(id: String, output: OutputStream) {
-        val template = find(id) ?: error("模板不存在：$id")
+        val template = find(id) ?: error("Mẫu không tồn tại: $id")
         ZipOutputStream(output.buffered()).use { zip ->
             fun write(relative: String, bytes: ByteArray) {
                 zip.putNextEntry(ZipEntry("${template.manifest.id}/$relative"))
@@ -166,11 +166,11 @@ class ProjectTemplateStore(
     }
 
     fun delete(id: String) {
-        val template = find(id) ?: error("模板不存在：$id")
-        require(!template.isBundled) { "内置模板不能删除" }
-        require(template.directory.path.startsWith(templatesDir.canonicalPath + File.separator)) { "模板目录越界" }
+        val template = find(id) ?: error("Mẫu không tồn tại: $id")
+        require(!template.isBundled) { "Không thể xóa mẫu tích hợp" }
+        require(template.directory.path.startsWith(templatesDir.canonicalPath + File.separator)) { "Thư mục mẫu vượt biên" }
         SafeFileTree.delete(template.directory)
-        check(!template.directory.exists()) { "模板删除失败：$id" }
+        check(!template.directory.exists()) { "Xóa mẫu thất bại: $id" }
     }
 
     private fun readInstalledTemplate(directory: File): InstalledProjectTemplate {
@@ -182,16 +182,16 @@ class ProjectTemplateStore(
             require(!File(relativePath).isAbsolute && !WINDOWS_ABSOLUTE_PATH.containsMatchIn(relativePath.replace('\\', '/')) &&
                 relativePath.replace('\\', '/').split('/').none { it == ".." }
             ) {
-                "模板预览图路径越界"
+                "Đường dẫn ảnh xem trước mẫu vượt phạm vi"
             }
             require(relativePath.substringAfterLast('.', "").lowercase() in PREVIEW_EXTENSIONS) {
-                "模板预览图仅支持 PNG、JPEG、WebP 或 GIF"
+                "Ảnh xem trước template chỉ hỗ trợ PNG, JPEG, WebP hoặc GIF"
             }
             return File(canonicalDirectory, relativePath).canonicalFile.also { file ->
                 require(file.path.startsWith(canonicalDirectory.path + File.separator) && file.isFile) {
-                    "模板预览图不存在"
+                    "Ảnh xem trước mẫu không tồn tại"
                 }
-                require(file.length() <= MAX_PREVIEW_BYTES) { "模板预览图过大" }
+                require(file.length() <= MAX_PREVIEW_BYTES) { "Ảnh xem trước template quá lớn" }
                 validatePreviewDimensions(file)
             }
         }
@@ -199,60 +199,60 @@ class ProjectTemplateStore(
         listOf(manifest.hooks.beforeCreate, manifest.hooks.afterCreate).filter(String::isNotBlank).forEach { hookPath ->
             val hook = File(canonicalDirectory, hookPath).canonicalFile
             require(hook.path.startsWith(canonicalDirectory.path + File.separator) && hook.isFile) {
-                "模板脚本不存在：$hookPath"
+                "Script mẫu không tồn tại: $hookPath"
             }
-            require(hook.length() <= MAX_HOOK_BYTES) { "模板脚本过大：$hookPath" }
+            require(hook.length() <= MAX_HOOK_BYTES) { "Script mẫu quá lớn: $hookPath" }
         }
         return InstalledProjectTemplate(manifest, canonicalDirectory, preview)
     }
 
     private fun validateManifest(manifest: ProjectTemplateManifest, allowBuiltinId: Boolean) {
         require(manifest.schemaVersion == ProjectTemplateManifest.CURRENT_SCHEMA_VERSION) {
-            "不支持的模板规范版本：${manifest.schemaVersion}"
+            "Phiên bản đặc tả mẫu không được hỗ trợ: ${manifest.schemaVersion}"
         }
-        require(ID_PATTERN.matches(manifest.id)) { "模板 id 不合法：${manifest.id}" }
-        require(allowBuiltinId || !manifest.id.startsWith(BUILTIN_ID_PREFIX)) { "模板 id 使用了保留前缀" }
-        require(CATEGORY_ID_PATTERN.matches(manifest.category.id)) { "模板分类 id 不合法" }
-        require(manifest.variables.map { it.name }.distinct().size == manifest.variables.size) { "模板变量名不能重复" }
+        require(ID_PATTERN.matches(manifest.id)) { "Template id không hợp lệ: ${manifest.id}" }
+        require(allowBuiltinId || !manifest.id.startsWith(BUILTIN_ID_PREFIX)) { "ID mẫu dùng tiền tố dành riêng" }
+        require(CATEGORY_ID_PATTERN.matches(manifest.category.id)) { "id phân loại mẫu không hợp lệ" }
+        require(manifest.variables.map { it.name }.distinct().size == manifest.variables.size) { "Tên biến template không được trùng" }
         manifest.variables.forEach { variable ->
-            require(VARIABLE_NAME_PATTERN.matches(variable.name)) { "模板变量名不合法：${variable.name}" }
+            require(VARIABLE_NAME_PATTERN.matches(variable.name)) { "Tên biến template không hợp lệ: ${variable.name}" }
             require(variable.name !in FIXED_VARIABLES || !variable.prompt) {
-                "项目名称和路径由智坊统一提供，不能声明为动态字段：${variable.name}"
+                "Tên dự án và đường dẫn do Tri Phường cung cấp thống nhất, không thể khai báo là trường động: ${variable.name}"
             }
             require(variable.validationRegex.isBlank() || runCatching { Regex(variable.validationRegex) }.isSuccess) {
-                "模板变量正则无效：${variable.name}"
+                "Regex biến mẫu không hợp lệ: ${variable.name}"
             }
             if (variable.inputType == ProjectTemplateInputType.SELECT) {
-                require(variable.options.isNotEmpty()) { "选择变量必须提供选项：${variable.name}" }
+                require(variable.options.isNotEmpty()) { "Biến chọn phải cung cấp tùy chọn: ${variable.name}" }
                 require(variable.options.map { it.value }.distinct().size == variable.options.size) {
-                    "选择变量的选项值不能重复：${variable.name}"
+                    "Giá trị tùy chọn của biến không được trùng lặp: ${variable.name}"
                 }
             }
             if (!variable.prompt && variable.required && variable.defaultValue.isBlank()) {
-                require(variable.name in DERIVED_VARIABLES) { "隐藏必填变量必须提供默认值：${variable.name}" }
+                require(variable.name in DERIVED_VARIABLES) { "Biến ẩn bắt buộc phải cung cấp giá trị mặc định: ${variable.name}" }
             }
         }
         fun validateTemplatePath(path: String) {
             val normalized = path.replace('\\', '/')
             require(normalized.isNotBlank() && !normalized.startsWith('/') &&
                 !WINDOWS_ABSOLUTE_PATH.containsMatchIn(normalized) && normalized.split('/').none { it == ".." }
-            ) { "模板校验路径无效：$path" }
+            ) { "Đường dẫn kiểm tra mẫu không hợp lệ: $path" }
         }
         manifest.validation.requiredFiles.forEach(::validateTemplatePath)
         manifest.validation.forbiddenFiles.forEach(::validateTemplatePath)
         manifest.validation.contentRules.forEach { rule -> validateTemplatePath(rule.path) }
         require(manifest.validation.requiredFiles.distinct().size == manifest.validation.requiredFiles.size) {
-            "模板必需文件不能重复"
+            "Tệp bắt buộc của mẫu không được trùng lặp"
         }
         require(manifest.validation.forbiddenFiles.distinct().size == manifest.validation.forbiddenFiles.size) {
-            "模板禁止文件不能重复"
+            "Tệp cấm của mẫu không được trùng lặp"
         }
         listOf(manifest.hooks.beforeCreate, manifest.hooks.afterCreate).filter(String::isNotBlank).forEach { hook ->
             val normalized = hook.replace('\\', '/')
             require(!normalized.startsWith('/') && !WINDOWS_ABSOLUTE_PATH.containsMatchIn(normalized) &&
                 normalized.startsWith("template-hooks/") && normalized.split('/').none { it == ".." }
             ) {
-                "模板脚本必须位于 template-hooks/ 目录"
+                "Script template phải nằm trong thư mục template-hooks/"
             }
         }
     }
@@ -260,9 +260,9 @@ class ProjectTemplateStore(
     private fun validatePreviewDimensions(file: File) {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.absolutePath, bounds)
-        require(bounds.outWidth > 0 && bounds.outHeight > 0) { "模板预览图无法解码" }
+        require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Không thể giải mã ảnh xem trước của mẫu" }
         require(bounds.outWidth == PREVIEW_SIZE && bounds.outHeight == PREVIEW_SIZE) {
-            "模板预览图必须为 ${PREVIEW_SIZE}×${PREVIEW_SIZE} 像素（1:1）"
+            "Ảnh xem trước mẫu phải là ${PREVIEW_SIZE}×${PREVIEW_SIZE} pixel (1:1)"
         }
     }
 
@@ -288,16 +288,16 @@ class ProjectTemplateStore(
         ZipInputStream(input.buffered()).use { zip ->
             while (true) {
                 val entry = zip.nextEntry ?: break
-                require(++entries <= MAX_ENTRIES) { "模板包文件数量过多" }
+                require(++entries <= MAX_ENTRIES) { "Số lượng tệp trong gói mẫu quá nhiều" }
                 val name = entry.name.replace('\\', '/')
                 require(!name.startsWith('/') && !WINDOWS_ABSOLUTE_PATH.containsMatchIn(name)) {
-                    "模板包包含绝对路径"
+                    "Gói mẫu chứa đường dẫn tuyệt đối"
                 }
-                require(name.isNotBlank() && name.split('/').none { it == ".." }) { "模板包包含越界路径" }
+                require(name.isNotBlank() && name.split('/').none { it == ".." }) { "Gói mẫu chứa đường dẫn vượt giới hạn" }
                 val target = File(targetDir, name).canonicalFile
-                require(target.path.startsWith(targetDir.canonicalPath + File.separator)) { "模板包包含越界路径" }
+                require(target.path.startsWith(targetDir.canonicalPath + File.separator)) { "Gói mẫu chứa đường dẫn vượt giới hạn" }
                 if (entry.isDirectory) {
-                    check(target.isDirectory || target.mkdirs()) { "无法创建模板目录" }
+                    check(target.isDirectory || target.mkdirs()) { "Không thể tạo thư mục mẫu" }
                 } else {
                     check(target.parentFile?.isDirectory == true || target.parentFile?.mkdirs() == true)
                     target.outputStream().buffered().use { output ->
@@ -308,7 +308,7 @@ class ProjectTemplateStore(
                             if (read < 0) break
                             fileBytes += read
                             totalBytes += read
-                            require(fileBytes <= MAX_FILE_BYTES && totalBytes <= MAX_TOTAL_BYTES) { "模板包体积过大" }
+                            require(fileBytes <= MAX_FILE_BYTES && totalBytes <= MAX_TOTAL_BYTES) { "Dung lượng gói mẫu quá lớn" }
                             output.write(buffer, 0, read)
                         }
                     }
@@ -316,7 +316,7 @@ class ProjectTemplateStore(
                 zip.closeEntry()
             }
         }
-        require(entries > 0) { "模板包为空" }
+        require(entries > 0) { "Gói mẫu rỗng" }
     }
 
     private companion object {

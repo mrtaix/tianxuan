@@ -50,7 +50,7 @@ class HarnessToolProvider(
 
     override suspend fun callTool(name: String, args: JsonObject): JsonObject {
         if (name !in exposedNames()) {
-            return textResult("工具「$name」未对 MCP 被控端开放。", isError = true)
+            return textResult("Công cụ 「$name」chưa mở cho phía bị điều khiển MCP.", isError = true)
         }
         val tool = HarnessApiMapper.toolByName(name)
         denialReason(name, tool, args)?.let { return textResult(it, isError = true) }
@@ -72,7 +72,7 @@ class HarnessToolProvider(
         } catch (c: CancellationException) {
             throw c
         } catch (t: Throwable) {
-            return textResult("工具执行失败：${t.message ?: t::class.simpleName}", isError = true)
+            return textResult("Thực thi công cụ thất bại: ${t.message ?: t::class.simpleName}", isError = true)
         }
         return textResult(result.output, isError = !result.success)
     }
@@ -85,7 +85,7 @@ class HarnessToolProvider(
         HarnessTool.HOST -> {
             val action = args.stringArg("action").lowercase()
             when {
-                action.isBlank() -> "host 调用缺少 action 参数。"
+                action.isBlank() -> "Lời gọi host thiếu tham số action."
                 action in READ_ONLY_HOST_ACTIONS -> null
                 allowWriteTools -> null
                 else -> writeDenied("host action「$action」")
@@ -100,12 +100,12 @@ class HarnessToolProvider(
             }
         }
         HarnessTool.WRITE, HarnessTool.EDIT, HarnessTool.BASE, HarnessTool.PROCESS, HarnessTool.DOWNLOAD ->
-            if (allowWriteTools) null else writeDenied("工具「$name」")
-        else -> "工具「$name」未对 MCP 被控端开放。"
+            if (allowWriteTools) null else writeDenied("Công cụ 「$name」")
+        else -> "Công cụ 「$name」chưa mở cho phía bị điều khiển MCP."
     }
 
     private fun writeDenied(what: String): String =
-        "$what 属于写入/执行层，当前未开启。请在「设置 → MCP → 服务端（被控方）」中开启「允许写入与执行」后重试。"
+        "$what thuộc tầng ghi/thực thi, hiện chưa bật. Hãy bật 「Cho phép ghi và thực thi」trong 「Cài đặt → MCP → Phía máy chủ (bên bị điều khiển)」rồi thử lại."
 
     private fun JsonObject.stringArg(key: String): String =
         (this[key] as? JsonPrimitive)?.content?.trim().orEmpty()

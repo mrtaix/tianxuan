@@ -26,7 +26,7 @@ class WorkflowApprovalBroker() {
         val key = key(request.executionId, request.nodeId)
         val deferred = CompletableDeferred<WorkflowApprovalDecision>()
         synchronized(waiting) {
-            check(key !in waiting) { "审批请求已存在：$key" }
+            check(key !in waiting) { "Yêu cầu phê duyệt đã tồn tại：$key" }
             waiting[key] = request to deferred
             requestsByExecution.getOrPut(request.executionId) { MutableStateFlow(null) }.value = request
             _currentRequest.value = waiting.values.firstOrNull()?.first

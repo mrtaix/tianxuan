@@ -81,12 +81,12 @@ fun SkillSecurityAuditDialog(
                 )
                 Column {
                     Text(
-                        text = if (isBlocked) "安全阻断：禁止安装" else "技能安装与静态安全审查",
+                        text = if (isBlocked) "Chặn an toàn: cấm cài đặt" else "Cài đặt kỹ năng và rà soát an toàn tĩnh",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        text = "天玄端侧安全边界审计",
+                        text = "Kiểm toán biên an toàn phía thiết bị Thiên Huyền",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -147,12 +147,12 @@ fun SkillSecurityAuditDialog(
                             modifier = Modifier.padding(top = 4.dp),
                         ) {
                             Text(
-                                text = "版本: v${pkg.manifest.version}",
+                                text = "Phiên bản: v${pkg.manifest.version}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Text(
-                                text = "作者: ${pkg.manifest.author}",
+                                text = "Tác giả: ${pkg.manifest.author}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
@@ -166,14 +166,14 @@ fun SkillSecurityAuditDialog(
                 // 2. 权限边界申请
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "申请权限与操作边界：",
+                        text = "Quyền xin cấp và ranh giới thao tác:",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
                     val allPerms = (audit.declaredPermissions + audit.detectedPermissions).toList()
                     if (allPerms.isEmpty()) {
                         Text(
-                            text = "纯只读提示词扩展，无需申请外部系统权限",
+                            text = "Phần mở rộng prompt chỉ đọc thuần túy, không cần xin quyền hệ thống bên ngoài",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -208,7 +208,7 @@ fun SkillSecurityAuditDialog(
                 // 3. 兼容性评估结果
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "环境兼容性判定：",
+                        text = "Phán định tương thích môi trường:",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -224,7 +224,7 @@ fun SkillSecurityAuditDialog(
                     )
                     if (compat.missingTools.isNotEmpty()) {
                         Text(
-                            text = "缺少依赖工具: ${compat.missingTools.joinToString()}",
+                            text = "Thiếu công cụ phụ thuộc: ${compat.missingTools.joinToString()}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                         )
@@ -235,7 +235,7 @@ fun SkillSecurityAuditDialog(
                 if (audit.findings.isNotEmpty()) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Text(
-                        text = "审计发现项 (${audit.findings.size} 项)：",
+                        text = "Mục phát hiện kiểm toán (${audit.findings.size} mục):",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = if (isBlocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
@@ -283,7 +283,7 @@ fun SkillSecurityAuditDialog(
             }
 
             Text(
-                text = "⚠ 静态审计仅为初步防线，无法识别所有混淆与恶意行为；安装后该技能脚本的实际执行仍会逐条申请审批。",
+                text = "⚠ Kiểm toán tĩnh chỉ là tuyến phòng thủ sơ bộ, không thể nhận diện mọi hành vi làm rối và độc hại; sau khi cài, việc thực thi thực tế của script kỹ năng này vẫn sẽ xin phê duyệt từng dòng.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),
@@ -297,7 +297,7 @@ fun SkillSecurityAuditDialog(
                         containerColor = MaterialTheme.colorScheme.error,
                     ),
                 ) {
-                    Text("安全策略已阻断")
+                    Text("Chính sách bảo mật đã chặn")
                 }
             } else {
                 RuntimeButton(
@@ -313,16 +313,16 @@ fun SkillSecurityAuditDialog(
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
-                        Text("正在安装…")
+                        Text("Đang cài đặt…")
                     } else {
-                        Text(if (audit.hasWarnings) "了解风险并确认安装" else "通过审查并安装")
+                        Text(if (audit.hasWarnings) "Hiểu rủi ro và xác nhận cài đặt" else "Qua rà soát và cài đặt")
                     }
                 }
             }
         },
         dismissButton = {
             RuntimeOutlinedButton(onClick = onDismiss) {
-                Text(if (isBlocked) "关闭" else "放弃")
+                Text(if (isBlocked) "关闭" else "Từ bỏ")
             }
         },
     )

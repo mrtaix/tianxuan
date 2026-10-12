@@ -136,14 +136,14 @@ fun LinuxEnvironmentSettingsScreen(
                         icon = RuntimeIconName.Server,
                         title = "Linux 发行版管理",
                         subtitle = "多沙箱并存 · 镜像拉取 · 一键切换主系统",
-                        value = "${installedDistros.size} 套系统",
+                        value = "${installedDistros.size} bộ hệ thống",
                         onClick = onOpenDistroManagement,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Storage,
-                        title = "存储管理",
-                        subtitle = "按 Linux、插件、项目与 Skills 分析占用",
+                        title = "Quản lý lưu trữ",
+                        subtitle = "Phân tích dung lượng theo Linux, plugin, dự án và Skills",
                         onClick = onOpenStorageUsage,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -157,40 +157,40 @@ fun LinuxEnvironmentSettingsScreen(
                     SettingsRow(
                         icon = RuntimeIconName.Key,
                         title = "环境变量",
-                        subtitle = "为终端、Agent 和工具注入用户变量",
+                        subtitle = "Chèn biến người dùng cho terminal, Agent và công cụ",
                         onClick = onOpenEnvironmentVariables,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Network,
-                        title = "SSH 远程访问",
-                        subtitle = "公钥认证 · 端口与局域网监听 · 随运行时启动",
+                        title = "Truy cập từ xa SSH",
+                        subtitle = "Xác thực public key · Cổng và lắng nghe LAN · Khởi động cùng runtime",
                         onClick = onOpenSshSettings,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.FolderOpen,
-                        title = "FTP 远程文件访问",
-                        subtitle = "挂载 Linux 根目录 (/) · FileZilla / 资源管理器直连",
+                        title = "Truy cập tệp từ xa FTP",
+                        subtitle = "Mount thư mục gốc Linux (/) · FileZilla / Explorer kết nối trực tiếp",
                         onClick = onOpenFtpSettings,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Globe,
-                        title = "天玄智枢 Web 协作台",
+                        title = "Bàn cộng tác Web Thiên Huyền Tri Khu",
                         subtitle = if (webChatStatus.isRunning) {
-                            "运行中 · ${webChatStatus.accessUrl} (PIN: ${webChatStatus.pinCode})"
+                            "Đang chạy · ${webChatStatus.accessUrl} (PIN: ${webChatStatus.pinCode})"
                         } else {
-                            "在同一 Wi-Fi 下使用电脑浏览器访问天玄 Agent 与工作区"
+                            "Dùng trình duyệt máy tính truy cập Agent và vùng làm việc Thiên Huyền trong cùng Wi-Fi"
                         },
-                        value = if (webChatStatus.isRunning) "已开启" else "未开启",
+                        value = if (webChatStatus.isRunning) "Đã bật" else "Chưa bật",
                         onClick = { showWebChatDialog = true },
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Package,
-                        title = "应用管理",
-                        subtitle = "同步系统/用户应用，查看禁用、冻结与后台联网限制状态",
+                        title = "Quản lý ứng dụng",
+                        subtitle = "Đồng bộ ứng dụng hệ thống/người dùng, xem trạng thái vô hiệu hóa, đóng băng và giới hạn mạng nền",
                         onClick = onOpenAppManagement,
                     )
                 }
@@ -208,14 +208,14 @@ fun LinuxEnvironmentSettingsScreen(
                         icon = RuntimeIconName.Key,
                         title = "系统运行特权模式",
                         subtitle = if (executionMode != effectiveExecutionMode) {
-                            "首选 ${executionMode.shortLabel} 暂不可用：${privilegeState.reason}"
+                            "${executionMode.shortLabel} ưu tiên tạm thời không khả dụng: ${privilegeState.reason}"
                         } else {
                             "PRoot 用户态沙箱 · Shizuku · Root"
                         },
                         value = if (executionMode == effectiveExecutionMode) {
                             effectiveExecutionMode.shortLabel
                         } else {
-                            "${effectiveExecutionMode.shortLabel}（已降级）"
+                            "${effectiveExecutionMode.shortLabel} (đã hạ cấp)"
                         },
                         onClick = { showExecutionModeDialog = true },
                     )
@@ -323,7 +323,7 @@ private fun ExecutionModeOptionItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = "要求: ${mode.requiredPrivilege}",
+                text = "Yêu cầu: ${mode.requiredPrivilege}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.secondary,
             )

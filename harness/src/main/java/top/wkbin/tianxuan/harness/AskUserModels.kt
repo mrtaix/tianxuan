@@ -36,23 +36,23 @@ object AskUserQuestions {
     /** 解析并校验 ask_user 入参；不合法时抛 [IllegalArgumentException]（文案可直接回写模型）。 */
     fun parse(args: JsonObject): List<AskUserQuestion> {
         val rawQuestions = args["questions"] as? JsonArray
-            ?: throw IllegalArgumentException("questions 必须是问题对象数组")
+            ?: throw IllegalArgumentException("questions phải là mảng đối tượng câu hỏi")
         if (rawQuestions.isEmpty() || rawQuestions.size > MAX_QUESTIONS) {
-            throw IllegalArgumentException("questions 数组长度必须在 1~$MAX_QUESTIONS 之间")
+            throw IllegalArgumentException("questions độ dài mảng phải trong khoảng 1~$MAX_QUESTIONS")
         }
         return rawQuestions.mapIndexed { index, element ->
             val item = element as? JsonObject
-                ?: throw IllegalArgumentException("questions[$index] 必须是 JSON 对象")
+                ?: throw IllegalArgumentException("questions[$index] phải là đối tượng JSON")
             val question = item["question"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
             if (question.isEmpty()) {
-                throw IllegalArgumentException("questions[$index].question 不能为空")
+                throw IllegalArgumentException("questions[$index].question không được rỗng")
             }
             val options = (item["options"] as? JsonArray)?.mapIndexed { optionIndex, optionElement ->
                 val option = optionElement as? JsonObject
-                    ?: throw IllegalArgumentException("questions[$index].options[$optionIndex] 必须是 JSON 对象")
+                    ?: throw IllegalArgumentException("questions[$index].options[$optionIndex] phải là đối tượng JSON")
                 val label = option["label"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
                 if (label.isEmpty()) {
-                    throw IllegalArgumentException("questions[$index].options[$optionIndex].label 不能为空")
+                    throw IllegalArgumentException("questions[$index].options[$optionIndex].label không được rỗng")
                 }
                 AskUserOption(
                     label = label,
@@ -60,11 +60,11 @@ object AskUserQuestions {
                 )
             }.orEmpty()
             if (options.size > MAX_OPTIONS) {
-                throw IllegalArgumentException("questions[$index].options 最多 $MAX_OPTIONS 项")
+                throw IllegalArgumentException("questions[$index].options tối đa $MAX_OPTIONS mục")
             }
             val duplicate = options.groupBy { it.label }.filterValues { it.size > 1 }.keys.firstOrNull()
             if (duplicate != null) {
-                throw IllegalArgumentException("questions[$index] 存在重复选项「$duplicate」，请使用互斥的候选项")
+                throw IllegalArgumentException("questions[$index] tồn tại lựa chọn trùng lặp 「$duplicate」, vui lòng dùng các ứng viên loại trừ lẫn nhau")
             }
             val allowCustom = item["allow_custom"]?.jsonPrimitive?.booleanOrNull ?: options.isNotEmpty()
             AskUserQuestion(
@@ -91,12 +91,12 @@ object AskUserQuestions {
                 }
         }.getOrNull().orEmpty()
         if (questions.isEmpty() || answers.isEmpty()) {
-            return "用户已回答 ask_user 提问：$answersJson"
+            return "Người dùng đã trả lời câu hỏi ask_user: $answersJson"
         }
         return buildString {
-            append("用户已回答 ask_user 提问：\n")
+            append("Người dùng đã trả lời câu hỏi ask_user:\n")
             answers.forEach { (index, answer) ->
-                val question = questions.getOrNull(index)?.question ?: "问题 ${index + 1}"
+                val question = questions.getOrNull(index)?.question ?: "Câu hỏi ${index + 1}"
                 append("${index + 1}. $question\n   → $answer\n")
             }
         }.trimEnd()

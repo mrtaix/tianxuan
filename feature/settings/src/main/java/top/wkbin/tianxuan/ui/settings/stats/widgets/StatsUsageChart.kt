@@ -48,7 +48,7 @@ fun StatsUsageChart(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "暂无用量数据",
+                text = "Hiện chưa có dữ liệu dung lượng dùng",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 ),
@@ -101,7 +101,7 @@ fun StatsUsageChart(
                             ),
                         )
                         Text(
-                            text = "总计: ${formatTokens(totalTokens)}",
+                            text = "Tổng cộng: ${formatTokens(totalTokens)}",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,

@@ -39,17 +39,17 @@ class AgentProviderCatalog(
             json.decodeFromString<AgentProviderDocument>(reader.readText())
         }
         require(document.schemaVersion == SUPPORTED_SCHEMA) {
-            "不支持的 Agent provider 配置版本：${document.schemaVersion}"
+            "Phiên bản cấu hình Agent provider không được hỗ trợ: ${document.schemaVersion}"
         }
-        require(document.providers.isNotEmpty()) { "Agent provider 配置为空" }
+        require(document.providers.isNotEmpty()) { "Cấu hình Agent provider rỗng" }
         require(document.providers.map { it.id }.distinct().size == document.providers.size) {
-            "Agent provider 配置包含重复 id"
+            "Cấu hình Agent provider chứa id trùng lặp"
         }
         document.providers.onEach { provider ->
-            require(provider.id.isNotBlank() && provider.name.isNotBlank()) { "Provider id/name 不能为空" }
+            require(provider.id.isNotBlank() && provider.name.isNotBlank()) { "Provider id/name không được rỗng" }
             if (provider.group != ProviderGroup.CUSTOM) {
                 require(ProviderEndpointPolicy.isSafeBaseUrl(provider.baseUrl)) {
-                    "Provider ${provider.id} 的 Base URL 不安全"
+                    "Base URL của Provider ${provider.id} không an toàn"
                 }
             }
         }

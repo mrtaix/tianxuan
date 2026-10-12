@@ -38,7 +38,7 @@ sealed interface TranslationModelStatus {
         val progress: Float? = null,
         val step: Int = 1,
         val totalSteps: Int = 2,
-        val stepName: String = "离线语言模型包",
+        val stepName: String = "Gói model ngôn ngữ ngoại tuyến",
         val downloadedBytes: Long = 0L,
         val totalBytes: Long = 0L,
     ) : TranslationModelStatus {
@@ -50,9 +50,9 @@ sealed interface TranslationModelStatus {
                     val pct = ((downloadedBytes.toDouble() / totalBytes) * 100).toInt().coerceIn(0, 100)
                     "$dlMb MB / $totMb MB ($pct%)"
                 } else if (progress != null) {
-                    "${((progress) * 100).toInt().coerceIn(0, 100)}% (第 $step/$totalSteps 阶段)"
+                    "${((progress) * 100).toInt().coerceIn(0, 100)}% (giai đoạn $step/$totalSteps)"
                 } else {
-                    "第 $step/$totalSteps 阶段 (连接中...)"
+                    "Giai đoạn $step/$totalSteps (đang kết nối...)"
                 }
             }
     }
@@ -177,8 +177,8 @@ class TranslationManager(
             val zhDownloaded = runCatching { modelManager.isModelDownloaded(chineseModel).awaitResult() }.getOrDefault(false)
 
             val queue = mutableListOf<Pair<TranslateRemoteModel, String>>()
-            if (!enDownloaded) queue.add(englishModel to "英语语言模型 (en，约 30MB)")
-            if (!zhDownloaded) queue.add(chineseModel to "中文语言模型 (zh，约 30MB)")
+            if (!enDownloaded) queue.add(englishModel to "Model ngôn ngữ tiếng Anh (en, khoảng 30MB)")
+            if (!zhDownloaded) queue.add(chineseModel to "Model ngôn ngữ tiếng Trung (zh, khoảng 30MB)")
 
             if (queue.isEmpty()) {
                 _status.value = TranslationModelStatus.Ready
@@ -197,7 +197,7 @@ class TranslationManager(
                     progress = baseProgress + 0.05f * stepWeight,
                     step = currentStep,
                     totalSteps = totalSteps,
-                    stepName = "正在下载 $modelName",
+                    stepName = "Đang tải $modelName",
                 )
 
                 // 启动进度轮询与渐进平滑估算协程
@@ -215,7 +215,7 @@ class TranslationManager(
                                 progress = overall,
                                 step = currentStep,
                                 totalSteps = totalSteps,
-                                stepName = "正在下载 $modelName",
+                                stepName = "Đang tải $modelName",
                                 downloadedBytes = dl,
                                 totalBytes = tot,
                             )
@@ -228,7 +228,7 @@ class TranslationManager(
                                 progress = overall,
                                 step = currentStep,
                                 totalSteps = totalSteps,
-                                stepName = "正在下载 $modelName",
+                                stepName = "Đang tải $modelName",
                                 downloadedBytes = 0L,
                                 totalBytes = 0L,
                             )
@@ -247,7 +247,7 @@ class TranslationManager(
                     progress = completedProgress,
                     step = currentStep,
                     totalSteps = totalSteps,
-                    stepName = "$modelName 下载完成",
+                    stepName = "$modelName tải xuống hoàn tất",
                 )
             }
 
@@ -256,7 +256,7 @@ class TranslationManager(
             Result.success(Unit)
         } catch (e: Exception) {
             appLogger.e("TranslationManager: Download translation models failed", e)
-            val msg = e.localizedMessage ?: "下载失败，若网络受限请检查连接或代理设置后重试"
+            val msg = e.localizedMessage ?: "Tải thất bại, nếu mạng bị hạn chế hãy kiểm tra kết nối hoặc cài đặt proxy rồi thử lại"
             _status.value = TranslationModelStatus.Error(msg)
             Result.failure(e)
         } finally {
@@ -296,7 +296,7 @@ class TranslationManager(
             if (enReady && zhReady) {
                 _status.value = TranslationModelStatus.Ready
             } else {
-                return@withContext Result.failure(IllegalStateException("离线翻译模型尚未下载"))
+                return@withContext Result.failure(IllegalStateException("Model dịch ngoại tuyến chưa tải xuống"))
             }
         }
 

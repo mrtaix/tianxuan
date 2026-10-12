@@ -56,7 +56,7 @@ class LinuxEnvironmentManager(
     ): Result<Unit> = mutate(distroId) { records ->
         val normalized = normalizeKey(key)
         validateValue(value, allowEmpty = false)
-        require(records.none { it.metadata.key == normalized }) { "环境变量 $normalized 已存在" }
+        require(records.none { it.metadata.key == normalized }) { "Biến môi trường $normalized đã tồn tại" }
         records + LinuxEnvironmentRecord(
             metadata = EnvironmentVariable(
                 id = UUID.randomUUID().toString(),
@@ -76,9 +76,9 @@ class LinuxEnvironmentManager(
         distroId: String = linuxRuntime.activeDistroId.value,
     ): Result<Unit> = mutate(distroId) { records ->
         val normalized = normalizeKey(key)
-        require(records.any { it.metadata.id == id }) { "环境变量不存在" }
+        require(records.any { it.metadata.id == id }) { "Biến môi trường không tồn tại" }
         require(records.none { it.metadata.id != id && it.metadata.key == normalized }) {
-            "环境变量 $normalized 已存在"
+            "Biến môi trường $normalized đã tồn tại"
         }
         records.map { record ->
             if (record.metadata.id != id) {
@@ -97,7 +97,7 @@ class LinuxEnvironmentManager(
         id: String,
         distroId: String = linuxRuntime.activeDistroId.value,
     ): Result<Unit> = mutate(distroId) { records ->
-        require(records.any { it.metadata.id == id }) { "环境变量不存在" }
+        require(records.any { it.metadata.id == id }) { "Biến môi trường không tồn tại" }
         records.filterNot { it.metadata.id == id }
     }
 
@@ -138,7 +138,7 @@ class LinuxEnvironmentManager(
             ),
             distroId,
         )
-        check(result.isSuccess) { result.stderr.trim().ifBlank { "读取 Linux 环境变量失败" } }
+        check(result.isSuccess) { result.stderr.trim().ifBlank { "Đọc biến môi trường Linux thất bại" } }
         val records = LinuxEnvironmentProfile.parse(result.stdout)
         if (records.isNotEmpty()) return records
 
@@ -165,7 +165,7 @@ class LinuxEnvironmentManager(
             append("rm -f '$LEGACY_PROFILE_PATH'")
         }
         val result = linuxRuntime.execute(ShellCommand(command), distroId)
-        check(result.isSuccess) { result.stderr.trim().ifBlank { "写入 Linux 环境变量失败" } }
+        check(result.isSuccess) { result.stderr.trim().ifBlank { "Ghi biến môi trường Linux thất bại" } }
     }
 
     private suspend fun readEffectiveEnvironment(distroId: String): List<EffectiveEnvironmentVariable> {
@@ -187,15 +187,15 @@ class LinuxEnvironmentManager(
 
     private fun normalizeKey(key: String): String {
         val normalized = key.trim().uppercase()
-        require(ENVIRONMENT_KEY.matches(normalized)) { "环境变量名称格式不正确" }
-        require(!isReservedKey(normalized)) { "$normalized 是运行时保留变量，不能修改" }
+        require(ENVIRONMENT_KEY.matches(normalized)) { "Định dạng tên biến môi trường không đúng" }
+        require(!isReservedKey(normalized)) { "$normalized là biến dành riêng runtime, không thể sửa" }
         return normalized
     }
 
     private fun validateValue(value: String, allowEmpty: Boolean = true) {
-        require(allowEmpty || value.isNotEmpty()) { "环境变量值不能为空" }
+        require(allowEmpty || value.isNotEmpty()) { "Giá trị biến môi trường không được rỗng" }
         require('\u0000' !in value && '\n' !in value && '\r' !in value) {
-            "环境变量值不能包含换行或 NUL 字符"
+            "Giá trị biến môi trường không được chứa ký tự xuống dòng hoặc NUL"
         }
     }
 

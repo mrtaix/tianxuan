@@ -71,15 +71,15 @@ class EmbeddingClient(
                     val maskedEndpoint = endpoint.substringBefore('/').take(40)
                     if (response.code == 404) {
                         throw IOException(
-                            "嵌入端点 404 NOT_FOUND（端点: $maskedEndpoint，模型: $model）：" +
-                                "当前 Base URL 可能不提供 $endpointSuffix 端点，或嵌入模型名 \"$model\" 不可用。" +
-                                "请在知识库页设置「嵌入模型名」与「嵌入端点后缀」以匹配你的提供商。响应: ${body.take(300)}"
+                            "Điểm cuối nhúng 404 NOT_FOUND (điểm cuối: $maskedEndpoint, model: $model):" +
+                                "Base URL hiện tại có thể không cung cấp $endpointSuffix endpoint, hoặc tên model nhúng \"$model\" không khả dụng." +
+                                "Hãy đặt「tên model nhúng」và「hậu tố endpoint nhúng」trong trang kho tri thức để khớp nhà cung cấp của bạn. Phản hồi: ${body.take(300)}"
                         )
                     }
                     if (response.code == 429) {
-                        throw IOException("嵌入接口限流（429）：请稍后重试或降低添加频率（端点: $maskedEndpoint）")
+                        throw IOException("Giao diện nhúng bị giới hạn tần suất (429): hãy thử lại sau hoặc giảm tần suất thêm (endpoint: $maskedEndpoint)")
                     }
-                    throw IOException("嵌入接口错误 HTTP ${response.code}（端点: $maskedEndpoint，模型: $model）：${body.take(500)}")
+                    throw IOException("Lỗi giao diện nhúng HTTP ${response.code} (điểm cuối: $maskedEndpoint, model: $model): ${body.take(500)}")
                 }
                 val body = response.body.string()
                 val parsed = runCatching { json.decodeFromString(EmbeddingResponse.serializer(), body) }
@@ -91,11 +91,11 @@ class EmbeddingClient(
         } catch (e: java.net.SocketException) {
             val maskedEndpoint = endpoint.substringBefore('/').take(40)
             throw IOException(
-                "嵌入连接被关闭（Socket closed）：请检查激活模型的 Base URL 是否可访问、网络是否受限、以及 API Key 是否有效（端点: $maskedEndpoint）",
+                "Kết nối nhúng bị đóng (Socket closed): vui lòng kiểm tra Base URL của model đang kích hoạt có truy cập được không, mạng có bị giới hạn không, và API Key có hợp lệ không (điểm cuối: $maskedEndpoint)",
                 e,
             )
         } catch (e: java.net.UnknownHostException) {
-            throw IOException("嵌入连接失败：无法解析主机（请检查 Base URL 拼写与设备网络）", e)
+            throw IOException("Kết nối embedding thất bại: không phân giải được host (hãy kiểm tra chính tả Base URL và mạng thiết bị)", e)
         } finally {
             cancelHandle?.dispose()
         }

@@ -23,14 +23,14 @@ object Community {
             "&uin=$QQ_GROUP_ID&card_type=group&source=qrcode"
 
     /** 群号展示文案（中文）。settings 模块的本地化映射键与之一致。 */
-    const val QQ_GROUP_LABEL_ZH: String = "群号: $QQ_GROUP_ID · 点击一键加群 / 复制群号"
+    const val QQ_GROUP_LABEL_ZH: String = "Số nhóm: $QQ_GROUP_ID · Nhấp để vào nhóm một chạm / sao chép số nhóm"
 
     /** 群号展示文案（英文）。 */
     const val QQ_GROUP_LABEL_EN: String =
         "Group number: $QQ_GROUP_ID · Click to add group/copy group number"
 
     /** 加群入口文案（中文）。 */
-    const val QQ_JOIN_LABEL_ZH: String = "加入 QQ 交流群 ($QQ_GROUP_ID)"
+    const val QQ_JOIN_LABEL_ZH: String = "Vào nhóm QQ ($QQ_GROUP_ID)"
 
     /** 加群入口文案（英文）。 */
     const val QQ_JOIN_LABEL_EN: String = "Join the QQ group ($QQ_GROUP_ID)"

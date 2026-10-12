@@ -35,7 +35,7 @@ val MIGRATION_28_29 = object : Migration(28, 29) {
 /**
  * 审批请求绑定 harness operation 与参数摘要，并引入过期时间：
  * - operationId：审批所属运行，恢复执行前校验归属，防跨运行重放；
- * - argsHash：argumentsJson 的 SHA-256，防"批准旧参数、执行新参数"；
+ * - argsHash：argumentsJson 的 SHA-256，防"Phê duyệt tham số cũ, thực thi tham số mới"；
  * - expiresAt：审批有效期（存量行填 Long.MAX_VALUE 表示永不过期）。
  */
 val MIGRATION_30_31 = object : Migration(30, 31) {
@@ -130,7 +130,7 @@ val MIGRATION_40_41 = object : Migration(40, 41) {
         db.execSQL("ALTER TABLE agent_tasks ADD COLUMN statusDetail TEXT")
         // Legacy RUNNING rows intentionally stay RUNNING here. Their empty sessionId makes the
         // recovery pass classify them as exhausted and move them to SUSPENDED with an explanation.
-        db.execSQL("UPDATE agent_tasks SET status = 'SUSPENDED', statusDetail = '旧任务未绑定会话，需手动重新发起' WHERE status IN ('IDLE', 'SUSPENDED')")
+        db.execSQL("UPDATE agent_tasks SET status = 'SUSPENDED', statusDetail = 'Nhiệm vụ cũ chưa gắn phiên, cần tự khởi tạo lại thủ công' WHERE status IN ('IDLE', 'SUSPENDED')")
         db.execSQL("UPDATE agent_tasks SET status = 'FAILED' WHERE status = 'ERROR'")
         db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_tasks_sessionId ON agent_tasks(sessionId)")
         db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_tasks_nextRunAt ON agent_tasks(nextRunAt)")

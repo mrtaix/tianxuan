@@ -1,11 +1,11 @@
-## Android 宿主权限（Shizuku 已激活，shell UID 2000 ≈ adb）
+## Quyền máy chủ Android (Shizuku đã kích hoạt, shell UID 2000 ≈ adb)
 
-host 工具全部动作可用。注意 base 运行在 PRoot 沙箱内、没有 Android runtime——am / pm / settings / input / logcat 只在 host 中有效。
+Toàn bộ thao tác của công cụ host khả dụng. Lưu ý base chạy trong sandbox PRoot, không có Android runtime —— am / pm / settings / input / logcat chỉ có hiệu lực trong host.
 
-1. 屏幕感知与操控：`screen_observe` 获取当前前台应用与屏幕节点树，`screen_click(x, y)` 模拟点击，`screen_swipe(x1, y1, x2, y2)` 滑动，`screen_input_text(text)` 打字输入，`screen_key(key)` 导航按键（back/home/recents/enter），`app_launch(package)` 调起应用。
-2. 系统与应用管理：读取/修改系统设置用 settings_get/settings_put，管理应用用 package_list/package_disable/package_enable/package_uninstall_user/app_list/app_freeze/app_unfreeze，日志用 logcat。它作用于宿主而非 PRoot 沙箱；修改系统状态前说明影响。
-3. 打开应用：`am start -n <包>/<Activity>`；不知道 Activity 时用 `monkey -p <包> -c android.intent.category.LAUNCHER 1`。查包名用 app_list。
-4. 常用系统意图：设闹钟 `am start -a android.intent.action.SET_ALARM -e android.intent.extra.alarm.HOUR <时> -e android.intent.extra.alarm.MINUTES <分> --es android.intent.extra.alarm.MESSAGE "<标签>" -e android.intent.extra.alarm.SKIP_UI true`；倒计时换成 SET_TIMER 并用 LENGTH 传秒数；分享文本 `-a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "<内容>"`。
-5. 一键体检：device_status 动作返回电量 / 网络 / 前台应用 / 存储摘要，只读免审批，适合开场先了解手机现状。
+1. Cảm nhận và điều khiển màn hình: `screen_observe` lấy ứng dụng tiền cảnh hiện tại và cây node màn hình, `screen_click(x, y)` mô phỏng nhấp, `screen_swipe(x1, y1, x2, y2)` vuốt, `screen_input_text(text)` gõ nhập, `screen_key(key)` phím điều hướng (back/home/recents/enter), `app_launch(package)` khởi chạy ứng dụng.
+2. Quản lý hệ thống và ứng dụng: đọc/sửa cài đặt hệ thống dùng settings_get/settings_put, quản lý ứng dụng dùng package_list/package_disable/package_enable/package_uninstall_user/app_list/app_freeze/app_unfreeze, nhật ký dùng logcat. Nó tác động lên máy chủ chứ không phải sandbox PRoot; trước khi sửa trạng thái hệ thống phải nêu rõ ảnh hưởng.
+3. Mở ứng dụng: `am start -n <gói>/<Activity>`; khi không biết Activity thì dùng `monkey -p <gói> -c android.intent.category.LAUNCHER 1`. Tra tên gói dùng app_list.
+4. Các Intent hệ thống thường dùng: đặt báo thức `am start -a android.intent.action.SET_ALARM -e android.intent.extra.alarm.HOUR <giờ> -e android.intent.extra.alarm.MINUTES <phút> --es android.intent.extra.alarm.MESSAGE "<nhãn>" -e android.intent.extra.alarm.SKIP_UI true`; đếm ngược thì đổi thành SET_TIMER và dùng LENGTH để truyền số giây; chia sẻ văn bản `-a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "<nội dung>"`.
+5. Kiểm tra nhanh một chạm: thao tác device_status trả về tóm tắt pin / mạng / ứng dụng tiền cảnh / lưu trữ, chỉ đọc miễn phê duyệt, phù hợp để mở đầu tìm hiểu hiện trạng điện thoại.
 
-status / device_status / app_list / package_list / settings_get / logcat 为只读；exec 与卸载始终需要审批。
+status / device_status / app_list / package_list / settings_get / logcat là chỉ đọc; exec và gỡ cài đặt luôn cần phê duyệt.

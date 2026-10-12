@@ -79,7 +79,7 @@ data class GuiExecResult(
         append(message)
         backend?.let { append(" · via ").append(it.label) }
         if (!success && attempts.isNotEmpty()) {
-            append("\n降级轨迹：")
+            append("\nQuỹ đạo hạ cấp:")
             attempts.forEach { a ->
                 append("\n- ").append(a.backend.label).append(": ").append(a.detail)
             }

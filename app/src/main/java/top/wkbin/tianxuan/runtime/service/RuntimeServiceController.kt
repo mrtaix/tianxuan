@@ -16,7 +16,7 @@ class RuntimeServiceController(
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) {
-            Log.w(TAG, "通知权限未授权，跳过 Runtime 前台保活服务")
+            Log.w(TAG, "Chưa cấp quyền thông báo, bỏ qua dịch vụ giữ sống foreground của Runtime")
             return false
         }
         return runCatching {
@@ -25,7 +25,7 @@ class RuntimeServiceController(
                 Intent(context, RuntimeForegroundService::class.java),
             )
             true
-        }.onFailure { Log.w(TAG, "启动 Runtime 前台服务失败", it) }
+        }.onFailure { Log.w(TAG, "Khởi động dịch vụ foreground Runtime thất bại", it) }
             .getOrDefault(false)
     }
 

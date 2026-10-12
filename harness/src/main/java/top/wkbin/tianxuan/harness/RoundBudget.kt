@@ -3,7 +3,7 @@ package top.wkbin.tianxuan.harness
 /**
  * 工具轮次预算：每段 [roundsPerSegment] 轮，段与段之间最多自动续跑 [maxContinuations] 次。
  *
- * 分段的意义不是"把上限调大"，而是把上限从硬失败降级成软检查点：每段用尽时上层会先让模型
+ * 分段的意义不是"Tăng giới hạn lên"，而是把上限从硬失败降级成软检查点：每段用尽时上层会先让模型
  * 收束并落盘进度，再续一段新预算继续跑。无人值守场景因此不必靠用户点一下才能往下走，
  * 同时总预算仍然有界，跑飞仍由循环检测与连续失败熔断兜底。
  */
@@ -36,7 +36,7 @@ internal class RoundBudget(roundsPerSegment: Int, maxContinuations: Int) {
 
     /** 开启下一段预算，返回这是第几次续跑；调用前须先确认 [canContinue]。 */
     fun beginNextSegment(): Int {
-        check(canContinue()) { "续跑次数已用尽" }
+        check(canContinue()) { "Số lần tiếp chạy đã dùng hết" }
         roundInSegment = 0
         return ++continuations
     }

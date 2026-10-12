@@ -47,8 +47,8 @@ object OAuthEndpointPolicy {
         val secure = uri.scheme.equals("https", ignoreCase = true)
         val loopback = uri.scheme.equals("http", ignoreCase = true) && uri.host?.lowercase() in
             setOf("localhost", "127.0.0.1", "::1", "[::1]")
-        require(secure || loopback) { "OAuth endpoint 必须使用 HTTPS；仅允许 loopback 使用 HTTP" }
-        require(!uri.host.isNullOrBlank()) { "OAuth endpoint 缺少 host" }
+        require(secure || loopback) { "OAuth endpoint phải dùng HTTPS; chỉ cho phép loopback dùng HTTP" }
+        require(!uri.host.isNullOrBlank()) { "OAuth endpoint thiếu host" }
         return url
     }
 }

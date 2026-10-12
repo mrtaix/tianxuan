@@ -126,7 +126,7 @@ class McpHttpTransport(
                 val result = response.result?.let { json.decodeFromJsonElement(McpCallToolResult.serializer(), it) }
                     ?: error("MCP tools/call did not return a result")
                 !result.isError to result.content.joinToString("\n") { it.text.orEmpty() }
-                    .ifBlank { if (result.isError) "执行失败" else "执行成功" }
+                    .ifBlank { if (result.isError) "Thực thi thất bại" else "Thực thi thành công" }
             } catch (t: Throwable) {
                 if (t is CancellationException) throw t
                 // OAuth token 过期：401/403 可安全重试（请求未被处理，无副作用风险）
@@ -144,11 +144,11 @@ class McpHttpTransport(
                     val retryResult = retryResponse.result?.let { json.decodeFromJsonElement(McpCallToolResult.serializer(), it) }
                         ?: error("MCP tools/call did not return a result")
                     return@withContext (!retryResult.isError to retryResult.content.joinToString("\n") { it.text.orEmpty() }
-                        .ifBlank { if (retryResult.isError) "执行失败" else "执行成功" })
+                        .ifBlank { if (retryResult.isError) "Thực thi thất bại" else "Thực thi thành công" })
                 }
                 if (isTransportFailure(t)) {
                     dropSession(server.id, session)
-                    throw IOException("MCP 工具响应丢失；为避免副作用重复，未自动重试 tools/call", t)
+                    throw IOException("Phản hồi công cụ MCP bị mất; để tránh lặp lại tác dụng phụ, chưa tự động thử lại tools/call", t)
                 }
                 throw t
             }
@@ -163,7 +163,7 @@ class McpHttpTransport(
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
             if (!isTransportFailure(t)) throw t
-            logger.w("MCP[${server.name}] 会话失效（${t.message}），重建后重试一次")
+            logger.w("MCP[${server.name}] phiên mất hiệu lực (${t.message}), tạo lại rồi thử lại một lần")
             dropSession(server.id, session)
             if (t is McpHttpStatusException && t.statusCode in setOf(401, 403) &&
                 server.authMode == top.wkbin.tianxuan.core.model.McpAuthMode.OAUTH
@@ -199,8 +199,8 @@ class McpHttpTransport(
             val until = downUntil[server.id]
             if (until != null && now < until) {
                 throw IllegalStateException(
-                    "MCP[${server.name}] 连接冷却中（剩余 ${(until - now) / 1000}s），跳过本次连接；" +
-                        "请确认服务端已启动后再在设置页手动测试",
+                    "MCP[${server.name}] đang trong thời gian làm nguội kết nối (còn lại ${(until - now) / 1000}s), bỏ qua kết nối lần này; " +
+                        "Vui lòng xác nhận phía server đã khởi động rồi mới kiểm tra thủ công trong trang cài đặt",
                 )
             }
         }
@@ -223,20 +223,20 @@ class McpHttpTransport(
                 }
                 sessions[server.id] = session
                 downUntil.remove(server.id)
-                logger.i("MCP[${server.name}] 连接成功（$label）endpoint=${session.endpoint}")
+                logger.i("MCP[${server.name}] kết nối thành công ($label) endpoint=${session.endpoint}")
                 return session
             } catch (t: CancellationException) {
                 throw t
             } catch (t: Throwable) {
                 failures += "$label: ${t.message ?: t::class.simpleName}"
-                logger.w("MCP[${server.name}] $label 握手失败: ${t.message}", t)
+                logger.w("MCP[${server.name}] bắt tay $label thất bại: ${t.message}", t)
             }
         }
         // B7: bypassCooldown（设置页手动测试）失败不写冷却，避免一次手动测试失败后对话发现快速失败 5 分钟
         if (!bypassCooldown) {
             downUntil[server.id] = System.currentTimeMillis() + FAILURE_COOLDOWN_MS
         }
-        throw IllegalStateException("MCP HTTP 连接失败（${failures.joinToString("；")}）")
+        throw IllegalStateException("Kết nối MCP HTTP thất bại (${failures.joinToString("；")}）")
     }
 
     /** B10: 禁用/删除 server 时关闭其会话（含 legacy SSE 长连接）并清冷却记录 */
@@ -298,7 +298,7 @@ class McpHttpTransport(
             val channel = LegacySseChannel(sseUrl, sseClient, json, scope, bearer)
         try {
             val messageEndpoint = withTimeoutOrNull(HANDSHAKE_TIMEOUT_MS) { channel.awaitEndpoint() }
-                ?: error("Legacy SSE 握手超时：${HANDSHAKE_TIMEOUT_MS / 1000}s 内未收到 endpoint 事件")
+                ?: error("Timeout bắt tay Legacy SSE: không nhận được sự kiện endpoint trong ${HANDSHAKE_TIMEOUT_MS / 1000}s")
             val params = json.encodeToJsonElement(McpInitializeParams.serializer(), McpInitializeParams())
             val init = postViaLegacy(channel, "initialize", params, bearer)
             val result = init.result?.let { json.decodeFromJsonElement(McpInitializeResult.serializer(), it) }
@@ -332,7 +332,7 @@ class McpHttpTransport(
                 bearer = session.bearer,
             ).response
             TransportMode.LEGACY_SSE -> postViaLegacy(
-                channel = session.legacy ?: error("Legacy SSE 会话已关闭"),
+                channel = session.legacy ?: error("Phiên Legacy SSE đã đóng"),
                 method = method,
                 params = params,
                 bearer = session.bearer,
@@ -385,7 +385,7 @@ class McpHttpTransport(
         return try {
             postLegacyPayload(channel, payload, retryable = method != "tools/call", bearer = bearer)
             withTimeoutOrNull(CALL_TIMEOUT_MS.milliseconds) { channel.await(id, deferred) }
-                ?: error("MCP 响应超时（${CALL_TIMEOUT_MS / 1000}s）")
+                ?: error("MCP phản hồi timeout (${CALL_TIMEOUT_MS / 1000}s)")
         } catch (t: Throwable) {
             channel.unregister(id)
             throw t
@@ -398,7 +398,7 @@ class McpHttpTransport(
     }
 
     private suspend fun postLegacyPayload(channel: LegacySseChannel, payload: String, retryable: Boolean, bearer: String? = null) {
-        val endpoint = channel.messageEndpoint ?: error("Legacy SSE 消息端点未就绪")
+        val endpoint = channel.messageEndpoint ?: error("Điểm cuối thông điệp Legacy SSE chưa sẵn sàng")
         val request = Request.Builder().url(endpoint).header("Accept", ACCEPT)
             .apply { bearer?.let { header("Authorization", "Bearer $it") } }
             .post(payload.toRequestBody(JSON)).build()
@@ -455,13 +455,13 @@ class McpHttpTransport(
                 // readUtf8LineStrict 单行超限时抛裸 EOFException：转换为与累积流熔断同口径的
                 // 结构化异常，避免一个巨大的 tools/call 结果让整个响应以传输故障的面目失败
                 throw IOException(
-                    "[MCP SSE 响应熔断拦截：单条 SSE 事件行超过 ${MAX_SSE_LINE_BYTES / 1024 / 1024}MB 硬上限，" +
-                        "已强制中断流式传输以保护应用内存]",
+                    "[MCP SSE phản hồi ngắt bảo vệ: một dòng sự kiện SSE vượt giới hạn cứng ${MAX_SSE_LINE_BYTES / 1024 / 1024}MB," +
+                        "Đã buộc ngắt truyền phát để bảo vệ bộ nhớ ứng dụng]",
                 )
             }
             bytes += line.utf8Size() + 1
             if (bytes > McpResponseSizeLimiter.DEFAULT_HARD_LIMIT_BYTES) {
-                throw IOException("[MCP SSE 响应熔断拦截：流事件累计已达 ${bytes / 1024 / 1024}MB，超过系统硬上限]")
+                throw IOException("[Ngắt chặn phản hồi MCP SSE: sự kiện luồng tích luỹ đã đạt ${bytes / 1024 / 1024}MB, vượt giới hạn cứng của hệ thống]")
             }
             if (line.isBlank()) {
                 decodeSse(data, requestId)?.let { return it }
@@ -484,7 +484,7 @@ class McpHttpTransport(
                     val escapedId = json.encodeToString(requestId)
                     """{"jsonrpc":"2.0","id":$escapedId,"result":{"content":[{"type":"text","text":$escapedText}],"isError":false}}"""
                 } else {
-                    throw IOException("[MCP 响应过大：元数据超出内存安全阈值 (${payload.totalBytes / 1024}KB)]")
+                    throw IOException("[Phản hồi MCP quá lớn: metadata vượt ngưỡng an toàn bộ nhớ (${payload.totalBytes / 1024}KB)]")
                 }
             }
             is McpResponseSizeLimiter.Payload.CircuitBroken -> {
@@ -577,7 +577,7 @@ class McpHttpTransport(
                             }
                         }
                     }
-                    error("SSE 连接已关闭")
+                    error("Kết nối SSE đã đóng")
                 }
             }.onFailure { fail(it) }
         }
@@ -588,7 +588,7 @@ class McpHttpTransport(
                 val resolved = url.resolve(data.first())
                 if (resolved == null) {
                     endpointDeferred.completeExceptionally(
-                        IllegalStateException("无法解析 endpoint 地址：${data.first()}"),
+                        IllegalStateException("Không thể phân giải địa chỉ endpoint: ${data.first()}"),
                     )
                 } else {
                     runCatching { validatedDerivedMcpEndpoint(url, resolved) }
@@ -635,8 +635,8 @@ class McpHttpTransport(
         private fun fail(t: Throwable) {
             closed = true
             // B3: close() 主动 cancel readLoop 产生的 CancellationException 若灌给 pending，
-            // 会让调用方协程被"伪取消"（上层对 CancellationException 直接 rethrow，agent 回合误判中止）；
-            // 统一改用 IOException 传达"传输已关闭"语义
+            // 会让调用方协程被"Hủy giả"（上层对 CancellationException 直接 rethrow，agent 回合误判中止）；
+            // 统一改用 IOException 传达"Truyền dẫn đã đóng"语义
             val failure = if (t is CancellationException) IOException("MCP HTTP transport closed") else t
             endpointDeferred.completeExceptionally(failure)
             pending.values.forEach { it.completeExceptionally(failure) }
@@ -667,10 +667,10 @@ class McpHttpTransport(
 }
 
 /**
- * 解析内置 browser server 的"实际"URL：仅当日标服务是内置 browser 且已绑定运行时端口时，
+ * 解析内置 browser server 的"Thực tế"URL：仅当日标服务是内置 browser 且已绑定运行时端口时，
  * 用运行时端口替换静态预设 URL 里的首选端口；否则原样返回。纯函数，便于对端口顺延做回归测试。
  *
- * 这是"发现与调用分离"的分界：provider 可见工具 schema（[top.wkbin.tianxuan.harness.mcp.server.McpToolDispatcher.listTools]）
+ * 这是"Tách rời phát hiện và gọi"的分界：provider 可见工具 schema（[top.wkbin.tianxuan.harness.mcp.server.McpToolDispatcher.listTools]）
  * 不含任何端口，真实端口只在 tools/call 连接阶段经此解析注入，因此绑定端口变化不改变 provider 可见表面。
  */
 internal fun resolveBrowserEffectiveUrl(serverUrl: String, serverId: String, runtimePort: Int?): String {
@@ -689,14 +689,14 @@ internal fun isAllowedCleartextMcpHost(host: String): Boolean {
 internal fun validatedMcpHttpEndpoint(baseUrl: String): HttpUrl {
     val url = baseUrl.trim().toHttpUrl()
     require(url.isHttps || isAllowedCleartextMcpHost(url.host)) {
-        "明文 MCP 仅允许 localhost、回环地址或 192.168.* 局域网地址"
+        "MCP không mã hoá chỉ cho phép localhost, địa chỉ loopback hoặc địa chỉ LAN 192.168.*"
     }
     return url
 }
 
 internal fun validatedDerivedMcpEndpoint(base: HttpUrl, resolved: HttpUrl): HttpUrl {
     require(base.scheme == resolved.scheme && base.host == resolved.host && base.port == resolved.port) {
-        "MCP SSE endpoint 必须与初始服务同源"
+        "MCP SSE endpoint phải cùng nguồn với dịch vụ khởi tạo"
     }
     return validatedMcpHttpEndpoint(resolved.toString())
 }

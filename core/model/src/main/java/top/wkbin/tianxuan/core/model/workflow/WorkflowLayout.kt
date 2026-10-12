@@ -3,14 +3,14 @@ package top.wkbin.tianxuan.core.model.workflow
 /** Longest-path layering followed by barycentric crossing reduction. Stable across runs. */
 object WorkflowLayout {
     fun arrange(definition: WorkflowDefinition): WorkflowDefinition {
-        require(WorkflowValidator.validate(definition).isEmpty()) { "请先修正工作流结构" }
+        require(WorkflowValidator.validate(definition).isEmpty()) { "Vui lòng sửa cấu trúc workflow trước" }
         val incoming = definition.edges.groupBy { it.toNodeId }
         val outgoing = definition.edges.groupBy { it.fromNodeId }
         val ranks = mutableMapOf<String, Int>()
         val pending = definition.nodes.map { it.id }.toMutableList()
         while (pending.isNotEmpty()) {
             val ready = pending.filter { id -> incoming[id].orEmpty().all { it.fromNodeId in ranks } }
-            check(ready.isNotEmpty()) { "工作流存在循环" }
+            check(ready.isNotEmpty()) { "Luồng công việc tồn tại vòng lặp" }
             ready.forEach { id -> ranks[id] = incoming[id].orEmpty().maxOfOrNull { ranks.getValue(it.fromNodeId) + 1 } ?: 0 }
             pending.removeAll(ready.toSet())
         }

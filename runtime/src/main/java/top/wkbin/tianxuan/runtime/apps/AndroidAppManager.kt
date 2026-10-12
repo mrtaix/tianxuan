@@ -25,7 +25,7 @@ class AndroidAppManager(
     suspend fun synchronize(): Result<AppInventorySyncResult> = withContext(Dispatchers.IO) {
         runCatching {
             val localApps = installedApplications()
-            check(localApps.isNotEmpty()) { "未读取到应用清单，已保留现有数据库数据。" }
+            check(localApps.isNotEmpty()) { "Không đọc được danh sách ứng dụng, đã giữ lại dữ liệu cơ sở dữ liệu hiện có." }
             val privilege = privilegeManager.getPrivilegeInfo()
             val privilegedSections = if (privilege.mode != ExecutionMode.PROOT && privilege.modeActive) {
                 privilegeManager.executeShellCommand(INVENTORY_COMMAND, "android-app-inventory")
@@ -72,7 +72,7 @@ class AndroidAppManager(
     suspend fun requireInitialized(packageName: String): AndroidAppEntity {
         check(repository.count() > 0) { INITIALIZATION_REQUIRED_MESSAGE }
         return requireNotNull(repository.findByPackageName(packageName)) {
-            "应用 $packageName 不在已同步的应用数据库中；请到设置 → 应用管理执行同步后重试。"
+            "Ứng dụng $packageName không nằm trong cơ sở dữ liệu ứng dụng đã đồng bộ; vui lòng vào Cài đặt → Quản lý ứng dụng để đồng bộ rồi thử lại."
         }
     }
 
@@ -89,7 +89,7 @@ class AndroidAppManager(
 
     /**
      * 非特权模式下判断应用是否实际启用：getApplicationEnabledSetting 无需特殊权限即可读取
-     * 用户通过 pm disable-user / 设置页"停用"造成的禁用状态，弥补 ApplicationInfo.enabled
+     * 用户通过 pm disable-user / 设置页"Vô hiệu hóa"造成的禁用状态，弥补 ApplicationInfo.enabled
      * 只反映 manifest 默认值的不足。
      */
     private fun isEffectivelyEnabled(packageName: String, manifestDefault: Boolean): Boolean = runCatching {
@@ -118,7 +118,7 @@ class AndroidAppManager(
         .toSet()
 
     private companion object {
-        const val INITIALIZATION_REQUIRED_MESSAGE = "应用数据库尚未初始化；请先到设置 → 应用管理完成初始化和同步。"
+        const val INITIALIZATION_REQUIRED_MESSAGE = "Cơ sở dữ liệu ứng dụng chưa được khởi tạo; vui lòng vào Cài đặt → Quản lý ứng dụng để hoàn tất khởi tạo và đồng bộ trước."
         const val DISABLED = "DISABLED"
         const val SUSPENDED = "SUSPENDED"
         const val NETWORK = "NETWORK"

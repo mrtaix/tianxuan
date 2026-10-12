@@ -60,7 +60,7 @@ class AgentMcpBootstrap(
         mutex.withLock {
             if (!cfg.enabled) {
                 if (runningConfig != null) {
-                    stopServer("已关闭")
+                    stopServer("Đã đóng")
                     foregroundLauncher.stop()
                 }
                 return
@@ -77,8 +77,8 @@ class AgentMcpBootstrap(
     }
 
     private fun restart(cfg: Config) {
-        // 重配期间不动前台服务：避免"停服务→再起服务"造成通知闪烁
-        stopServer("重配")
+        // 重配期间不动前台服务：避免"Dừng dịch vụ→khởi động lại dịch vụ"造成通知闪烁
+        stopServer("Cấu hình lại")
         val server = runtime.value
         val ok = server.start(
             loopbackOnly = !cfg.allowRemote,
@@ -92,23 +92,23 @@ class AgentMcpBootstrap(
             // 服务端已就绪，把进程提升为前台，避免 App 退到后台后被冻结掐断外部客户端
             foregroundLauncher.start()
             val host = if (cfg.allowRemote) "0.0.0.0" else McpServerRuntime.loopbackHost
-            Log.i(TAG, "AgentMcpServer 已启动 http://$host:${server.port}/mcp（Bearer 认证已启用，写入层=${cfg.allowWriteTools}）")
+            Log.i(TAG, "AgentMcpServer đã khởi động http://$host:${server.port}/mcp (Bearer đã bật xác thực, lớp ghi=${cfg.allowWriteTools})")
         } else {
             runningConfig = null
             AgentMcpAccess.port = null
             AgentMcpAccess.running = false
             foregroundLauncher.stop()
-            Log.w(TAG, "AgentMcpServer 启动失败：候选端口 ${cfg.port}..${cfg.port + 9} 均不可用")
+            Log.w(TAG, "Khởi động AgentMcpServer thất bại: các cổng ứng viên ${cfg.port}..${cfg.port + 9} đều không khả dụng")
         }
     }
 
     private fun stopServer(reason: String) {
         runCatching { runtime.value.stop() }
-            .onFailure { Log.w(TAG, "stop($reason) 失败: ${it.message}") }
+            .onFailure { Log.w(TAG, "stop($reason) thất bại: ${it.message}") }
         runningConfig = null
         AgentMcpAccess.port = null
         AgentMcpAccess.running = false
-        Log.i(TAG, "AgentMcpServer 已停止（$reason）")
+        Log.i(TAG, "AgentMcpServer đã dừng ($reason)")
     }
 
     private fun generateToken(): String = java.util.UUID.randomUUID().toString().replace("-", "")

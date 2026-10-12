@@ -112,7 +112,7 @@ class ToolExecutor(
                     createdAt = now,
                     toolCallId = toolCall.id,
                     success = false,
-                    output = "该工具需要用户回答，但当前子智能体 Lane 不支持暂停等待用户输入，本次没有创建问题请求。请将问题交接给主智能体，由主会话重新发起 ask_user。",
+                    output = "Phát hiện điện thoại đang trong kết nối VPN, VPN hiện tại sẽ tiếp quản lưu lượng của ứng dụng này, máy tính trong cùng mạng LAN có thể bị timeout khi kết nối. Hãy tắt VPN trước, hoặc thêm ứng dụng này vào danh sách kết nối trực tiếp/loại trừ của VPN.",
                     approvalDeferred = true,
                 )
             }
@@ -141,11 +141,11 @@ class ToolExecutor(
                             toolCallId = toolCall.id,
                             success = false,
                             output = buildString {
-                                append("⛔ 只读规划模式（PLAN）已拦截本次调用：").append(blockedName).append('\n')
-                                append("原因：").append(blocked).append('\n')
-                                append("本次调用未执行，也未进入审批队列。\n")
-                                append("请不要重试同一调用，也不要声称该操作已完成：")
-                                append("把该动作写进规划结论的待办中，由用户切换到 BUILD（构建）模式后再执行。")
+                                append("⛔ Chế độ lập kế hoạch chỉ đọc (PLAN) đã chặn lần gọi này:").append(blockedName).append('\n')
+                                append("Lý do:").append(blocked).append('\n')
+                                append("Lần gọi này chưa thực thi, cũng chưa vào hàng đợi phê duyệt.\n")
+                                append("Đừng thử lại cùng một lời gọi, cũng đừng tuyên bố thao tác đó đã hoàn thành:")
+                                append("Ghi động tác đó vào việc cần làm trong kết luận kế hoạch, do người dùng chuyển sang chế độ BUILD (xây dựng) rồi mới thực thi.")
                             },
                         )
                     }
@@ -166,22 +166,22 @@ class ToolExecutor(
                     if (!allowApprovalRequest) {
                         // 后台 Lane 没有可暂停的审批 UI，只能结构化交接：标记 approvalDeferred，
                         // 由 Lane 收集成待办上交父智能体。若只回一句失败文字，模型下一轮会输出
-                        // "已交由主智能体"，而那句话曾被当成完成结论。
+                        // "Đã giao cho Agent chính"，而那句话曾被当成完成结论。
                         return ToolResult(
                             id = UUID.randomUUID().toString(),
                             createdAt = now,
                             toolCallId = toolCall.id,
                             success = false,
                             output = buildString {
-                                append("该工具需要用户审批（${decision.summary}），子智能体后台 Lane 不支持暂停审批，本次调用未执行。")
-                                append("\n原因：").append(decision.reason)
-                                append("\n请不要重试同一调用，也不要声称已完成：把该操作作为待办写进结论，")
-                                append("由主智能体在主会话重新发起并等待用户批准。")
+                                append("Công cụ này cần người dùng phê duyệt (${decision.summary}), Lane nền của Agent con không hỗ trợ tạm dừng phê duyệt, lời gọi lần này chưa được thực thi.")
+                                append("\nLý do:").append(decision.reason)
+                                append("\nVui lòng đừng thử lại cùng lời gọi, cũng đừng tuyên bố đã hoàn thành: hãy ghi thao tác đó thành việc cần làm trong kết luận,")
+                                append("Do Agent chính khởi tạo lại ở phiên chính và chờ người dùng phê duyệt.")
                             },
                             approvalDeferred = true,
                         )
                     }
-                    checkNotNull(repository) { "审批仓库未初始化" }
+                    checkNotNull(repository) { "Kho phê duyệt chưa khởi tạo" }
                     val request = approvalPolicyEngine.createRequest(sessionId, toolCall, workspace, decision, operationId)
                     repository.create(request)
                     eventBus?.emit(
@@ -199,7 +199,7 @@ class ToolExecutor(
                         createdAt = now,
                         toolCallId = toolCall.id,
                         success = false,
-                        output = "等待用户批准：${decision.summary}\n${decision.reason}",
+                        output = "Chờ người dùng phê duyệt: ${decision.summary}\n${decision.reason}",
                         awaitingApproval = true,
                         approvalRequestId = request.id,
                     )
@@ -209,11 +209,11 @@ class ToolExecutor(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
-            false to "工具执行异常：${throwable.message ?: throwable::class.simpleName}"
+            false to "Lỗi thực thi công cụ: ${throwable.message ?: throwable::class.simpleName}"
         }
         val (success, rawOutput) = outcome
         val finalOutput = if (!success && !rawOutput.contains("【天玄") && !rawOutput.contains("【已强制拦截")) {
-            rawOutput + "\n\n【天玄 Harness 调试提示】：本次工具调用未成功。请仔细阅读上方错误信息，分析具体原因并在下一步中调整策略，严禁使用相同参数盲目重试。"
+            rawOutput + "\n\n【Gợi ý debug Harness Thien Huyen】: Lần gọi công cụ này chưa thành công. Hãy đọc kỹ thông tin lỗi phía trên, phân tích nguyên nhân cụ thể và điều chỉnh chiến lược ở bước sau, nghiêm cấm dùng tham số giống hệt để thử lại mù quáng."
         } else {
             rawOutput
         }
@@ -267,33 +267,33 @@ class ToolExecutor(
         val totalLines = output.count { it == '\n' } + 1
         val keptLines = kept.count { it == '\n' } + 1
         val recoverHint = if (spillPath != null) {
-            "完整输出已保存至 $spillPath，可用 read 工具（offset/limit 分页）查看其余部分。"
+            "Đầu ra đầy đủ đã được lưu tại $spillPath, có thể dùng công cụ read (phân trang offset/limit) để xem phần còn lại."
         } else {
-            "需要其余部分请用 grep 过滤关键字、head/tail 取首尾、或 sed -n 'N,Mp' 取指定行段，不要原样重复执行同一命令。"
+            "Nếu cần phần còn lại hãy dùng grep để lọc từ khóa, head/tail lấy đầu/cuối, hoặc sed -n 'N,Mp' lấy đoạn dòng chỉ định, đừng lặp lại y nguyên cùng một lệnh."
         }
         return buildString {
             when (retention) {
                 OutputRetention.TAIL -> {
-                    append("[输出已截断：完整输出共 ")
+                    append("[Đầu ra đã bị cắt: tổng đầu ra đầy đủ là ")
                     append(totalLines)
-                    append(" 行 / ")
+                    append(" dòng / ")
                     append(output.length)
-                    append(" 字符，以下仅显示末尾 ")
+                    append(" ký tự, dưới đây chỉ hiển thị phần cuối ")
                     append(keptLines)
-                    append(" 行（命令报错/断言通常位于末尾）。")
+                    append(" dòng (lỗi lệnh/assertion thường nằm ở cuối).")
                     append(recoverHint)
                     append("]\n")
                     append(kept)
                 }
                 OutputRetention.HEAD -> {
                     append(kept)
-                    append("\n\n[输出已截断：完整输出共 ")
+                    append("\n\n[Đầu ra đã bị cắt: tổng đầu ra đầy đủ gồm ")
                     append(totalLines)
-                    append(" 行 / ")
+                    append(" dòng / ")
                     append(output.length)
-                    append(" 字符，以上仅显示前 ")
+                    append(" ký tự, trên đây chỉ hiển thị phần đầu ")
                     append(keptLines)
-                    append(" 行。")
+                    append(" dòng.")
                     append(recoverHint)
                     append("]")
                 }
@@ -330,8 +330,8 @@ class ToolExecutor(
                             metadata["image_payload"] = ImagePayloadCompressor.downscaleDataUrl(
                                 "data:$imageMime;base64,$base64",
                             )
-                            true to "已读取图片文件 $path（${bytesResult.data.size} 字节，$imageMime）。" +
-                                "图像已作为多模态附件随本次工具结果提供；若当前模型不支持视觉，请改用文字/脚本方式描述图片内容。"
+                            true to "Đã đọc tệp ảnh $path (${bytesResult.data.size} byte, $imageMime)." +
+                                "Ảnh đã được cung cấp dưới dạng đính kèm đa phương thức kèm kết quả công cụ lần này; nếu model hiện tại không hỗ trợ thị giác, hãy chuyển sang mô tả nội dung ảnh bằng văn bản/script."
                         }
                         is AppResult.Failure -> bytesResult.toToolOutput(actionName = "read")
                     }
@@ -346,7 +346,7 @@ class ToolExecutor(
                 val content = requireString(args, "content")
                 captureBeforeWrite(sessionId, activeFileAccess, path)
                 val linesAdded = content.lines().size
-                val output = activeFileAccess.write(path, content).toToolOutput("已写入 $path\nDIFF_STAT: +$linesAdded -0", actionName = "write")
+                val output = activeFileAccess.write(path, content).toToolOutput("Đã ghi $path\nDIFF_STAT: +$linesAdded -0", actionName = "write")
                 if (output.first) captureAfterWrite(sessionId, activeFileAccess, path, knownContent = content)
                 output
             }
@@ -363,7 +363,7 @@ class ToolExecutor(
                 // 绝不把 diff 正文注入模型上下文，避免重复占用 Token。
                 val finalOutput = if (output.first && outcome is AppResult.Success) {
                     outcome.data.diff?.let { metadata["diff"] = it }
-                    true to "已修改 $path（匹配策略：${outcome.data.strategy}，替换 ${outcome.data.replacements} 处）\n" +
+                    true to "Đã sửa $path (chiến lược khớp: ${outcome.data.strategy}, thay thế ${outcome.data.replacements} chỗ)\n" +
                         "DIFF_STAT: +$linesAdded -$linesDeleted"
                 } else {
                     output
@@ -380,29 +380,29 @@ class ToolExecutor(
                 if (destinationPath != null) captureBeforeWrite(sessionId, activeFileAccess, destinationPath)
                 executeDownload(args, activeFileAccess, progressReporter)
             }
-            HarnessTool.MEMORY -> contextExecutor?.executeMemory(args, sessionId, workspace) ?: (false to "未初始化记忆执行器")
-            HarnessTool.PLAN -> contextExecutor?.executePlan(args, sessionId) ?: (false to "未初始化计划执行器")
-            HarnessTool.SCRATCHPAD -> contextExecutor?.executeScratchpad(args, sessionId) ?: (false to "未初始化草稿执行器")
+            HarnessTool.MEMORY -> contextExecutor?.executeMemory(args, sessionId, workspace) ?: (false to "Chưa khởi tạo trình thực thi ký ức")
+            HarnessTool.PLAN -> contextExecutor?.executePlan(args, sessionId) ?: (false to "Chưa khởi tạo bộ thực thi kế hoạch")
+            HarnessTool.SCRATCHPAD -> contextExecutor?.executeScratchpad(args, sessionId) ?: (false to "Chưa khởi tạo bộ thực thi nháp")
             HarnessTool.HISTORY_SEARCH -> executeHistorySearch(args, sessionId)
             HarnessTool.HISTORY_READ -> executeHistoryRead(args, sessionId)
             HarnessTool.COMPRESS -> executeCompress(args, sessionId)
             // ask_user 在 execute() 入口特判（不走审批门控）；此处仅为 when 穷尽兜底
-            HarnessTool.ASK_USER -> false to "ask_user 应在执行入口处理，不应到达工具分派"
+            HarnessTool.ASK_USER -> false to "ask_user nên xử lý ở entry thực thi, không nên tới bộ phân phối công cụ"
             HarnessTool.RENDER_SURFACE -> A2uiSurfaceBus.publishFromTool(args, sessionId)
             HarnessTool.KNOWLEDGE -> executeKnowledgeSearch(args)
             HarnessTool.KB_ADD -> executeKnowledgeAdd(args)
             HarnessTool.KB_LIST -> executeKnowledgeList()
-            HarnessTool.BUILD_SCRIPT -> buildScriptToolExecutor?.execute(args, workspace) ?: (false to "未初始化构建脚本管理器")
+            HarnessTool.BUILD_SCRIPT -> buildScriptToolExecutor?.execute(args, workspace) ?: (false to "Chưa khởi tạo trình quản lý script build")
             HarnessTool.SUBAGENT -> if (rawToolName.equals("invoke_dual_agent", ignoreCase = true)) {
-                dualAgentCoordinator?.executeFromTool(args, sessionId, workspace) ?: (false to "未初始化双智能体编排器")
+                dualAgentCoordinator?.executeFromTool(args, sessionId, workspace) ?: (false to "Chưa khởi tạo bộ điều phối Agent kép")
             } else {
-                subagentOrchestrator?.executeSubagents(args, sessionId) ?: (false to "未初始化子智能体编排器")
+                subagentOrchestrator?.executeSubagents(args, sessionId) ?: (false to "Chưa khởi tạo trình điều phối Agent con")
             }
             HarnessTool.MCP -> if (rawToolName == "use_capability") {
                 executeCapability(args, workspace)
             } else {
                 // 兼容路径：对话历史/模型习惯中仍可能出现直接 mcp__ 调用（schema 已不再宣告）
-                mcpManager?.executeTool(rawToolName ?: "mcp", args, workspace) ?: (false to "未初始化 MCP 管理器")
+                mcpManager?.executeTool(rawToolName ?: "mcp", args, workspace) ?: (false to "Chưa khởi tạo trình quản lý MCP")
             }
             HarnessTool.LOAD_SKILL -> {
                 // 按需技能加载：目录（元数据）常驻系统提示，命中后由模型主动拉取
@@ -410,7 +410,7 @@ class ToolExecutor(
                 val query = requireString(args, "name").trim().trimStart('/')
                 val skills = skillRepository?.activeSkills?.first().orEmpty()
                 if (skills.isEmpty()) {
-                    false to "当前没有已启用的技能。请提示用户到「设置 → 智能体」启用技能后重试。"
+                    false to "Hiện chưa có kỹ năng nào được bật. Vui lòng nhắc người dùng vào「Cài đặt → Agent」bật kỹ năng rồi thử lại."
                 } else {
                     val queryLower = query.lowercase()
                     // 精确匹配（name / id / 去斜杠 triggerCommand）：大小写无关。
@@ -434,28 +434,28 @@ class ToolExecutor(
                     }
                     val pool = if (exact.isNotEmpty()) exact else fuzzy
                     when {
-                        pool.isEmpty() -> false to "未找到匹配的技能：$query。可用技能：" +
+                        pool.isEmpty() -> false to "Không tìm thấy skill khớp: $query. Skill khả dụng:" +
                             skills.joinToString("、") { it.name }
-                        pool.size > 1 -> false to "技能名 $query 匹配到多个技能：" +
-                            pool.joinToString("、") { it.name } + "。请使用完整技能名或 id 重试。"
+                        pool.size > 1 -> false to "Tên skill $query khớp nhiều skill:" +
+                            pool.joinToString("、") { it.name } + "。Vui lòng dùng tên skill đầy đủ hoặc id để thử lại."
                         else -> {
                             val matched = pool.first()
                             val subPath = args.stringArg("path")?.trim()
                             if (subPath.isNullOrEmpty()) {
-                                true to "【技能已加载：${matched.name}】(category=${matched.category})\n" +
+                                true to "[Skill đã nạp: ${matched.name}] (category=${matched.category})\n" +
                                     SkillResourceReader.stripFrontmatter(matched.systemPrompt).trim()
                             } else {
                                 val resourceDir = matched.resourcePath?.takeIf { it.isNotBlank() }
                                 if (resourceDir == null) {
-                                    false to "技能「${matched.name}」没有可读取的资源目录（resourcePath 为空），无法读取 $subPath。" +
-                                        "请改用包含 SKILL.md 的目录形式导入该技能后再读取子资源。"
+                                    false to "Kỹ năng 「${matched.name}」 không có thư mục tài nguyên đọc được (resourcePath rỗng), không thể đọc $subPath." +
+                                        "Vui lòng chuyển sang nhập kỹ năng đó dưới dạng thư mục chứa SKILL.md rồi mới đọc tài nguyên con."
                                 } else {
                                     val content = SkillResourceReader.readSubResource(File(resourceDir), subPath)
                                     if (content == null) {
-                                        false to "技能资源不存在或路径越界：$subPath。" +
-                                            "路径须为技能目录内的相对路径（如 references/foo.md / scripts/bar.sh）。"
+                                        false to "Tài nguyên kỹ năng không tồn tại hoặc vượt đường dẫn: $subPath." +
+                                            "Đường dẫn phải là đường dẫn tương đối trong thư mục kỹ năng (như references/foo.md / scripts/bar.sh)."
                                     } else {
-                                        true to "【技能资源：${matched.name}/$subPath】\n$content"
+                                        true to "【Tài nguyên kỹ năng: ${matched.name}/$subPath】\n$content"
                                     }
                                 }
                             }
@@ -467,12 +467,12 @@ class ToolExecutor(
                 val rule = requireString(args, "rule")
                 val content = promptRouter?.loadRule(rule)
                 if (content != null) {
-                    true to "【规则块：$rule】\n$content"
+                    true to "【Khối quy tắc: $rule】\n$content"
                 } else {
                     // 名单从 PromptRouter 动态生成：硬编码清单会随规则块增删漂移（曾漏 image-delivery/browser-reverse）。
                     val available = promptRouter?.availableRuleNames()
                         ?: "workflow / code-navigation / security / memory / environment-proot / tools"
-                    false to "未知规则块：$rule。可用：$available"
+                    false to "Khối quy tắc không xác định: $rule. Khả dụng: $available"
                 }
             }
         }
@@ -510,16 +510,16 @@ class ToolExecutor(
                 return true to "mode wireless-adb · exit ${adbResult.exitCode ?: 0}\n${adbResult.output.trim()}"
             }
             val fallbackManager = privilegeManager ?: return false to adbResult.output.ifBlank {
-                "无线 ADB 未连接；请在开发者控制台开启无线调试并完成一次配对。"
+                "ADB không dây chưa kết nối; vui lòng bật gỡ lỗi không dây trong bảng điều khiển nhà phát triển và hoàn tất ghép nối một lần."
             }
             val info = fallbackManager.getPrivilegeInfo()
             if (info.mode == ExecutionMode.PROOT || !info.modeActive) {
                 return false to adbResult.output.ifBlank {
-                    "无线 ADB 未连接；请在开发者控制台开启无线调试并完成一次配对。"
+                    "ADB không dây chưa kết nối; vui lòng bật gỡ lỗi không dây trong bảng điều khiển nhà phát triển và hoàn tất ghép nối một lần."
                 }
             }
         }
-        val manager = privilegeManager ?: return false to "未初始化宿主权限执行器"
+        val manager = privilegeManager ?: return false to "Chưa khởi tạo bộ thực thi quyền host"
 
         // settings_put system 命名空间优先走 Android ContentResolver API（需 WRITE_SETTINGS），
         // 避免 Shizuku shell 在部分国产 ROM 上被 SettingsProvider 静默拒绝（exit 22）。
@@ -543,7 +543,7 @@ class ToolExecutor(
                         sessionId = sessionId.ifBlank { "unknown" },
                         timestamp = System.currentTimeMillis(),
                         permission = "WRITE_SETTINGS",
-                        reason = "修改系统设置（如亮度）需要授权「修改系统设置」权限",
+                        reason = "Sửa đổi cài đặt hệ thống (như độ sáng) cần cấp quyền 「Sửa đổi cài đặt hệ thống」",
                     )
                 )
             }
@@ -553,24 +553,24 @@ class ToolExecutor(
             "status" -> {
                 val info = manager.getPrivilegeInfo()
                 true to buildString {
-                    append("当前生效模式：").append(info.mode.title)
-                    append("\n权限状态：").append(if (info.modeActive) "已授权" else "未授权")
-                    append("\nShizuku：").append(if (info.shizukuAvailable) "可用 (shell UID 2000)" else "不可用")
-                    append("\nRoot：").append(if (info.rootAvailable) "可用 (UID 0)" else "不可用或未选择")
+                    append("Chế độ đang có hiệu lực:").append(info.mode.title)
+                    append("\nTrạng thái quyền:").append(if (info.modeActive) "Đã cấp quyền" else "Chưa ủy quyền")
+                    append("\nShizuku：").append(if (info.shizukuAvailable) "Khả dụng (shell UID 2000)" else "Không khả dụng")
+                    append("\nRoot：").append(if (info.rootAvailable) "Khả dụng (UID 0)" else "Không khả dụng hoặc chưa chọn")
                 }
             }
             "app_list" -> executeCachedApps(args)
             "screen_observe" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val onlyInteractive = args["only_interactive"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: true
                 val res = gui.observeScreen(onlyInteractive)
                 res.fold(
                     onSuccess = { obs -> true to obs.toAgentSummary() },
-                    onFailure = { err -> false to "感知屏幕失败：${err.message}" }
+                    onFailure = { err -> false to "Nhận biết màn hình thất bại: ${err.message}" }
                 )
             }
             "screen_click" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val x = requireInt(args, "x")
                 val y = requireInt(args, "y")
                 val res = gui.click(x, y)
@@ -580,14 +580,14 @@ class ToolExecutor(
                 )
             }
             "screen_double_click" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 gui.doubleClick(requireInt(args, "x"), requireInt(args, "y")).fold(
                     onSuccess = { true to it },
                     onFailure = { false to it.message.orEmpty() },
                 )
             }
             "screen_long_press" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val duration = optionalLong(args, "duration_ms", 800L, 200L, 5_000L)
                 gui.longPress(requireInt(args, "x"), requireInt(args, "y"), duration).fold(
                     onSuccess = { true to it },
@@ -595,7 +595,7 @@ class ToolExecutor(
                 )
             }
             "screen_swipe" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val x1 = requireInt(args, "x1")
                 val y1 = requireInt(args, "y1")
                 val x2 = requireInt(args, "x2")
@@ -608,13 +608,13 @@ class ToolExecutor(
                 )
             }
             "screen_scroll" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val direction = when (requireString(args, "direction").lowercase()) {
                     "up" -> top.wkbin.tianxuan.runtime.gui.ScrollDirection.UP
                     "down" -> top.wkbin.tianxuan.runtime.gui.ScrollDirection.DOWN
                     "left" -> top.wkbin.tianxuan.runtime.gui.ScrollDirection.LEFT
                     "right" -> top.wkbin.tianxuan.runtime.gui.ScrollDirection.RIGHT
-                    else -> return false to "direction 仅支持 up/down/left/right"
+                    else -> return false to "direction chỉ hỗ trợ up/down/left/right"
                 }
                 val ratio = args["distance_ratio"]?.jsonPrimitive?.content?.toFloatOrNull()?.coerceIn(0.15f, 0.8f) ?: 0.45f
                 val durationMs = optionalLong(args, "duration_ms", 350L, 50L, 5_000L)
@@ -624,7 +624,7 @@ class ToolExecutor(
                 )
             }
             "screen_input_text", "paste_text" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val text = requireString(args, "text")
                 val res = gui.inputText(text)
                 res.fold(
@@ -633,7 +633,7 @@ class ToolExecutor(
                 )
             }
             "screen_key" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val key = requireString(args, "key")
                 val res = gui.sendKey(key)
                 res.fold(
@@ -642,7 +642,7 @@ class ToolExecutor(
                 )
             }
             "app_launch" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val packageName = requireHostIdentifier(args, "package", PACKAGE_NAME)
                 val res = gui.launchApp(packageName)
                 res.fold(
@@ -651,7 +651,7 @@ class ToolExecutor(
                 )
             }
             "screen_capture" -> {
-                val gui = hostGuiController ?: return false to "未初始化 GUI 控制器"
+                val gui = hostGuiController ?: return false to "Chưa khởi tạo bộ điều khiển GUI"
                 val targetPath = requireString(args, "path")
                 val res = gui.captureScreenshot(targetPath)
                 res.fold(
@@ -660,51 +660,51 @@ class ToolExecutor(
                 )
             }
             "virtual_screen_ensure" -> {
-                val coordinator = virtualDisplayCoordinator ?: return false to "未初始化虚拟屏协调器"
+                val coordinator = virtualDisplayCoordinator ?: return false to "Chưa khởi tạo bộ điều phối màn hình ảo"
                 val session = optionalSession(args)
                 val displayId = coordinator.ensureVirtualDisplay(session)
                 if (displayId == null) {
                     val reason = coordinator.lastFailureReason
-                        ?: "未知原因（ensureVirtualDisplay 返回 null 但无 failureReason）"
-                    false to "虚拟屏创建失败（session=$session）：$reason"
+                        ?: "Nguyên nhân không rõ (ensureVirtualDisplay trả về null nhưng không có failureReason)"
+                    false to "Tạo màn hình ảo thất bại (session=$session): $reason"
                 } else {
-                    true to "虚拟屏已就绪：session=$session displayId=$displayId（尺寸与主屏一致）；" +
-                        "接下来用 virtual_screen_launch 启动应用，virtual_screen_screenshot 截图识图"
+                    true to "Màn hình ảo đã sẵn sàng: session=$session displayId=$displayId (kích thước giống màn hình chính);" +
+                        "Tiếp theo dùng virtual_screen_launch để khởi chạy ứng dụng, virtual_screen_screenshot để chụp ảnh nhận diện"
                 }
             }
             "virtual_screen_launch" -> {
-                val coordinator = virtualDisplayCoordinator ?: return false to "未初始化虚拟屏协调器"
+                val coordinator = virtualDisplayCoordinator ?: return false to "Chưa khởi tạo bộ điều phối màn hình ảo"
                 val session = optionalSession(args)
                 val packageName = requireHostIdentifier(args, "package", PACKAGE_NAME)
                 if (coordinator.getDisplayId(session) == null &&
                     coordinator.ensureVirtualDisplay(session) == null
                 ) {
-                    return false to "虚拟屏创建失败（session=$session）：需要 Shizuku 或 Root 模式"
+                    return false to "Tạo màn hình ảo thất bại (session=$session): cần chế độ Shizuku hoặc Root"
                 }
                 val res = coordinator.launchApp(session, packageName)
                 if (res) {
-                    true to "已在虚拟屏启动应用：$packageName（session=$session " +
-                        "displayId=${coordinator.getDisplayId(session)}）；应用画面不会出现在主屏"
+                    true to "Đã khởi chạy ứng dụng trên màn hình ảo: $packageName (session=$session " +
+                        "displayId=${coordinator.getDisplayId(session)}); hình ảnh ứng dụng sẽ không xuất hiện trên màn hình chính"
                 } else {
-                    false to "虚拟屏启动应用失败：$packageName（检查包名是否为已安装应用）"
+                    false to "Khởi chạy ứng dụng màn hình ảo thất bại: $packageName (kiểm tra tên gói có phải ứng dụng đã cài không)"
                 }
             }
             "virtual_screen_screenshot" -> {
-                val coordinator = virtualDisplayCoordinator ?: return false to "未初始化虚拟屏协调器"
+                val coordinator = virtualDisplayCoordinator ?: return false to "Chưa khởi tạo bộ điều phối màn hình ảo"
                 val session = optionalSession(args)
                 if (coordinator.getDisplayId(session) == null) {
-                    return false to "虚拟屏未创建（session=$session）：先调用 virtual_screen_ensure"
+                    return false to "Màn hình ảo chưa được tạo (session=$session): hãy gọi virtual_screen_ensure trước"
                 }
                 val targetPath = requireString(args, "path")
                 val png = coordinator.requestScreenshot(session)
-                    ?: return false to "虚拟屏截图失败（session=$session）：server 未响应或已退出"
+                    ?: return false to "Chụp màn hình ảo thất bại (session=$session): server không phản hồi hoặc đã thoát"
                 runCatching {
                     val file = File(targetPath)
                     file.parentFile?.mkdirs()
                     file.writeBytes(png)
                 }.fold(
-                    onSuccess = { true to "虚拟屏截图已保存至 $targetPath（${png.size} 字节），可用 read 查看图片" },
-                    onFailure = { err -> false to "截图写入失败：${err.message}" }
+                    onSuccess = { true to "Ảnh chụp màn hình ảo đã lưu tại $targetPath (${png.size} byte), có thể dùng read để xem ảnh" },
+                    onFailure = { err -> false to "Ghi ảnh chụp thất bại: ${err.message}" }
                 )
             }
             "virtual_screen_click",
@@ -714,7 +714,7 @@ class ToolExecutor(
             "virtual_screen_scroll",
             "virtual_screen_key",
             -> {
-                val toolkit = virtualScreenToolkit ?: return false to "未初始化虚拟屏工具"
+                val toolkit = virtualScreenToolkit ?: return false to "Chưa khởi tạo công cụ màn hình ảo"
                 val session = optionalSession(args)
                 val primitive = when (action) {
                     "virtual_screen_click" ->
@@ -739,14 +739,14 @@ class ToolExecutor(
                             "down" -> ScrollDirection.DOWN
                             "left" -> ScrollDirection.LEFT
                             "right" -> ScrollDirection.RIGHT
-                            else -> return false to "screen_scroll 需要 direction: up/down/left/right"
+                            else -> return false to "screen_scroll cần direction: up/down/left/right"
                         },
                         distanceRatio = args["distance_ratio"]?.jsonPrimitive?.doubleOrNull?.toFloat() ?: 0.45f,
                         durationMs = optionalLong(args, "duration_ms", 350L, 50L, 5_000L),
                     )
                     else -> {
                         val key = GuiKey.parse(requireString(args, "key"))
-                            ?: return false to "未知按键：支持 back/home/recents/enter/delete/paste/power"
+                            ?: return false to "Phím không rõ: hỗ trợ back/home/recents/enter/delete/paste/power"
                         GuiPrimitive.Key(key)
                     }
                 }
@@ -754,40 +754,40 @@ class ToolExecutor(
                 result.success to result.message
             }
             "virtual_screen_close" -> {
-                val coordinator = virtualDisplayCoordinator ?: return false to "未初始化虚拟屏协调器"
+                val coordinator = virtualDisplayCoordinator ?: return false to "Chưa khởi tạo bộ điều phối màn hình ảo"
                 val session = optionalSession(args)
                 coordinator.closeSession(session)
-                true to "已关闭虚拟屏会话：$session"
+                true to "Đã đóng phiên màn hình ảo: $session"
             }
             "virtual_screen_show" -> {
-                val coordinator = virtualDisplayCoordinator ?: return false to "未初始化虚拟屏协调器"
+                val coordinator = virtualDisplayCoordinator ?: return false to "Chưa khởi tạo bộ điều phối màn hình ảo"
                 val session = optionalSession(args)
                 if (coordinator.getDisplayId(session) == null &&
                     coordinator.ensureVirtualDisplay(session) == null
                 ) {
-                    return false to "虚拟屏创建失败（session=$session）：需要 Shizuku 或 Root 模式"
+                    return false to "Tạo màn hình ảo thất bại (session=$session): cần chế độ Shizuku hoặc Root"
                 }
                 if (coordinator.showOverlay(session)) {
-                    true to "已显示虚拟屏实时悬浮窗（session=$session）：用户可观看画面并直接触摸干预"
+                    true to "Đã hiển thị cửa sổ nổi trực tiếp của màn hình ảo (session=$session): người dùng có thể xem hình ảnh và trực tiếp chạm can thiệp"
                 } else {
-                    false to "悬浮窗权限未授予：请引导用户在系统设置中允许「显示在其他应用上层」后重试"
+                    false to "Chưa cấp quyền cửa sổ nổi: hãy hướng dẫn người dùng cho phép「Hiển thị trên các ứng dụng khác」trong cài đặt hệ thống rồi thử lại"
                 }
             }
             "virtual_screen_hide" -> {
-                val coordinator = virtualDisplayCoordinator ?: return false to "未初始化虚拟屏协调器"
+                val coordinator = virtualDisplayCoordinator ?: return false to "Chưa khởi tạo bộ điều phối màn hình ảo"
                 coordinator.hideOverlay()
-                true to "已隐藏虚拟屏悬浮窗（虚拟屏会话不受影响，仍可继续操作）"
+                true to "Đã ẩn cửa sổ nổi màn hình ảo (phiên màn hình ảo không bị ảnh hưởng, vẫn có thể tiếp tục thao tác)"
             }
             else -> {
                 val packageName = if (action in APP_DATABASE_GUARDED_ACTIONS || action == "app_grant_permission") {
                     requireHostIdentifier(args, "package", PACKAGE_NAME)
                 } else ""
                 if (action in APP_DATABASE_GUARDED_ACTIONS) {
-                    (androidAppManager ?: return false to "未初始化应用管理器").requireInitialized(packageName)
+                    (androidAppManager ?: return false to "Chưa khởi tạo trình quản lý ứng dụng").requireInitialized(packageName)
                 }
                 val info = manager.getPrivilegeInfo()
                 require(info.mode != ExecutionMode.PROOT && info.modeActive) {
-                    "权限不足：冻结、启用、卸载或授权应用前，请先在设置中授权并切换到 Shizuku 或 Root 模式。"
+                    "Không đủ quyền: trước khi đóng băng, bật, gỡ cài hoặc cấp quyền ứng dụng, hãy cấp quyền trong cài đặt và chuyển sang chế độ Shizuku hoặc Root."
                 }
 
                 // Shizuku 生效时优先 Binder 直调：免 shell 转义、异常结构化。
@@ -811,20 +811,20 @@ class ToolExecutor(
                             if (action in APP_DATABASE_GUARDED_ACTIONS) androidAppManager?.synchronize()
                             return true to buildString {
                                 append("mode shizuku-api · exit 0")
-                                append("\n[Android Binder] $action $packageName 成功")
+                                append("\n[Android Binder] $action $packageName thành công")
                                 if (action == "app_grant_permission") {
-                                    append(" 权限=").append(requireHostIdentifier(args, "permission", ANDROID_PERMISSION))
+                                    append(" quyền=").append(requireHostIdentifier(args, "permission", ANDROID_PERMISSION))
                                 }
                             }
                         }
                         is BinderOutcome.Failed ->
-                            return false to "宿主侧拒绝该操作：${binderOutcome.message}（模式=${info.mode.shortLabel}）。请核对包名/权限名后重试。"
+                            return false to "Phía máy chủ từ chối thao tác này: ${binderOutcome.message} (chế độ=${info.mode.shortLabel}). Vui lòng kiểm tra tên gói/tên quyền rồi thử lại."
                         else -> Unit
                     }
                 }
 
                 val command = buildHostCommand(action, args)
-                require(command.length <= MAX_COMMAND_LENGTH) { "命令过长（${command.length} 字符，上限 $MAX_COMMAND_LENGTH）" }
+                require(command.length <= MAX_COMMAND_LENGTH) { "Lệnh quá dài (${command.length} ký tự, giới hạn $MAX_COMMAND_LENGTH)" }
                 val hostOperationId = operationId?.takeIf { it.isNotBlank() } ?: "host-${UUID.randomUUID()}"
                 val cancelHandle = currentCoroutineContext()[Job]?.invokeOnCompletion(onCancelling = true) { cause ->
                     if (cause is CancellationException) manager.cancelShellCommand(hostOperationId)
@@ -856,8 +856,8 @@ class ToolExecutor(
     }
 
     private suspend fun executeCachedApps(args: JsonObject): Pair<Boolean, String> {
-        val repository = androidAppRepository ?: return false to "未初始化应用数据库"
-        if (repository.count() == 0) return false to "应用数据库尚未初始化；请先到设置 → 应用管理完成初始化和同步。"
+        val repository = androidAppRepository ?: return false to "Chưa khởi tạo cơ sở dữ liệu ứng dụng"
+        if (repository.count() == 0) return false to "Cơ sở dữ liệu ứng dụng chưa được khởi tạo; vui lòng vào Cài đặt → Quản lý ứng dụng để hoàn tất khởi tạo và đồng bộ trước."
         val query = args["query"]?.jsonPrimitive?.content?.trim().orEmpty()
         val limit = optionalLong(args, "limit", 50L, 1L, 200L).toInt()
         val includeSystem = args["include_system"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false
@@ -866,14 +866,14 @@ class ToolExecutor(
             .filter { includeSystem || !it.isSystemApp }
             .take(limit)
             .toList()
-        if (apps.isEmpty()) return true to "应用数据库中未找到：${query.ifBlank { "全部应用" }}"
+        if (apps.isEmpty()) return true to "Không tìm thấy trong cơ sở dữ liệu ứng dụng: ${query.ifBlank { "全部应用" }}"
         return true to apps.joinToString("\n") { app ->
             buildString {
                 append(app.label).append(" | ").append(app.packageName)
                 append(" | ").append(if (app.isSystemApp) "系统" else "用户")
-                append(" | ").append(if (app.isEnabled) "启用" else "禁用")
-                if (app.isSuspended) append(" | 冻结")
-                if (app.isNetworkRestricted) append(" | 后台联网受限")
+                append(" | ").append(if (app.isEnabled) "Bật" else "Vô hiệu hóa")
+                if (app.isSuspended) append(" | Đóng băng")
+                if (app.isNetworkRestricted) append(" | Nối mạng nền bị hạn chế")
             }
         }
     }
@@ -931,24 +931,24 @@ class ToolExecutor(
             val tag = args["tag"]?.jsonPrimitive?.content?.trim().orEmpty()
             if (tag.isBlank()) "/system/bin/logcat -d -t $lines"
             else {
-                require(LOGCAT_TAG.matches(tag)) { "logcat tag 格式不合法" }
+                require(LOGCAT_TAG.matches(tag)) { "Định dạng logcat tag không hợp lệ" }
                 "/system/bin/logcat -d -t $lines -s ${shellQuote("$tag:*")}"
             }
         }
         else -> throw IllegalArgumentException(
-            "不支持的 host action：$action；可用 status/exec/settings_get/settings_put/package_list/package_disable/package_enable/package_uninstall_user/app_list/app_freeze/app_unfreeze/app_grant_permission/logcat",
+            "host action không được hỗ trợ: $action; khả dụng status/exec/settings_get/settings_put/package_list/package_disable/package_enable/package_uninstall_user/app_list/app_freeze/app_unfreeze/app_grant_permission/logcat",
         )
     }
 
     private fun requireSettingsNamespace(args: JsonObject): String {
         val namespace = requireString(args, "namespace").trim().lowercase()
-        require(namespace in setOf("system", "secure", "global")) { "namespace 仅支持 system/secure/global" }
+        require(namespace in setOf("system", "secure", "global")) { "namespace chỉ hỗ trợ system/secure/global" }
         return namespace
     }
 
     private fun requireHostIdentifier(args: JsonObject, key: String, pattern: Regex): String {
         val value = requireString(args, key).trim()
-        require(pattern.matches(value)) { "$key 格式不合法" }
+        require(pattern.matches(value)) { "$key định dạng không hợp lệ" }
         return value
     }
 
@@ -958,7 +958,7 @@ class ToolExecutor(
         val query = requireString(args, "query")
         val limit = optionalLong(args, "limit", 8L, 1L, 20L).toInt()
         val matches = messageStore?.searchIndexed(sessionId, query, limit).orEmpty()
-        if (matches.isEmpty()) return true to "未找到匹配历史：$query"
+        if (matches.isEmpty()) return true to "Không tìm thấy lịch sử khớp: $query"
         return true to matches.map { (message, index) ->
             "[index=$index] id=${message.id} time=${message.createdAt} ${historyLabel(message)}"
         }.joinToString("\n")
@@ -989,11 +989,11 @@ class ToolExecutor(
             success = false,
             output = output,
         )
-        if (sessionId.isBlank()) return failure("ask_user 需要会话上下文（sessionId 为空）")
+        if (sessionId.isBlank()) return failure("ask_user cần context phiên (sessionId rỗng)")
         val questions = runCatching { AskUserQuestions.parse(toolCall.args) }.getOrElse { error ->
-            return failure("ask_user 参数校验未通过：${error.message}。请修正参数后重新调用。")
+            return failure("Kiểm tra tham số ask_user không đạt: ${error.message}. Vui lòng sửa tham số rồi gọi lại.")
         }
-        val repository = approvalRepository ?: return failure("审批仓储未初始化，无法向用户提问")
+        val repository = approvalRepository ?: return failure("Kho phê duyệt chưa khởi tạo, không thể đặt câu hỏi cho người dùng")
         val request = approvalPolicyEngine.createRequest(
             sessionId = sessionId,
             toolCall = ToolCall(
@@ -1008,21 +1008,21 @@ class ToolExecutor(
                 required = true,
                 riskLevel = "none",
                 reason = questions.first().question.take(200),
-                summary = "智能体向你提问（${questions.size} 个问题）",
+                summary = "Agent hỏi bạn (${questions.size} câu hỏi)",
             ),
             operationId = operationId,
         )
         // 问题等待的是用户的思考与决策，TTL 比操作类审批（10 分钟）宽裕
         runCatching { repository.create(request.copy(expiresAt = now + QUESTION_TTL_MS)) }
             .getOrElse { throwable ->
-                return failure("问题请求落库失败：${throwable.message ?: throwable::class.simpleName}")
+                return failure("Lưu yêu cầu hỏi vào CSDL thất bại: ${throwable.message ?: throwable::class.simpleName}")
             }
         return ToolResult(
             id = UUID.randomUUID().toString(),
             createdAt = now,
             toolCallId = toolCall.id,
             success = true,
-            output = "已向用户提出 ${questions.size} 个问题，等待回答。",
+            output = "Đã đặt ${questions.size} câu hỏi cho người dùng, đang chờ trả lời.",
             awaitingApproval = true,
             approvalRequestId = request.id,
         )
@@ -1032,10 +1032,10 @@ class ToolExecutor(
         // compress 只会在用户明确要求时由模型调用，属于显式会话操作。
         // 不受「命令输出压缩」或「自动上下文压缩」开关约束：前者仅控制 RTK 命令输出，
         // 后者仅控制 ApiContextAssembler 的自动折叠策略。
-        val manager = compactionManager ?: return false to "未初始化压缩管理器"
+        val manager = compactionManager ?: return false to "Chưa khởi tạo trình quản lý nén"
         val mode = args.stringArg("mode").orEmpty().trim().lowercase()
         val anchor = args.stringArg("anchor").orEmpty()
-        if (sessionId.isBlank()) return false to "当前没有活动会话，无法压缩"
+        if (sessionId.isBlank()) return false to "Hiện không có phiên hoạt động, không thể nén"
 
         val context = manager.project(sessionId)
         val keepFromIndex = when (val resolved = top.wkbin.tianxuan.harness.compaction.CompactionManager.resolveCompressAnchor(
@@ -1073,11 +1073,11 @@ class ToolExecutor(
         )
         val foldedCount = context.messages.size - compacted.messages.size
         return true to buildString {
-            append("已按 ")
+            append("Đã nhấn ")
             append(if (mode == "before") "before" else "after")
-            append(" 模式压缩：折叠 $foldedCount 条消息为结构化摘要")
-            append("（保留后 ${compacted.messages.size} 条）。")
-            append("被折叠的原文仍在会话记录中，需要细节时可用 history_read(message_id) 按需回读。")
+            append(" Chế độ nén: gộp $foldedCount tin nhắn thành tóm tắt có cấu trúc")
+            append("(Sau khi giữ còn ${compacted.messages.size} mục).")
+            append("Nguyên văn bị gộp vẫn còn trong bản ghi hội thoại, khi cần chi tiết có thể dùng history_read(message_id) để đọc lại theo nhu cầu.")
         }
     }
 
@@ -1091,29 +1091,29 @@ class ToolExecutor(
      * - decline：模型显式放弃某能力，确认即回。
      */
     private suspend fun executeCapability(args: JsonObject, workspace: String): Pair<Boolean, String> {
-        val manager = mcpManager ?: return false to "未初始化 MCP 管理器"
+        val manager = mcpManager ?: return false to "Chưa khởi tạo trình quản lý MCP"
         val action = args.stringArg("action").orEmpty().trim().lowercase()
         return when (action) {
             "list" -> {
                 val summaries = manager.enabledServerSummaries()
                 if (summaries.isEmpty()) {
-                    false to "当前没有启用任何 MCP 服务。可在「设置 → MCP 插件与协议生态」启用内置能力或添加自定义服务。"
+                    false to "Hiện chưa bật dịch vụ MCP nào. Có thể bật năng lực tích hợp hoặc thêm dịch vụ tùy chỉnh trong 「Cài đặt → Plugin MCP và hệ sinh thái giao thức」."
                 } else {
                     true to buildString {
-                        appendLine("已启用的 MCP 服务（未连接的服务在首次 call 时自动启动并发现工具）：")
+                        appendLine("Dịch vụ MCP đã bật (dịch vụ chưa kết nối sẽ tự khởi động và phát hiện công cụ ở lần call đầu tiên): ")
                         summaries.forEach { summary ->
                             appendLine(
-                                "- ${summary.id} · ${summary.name} · 已缓存 ${summary.cachedToolCount} 个工具 · " +
-                                    if (summary.connected) "已连接" else "未连接",
+                                "- ${summary.id} · ${summary.name} · đã cache ${summary.cachedToolCount} công cụ · " +
+                                    if (summary.connected) "Đã kết nối" else "Chưa kết nối",
                             )
                         }
-                        append("用 inspect 查看某服务的工具清单与参数，用 call 调用。")
+                        append("Dùng inspect để xem danh sách công cụ và tham số của một dịch vụ, dùng call để gọi.")
                     }
                 }
             }
             "inspect" -> {
                 val serverId = args.stringArg("server")?.trim().orEmpty()
-                if (serverId.isBlank()) return false to "inspect 需要 server 参数（先用 list 查看可用的服务 id）"
+                if (serverId.isBlank()) return false to "inspect cần tham số server (dùng list trước để xem id dịch vụ khả dụng)"
                 // 缓存为空 = 服务尚未连接过：按需发现一次（唯一会拉起进程的 inspect 场景——
                 // 模型无从得知未连接服务的工具名，必须给它完整清单才能构造 call）
                 var tools = manager.cachedToolsOf(serverId)
@@ -1122,30 +1122,30 @@ class ToolExecutor(
                 }
                 if (tools.isEmpty()) {
                     val lastError = manager.getLastError(serverId)
-                    return false to "MCP[$serverId] 工具发现失败或服务不可用${lastError?.let { "：$it" } ?: "（未启用或不存在）"}。" +
-                        "可稍后重试 inspect，或检查该服务的设置与沙箱环境。"
+                    return false to "MCP[$serverId] phát hiện công cụ thất bại hoặc dịch vụ không khả dụng${lastError?.let { "：$it" } ?: "（未启用或不存在）"}。" +
+                        "Có thể thử inspect lại sau, hoặc kiểm tra cài đặt và môi trường sandbox của dịch vụ đó."
                 }
                 val rendered = tools.joinToString("\n\n") { tool ->
                     buildString {
                         appendLine("### ${tool.name}")
                         if (tool.description.isNotBlank()) appendLine(tool.description.trim().take(400))
                         if (tool.parametersJson.isNotBlank() && tool.parametersJson != "{}") {
-                            appendLine("参数：${tool.parametersJson.take(1200)}")
+                            appendLine("Tham số: ${tool.parametersJson.take(1200)}")
                         }
                     }
                 }
                 val body = if (rendered.length > MAX_INSPECT_CHARS) {
-                    rendered.take(MAX_INSPECT_CHARS) + "\n…[清单过长已截断，可直接按已知工具名 call]"
+                    rendered.take(MAX_INSPECT_CHARS) + "\n…[Danh sách quá dài đã cắt, có thể call trực tiếp theo tên công cụ đã biết]"
                 } else {
                     rendered
                 }
-                true to "MCP[$serverId] 工具清单（${tools.size} 个）：\n$body"
+                true to "MCP[$serverId] danh sách công cụ (${tools.size} công cụ):\n$body"
             }
             "call" -> {
                 val serverId = args.stringArg("server")?.trim().orEmpty()
                 val tool = args.stringArg("tool")?.trim().orEmpty()
                 if (serverId.isBlank() || tool.isBlank()) {
-                    return false to "call 需要 server 与 tool 参数（先 inspect 查看可用的工具名与参数）"
+                    return false to "call cần tham số server và tool (inspect trước để xem tên công cụ và tham số khả dụng)"
                 }
                 val callArgs = args["arguments"] as? JsonObject ?: JsonObject(emptyMap())
                 manager.executeCapabilityTool(serverId, tool, callArgs, workspace)
@@ -1153,38 +1153,38 @@ class ToolExecutor(
             "decline" -> {
                 val serverId = args.stringArg("server").orEmpty().trim()
                 val tool = args.stringArg("tool").orEmpty().trim()
-                true to "已记录：不再尝试 ${if (serverId.isNotBlank()) "$serverId." else ""}$tool。请改用其他方式完成任务或向用户说明障碍。"
+                true to "Đã ghi nhận: không thử lại nữa ${if (serverId.isNotBlank()) "$serverId." else ""}$tool. Vui lòng dùng cách khác để hoàn thành nhiệm vụ hoặc nêu rõ trở ngại cho người dùng."
             }
-            else -> false to "action 必须是 list / inspect / call / decline 之一"
+            else -> false to "action phải là một trong list / inspect / call / decline"
         }
     }
 
     private suspend fun executeHistoryRead(args: JsonObject, sessionId: String): Pair<Boolean, String> {
         val messageId = args["message_id"]?.jsonPrimitive?.content?.trim()?.takeIf { it.isNotBlank() }
         val index = args["index"]?.jsonPrimitive?.content?.trim()?.toIntOrNull()
-        require(messageId != null || index != null) { "history.read 需要 message_id 或 index" }
+        require(messageId != null || index != null) { "history.read cần message_id hoặc index" }
         val messages = messageStore?.readWithRelated(sessionId, messageId, index).orEmpty()
-        if (messages.isEmpty()) return false to "未找到指定历史消息"
+        if (messages.isEmpty()) return false to "Không tìm thấy tin nhắn lịch sử chỉ định"
         return true to messages.joinToString("\n\n") { message ->
             "id=${message.id}\n${historyLabel(message, full = true)}"
         }.take(MAX_HISTORY_READ_OUTPUT)
     }
 
     private fun historyLabel(message: HarnessMessage, full: Boolean = false): String = when (message) {
-        is CapabilityEvent -> "能力事件 ${message.name}: ${message.details}"
-        is SkillSuggestion -> "技能建议 ${message.skillName}: ${message.description}"
-        is ModelSwitchEvent -> "切换模型 ${message.fromLabel} → ${message.toLabel}"
-        is UserMessage -> "用户：${message.text.take(if (full) MAX_HISTORY_READ_OUTPUT else 240)}"
-        is AssistantText -> "助手：${message.text.take(if (full) MAX_HISTORY_READ_OUTPUT else 240)}" +
+        is CapabilityEvent -> "Sự kiện năng lực ${message.name}: ${message.details}"
+        is SkillSuggestion -> "Gợi ý skill ${message.skillName}: ${message.description}"
+        is ModelSwitchEvent -> "Chuyển model ${message.fromLabel} → ${message.toLabel}"
+        is UserMessage -> "Người dùng: ${message.text.take(if (full) MAX_HISTORY_READ_OUTPUT else 240)}"
+        is AssistantText -> "Trợ lý: ${message.text.take(if (full) MAX_HISTORY_READ_OUTPUT else 240)}" +
             if (full && !message.reasoning.isNullOrBlank()) "\nreasoning:\n${message.reasoning.take(MAX_HISTORY_READ_OUTPUT)}" else ""
-        is ToolCall -> "工具调用 ${message.rawToolName ?: message.tool}: ${message.args}" +
+        is ToolCall -> "Gọi công cụ ${message.rawToolName ?: message.tool}: ${message.args}" +
             if (full) "\nreasoning:\n${message.reasoning.orEmpty().take(MAX_HISTORY_READ_OUTPUT)}" else ""
-        is ToolResult -> "工具结果：${message.output.take(if (full) MAX_HISTORY_READ_OUTPUT else 240)}"
+        is ToolResult -> "Kết quả công cụ: ${message.output.take(if (full) MAX_HISTORY_READ_OUTPUT else 240)}"
     }
 
     private suspend fun executeBase(args: JsonObject, workspace: String): Pair<Boolean, String> {
         val command = requireString(args, "command")
-        require(command.length <= MAX_COMMAND_LENGTH) { "命令过长（${command.length} 字符，上限 $MAX_COMMAND_LENGTH）" }
+        require(command.length <= MAX_COMMAND_LENGTH) { "Lệnh quá dài (${command.length} ký tự, giới hạn $MAX_COMMAND_LENGTH)" }
         val cwd = pathResolver.resolveWorkingDirectory(args["cwd"]?.jsonPrimitive?.content, workspace)
         val commandOutputCompressionEnabled = settingsDataStore?.let { prefs ->
             runCatching { prefs.commandOutputCompressionEnabled.first() }.getOrDefault(true)
@@ -1230,11 +1230,11 @@ class ToolExecutor(
             if (stdout.isNotEmpty()) append("\n$stdout")
             if (stderr.isNotEmpty()) append("\n$stderr")
             if (!isSuccess && result.exitCode != 0) {
-                append("\n\n【执行失败反思与纠错要求】")
-                append("\n命令返回非零退出码 (${result.exitCode})。请仔细阅读上述错误信息：")
-                append("\n1. 严禁原样重复执行失败命令；")
-                append("\n2. 分析是参数拼写错误、路径不存在、沙箱缺少系统依赖还是语法错误；")
-                append("\n3. 修正命令、使用包管理器安装依赖或改用其他工具后再继续。")
+                append("\n\n【Yêu cầu phản tỉnh và sửa lỗi khi thực thi thất bại】")
+                append("\nLệnh trả về mã thoát khác 0 (${result.exitCode}). Vui lòng đọc kỹ thông tin lỗi phía trên:")
+                append("\n1. Nghiêm cấm lặp lại nguyên văn lệnh đã thất bại;")
+                append("\n2. Phân tích xem là lỗi chính tả tham số, đường dẫn không tồn tại, sandbox thiếu phụ thuộc hệ thống hay lỗi cú pháp;")
+                append("\n3. Sửa lệnh, dùng trình quản lý gói để cài phụ thuộc hoặc đổi công cụ khác rồi tiếp tục.")
             }
         }
         return isSuccess to body
@@ -1247,10 +1247,10 @@ class ToolExecutor(
                 val externalId = requireProcessId(args)
                 val internalId = processId(externalId)
                 val command = requireString(args, "command")
-                require(command.length <= MAX_COMMAND_LENGTH) { "命令过长（${command.length} 字符，上限 $MAX_COMMAND_LENGTH）" }
+                require(command.length <= MAX_COMMAND_LENGTH) { "Lệnh quá dài (${command.length} ký tự, giới hạn $MAX_COMMAND_LENGTH)" }
                 val cwd = pathResolver.resolveWorkingDirectory(args["cwd"]?.jsonPrimitive?.content, workspace)
                 val existing = linuxRuntime.listBackground().firstOrNull { it.id == internalId && it.session.isAlive }
-                require(existing == null) { "后台进程 $externalId 已在运行；请先查询状态或停止它" }
+                require(existing == null) { "Tiến trình nền $externalId đã đang chạy; vui lòng truy vấn trạng thái hoặc dừng nó trước" }
                 val managed = linuxRuntime.startBackground(
                     id = internalId,
                     command = ShellCommand(
@@ -1261,33 +1261,33 @@ class ToolExecutor(
                     type = ProcessType.COMMAND,
                 )
                 true to buildString {
-                    append("后台进程已启动：").append(externalId)
+                    append("Tiến trình nền đã khởi động:").append(externalId)
                     managed.pid?.let { append("\npid: ").append(it) }
-                    append("\n工作目录：").append(cwd)
-                    append("\n请用 process(status/logs/stop) 管理；命令应以前台模式运行，不要再套 nohup 或 &。")
+                    append("\nThư mục làm việc: ").append(cwd)
+                    append("\nHãy dùng process(status/logs/stop) để quản lý; lệnh nên chạy ở chế độ foreground, đừng bọc thêm nohup hay &.")
                 }
             }
             "status" -> {
                 val externalId = requireProcessId(args)
                 val managed = linuxRuntime.listBackground().firstOrNull { it.id == processId(externalId) }
-                    ?: return false to "未找到后台进程：$externalId"
+                    ?: return false to "Không tìm thấy tiến trình nền: $externalId"
                 true to buildString {
-                    append("后台进程：").append(externalId)
-                    append("\n状态：").append(if (managed.session.isAlive) "运行中" else "已退出")
+                    append("Tiến trình nền:").append(externalId)
+                    append("\nTrạng thái:").append(if (managed.session.isAlive) "运行中" else "Đã thoát")
                     managed.pid?.let { append("\npid: ").append(it) }
-                    append("\n已运行：").append((System.currentTimeMillis() - managed.startedAt).coerceAtLeast(0L)).append(" ms")
+                    append("\nĐã chạy:").append((System.currentTimeMillis() - managed.startedAt).coerceAtLeast(0L)).append(" ms")
                 }
             }
             "logs" -> {
                 val externalId = requireProcessId(args)
                 val tailLines = optionalLong(args, "tail_lines", DEFAULT_PROCESS_LOG_LINES, 1L, MAX_PROCESS_LOG_LINES).toInt()
                 val logs = linuxRuntime.getBackgroundLogs(processId(externalId)).takeLast(tailLines)
-                true to if (logs.isEmpty()) "后台进程 $externalId 暂无日志" else logs.joinToString("\n")
+                true to if (logs.isEmpty()) "Tiến trình nền $externalId tạm chưa có log" else logs.joinToString("\n")
             }
             "list" -> {
                 val managed = linuxRuntime.listBackground().filter { it.id.startsWith(AGENT_PROCESS_PREFIX) }
                 true to if (managed.isEmpty()) {
-                    "当前没有 Agent 管理的后台进程"
+                    "Hiện không có tiến trình nền do Agent quản lý"
                 } else {
                     managed.joinToString("\n") {
                         val externalId = it.id.removePrefix(AGENT_PROCESS_PREFIX)
@@ -1298,16 +1298,16 @@ class ToolExecutor(
             "stop" -> {
                 val externalId = requireProcessId(args)
                 val stopped = linuxRuntime.stopBackground(processId(externalId))
-                stopped to if (stopped) "后台进程已停止：$externalId" else "未找到后台进程：$externalId"
+                stopped to if (stopped) "Tiến trình nền đã dừng: $externalId" else "Không tìm thấy tiến trình nền: $externalId"
             }
-            else -> false to "不支持的 process action：$action；可用 start/status/logs/list/stop"
+            else -> false to "process action không được hỗ trợ: $action; khả dụng start/status/logs/list/stop"
         }
     }
 
 
     private fun requireProcessId(args: JsonObject): String {
         val id = requireString(args, "id").trim().lowercase()
-        require(PROCESS_ID.matches(id)) { "进程 id 仅允许小写字母、数字、点、下划线和连字符，长度 1-64" }
+        require(PROCESS_ID.matches(id)) { "id tiến trình chỉ cho phép chữ thường, số, dấu chấm, gạch dưới và gạch nối, độ dài 1-64" }
         return id
     }
 
@@ -1319,7 +1319,7 @@ class ToolExecutor(
         progressReporter: (suspend (String) -> Unit)?,
     ): Pair<Boolean, String> {
         val url = requireString(args, "url")
-        require(url.startsWith("https://", ignoreCase = true)) { "下载地址必须使用 HTTPS" }
+        require(url.startsWith("https://", ignoreCase = true)) { "Địa chỉ tải phải dùng HTTPS" }
         val destinationPath = requireString(args, "destination")
         val destination = activeFileAccess.resolveDownloadDestination(destinationPath)
         val sha256 = args["sha256"]?.jsonPrimitive?.content?.trim()?.takeIf { it.isNotEmpty() }
@@ -1350,7 +1350,7 @@ class ToolExecutor(
                 }
                 DownloadEvent.Verifying -> {
                     verified = true
-                    progressReporter?.invoke("正在校验下载文件 SHA-256…")
+                    progressReporter?.invoke("Đang kiểm tra SHA-256 của tệp tải…")
                 }
                 is DownloadEvent.Completed -> completedFile = event.file
                 DownloadEvent.Started -> Unit
@@ -1360,25 +1360,25 @@ class ToolExecutor(
         val size = file.length()
         if (hasImageExtension(destination) && !isImageMagic(destination)) {
             return false to buildString {
-                append("下载失败：目标应为图片，但内容不是有效的图片格式（JPEG/PNG/GIF/WebP/BMP）。")
-                append("\n来源：").append(url)
-                append("\n大小：").append(size).append(" bytes")
-                append("\n常见原因：图床反爬/防盗链返回了占位图或错误页，或链接已过期。")
-                append("\n建议：更换图源（换站点/换域名）或稍后重试，不要用相同 URL 原样重试。")
+                append("Tải thất bại: mục tiêu phải là ảnh, nhưng nội dung không phải định dạng ảnh hợp lệ (JPEG/PNG/GIF/WebP/BMP).")
+                append("\nNguồn:").append(url)
+                append("\nKích thước:").append(size).append(" bytes")
+                append("\nNguyên nhân thường gặp: dịch vụ lưu ảnh chống crawl/chống hotlink trả về ảnh placeholder hoặc trang lỗi, hoặc liên kết đã hết hạn.")
+                append("\nGợi ý: đổi nguồn ảnh (đổi trang/đổi tên miền) hoặc thử lại sau, đừng thử lại nguyên trạng với cùng URL.")
             }
         }
         val duplicateOf = findDuplicateDownload(destination)
         val body = buildString {
-            append("下载完成：").append(destinationPath)
-            append("\n大小：").append(size).append(" bytes")
+            append("Tải xong:").append(destinationPath)
+            append("\nKích thước:").append(size).append(" bytes")
             latestProgress?.totalBytes?.let { append(" / ").append(it).append(" bytes") }
-            append("\n特性：HTTPS、HTTP Range 断点续传、自动重试（最多 ").append(maxAttempts).append(" 次）")
-            if (verified) append("\nSHA-256：已校验")
-            append("\n说明：当前下载器是单连接续传，不是多线程分片下载。")
+            append("\nĐặc tính: HTTPS, tiếp tục tải HTTP Range, tự động thử lại (tối đa ").append(maxAttempts).append(" lần)")
+            if (verified) append("\nSHA-256: đã kiểm tra")
+            append("\nGhi chú: trình tải hiện tại là tiếp tục tải một kết nối, không phải tải phân mảnh đa luồng.")
             if (duplicateOf != null) {
-                append("\n\n警告：本次下载内容与工作区已有文件 ").append(duplicateOf)
-                append(" 完全相同（SHA-256 一致），疑似图床反爬占位图。请立即更换图源（换站点/换域名），")
-                append("不要继续从同一图床高频下载，也不要重复下载相同的 URL。")
+                append("\n\nCảnh báo: nội dung tải lần này với tệp đã có trong workspace ").append(duplicateOf)
+                append(" hoàn toàn giống nhau (SHA-256 trùng khớp), nghi là ảnh placeholder chống crawl của image host. Hãy đổi nguồn ảnh ngay (đổi site/đổi domain),")
+                append("Đừng tiếp tục tải với tần suất cao từ cùng một image host, cũng đừng tải lặp lại cùng một URL.")
             }
         }
         return true to body
@@ -1443,7 +1443,7 @@ class ToolExecutor(
         val total = event.totalBytes?.let(::formatBytes)
         val percent = event.totalBytes?.takeIf { it > 0L }?.let { event.downloadedBytes * 100 / it }
         return buildString {
-            append("下载中：").append(downloaded)
+            append("Đang tải xuống:").append(downloaded)
             if (total != null) {
                 append(" / ").append(total)
                 percent?.let { append(" (").append(it.coerceIn(0L, 100L)).append("%)") }
@@ -1474,7 +1474,7 @@ class ToolExecutor(
         val normalized = path.trim().trimStart('/')
         // 超过快照上限的文件整体跳过：避免大文件整读入堆内存（OOM 风险），
         // 且 commit 恢复走 write（同样受 1MiB 上限约束），快照了也恢复不回去。
-        // 注意不能返回 null 充当"文件不存在"快照——那会让 rewind 误删该文件。
+        // 注意不能返回 null 充当"Tệp không tồn tại"快照——那会让 rewind 误删该文件。
         val size = activeFileAccess.fileSizeOrNull(normalized)
         if (size != null && size > CheckpointStore.SNAPSHOT_MAX_BYTES) {
             eventBus?.emit(
@@ -1483,7 +1483,7 @@ class ToolExecutor(
                     timestamp = System.currentTimeMillis(),
                     operationId = null,
                     outcome = "checkpoint_incomplete",
-                    detail = "文件 $normalized 超过 ${CheckpointStore.SNAPSHOT_MAX_BYTES} bytes，无法完整捕获轮前快照；本轮 rewind 不能保证恢复该文件。",
+                    detail = "Tệp $normalized vượt quá ${CheckpointStore.SNAPSHOT_MAX_BYTES} bytes, không thể chụp đầy đủ ảnh chụp trước lượt; lượt rewind này không đảm bảo khôi phục được tệp đó.",
                 ),
             )
             return
@@ -1516,8 +1516,8 @@ class ToolExecutor(
         is AppResult.Failure -> {
             val baseError = error.message
             val reflectionHint = when (actionName) {
-                "edit" -> "\n\n【文本替换失败反思与纠错要求】\n未在目标文件中找到唯一匹配的 oldText。请立即调用 read 查看该文件的最新真实内容与行号，获取精确匹配的内容后再发起 edit，严禁盲目猜测或重复相同内容！"
-                "read" -> "\n\n【文件读取失败反思与纠错要求】\n无法读取指定路径文件。请调用 base 执行 ls 或 find 确定文件的真实存在路径，切勿盲目重复错误路径！"
+                "edit" -> "\n\n【Yêu cầu phản tỉnh và sửa lỗi khi thay thế văn bản thất bại】\nKhông tìm thấy oldText khớp duy nhất trong tệp mục tiêu. Hãy lập tức gọi read để xem nội dung thật và số dòng mới nhất của tệp, lấy nội dung khớp chính xác rồi mới phát edit, nghiêm cấm đoán mò hoặc lặp lại nội dung giống hệt!"
+                "read" -> "\n\n【Yêu cầu phản tư và sửa lỗi khi đọc tệp thất bại】\nKhông thể đọc tệp tại đường dẫn chỉ định. Hãy gọi base chạy ls hoặc find để xác định đường dẫn thực sự tồn tại của tệp, tuyệt đối đừng mù quáng lặp lại đường dẫn sai!"
                 else -> ""
             }
             false to (baseError + reflectionHint)
@@ -1540,21 +1540,21 @@ class ToolExecutor(
 
     private fun requireString(args: JsonObject, key: String): String {
         val value = args[key]?.jsonPrimitive?.content
-        require(!value.isNullOrBlank()) { "缺少参数：$key" }
-        require(value.length <= MAX_ARG_LENGTH) { "参数 $key 过长（${value.length} 字符，上限 $MAX_ARG_LENGTH）" }
+        require(!value.isNullOrBlank()) { "Thiếu tham số: $key" }
+        require(value.length <= MAX_ARG_LENGTH) { "Tham số $key quá dài (${value.length} ký tự, giới hạn $MAX_ARG_LENGTH)" }
         return value
     }
 
     private fun requireInt(args: JsonObject, key: String): Int {
         val raw = args[key]?.jsonPrimitive?.content?.trim()
-        require(!raw.isNullOrBlank()) { "缺少参数：$key" }
-        return raw.toIntOrNull() ?: throw IllegalArgumentException("参数 $key 必须是整数")
+        require(!raw.isNullOrBlank()) { "Thiếu tham số: $key" }
+        return raw.toIntOrNull() ?: throw IllegalArgumentException("Tham số $key phải là số nguyên")
     }
 
     private fun optionalLong(args: JsonObject, key: String, default: Long, min: Long, max: Long): Long {
         val raw = args[key]?.jsonPrimitive?.content?.trim() ?: return default
-        val value = raw.toLongOrNull() ?: throw IllegalArgumentException("参数 $key 必须是整数")
-        require(value in min..max) { "参数 $key 必须在 $min-$max 之间" }
+        val value = raw.toLongOrNull() ?: throw IllegalArgumentException("Tham số $key phải là số nguyên")
+        require(value in min..max) { "Tham số $key phải nằm trong khoảng $min-$max" }
         return value
     }
 
@@ -1563,52 +1563,52 @@ class ToolExecutor(
         args["session"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() } ?: VIRTUAL_SCREEN_DEFAULT_SESSION
 
     private suspend fun executeKnowledgeSearch(args: JsonObject): Pair<Boolean, String> {
-        val km = knowledgeManager ?: return false to "知识库未初始化"
+        val km = knowledgeManager ?: return false to "Kho tri thức chưa khởi tạo"
         val query = args["query"]?.jsonPrimitive?.contentOrNull?.trim() ?: ""
-        if (query.isBlank()) return false to "kb_search 需要 query 参数"
+        if (query.isBlank()) return false to "kb_search cần tham số query"
         val topK = (args["top_k"]?.jsonPrimitive?.contentOrNull?.toIntOrNull() ?: 3).coerceIn(1, 10)
         return try {
             val hits = km.search(query, topK)
             if (hits.isEmpty()) {
-                true to "知识库中未检索到与「$query」相关的文档片段。可通过 kb_add 先添加文档。"
+                true to "Không truy xuất được đoạn tài liệu liên quan đến 「$query」 trong kho tri thức. Có thể dùng kb_add để thêm tài liệu trước."
             } else {
-                val text = hits.joinToString("\n\n") { "【${it.docName} · 相似度 ${"%.2f".format(it.score)}】\n${it.text}" }
+                val text = hits.joinToString("\n\n") { "【${it.docName} · Độ tương đồng ${"%.2f".format(it.score)}】\n${it.text}" }
                 true to text
             }
         } catch (e: Exception) {
-            false to "知识库检索失败：${e.message ?: e::class.simpleName}"
+            false to "Truy xuất kho tri thức thất bại: ${e.message ?: e::class.simpleName}"
         }
     }
 
     private suspend fun executeKnowledgeAdd(args: JsonObject): Pair<Boolean, String> {
-        val km = knowledgeManager ?: return false to "知识库未初始化"
+        val km = knowledgeManager ?: return false to "Kho tri thức chưa khởi tạo"
         val name = args["name"]?.jsonPrimitive?.contentOrNull?.trim() ?: ""
         val content = args["content"]?.jsonPrimitive?.contentOrNull ?: ""
-        if (name.isBlank()) return false to "kb_add 需要 name 参数"
-        if (content.isBlank()) return false to "kb_add 需要 content 参数"
+        if (name.isBlank()) return false to "kb_add cần tham số name"
+        if (content.isBlank()) return false to "kb_add cần tham số content"
         return try {
             val docId = km.addDocument(name, content, source = "agent")
             val doc = km.documents.first().firstOrNull { it.id == docId }
-            true to "知识库文档「$name」已写入（ID: $docId，分块 ${doc?.chunkCount ?: 0}，状态 ${doc?.status ?: "embedding"}）。"
+            true to "Tài liệu kho tri thức 「$name」 đã được ghi (ID: $docId, phân khối ${doc?.chunkCount ?: 0}, trạng thái ${doc?.status ?: "embedding"}）。"
         } catch (e: Exception) {
-            false to "知识库写入失败：${e.message ?: e::class.simpleName}"
+            false to "Ghi kho tri thức thất bại: ${e.message ?: e::class.simpleName}"
         }
     }
 
     private suspend fun executeKnowledgeList(): Pair<Boolean, String> {
-        val km = knowledgeManager ?: return false to "知识库未初始化"
+        val km = knowledgeManager ?: return false to "Kho tri thức chưa khởi tạo"
         return try {
             val docs = km.documents.first()
             if (docs.isEmpty()) {
-                true to "知识库为空。可通过 kb_add 添加文档。"
+                true to "Kho tri thức trống. Có thể thêm tài liệu qua kb_add."
             } else {
                 val text = docs.joinToString("\n") { doc ->
-                    "- ${doc.name}（来源 ${doc.source} · 分块 ${doc.chunkCount} · 状态 ${doc.status}）"
+                    "- ${doc.name} (nguồn ${doc.source} · phân khối ${doc.chunkCount} · trạng thái ${doc.status})"
                 }
-                true to "知识库共 ${docs.size} 个文档：\n$text"
+                true to "Kho tri thức có tổng ${docs.size} tài liệu:\n$text"
             }
         } catch (e: Exception) {
-            false to "知识库读取失败：${e.message ?: e::class.simpleName}"
+            false to "Đọc kho tri thức thất bại: ${e.message ?: e::class.simpleName}"
         }
     }
 
@@ -1616,7 +1616,7 @@ class ToolExecutor(
         const val MIN_BASE_TIMEOUT_SECONDS = 1L
         /** virtual_screen_* 的默认会话 ID。 */
         const val VIRTUAL_SCREEN_DEFAULT_SESSION = "default"
-        // 前台单命令上限 15min：防模型把 timeout_seconds 拉到 1h 导致界面长时间"像卡死"；
+        // 前台单命令上限 15min：防模型把 timeout_seconds 拉到 1h 导致界面长时间"Như treo máy"；
         // 超过 15min 的全量编译/长构建应走后台 process（其 Long.MAX_VALUE 有 stop 管理，属合理设计）。
         const val MAX_BASE_TIMEOUT_SECONDS = 900L
         /** ask_user 问题请求的有效期：等待用户思考与决策，比操作类审批的 10 分钟宽裕。 */
@@ -1674,7 +1674,7 @@ internal fun capHostOutput(output: String): String =
         output
     } else {
         output.take(ToolExecutor.MAX_HOST_OUTPUT_CHARS) +
-            "\n[host 输出超限已截断：原文 ${output.length} 字符，仅保留前 ${ToolExecutor.MAX_HOST_OUTPUT_CHARS}。" +
-            "需要完整内容请缩小范围重取：logcat 用更精确的 tag/keyword 与更少 tail_lines，" +
-            "dumpsys 指定子服务（如 dumpsys activity），避免全量输出]"
+            "\n[Đầu ra host vượt giới hạn đã bị cắt: nguyên văn ${output.length} ký tự, chỉ giữ lại ${ToolExecutor.MAX_HOST_OUTPUT_CHARS} đầu tiên." +
+            "Nếu cần nội dung đầy đủ hãy thu hẹp phạm vi và lấy lại: logcat dùng tag/keyword chính xác hơn và tail_lines ít hơn, " +
+            "dumpsys chỉ định dịch vụ con (như dumpsys activity), tránh xuất toàn bộ]"
     }

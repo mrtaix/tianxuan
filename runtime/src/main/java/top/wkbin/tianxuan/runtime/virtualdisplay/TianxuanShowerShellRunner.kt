@@ -24,7 +24,7 @@ internal class TianxuanShowerShellRunner(
     override suspend fun run(command: String, identity: ShellIdentity): ShellCommandResult {
         val result = privilegeManager.executeShellCommand(command)
         if (!result.success) {
-            logger.w("Shower shell 命令执行失败 (identity=$identity, exit=${result.exitCode}): " +
+            logger.w("Shower shell thực thi lệnh thất bại (identity=$identity, exit=${result.exitCode}): " +
                 result.stderr.take(LOG_PREVIEW_LIMIT))
         }
         return ShellCommandResult(

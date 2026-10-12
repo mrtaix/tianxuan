@@ -46,7 +46,7 @@ class DualAgentCoordinator(
         workspace: String,
     ): Pair<Boolean, String> {
         val prompt = args["prompt"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
-        require(prompt.isNotBlank()) { "缺少参数：prompt" }
+        require(prompt.isNotBlank()) { "Thiếu tham số: prompt" }
         val session = sessionRepository.findById(sessionId)
         val inheritedProfileId = session?.modelId
         val inheritedVariant = session?.modelVariant
@@ -67,13 +67,13 @@ class DualAgentCoordinator(
             is DualAgentOutcome.Success -> true to buildString {
                 appendLine(outcome.finalReport)
                 appendLine()
-                append("双智能体执行完成：${outcome.plan.count { it.status == StepStatus.COMPLETED }}/${outcome.plan.size} 步，")
-                append("${outcome.totalToolCalls} 次工具调用，${outcome.totalRounds} 轮规划。")
+                append("Song Agent thực thi xong: ${outcome.plan.count { it.status == StepStatus.COMPLETED }}/${outcome.plan.size} bước,")
+                append("${outcome.totalToolCalls} lần gọi công cụ, ${outcome.totalRounds} vòng lập kế hoạch.")
             }
             is DualAgentOutcome.Failed -> false to buildString {
                 appendLine(outcome.message)
                 if (outcome.plan.isNotEmpty()) {
-                    append("当前进度：${outcome.plan.count { it.status == StepStatus.COMPLETED }}/${outcome.plan.size} 步完成。")
+                    append("Tiến độ hiện tại: ${outcome.plan.count { it.status == StepStatus.COMPLETED }}/${outcome.plan.size} bước hoàn thành.")
                 }
             }
         }
@@ -110,7 +110,7 @@ class DualAgentCoordinator(
 
         while (roundCount < maxSteps) {
             roundCount++
-            onStatusUpdate("规划者 (Planner) 正在深度推演…（轮次 $roundCount/$maxSteps）")
+            onStatusUpdate("Planner đang suy luận sâu… (lượt $roundCount/$maxSteps)")
 
             // 1. 调用 Planner 生成决策
             val plannerResult = runCatching {
@@ -119,7 +119,7 @@ class DualAgentCoordinator(
                 // 协程取消（用户点停止）必须传播，不能被当成模型故障回灌主循环。
                 if (throwable is kotlinx.coroutines.CancellationException) throw throwable
                 return@withContext DualAgentOutcome.Failed(
-                    message = "Planner 模型调用失败：${throwable.message}",
+                    message = "Gọi model Planner thất bại: ${throwable.message}",
                     plan = steps,
                     failedStep = steps.lastOrNull { it.status == StepStatus.RUNNING },
                 )
@@ -138,14 +138,14 @@ class DualAgentCoordinator(
                         plannerMessages.add(
                             ApiMessage(
                                 role = "user",
-                                content = "计划仍有未完成工序：${incomplete.joinToString { "${it.id}(${it.status})" }}。" +
-                                    "不得提前 FINISH；请继续执行就绪工序或使用 REPLAN 修复依赖。",
+                                content = "Kế hoạch vẫn còn công đoạn chưa hoàn thành: ${incomplete.joinToString { "${it.id}(${it.status})" }}。" +
+                                    "Không được FINISH sớm; vui lòng tiếp tục thực thi công đoạn đã sẵn sàng hoặc dùng REPLAN để sửa phụ thuộc.",
                             ),
                         )
                         continue
                     }
                     onPlanUpdated(steps)
-                    onStatusUpdate("所有步骤已完成，任务已交付！")
+                    onStatusUpdate("Tất cả các bước đã hoàn thành, nhiệm vụ đã bàn giao!")
                     return@withContext DualAgentOutcome.Success(
                         finalReport = decision.finalReport.ifBlank { plannerText },
                         plan = steps,
@@ -156,7 +156,7 @@ class DualAgentCoordinator(
                 }
 
                 is PlannerDecision.Replan -> {
-                    onStatusUpdate("Planner 调整了执行方案：${decision.reason}")
+                    onStatusUpdate("Planner đã điều chỉnh phương án thực thi: ${decision.reason}")
                     // REPLAN 按 id 保留旧步骤状态：解析器生成的步骤恒为 PENDING，直接清空重置会让
                     // 已完成步骤被重复执行（写文件等副作用重复发生）。
                     // COMPLETED 必须保留；FAILED 不保留——配合 EXECUTE_STEP 的 FAILED 可重试语义，
@@ -189,7 +189,7 @@ class DualAgentCoordinator(
                 }
 
                 is PlannerDecision.InitializePlan -> {
-                    onStatusUpdate("Planner 已制订全局步骤拆解（共 ${decision.plan.size} 项工序）")
+                    onStatusUpdate("Planner đã lập xong phân rã bước toàn cục (tổng cộng ${decision.plan.size} công đoạn)")
                     steps.clear()
                     steps.addAll(decision.plan)
                     onPlanUpdated(steps)
@@ -241,7 +241,7 @@ class DualAgentCoordinator(
         }
 
         DualAgentOutcome.Failed(
-            message = "已达到最大规划步数上限（$maxSteps 步），未能全部完成",
+            message = "Đã đạt giới hạn số bước lập kế hoạch tối đa ($maxSteps bước), chưa thể hoàn thành toàn bộ",
             plan = steps,
             failedStep = steps.lastOrNull { it.status != StepStatus.COMPLETED },
         )
@@ -312,7 +312,7 @@ class DualAgentCoordinator(
             for (index in steps.indices) {
                 val step = steps[index]
                 if (step.status == StepStatus.PENDING && step.dependencies.any { it in failedIds }) {
-                    val cascaded = step.copy(status = StepStatus.FAILED, resultSummary = "前置工序失败，已级联标记为失败")
+                    val cascaded = step.copy(status = StepStatus.FAILED, resultSummary = "Công đoạn tiền đề thất bại, đã đánh dấu dây chuyền thành thất bại")
                     steps[index] = cascaded
                     failedIds.add(step.id)
                     emitProgress(sessionId, cascaded, StepStatus.FAILED)
@@ -333,16 +333,16 @@ class DualAgentCoordinator(
         executorModel: ModelConfig,
         onStatusUpdate: (String) -> Unit,
     ): Pair<PlanStep, StepExecutionResult> {
-        onStatusUpdate("执行者 (Executor) 正在执行：${step.title}")
+        onStatusUpdate("Executor đang thực thi: ${step.title}")
         emitProgress(sessionId, step, StepStatus.RUNNING)
 
         val stepLaneName = "dual:$executionId:executor:${step.id}"
         val executorPrompt = buildString {
-            appendLine("请严格执行以下单步工序并汇报成果：")
-            appendLine("【步骤标题】: ${step.title}")
-            appendLine("【详细指令】: ${step.instruction}")
+            appendLine("Vui lòng thực thi nghiêm ngặt quy trình đơn bước sau và báo cáo kết quả：")
+            appendLine("【Tiêu đề bước】: ${step.title}")
+            appendLine("【Chỉ thị chi tiết】: ${step.instruction}")
             if (step.expectedOutcome.isNotBlank()) {
-                appendLine("【预期成果】: ${step.expectedOutcome}")
+                appendLine("【Thành quả dự kiến】: ${step.expectedOutcome}")
             }
         }
 
@@ -369,10 +369,10 @@ class DualAgentCoordinator(
         val duration = System.currentTimeMillis() - startedAt
         val isSuccess = stepResult?.success == true
         val summary = when {
-            stepResult == null -> "执行超时（已超出 ${STEP_TIMEOUT_MS / 1000} 秒）或遭遇系统异常中断"
+            stepResult == null -> "Thực thi quá thời gian (đã vượt ${STEP_TIMEOUT_MS / 1000} giây) hoặc gặp gián đoạn bất thường của hệ thống"
             stepResult.summary.isNotBlank() -> stepResult.summary
-            isSuccess -> "执行完成"
-            else -> "执行中断或遇到异常"
+            isSuccess -> "Thực thi hoàn tất"
+            else -> "Thực thi gián đoạn hoặc gặp lỗi"
         }
 
         val newStatus = if (isSuccess) StepStatus.COMPLETED else StepStatus.FAILED
@@ -400,24 +400,24 @@ class DualAgentCoordinator(
     ) {
         val feedbackText = buildString {
             if (batchResults.isEmpty()) {
-                appendLine("【提示】当前计划中暂无满足前置依赖的可执行工序。")
-                appendLine("请审视当前步骤状态并使用 REPLAN 或 FINISH 调整：")
+                appendLine("【Gợi ý】Hiện kế hoạch chưa có công đoạn khả thi nào thỏa mãn phụ thuộc tiền đề.")
+                appendLine("Hãy xem lại trạng thái bước hiện tại và dùng REPLAN hoặc FINISH để điều chỉnh:")
             } else {
-                appendLine("【本轮并发工序执行汇报（共 ${batchResults.size} 项）】")
+                appendLine("[Báo cáo thực thi công đoạn song song lượt này (tổng ${batchResults.size} mục)]")
                 for ((step, res) in batchResults) {
-                    appendLine("- 工序 ${step.id}（${step.title}）：${if (res.success) "✅ 成功" else "❌ 失败"}")
-                    appendLine("  成果摘要: ${res.summary}")
+                    appendLine("- Công đoạn ${step.id} (${step.title}): ${if (res.success) "✅ 成功" else "❌ 失败"}")
+                    appendLine("  Tóm tắt thành quả: ${res.summary}")
                 }
             }
 
             val allCompleted = allSteps.isNotEmpty() && allSteps.all { it.status == StepStatus.COMPLETED }
             if (allCompleted) {
-                appendLine("所有计划工序已全部完成！请评估成果并交付最终报告（FINISH）。")
+                appendLine("Tất cả công đoạn kế hoạch đã hoàn thành! Hãy đánh giá thành quả và giao báo cáo cuối cùng (FINISH).")
             } else {
                 val remaining = allSteps.count { it.status == StepStatus.PENDING }
                 val failed = allSteps.count { it.status == StepStatus.FAILED }
-                appendLine("当前进度：剩余待执行 $remaining 项，失败 $failed 项。")
-                appendLine("请决定下一步：继续下发 EXECUTE_STEP、调整方案 REPLAN 或提前交付 FINISH。")
+                appendLine("Tiến độ hiện tại: còn $remaining mục chờ thực thi, $failed mục thất bại.")
+                appendLine("Hãy quyết định bước tiếp theo: tiếp tục gửi EXECUTE_STEP, điều chỉnh phương án REPLAN hoặc giao sớm FINISH.")
             }
         }
         plannerMessages.add(ApiMessage(role = "user", content = feedbackText))

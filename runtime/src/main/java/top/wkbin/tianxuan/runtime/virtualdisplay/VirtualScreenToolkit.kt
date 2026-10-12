@@ -38,16 +38,16 @@ class VirtualScreenToolkit(
             if (coordinator.getDisplayId(sessionId) == null) {
                 return@withContext GuiExecResult(
                     false,
-                    "虚拟屏未创建（session=$sessionId）：请先调用 virtual_screen_ensure",
+                    "Màn hình ảo chưa được tạo (session=$sessionId): hãy gọi virtual_screen_ensure trước",
                     backend,
                 )
             }
             when (action) {
                 is GuiPrimitive.Tap -> {
                     if (controller.tap(action.x, action.y)) {
-                        GuiExecResult(true, "已在虚拟屏点击 (${action.x},${action.y})", backend)
+                        GuiExecResult(true, "Đã bấm trên màn hình ảo (${action.x},${action.y})", backend)
                     } else {
-                        GuiExecResult(false, "虚拟屏点击失败 (${action.x},${action.y})", backend)
+                        GuiExecResult(false, "Bấm màn hình ảo thất bại (${action.x},${action.y})", backend)
                     }
                 }
 
@@ -56,9 +56,9 @@ class VirtualScreenToolkit(
                     delay(action.gapMs.coerceIn(40L, 400L))
                     val second = controller.tap(action.x, action.y)
                     if (first && second) {
-                        GuiExecResult(true, "已在虚拟屏双击 (${action.x},${action.y})", backend)
+                        GuiExecResult(true, "Đã nhấp đúp trên màn hình ảo (${action.x},${action.y})", backend)
                     } else {
-                        GuiExecResult(false, "虚拟屏双击失败 (${action.x},${action.y})", backend)
+                        GuiExecResult(false, "Nhấp đúp màn hình ảo thất bại (${action.x},${action.y})", backend)
                     }
                 }
 
@@ -68,9 +68,9 @@ class VirtualScreenToolkit(
                     // 若走 touchDown→delay→touchUp，协程在 delay 间被取消会让 touchUp
                     // 不再执行，虚拟屏上残留一个永不抬起的触点。
                     if (controller.swipe(action.x, action.y, action.x, action.y, hold)) {
-                        GuiExecResult(true, "已在虚拟屏长按 (${action.x},${action.y}) ${hold}ms", backend)
+                        GuiExecResult(true, "Đã nhấn giữ trên màn hình ảo (${action.x},${action.y}) ${hold}ms", backend)
                     } else {
-                        GuiExecResult(false, "虚拟屏长按失败 (${action.x},${action.y})", backend)
+                        GuiExecResult(false, "Nhấn giữ màn hình ảo thất bại (${action.x},${action.y})", backend)
                     }
                 }
 
@@ -79,18 +79,18 @@ class VirtualScreenToolkit(
                     if (controller.swipe(action.x1, action.y1, action.x2, action.y2, dur)) {
                         GuiExecResult(
                             true,
-                            "已在虚拟屏滑动 (${action.x1},${action.y1})→(${action.x2},${action.y2})",
+                            "Đã vuốt trên màn hình ảo (${action.x1},${action.y1})→(${action.x2},${action.y2})",
                             backend,
                         )
                     } else {
-                        GuiExecResult(false, "虚拟屏滑动失败", backend)
+                        GuiExecResult(false, "Vuốt màn hình ảo thất bại", backend)
                     }
                 }
 
                 is GuiPrimitive.Scroll -> {
                     val size = coordinator.getVideoSize(sessionId)
                     if (size == null) {
-                        return@withContext GuiExecResult(false, "虚拟屏尺寸未知（视频流未就绪）", backend)
+                        return@withContext GuiExecResult(false, "Kích thước màn hình ảo chưa biết (luồng video chưa sẵn sàng)", backend)
                     }
                     val (width, height) = size
                     val mapped = action.direction.toSwipe(
@@ -104,11 +104,11 @@ class VirtualScreenToolkit(
                     if (controller.swipe(mapped.x1, mapped.y1, mapped.x2, mapped.y2, mapped.durationMs)) {
                         GuiExecResult(
                             true,
-                            "已在虚拟屏滚动 ${action.direction.name.lowercase()}",
+                            "Đã cuộn trên màn hình ảo ${action.direction.name.lowercase()}",
                             backend,
                         )
                     } else {
-                        GuiExecResult(false, "虚拟屏滚动失败", backend)
+                        GuiExecResult(false, "Cuộn màn hình ảo thất bại", backend)
                     }
                 }
 
@@ -116,11 +116,11 @@ class VirtualScreenToolkit(
                     if (controller.key(action.key.keyCode)) {
                         GuiExecResult(
                             true,
-                            "已在虚拟屏触发按键：${action.key.name.lowercase()} (${action.key.keyCode})",
+                            "Đã kích hoạt phím trên màn hình ảo: ${action.key.name.lowercase()} (${action.key.keyCode})",
                             backend,
                         )
                     } else {
-                        GuiExecResult(false, "虚拟屏按键失败：${action.key.name.lowercase()}", backend)
+                        GuiExecResult(false, "Nhấn phím màn hình ảo thất bại: ${action.key.name.lowercase()}", backend)
                     }
                 }
 
@@ -139,17 +139,17 @@ class VirtualScreenToolkit(
         backend: GuiBackendId,
     ): GuiExecResult {
         if (text.isEmpty()) {
-            return GuiExecResult(false, "粘贴文本为空", backend)
+            return GuiExecResult(false, "Văn bản dán rỗng", backend)
         }
         if (!writeClipboard(text)) {
-            return GuiExecResult(false, "写入剪贴板失败，虚拟屏粘贴中止", backend)
+            return GuiExecResult(false, "Ghi vào clipboard thất bại, dán màn hình ảo bị hủy", backend)
         }
         delay(PASTE_SETTLE_MS)
         val controller = coordinator.controller(sessionId)
         return if (controller.key(GuiKey.PASTE.keyCode)) {
-            GuiExecResult(true, "已在虚拟屏通过剪贴板粘贴（${text.length} 字）：$text", backend)
+            GuiExecResult(true, "Đã dán qua clipboard trên màn hình ảo (${text.length} ký tự): $text", backend)
         } else {
-            GuiExecResult(false, "KEYCODE_PASTE 注入失败：目标应用可能不响应粘贴键", backend)
+            GuiExecResult(false, "Chèn KEYCODE_PASTE thất bại: ứng dụng mục tiêu có thể không phản hồi phím dán", backend)
         }
     }
 

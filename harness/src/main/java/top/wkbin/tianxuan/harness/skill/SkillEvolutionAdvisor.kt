@@ -151,18 +151,18 @@ class SkillEvolutionAdvisor(
             val sb = StringBuilder()
             messages.drop(lastUserIndex).forEach { msg ->
                 when (msg) {
-                    is UserMessage -> sb.append("[用户请求]\n").append(msg.text.take(2000)).append('\n')
-                    is ToolCall -> sb.append("[调用工具] ")
+                    is UserMessage -> sb.append("[Yêu cầu người dùng]\n").append(msg.text.take(2000)).append('\n')
+                    is ToolCall -> sb.append("[Gọi công cụ] ")
                         .append(msg.tool.name)
                         .append(' ')
                         .append(msg.args.toString().take(200))
                         .append('\n')
-                    is ToolResult -> sb.append("[工具结果] success=")
+                    is ToolResult -> sb.append("[Kết quả công cụ] success=")
                         .append(msg.success)
-                        .append(" 输出摘录：")
+                        .append(" Trích đầu ra:")
                         .append(msg.output.take(300).replace('\n', ' '))
                         .append('\n')
-                    is AssistantText -> sb.append("[助手结论]\n").append(msg.text.take(1500)).append('\n')
+                    is AssistantText -> sb.append("[Kết luận trợ lý]\n").append(msg.text.take(1500)).append('\n')
                     else -> {}
                 }
             }
@@ -170,18 +170,18 @@ class SkillEvolutionAdvisor(
         }
 
         internal fun buildAdvisorUserPrompt(digest: String, skills: List<AgentSkill>): String = buildString {
-            append("## 刚结束的会话内容\n")
+            append("## Nội dung phiên vừa kết thúc\n")
             append(digest)
-            append("\n\n## 现有启用技能\n")
+            append("\n\n## Kỹ năng đang bật hiện có\n")
             if (skills.isEmpty()) {
-                append("（无）\n")
+                append("(Không có)\n")
             } else {
                 skills.forEach { skill ->
                     append("- ").append(skill.name).append("（id=").append(skill.id).append("）：")
                         .append(skill.description.take(80)).append('\n')
                 }
             }
-            append("\n请按系统提示的规则只输出一个 JSON 对象。")
+            append("\nHãy chỉ xuất một đối tượng JSON theo quy tắc của system prompt.")
         }
 
         internal val ADVISOR_SYSTEM_PROMPT = """
@@ -193,7 +193,7 @@ class SkillEvolutionAdvisor(
             - none：一次性任务、简单问答、无沉淀价值（这是默认答案，宁缺毋滥）。
 
             输出要求：只输出一个 JSON 对象，不要任何解释或代码围栏：
-            {"action":"none|create|update","name":"技能名（≤20字）","description":"一句话适用场景（≤80字）","trigger":"触发命令（可选，≤20字符，仅小写字母数字连字符）","system_prompt":"完整技能指导规则（第二人称中文，包含目标/执行步骤/明确使用的工具/输出格式/约束，create 时 300-800 字）","target_skill_id":"仅 update 时填写","reason":"给出该建议的一句话依据"}
+            {"action":"none|create|update","name":"Tên kỹ năng (≤20 ký tự)","description":"Tình huống áp dụng một câu (≤80 chữ)","trigger":"Lệnh kích hoạt (tùy chọn, ≤20 ký tự, chỉ chữ thường số và dấu nối)","system_prompt":"Quy tắc chỉ dẫn skill đầy đủ (ngôi thứ hai tiếng Trung, gồm mục tiêu/các bước thực thi/công cụ dùng rõ ràng/định dạng đầu ra/ràng buộc, 300-800 chữ khi create)","target_skill_id":"Chỉ điền khi update","reason":"Đưa ra căn cứ một câu cho đề xuất này"}
         """.trimIndent()
 
         private val json = Json { ignoreUnknownKeys = true; isLenient = true }
@@ -244,7 +244,7 @@ class SkillEvolutionAdvisor(
                                 proposal.copy(action = "create", target_skill_id = null)
                             }
                         }
-                        target.isBuiltin -> proposal.copy(action = "create", target_skill_id = null, name = "${proposal.name}-进化")
+                        target.isBuiltin -> proposal.copy(action = "create", target_skill_id = null, name = "${proposal.name}-tiến hóa")
                         else -> proposal
                     }
                 }

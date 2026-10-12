@@ -49,18 +49,18 @@ class ApprovalResumePolicy(
     ): String? {
         if (request.expiresAt <= nowMs) {
             val ttlMinutes = ApprovalPolicyEngine.APPROVAL_TTL_MS / 60_000L
-            return "该审批已过期（等待超过 $ttlMinutes 分钟）"
+            return "Phê duyệt này đã hết hạn (chờ quá $ttlMinutes phút)"
         }
         if (request.argsHash.isNotBlank() && request.argsHash != ApprovalPolicyEngine.argsHash(request.argumentsJson)) {
-            return "审批记录的参数摘要校验不一致，审批可能已损坏"
+            return "Kiểm tra tổng kết tham số của bản ghi phê duyệt không khớp, phê duyệt có thể đã hỏng"
         }
         val currentWorkspace = sessionDao.findById(request.sessionId)?.workspace.orEmpty()
         if (currentWorkspace != request.workspace) {
-            return "会话工作区已变更（审批时：${request.workspace.ifBlank { "无" }}，当前：${currentWorkspace.ifBlank { "无" }}）"
+            return "Vùng làm việc hội thoại đã thay đổi (khi phê duyệt: ${request.workspace.ifBlank { "无" }}, hiện tại: ${currentWorkspace.ifBlank { "无" }}）"
         }
         val boundOperationId = request.operationId
         if (boundOperationId != null && !operationCoordinator.operationExists(boundOperationId)) {
-            return "该审批所属的运行已结束或被新运行接管"
+            return "Lần chạy sở hữu phê duyệt này đã kết thúc hoặc bị lần chạy mới tiếp quản"
         }
         return null
     }
@@ -73,8 +73,8 @@ class ApprovalResumePolicy(
     }
 
     fun invalidationResultMessage(reason: String): String =
-        "$reason。该工具调用未执行；如仍需要，请重新发起。"
+        "$reason. Lời gọi công cụ này chưa thực thi; nếu vẫn cần, hãy khởi tạo lại."
 
     fun rejectionResultMessage(): String =
-        "用户拒绝了该工具操作。请尊重用户决定，并选择不需要该权限的替代方案。"
+        "Người dùng đã từ chối thao tác công cụ này. Vui lòng tôn trọng quyết định của người dùng và chọn phương án thay thế không cần quyền đó."
 }

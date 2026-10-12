@@ -78,13 +78,13 @@ class SubagentOrchestrator(
     ): Pair<Boolean, String> = withContext(Dispatchers.IO) {
         val specs = SubagentArgsParser.parse(args)
         if (specs.isEmpty()) {
-            return@withContext false to "未解析到有效的 subagents 任务列表，请检查参数"
+            return@withContext false to "Không phân giải được danh sách nhiệm vụ subagents hợp lệ, vui lòng kiểm tra tham số"
         }
         val background = args["background"]?.jsonPrimitive?.booleanOrNull == true
         if (background) {
             return@withContext false to
-                "background=true 暂不可用：移动端后台子任务尚未接入持久批次恢复与前台服务保活。" +
-                "为避免应用退后台后任务静默丢失，本次没有启动任何子任务；请移除 background 并以前台模式重试。"
+                "background=true tạm thời không khả dụng: nhiệm vụ con nền trên di động chưa tích hợp khôi phục lô bền vững và giữ sống dịch vụ tiền cảnh." +
+                "Để tránh nhiệm vụ bị mất âm thầm sau khi ứng dụng vào nền, lần này không khởi động nhiệm vụ con nào; hãy bỏ background và thử lại ở chế độ tiền cảnh."
         }
         runBatch(specs, parentSessionId)
     }
@@ -100,11 +100,11 @@ class SubagentOrchestrator(
         val modelVariant = parentSession?.modelVariant
         val profileIndex = subagentRepository.enabledIndex()
         if (profileIndex.isEmpty()) {
-            return@supervisorScope false to "当前没有启用的子智能体角色，请先在 Agent 设置中添加或启用角色"
+            return@supervisorScope false to "Hiện chưa có vai trò Agent con nào được bật, vui lòng thêm hoặc bật vai trò trong Cài đặt Agent trước"
         }
         val parentLeaf = laneManager.get(parentSessionId, "main")?.leafId
 
-        // 写租约协调：把任务按 write_paths 冲突切成若干"写不冲突"的波。
+        // 写租约协调：把任务按 write_paths 冲突切成若干"Ghi không xung đột"的波。
         // 同一波内的写路径互不相交 → 可并行（受 globalParallelism 约束）；跨波顺序执行。
         // 未声明 writePaths 的任务为只读任务，可彼此并行；["*"] 才表示整工作区独占写租约。
         val results = mutableListOf<SubagentExecutionOutcome>()
@@ -155,7 +155,7 @@ class SubagentOrchestrator(
         )
         // 失败原因必须与上面的批次日志同等、无门控地落盘：子智能体的终止原因原先只经
         // AgentEventLogger（受 agentLoggingEnabled 门控，默认关闭），批次行里也只有一句
-        // termination=FAILED，于是"派发的子智能体总是全部失败"既拿不到具体异常，也无法
+        // termination=FAILED，于是"Agent con được phái luôn thất bại toàn bộ"既拿不到具体异常，也无法
         // 区分不可重试 4xx / 限流耗尽 / 上下文超限 / 超时 / 轮数耗尽。摘要是唯一的线索来源。
         orderedResults.filterNot { it.isSuccess }.forEach { outcome ->
             logger.logAgent(
@@ -166,7 +166,7 @@ class SubagentOrchestrator(
                     outcome.summary.lineSequence().firstOrNull()?.take(300).orEmpty(),
             )
         }
-        // 整批工具结果只有在每个子任务都确认完成时才算成功。用 anySuccess 会让"1 成功 5 失败"
+        // 整批工具结果只有在每个子任务都确认完成时才算成功。用 anySuccess 会让"1 thành công 5 thất bại"
         // 在父会话里显示为成功工具调用，模型据此继续往下走，正文里的部分失败说明形同虚设。
         val allSucceeded = orderedResults.all { it.isSuccess }
         allSucceeded to summaryMarkdown
@@ -190,8 +190,8 @@ class SubagentOrchestrator(
             spec = spec,
             subSessionId = spec.taskId.orEmpty(),
             isSuccess = false,
-            summary = "子任务执行异常（${failure::class.simpleName ?: "Throwable"}）：" +
-                (failure.message ?: "无错误消息"),
+            summary = "Nhiệm vụ con thực thi bất thường (${failure::class.simpleName ?: "Throwable"}）：" +
+                (failure.message ?: "Không có thông báo lỗi"),
             toolCallCount = 0,
             termination = SubagentTermination.FAILED,
         )
@@ -218,8 +218,8 @@ class SubagentOrchestrator(
                     spec = spec,
                     subSessionId = resumeLaneName,
                     isSuccess = false,
-                    summary = "task_id=$resumeLaneName 不存在或不是本会话的子任务 Lane，无法续跑。" +
-                        "请从最近一次 invoke_subagent 汇总中原样复制 task_id；Lane 已删除时改为派发全新任务。",
+                    summary = "task_id=$resumeLaneName không tồn tại hoặc không phải Lane nhiệm vụ con của phiên này, không thể chạy tiếp." +
+                        "Vui lòng sao chép nguyên văn task_id từ bản tổng hợp invoke_subagent gần nhất; khi Lane đã bị xóa thì chuyển sang phái nhiệm vụ hoàn toàn mới.",
                     toolCallCount = 0,
                     termination = SubagentTermination.INCOMPLETE,
                 )
@@ -232,7 +232,7 @@ class SubagentOrchestrator(
                     spec = spec,
                     subSessionId = resumeLaneName,
                     isSuccess = false,
-                    summary = "续跑 Lane 的角色已禁用或删除，无法续跑；请改为派发全新任务。",
+                    summary = "Vai trò chạy tiếp Lane đã bị vô hiệu hóa hoặc xóa, không thể chạy tiếp; vui lòng chuyển sang phái nhiệm vụ hoàn toàn mới.",
                     toolCallCount = 0,
                     termination = SubagentTermination.FAILED,
                 )
@@ -265,7 +265,7 @@ class SubagentOrchestrator(
             logger.logAgent(
                 parentSessionId,
                 "SubagentWriteScope",
-                "task=${spec.taskName} 任务文字要求落盘但未声明 write_paths，本 Lane 按只读执行",
+                "task=${spec.taskName} văn bản nhiệm vụ yêu cầu ghi đĩa nhưng chưa khai báo write_paths, Lane này thực thi theo chỉ đọc",
             )
         }
         val targetModel = runCatching {
@@ -279,7 +279,7 @@ class SubagentOrchestrator(
                 spec = spec,
                 subSessionId = resumeLaneName ?: "",
                 isSuccess = false,
-                summary = failure.message ?: "无法解析子智能体模型",
+                summary = failure.message ?: "Không thể phân giải model Agent con",
                 toolCallCount = 0,
                 resolvedProfileId = profile.id,
                 resolvedProfileName = profile.name,
@@ -293,7 +293,7 @@ class SubagentOrchestrator(
                 spec = spec,
                 subSessionId = laneName,
                 isSuccess = false,
-                summary = "task_id=$laneName 正在运行，拒绝并发续跑；请等待当前执行完成后再提交新指令。",
+                summary = "task_id=$laneName đang chạy, từ chối tiếp chạy đồng thời; vui lòng chờ thực thi hiện tại hoàn tất rồi gửi chỉ thị mới.",
                 toolCallCount = 0,
                 resolvedProfileId = profile.id,
                 resolvedProfileName = profile.name,
@@ -316,7 +316,7 @@ class SubagentOrchestrator(
         }
 
         // 超时取消时 withTimeoutOrNull 返回 null，若直接 ?: 0 会把子智能体在超时窗口内
-        // 真实执行的工具调用全部归零，汇总里出现"明明在跑却显示 0 次工具调用"。
+        // 真实执行的工具调用全部归零，汇总里出现"Rõ ràng đang chạy mà hiển thị 0 lần gọi công cụ"。
         // lane 的 tool_call entry 在执行期已逐条落库，从 transcript 恢复真实计数。
         val transcript = runCatching { laneManager.subagentTranscript(parentSessionId, laneName) }
             .getOrElse { runCatching { laneManager.transcript(parentSessionId, laneName) }.getOrDefault(emptyList()) }
@@ -326,7 +326,7 @@ class SubagentOrchestrator(
             spec = spec,
             subSessionId = laneName,
             isSuccess = laneResult?.success == true,
-            // 超时不再只回一句"执行超时"：已查到的证据、改过的文件、最后进度都从 transcript
+            // 超时不再只回一句"Thực thi quá thời gian"：已查到的证据、改过的文件、最后进度都从 transcript
             // 还原成续跑摘要，否则父智能体只能创建全新 Lane 从头重复同样的工作。
             summary = laneResult?.summary
                 ?: buildSubagentTimeoutSummary(SUBAGENT_TIMEOUT_MS, toolCallCount, transcript, laneName),
@@ -386,10 +386,10 @@ class SubagentOrchestrator(
     }
 
     private fun routingFailure(spec: SubagentTaskSpec): String = if (spec.role.isNotBlank()) {
-        "精确角色 ${spec.role} 未配置或未启用。可改用 department + agentQuery 让本地索引派发。"
+        "Vai trò chính xác ${spec.role} chưa cấu hình hoặc chưa bật. Có thể chuyển dùng department + agentQuery để chỉ mục cục bộ phái đi."
     } else {
-        "部门 ${spec.department} 中没有匹配 agentQuery=\"${spec.agentQuery}\" 的已启用角色。" +
-            "请保留部门并改用 2–5 个更具体的英文专业关键词。"
+        "Trong bộ phận ${spec.department} không có vai trò đã bật nào khớp agentQuery=\"${spec.agentQuery}\"." +
+            "Hãy giữ bộ phận và chuyển dùng 2–5 từ khóa chuyên môn tiếng Anh cụ thể hơn."
     }
 
     private suspend fun buildSubagentPrompt(
@@ -407,7 +407,7 @@ class SubagentOrchestrator(
                 "ROLE_NAME" to profile.name,
                 "ROLE_ID" to profile.id,
                 "TASK_NAME" to spec.taskName,
-                "WORKSPACE_LINE" to workspace.takeIf { it.isNotBlank() }?.let { "工作区：$it" }.orEmpty(),
+                "WORKSPACE_LINE" to workspace.takeIf { it.isNotBlank() }?.let { "Vùng làm việc: $it" }.orEmpty(),
                 "ROLE_PROMPT" to profile.systemPrompt.trim(),
                 "TASK_PROMPT" to spec.prompt,
                 "WRITE_LINE" to writeLine,
@@ -419,23 +419,23 @@ class SubagentOrchestrator(
     /** 写租约约束文案：全新派发与续跑共用同一份语义（空=只读、精确路径=局部租约、["*"]=独占）。 */
     private fun buildWriteLeaseLine(spec: SubagentTaskSpec, readOnlyWriteIntent: Boolean): String = when {
         spec.writePaths.isEmpty() -> buildString {
-            append("本任务为只读任务：禁止调用 write/edit/download，禁止执行会修改工作区的命令；只返回分析或数据。")
-            append("write/edit/download 在本 Lane 内会被强制拦截；base 命令不受该闸门约束，")
-            append("因此绝不允许用 shell 重定向、sed -i、mv、rm 等方式绕过。")
+            append("Nhiệm vụ này là nhiệm vụ chỉ đọc: cấm gọi write/edit/download, cấm thực thi lệnh sửa workspace; chỉ trả về phân tích hoặc dữ liệu.")
+            append("write/edit/download trong Lane này sẽ bị chặn bắt buộc; lệnh base không bị ràng buộc bởi cổng đó,")
+            append("Do đó tuyệt đối không được bỏ qua bằng các cách như chuyển hướng shell, sed -i, mv, rm.")
             if (readOnlyWriteIntent) {
                 // 任务文字要求落盘却没有写租约：必须显式指出冲突，否则子智能体会在
-                // "要写"与"不许写"之间自行猜测，并可能把"没法写"当成完成。
-                append("\n注意：本任务文字提到了落盘/写入，但主智能体未声明 write_paths。")
-                append("请把需要落盘的完整内容直接放进结论正文（含目标路径与完整文件内容），")
-                append("由主智能体写入；不要声称文件已生成。")
+                // "Cần ghi"与"Không cho ghi"之间自行猜测，并可能把"Không thể ghi"当成完成。
+                append("\nLưu ý: văn bản nhiệm vụ này có nhắc tới ghi đĩa/ghi, nhưng Agent chính chưa khai báo write_paths.")
+                append("Vui lòng đặt toàn bộ nội dung cần ghi ra đĩa trực tiếp vào phần thân kết luận (gồm đường dẫn mục tiêu và nội dung tệp đầy đủ),")
+                append("Do Agent chính ghi vào; đừng tuyên bố tệp đã được tạo.")
             }
         }
         spec.writePaths.any(::isWholeWorkspaceWritePath) ->
-            "本任务持有整工作区独占写租约；仅修改任务确实需要的文件，避免无关改动。"
+            "Nhiệm vụ này giữ write lease độc quyền toàn workspace; chỉ sửa các tệp nhiệm vụ thực sự cần, tránh thay đổi không liên quan."
         else -> buildString {
-            append("限定写入范围（write/edit/download 会强制校验，越界写入直接拦截）：")
+            append("Giới hạn phạm vi ghi (write/edit/download sẽ bắt buộc kiểm tra, ghi vượt phạm vi bị chặn trực tiếp): ")
             append(spec.writePaths.joinToString("、"))
-            append("。base 命令不受该闸门约束，也必须遵守同一范围。")
+            append(". Lệnh base không bị ràng buộc bởi cổng đó, cũng phải tuân thủ cùng phạm vi.")
         }
     }
 
@@ -451,7 +451,7 @@ class SubagentOrchestrator(
     ): String {
         val factsPack = buildParentFactsPack(parentSessionId, workspace)
         return buildString {
-            append("【任务续跑】原任务「${spec.taskName}」未完结，主智能体要求在本 Lane 已有工作基础上继续：\n")
+            append("【Chạy tiếp nhiệm vụ】Nhiệm vụ gốc「${spec.taskName}」chưa hoàn tất, Agent chính yêu cầu tiếp tục trên nền công việc đã có trong Lane này:\n")
             append(spec.prompt.trim())
             append("\n\n")
             append(buildWriteLeaseLine(spec, readOnlyWriteIntent))
@@ -468,7 +468,7 @@ class SubagentOrchestrator(
             )
         }.getOrDefault(emptyList())
         if (pinned.isEmpty()) return ""
-        return "## 父级上下文事实包（父会话已 pin 的指令/事实，作为本子任务的背景参考）\n" +
+        return "## Gói sự kiện ngữ cảnh cấp cha (chỉ thị/sự kiện đã pin của phiên cha, làm tham chiếu nền cho nhiệm vụ con này)\n" +
             pinned.joinToString("\n") { "- [${it.scope}/${it.kind}] ${it.key}: ${it.value}" }
     }
 
@@ -490,7 +490,7 @@ class SubagentOrchestrator(
             outcomes,
             workspace,
             // 落盘必须与 ToolExecutor 的 read 走同一基准：汇总里给父智能体的是工作区相对路径，
-            // 用全局 fileAccess 写会落到应用根目录，模型随后 read 就会"提示有报告、实际读不到"。
+            // 用全局 fileAccess 写会落到应用根目录，模型随后 read 就会"Báo là có nhưng thực tế đọc không được"。
             if (workspace.isNotBlank()) fileAccess.withBase(workspace) else fileAccess,
         )
 
@@ -522,7 +522,7 @@ class SubagentOrchestrator(
 
 /**
  * 单个子代理 lane 的 token 用量：
- * 缓存命中单列，让"委派是否划算"有数据可看，而不是只看轮数。
+ * 缓存命中单列，让"Ủy thác có đáng không"有数据可看，而不是只看轮数。
  */
 internal data class SubagentTokenUsage(
     val promptTokens: Long,
@@ -574,25 +574,25 @@ internal fun selectSubagentModel(
 }
 
 
-/** background=true 时立即返回给模型的启动确认：明确"不要轮询"（对齐 opencode task 工具的输出约定）。 */
+/** background=true 时立即返回给模型的启动确认：明确"Không polling"（对齐 opencode task 工具的输出约定）。 */
 internal fun backgroundStartedText(specs: List<SubagentTaskSpec>): String = buildString {
-    append("已启动 ${specs.size} 个后台子任务：${specs.joinToString("、") { it.taskName }}。\n")
-    append("任务在后台执行，完成后结果会自动注入本会话并触发后续推理。")
-    append("不要等待、轮询进度或重复派发相同任务；可先处理其他独立工作，或直接结束本轮回复。")
+    append("Đã khởi động ${specs.size} nhiệm vụ con nền: ${specs.joinToString("、") { it.taskName }}。\n")
+    append("Nhiệm vụ thực thi ở nền, sau khi hoàn thành kết quả sẽ tự động được đưa vào phiên này và kích hoạt suy luận tiếp theo.")
+    append("Đừng chờ, poll tiến độ hay phái lại cùng nhiệm vụ; có thể xử lý việc độc lập khác trước, hoặc kết thúc lượt phản hồi này luôn.")
 }
 
 /** 后台批次完成后的注入文本：汇总 + 续跑指引；由 HarnessLoop.send 以用户消息触发新轮推理。 */
 internal fun backgroundCompletionText(allSucceeded: Boolean, summaryMarkdown: String): String = buildString {
-    append("【后台子任务已完成】\n\n")
+    append("【Nhiệm vụ con nền đã hoàn thành】\n\n")
     append(summaryMarkdown.trim())
-    append("\n\n---\n以上为后台子任务结果，请基于它继续推进原任务。")
+    append("\n\n---\nTrên đây là kết quả nhiệm vụ con nền, hãy dựa vào đó tiếp tục đẩy nhiệm vụ gốc.")
     if (!allSucceeded) {
-        append("失败子任务可在新的 invoke_subagent 调用中用其 task_id 续跑（附新指令），或重新派发全新任务。")
+        append("Nhiệm vụ con thất bại có thể tiếp chạy trong lời gọi invoke_subagent mới bằng task_id của nó (kèm chỉ thị mới), hoặc phái lại nhiệm vụ hoàn toàn mới.")
     }
 }
 
 /**
- * 将任务按 write_paths 冲突切成若干互不相交的"波"。
+ * 将任务按 write_paths 冲突切成若干互不相交的"Ba"。
  * 同一波内所有任务的写路径集合互不重叠 → 可安全并行执行。
  * 空 writePaths 是只读任务，可与其他只读任务并行；["*"] 是整工作区独占写租约。
  * 为避免读到写入中间态，只读波与任何写入波分离；局部写路径互不冲突时可并行。
@@ -663,7 +663,7 @@ private fun waveLeaseDescription(wave: List<SubagentTaskSpec>): String = when {
 
 /**
  * 是否为整工作区租约。`*` 与 `.` 都表示整个工作区；`.` 归一化后为空串，
- * 空串同样是"工作区根"，不能当成未声明。
+ * 空串同样是"Gốc vùng làm việc"，不能当成未声明。
  */
 internal fun isWholeWorkspaceWritePath(path: String): Boolean = normalizeWritePath(path) in WHOLE_WORKSPACE_SCOPES
 
@@ -679,7 +679,7 @@ internal fun writePathsConflict(left: String, right: String): Boolean {
 /**
  * 超时取消时 laneRunner 协程被中止，其内存中的工具调用统计随返回值一起丢失；
  * 此时从 lane 已落库的 transcript（tool_call entry）恢复真实计数，
- * 避免汇总里出现"子智能体明明在干活却显示 0 次工具调用"。
+ * 避免汇总里出现"Agent con rõ ràng đang làm việc nhưng hiển thị 0 lần gọi công cụ"。
  */
 internal fun resolveSubagentToolCallCount(
     laneResultToolCalls: Int?,
@@ -698,7 +698,7 @@ internal fun renderSummaryMarkdown(outcomes: List<SubagentOrchestrator.SubagentE
         append(subagentBatchHeader(outcomes))
         outcomes.forEachIndexed { index, outcome ->
             append(subagentOutcomeHeader(outcome, index, includeModelBadge = true))
-            append("- **子任务输出**：\n")
+            append("- **Đầu ra nhiệm vụ con**:\n")
             append(outcome.summary.trim())
             append("\n\n")
         }
@@ -707,16 +707,16 @@ internal fun renderSummaryMarkdown(outcomes: List<SubagentOrchestrator.SubagentE
 private fun subagentBatchHeader(outcomes: List<SubagentOrchestrator.SubagentExecutionOutcome>): String {
     val succeeded = outcomes.count { it.isSuccess }
     val batchStatus = when (succeeded) {
-        outcomes.size -> "全部成功"
-        0 -> "全部失败"
-        else -> "部分成功"
+        outcomes.size -> "Tất cả thành công"
+        0 -> "Tất cả thất bại"
+        else -> "Thành công một phần"
     }
     return buildString {
-        append("### 🤖 子智能体协同执行完成 · $batchStatus ($succeeded/${outcomes.size})\n\n")
+        append("### 🤖 Phối hợp thực thi Agent con hoàn tất · $batchStatus ($succeeded/${outcomes.size})\n\n")
         if (succeeded in 1 until outcomes.size) {
             // 整批 ToolResult 标失败（一个没做完就不能算成功），但重发时不该把已完成的再跑一遍。
-            append("（本批部分成功：需要处理的只有下方标 ⚠️ 的子任务。重新派发时只提交这些任务，")
-            append("不要重复标 ✅ 的工作；它们的产出已在本汇总中。）\n\n")
+            append("(Lô này thành công một phần: chỉ cần xử lý các nhiệm vụ con đánh dấu ⚠️ bên dưới. Khi phái lại chỉ nộp những nhiệm vụ đó,")
+            append("Đừng lặp lại công việc đã đánh ✅; sản phẩm của chúng đã có trong bản tổng hợp này.)\n\n")
         }
     }
 }
@@ -725,7 +725,7 @@ private fun subagentBatchHeader(outcomes: List<SubagentOrchestrator.SubagentExec
  * 每个子任务的状态头。
  *
  * 状态不再只有 ✅/⚠️ 两态：未完成时必须写出终止原因、待审批交接与被拦截的写入，
- * 否则父智能体（和用户）无法区分"做完了"与"收场了但没做完"。
+ * 否则父智能体（和用户）无法区分"Làm xong rồi"与"Đã thu lại nhưng chưa làm xong"。
  */
 private fun subagentOutcomeHeader(
     outcome: SubagentOrchestrator.SubagentExecutionOutcome,
@@ -738,56 +738,56 @@ private fun subagentOutcomeHeader(
     } else {
         outcome.spec.role.ifBlank { "${outcome.spec.department} / ${outcome.spec.agentQuery}" }
     }
-    val modelBadge = if (includeModelBadge) outcome.resolvedModel?.let { " · 专用模型: $it" } ?: "" else ""
-    append("#### ${index + 1}. $statusIcon 【${outcome.spec.taskName}】(角色: $resolvedRole$modelBadge)\n")
-    append("- **工具调用次数**：${outcome.toolCallCount} 次\n")
+    val modelBadge = if (includeModelBadge) outcome.resolvedModel?.let { " · Model chuyên dụng: $it" } ?: "" else ""
+    append("#### ${index + 1}. $statusIcon 【${outcome.spec.taskName}】(vai trò: $resolvedRole$modelBadge)\n")
+    append("- **Số lần gọi công cụ**: ${outcome.toolCallCount} lần\n")
     // task_id 暴露给父智能体：未完结的子任务可凭它在同一 Lane 上续跑（对齐 opencode task 工具）。
     if (outcome.subSessionId.isNotBlank()) {
-        append("- **task_id**（续跑用，原样复制到 invoke_subagent 的 task_id 字段）: ${outcome.subSessionId}\n")
+        append("- **task_id** (dùng để chạy tiếp, sao chép nguyên văn vào trường task_id của invoke_subagent): ${outcome.subSessionId}\n")
     }
     // 委托经济学：把成本摊开给父智能体与用户看——缓存命中率低的大输入是委派不划算的主要信号。
     outcome.tokenUsage?.let { usage ->
         append(
-            "- **Token 用量**：输入 ${usage.promptTokens}（缓存命中 ${usage.cachedTokens}，" +
-                "${usage.cacheHitPercent}%）· 输出 ${usage.completionTokens}\n",
+            "- **Mức dùng Token**: đầu vào ${usage.promptTokens} (cache hit ${usage.cachedTokens}, " +
+                "${usage.cacheHitPercent}%) · đầu ra ${usage.completionTokens}\n",
         )
     }
     if (!outcome.isSuccess) {
-        append("- **终止原因**：${subagentTerminationLabel(outcome.termination)}\n")
+        append("- **Nguyên nhân dừng**: ${subagentTerminationLabel(outcome.termination)}\n")
     }
-    // 完成 claim 裁定：无论最终状态如何都展示——✅ 也让父智能体看到"凭据背书了什么"。
+    // 完成 claim 裁定：无论最终状态如何都展示——✅ 也让父智能体看到"Credential đã chứng thực gì"。
     if (outcome.claimAdjudication != null) {
         append(renderSubagentClaimAdjudication(outcome.claimAdjudication))
     }
     if (outcome.pendingApprovals.isNotEmpty()) {
-        append("- **待主智能体重新发起并审批**：")
+        append("- **Chờ Agent chính phát lại và phê duyệt**：")
         append(outcome.pendingApprovals.joinToString("、") { it.toolName })
         append("\n")
     }
     if (outcome.blockedWrites.isNotEmpty()) {
-        append("- **被写租约拦截、未落盘**：${outcome.blockedWrites.joinToString("、")}\n")
+        append("- **Bị write lease chặn, chưa ghi đĩa**: ${outcome.blockedWrites.joinToString("、")}\n")
     }
     if (outcome.readOnlyWriteIntent) {
-        append("- **写租约缺失**：任务要求落盘但未声明 write_paths，本次按只读执行；产物在正文中，未写入文件\n")
+        append("- **Thiếu write lease**: nhiệm vụ yêu cầu ghi đĩa nhưng chưa khai báo write_paths, lần này thực thi theo chỉ đọc; sản phẩm nằm trong phần nội dung, chưa ghi vào tệp\n")
     }
     if (outcome.suspectedShellWrites.isNotEmpty()) {
-        append("- **疑似 shell 写入（仅提示，未自动判定越界）**：")
+        append("- **Nghi ngờ ghi shell (chỉ nhắc, chưa tự phán định vượt phạm vi)**:")
         append(outcome.suspectedShellWrites.joinToString("；"))
-        append("；请由主智能体复核实际产物与写租约范围。\n")
+        append("; vui lòng để Agent chính rà soát lại sản phẩm thực tế và phạm vi write lease.\n")
     }
 }
 
 private fun subagentTerminationLabel(termination: SubagentTermination): String = when (termination) {
-    SubagentTermination.CONCLUDED -> "已产出结论"
-    SubagentTermination.INCOMPLETE -> "收场但未产出可信结论"
-    SubagentTermination.NEEDS_APPROVAL -> "有需要审批的操作未执行"
-    SubagentTermination.WRITE_SCOPE_BLOCKED -> "写入被写租约拦截"
-    SubagentTermination.WRITE_FAILED -> "写入尝试失败，产物未落盘"
-    SubagentTermination.UNPARSEABLE_TOOL_CALL -> "文本工具调用无法解析"
-    SubagentTermination.MAX_ROUNDS -> "用尽工具轮数预算"
-    SubagentTermination.FAILED -> "执行异常"
-    SubagentTermination.TIMEOUT -> "执行超时"
-    SubagentTermination.CLAIM_DOWNGRADED -> "自报 complete 未被 host 凭据完全背书，降级为 partial"
+    SubagentTermination.CONCLUDED -> "Đã sản xuất kết luận"
+    SubagentTermination.INCOMPLETE -> "Thu cuộc nhưng chưa cho ra kết luận đáng tin"
+    SubagentTermination.NEEDS_APPROVAL -> "Có thao tác cần phê duyệt chưa thực thi"
+    SubagentTermination.WRITE_SCOPE_BLOCKED -> "Ghi bị write lease chặn"
+    SubagentTermination.WRITE_FAILED -> "Thử ghi thất bại, sản phẩm chưa ghi vào đĩa"
+    SubagentTermination.UNPARSEABLE_TOOL_CALL -> "Gọi công cụ dạng văn bản không phân giải được"
+    SubagentTermination.MAX_ROUNDS -> "Dùng hết ngân sách số lượt công cụ"
+    SubagentTermination.FAILED -> "Thực thi bất thường"
+    SubagentTermination.TIMEOUT -> "Thực thi quá thời gian"
+    SubagentTermination.CLAIM_DOWNGRADED -> "Tự báo complete chưa được credential host chứng thực đầy đủ, hạ cấp xuống partial"
 }
 
 /**
@@ -797,7 +797,7 @@ private fun subagentTerminationLabel(termination: SubagentTermination): String =
  * `.tianxuan-subagent/<laneName-safe>.md`（工作区相对路径），模型可用 read 工具按 offset/limit 分页读取。
  *
  * [fileAccess] 必须已经绑定到 [workspace]：返回给父智能体的是工作区相对路径，
- * 写入基准与 read 的基准不一致就会出现"提示有完整报告、实际读不到"。
+ * 写入基准与 read 的基准不一致就会出现"Báo có báo cáo đầy đủ, thực tế đọc không được"。
  */
 internal suspend fun paginateSubagentSummary(
     outcomes: List<SubagentOrchestrator.SubagentExecutionOutcome>,
@@ -826,14 +826,14 @@ internal suspend fun paginateSubagentSummary(
 
     return buildString {
         append(subagentBatchHeader(outcomes))
-        append("（本批输出总量超出注入预算，超长子任务已截断；完整结果可用 read 工具按 offset/limit 分页读取）\n\n")
+        append("(Tổng lượng đầu ra của lô này vượt ngân sách tiêm, các tác vụ con quá dài đã bị cắt; kết quả đầy đủ có thể dùng công cụ read để đọc phân trang theo offset/limit)\n\n")
         outcomes.forEachIndexed { index, outcome ->
             append(subagentOutcomeHeader(outcome, index, includeModelBadge = false))
-            append("- **子任务输出**：\n")
+            append("- **Đầu ra nhiệm vụ con**:\n")
             val spillPath = spilled[outcome.subSessionId]
             if (spillPath != null) {
                 append(outcome.summary.take(PER_TASK_INLINE_BUDGET))
-                append("\n\n…（截断，共 ${outcome.summary.length} 字符。完整结果：read 路径 `$spillPath`）\n\n")
+                append("\n\n…(bị cắt, tổng ${outcome.summary.length} ký tự. Kết quả đầy đủ: read đường dẫn `$spillPath`)\n\n")
             } else {
                 append(outcome.summary.trim())
                 append("\n\n")

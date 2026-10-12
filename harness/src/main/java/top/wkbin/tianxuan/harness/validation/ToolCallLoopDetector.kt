@@ -27,7 +27,7 @@ class ToolCallLoopDetector(
         val timestamp: Long = System.currentTimeMillis(),
     )
 
-    /** (toolName:argsJson) → 上一次输出的指纹，用于识别"参数相同但结果在变"的合法轮询。 */
+    /** (toolName:argsJson) → 上一次输出的指纹，用于识别"Tham số giống nhau nhưng kết quả thay đổi"的合法轮询。 */
     private val lastOutputFingerprints = mutableMapOf<String, Int>()
 
     sealed interface LoopVerdict {
@@ -59,18 +59,18 @@ class ToolCallLoopDetector(
 
         if (sameFailedStreak >= maxSameCallFailures) {
             return LoopVerdict.Block(
-                reason = "检测到死循环：工具 `$toolName` 已使用完全相同的参数连续执行失败 $sameFailedStreak 次",
+                reason = "Phát hiện vòng lặp chết: công cụ `$toolName` đã thực thi thất bại $sameFailedStreak lần liên tiếp với tham số hoàn toàn giống nhau",
                 guidance = buildString {
-                    append("【已强制拦截该重复调用并要求反思】\n")
-                    append("你正在反复发起完全相同的失败操作：`$toolName($currentArgsJson)`。\n")
-                    append("这是典型的死循环行为，已直接阻断执行。\n\n")
-                    append("请立即执行以下反思与策略变更：\n")
-                    append("1. **定位根因**：仔细阅读前述错误输出，分析上几次失败的具体原因（路径错误？内容不匹配？参数缺失？缺少依赖？）；\n")
-                    append("2. **严禁重试**：严禁再次发起完全相同的调用；\n")
-                    append("3. **改变策略**：\n")
-                    append("   - 如果是 `edit` 匹配失败：必须先调用 `read` 查看文件的最新精确内容与行号；\n")
-                    append("   - 如果是 `base` 命令失败：调用 `read`/`base` 检查环境、路径或查看日志，或切换实现方式；\n")
-                    append("   - 如果缺少工具或能力：向用户明确说明当前遇到的障碍与已完成的步骤。")
+                    append("【Đã chặn bắt buộc lời gọi lặp này và yêu cầu suy ngẫm】\n")
+                    append("Bạn đang liên tục phát đi thao tác thất bại hoàn toàn giống hệt: `$toolName($currentArgsJson)`.\n")
+                    append("Đây là hành vi vòng lặp chết điển hình, đã chặn thực thi trực tiếp.\n\n")
+                    append("Hãy thực thi ngay phản tư và thay đổi chiến lược sau:\n")
+                    append("1. **Định vị căn nguyên**: đọc kỹ đầu ra lỗi nêu trên, phân tích nguyên nhân cụ thể của vài lần thất bại trước (sai đường dẫn? nội dung không khớp? thiếu tham số? thiếu phụ thuộc?);\n")
+                    append("2. **Nghiêm cấm thử lại**: nghiêm cấm phát lại lời gọi hoàn toàn giống hệt;\n")
+                    append("3. **Thay đổi chiến lược**:\n")
+                    append("   - Nếu là `edit` khớp thất bại: phải gọi `read` trước để xem nội dung chính xác và số dòng mới nhất của tệp;\n")
+                    append("   - Nếu là `base` thất bại: gọi `read`/`base` để kiểm tra môi trường, đường dẫn hoặc xem log, hoặc đổi cách triển khai;\n")
+                    append("   - Nếu thiếu công cụ hoặc năng lực: nói rõ với người dùng trở ngại gặp phải hiện tại và các bước đã hoàn thành.")
                 },
             )
         }
@@ -86,11 +86,11 @@ class ToolCallLoopDetector(
 
         if (identicalStreak >= maxIdenticalCallsStreak) {
             return LoopVerdict.Block(
-                reason = "检测到重复空转：工具 `$toolName` 已连续执行 $identicalStreak 次，参数与输出均无变化",
+                reason = "Phát hiện lặp vòng rỗng: công cụ `$toolName` đã thực thi liên tiếp $identicalStreak lần, tham số và đầu ra đều không thay đổi",
                 guidance = buildString {
-                    append("【已强制拦截该无进展重复调用】\n")
-                    append("你已连续 $identicalStreak 次执行完全相同的操作 `$toolName`，系统检测到任务陷入停滞空转。\n")
-                    append("请跳出当前循环，总结已获取的信息，推进到下一阶段或向用户汇报。")
+                    append("【Đã cưỡng chế chặn lời gọi lặp không tiến triển này】\n")
+                    append("Bạn đã thực hiện thao tác hoàn toàn giống nhau `$toolName` liên tục $identicalStreak lần, hệ thống phát hiện nhiệm vụ rơi vào bế tắc chạy không.\n")
+                    append("Vui lòng thoát khỏi vòng lặp hiện tại, tổng kết thông tin đã lấy, đẩy sang giai đoạn tiếp theo hoặc báo cáo cho người dùng.")
                 },
             )
         }
@@ -104,14 +104,14 @@ class ToolCallLoopDetector(
                 val cycle3 = simulatedHistory.dropLast(period * 2).takeLast(period)
                 if (cycle1 == cycle2 && cycle2 == cycle3) {
                     return LoopVerdict.Block(
-                        reason = "检测到交替震荡死循环：工具调用序列以周期 $period 反复交替循环了 3 次",
+                        reason = "Phát hiện vòng lặp dao động luân phiên: chuỗi lời gọi công cụ lặp luân phiên theo chu kỳ $period tới 3 lần",
                         guidance = buildString {
-                            append("【已强制拦截交替震荡死循环】\n")
-                            append("你正在反复交替执行相同的操作序列（周期 $period）。\n")
-                            append("系统检测到任务陷入来回摆动的震荡死循环，已直接阻断执行。\n\n")
-                            append("请立即执行以下反思：\n")
-                            append("1. 为什么上一个步骤的结果无法推进任务？\n")
-                            append("2. 立即停止当前循环模式，切换到新的解决思路或向用户汇报当前阻碍。")
+                            append("【Đã cưỡng chế chặn vòng lặp chết dao động xen kẽ】\n")
+                            append("Bạn đang lặp đi lặp lại cùng một chuỗi thao tác xen kẽ (chu kỳ $period).\n")
+                            append("Hệ thống phát hiện nhiệm vụ rơi vào vòng lặp chết dao động qua lại, đã chặn thực thi trực tiếp.\n\n")
+                            append("Hãy thực thi ngay phản tư sau:\n")
+                            append("1. Vì sao kết quả bước trước không thể thúc đẩy nhiệm vụ?\n")
+                            append("2. Lập tức dừng chế độ vòng lặp hiện tại, chuyển sang hướng giải quyết mới hoặc báo cáo trở ngại hiện tại cho người dùng.")
                         },
                     )
                 }

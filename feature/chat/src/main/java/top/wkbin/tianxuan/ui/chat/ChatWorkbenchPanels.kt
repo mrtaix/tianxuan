@@ -116,7 +116,7 @@ internal fun CollapsibleChatWorkbenchStrip(
 
     val (runModeLabelRes, runModeColor) = when (runMode) {
         RunMode.BUILD -> R.string.chat_run_mode_build to Color(0xFF546E7A)
-        // 规划模式用紫色以区别于审批模式的三色，并提示"当前只看不动"
+        // 规划模式用紫色以区别于审批模式的三色，并提示"Hiện chỉ xem không thao tác"
         RunMode.PLAN -> R.string.chat_run_mode_plan to Color(0xFF7B1FA2)
     }
 
@@ -191,7 +191,7 @@ internal fun CollapsibleChatWorkbenchStrip(
                 StatusDivider()
                 WorkbenchStatusItem(
                     icon = RuntimeIconName.GitBranch,
-                    label = if (repositoryHighlight) "仓库 •" else stringResource(R.string.chat_repository),
+                    label = if (repositoryHighlight) "Kho •" else stringResource(R.string.chat_repository),
                     tint = if (repositoryHighlight) Color(0xFF2E9E5B) else MaterialTheme.colorScheme.onSurfaceVariant,
                     highlight = repositoryHighlight,
                     onClick = onOpenRepository,
@@ -203,7 +203,7 @@ internal fun CollapsibleChatWorkbenchStrip(
                 StatusDivider()
                 WorkbenchStatusItem(
                     icon = RuntimeIconName.Globe,
-                    label = if (browserHighlight) "浏览器 •" else "浏览器",
+                    label = if (browserHighlight) "Trình duyệt •" else "Trình duyệt",
                     tint = if (browserHighlight) Color(0xFF3F8FFF) else MaterialTheme.colorScheme.onSurfaceVariant,
                     highlight = browserHighlight,
                     onClick = onOpenBrowser,
@@ -772,7 +772,7 @@ internal fun RuntimeTimelineSheet(
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = pad.key.ifBlank { "草稿" },
+                                                text = pad.key.ifBlank { "Bản nháp" },
                                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                                 color = MaterialTheme.colorScheme.tertiary,
                                             )
@@ -1292,7 +1292,7 @@ private fun PayloadBox(label: String, text: String) {
                 onClick = {
                     val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                     clipboard?.setPrimaryClip(android.content.ClipData.newPlainText(label, text))
-                    android.widget.Toast.makeText(context, "已复制", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, "Đã sao chép", android.widget.Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.size(20.dp),
             ) {
@@ -1443,8 +1443,8 @@ private fun eventVisual(event: HarnessEvent): EventVisual = when (event) {
             "RUNNING" -> MaterialTheme.colorScheme.primary
             else -> Color(0xFF7C4DFF)
         },
-        "工序 ${event.stepId} · ${event.title}",
-        event.resultSummary ?: "状态: ${event.status}",
+        "Công đoạn ${event.stepId} · ${event.title}",
+        event.resultSummary ?: "Trạng thái: ${event.status}",
     )
 }
 
@@ -1564,7 +1564,7 @@ private fun prettyArgs(args: JsonObject): String =
 
 internal fun limitDiagnosticText(text: String, maxChars: Int = MAX_DIAGNOSTIC_TEXT_CHARS): String {
     if (text.length <= maxChars) return text
-    return text.take(maxChars) + "\n…（内容过长，已截断）"
+    return text.take(maxChars) + "\n…(nội dung quá dài, đã cắt bớt)"
 }
 
 /**
@@ -1598,12 +1598,12 @@ internal fun sanitizeModelResponseForDiagnostics(
                 .take(40)
                 .ifBlank { "image" }
             if (out.isNotEmpty() && !out.last().isWhitespace()) out.append(' ')
-            out.append("[图片数据已隐藏：").append(mime).append(']')
+            out.append("[Dữ liệu ảnh đã ẩn:").append(mime).append(']')
             val end = text.indexOfAny(charArrayOf(')', '"', '\'', '>', ' ', '\n', '\r', '\t'), dataStart)
             cursor = if (end >= 0) end + 1 else text.length
         } else {
             out.append(text, cursor, minOf(jsonKeyStart, cursor + (maxChars - out.length)))
-            out.append("\"b64_json\":\"[图片 Base64 已隐藏]\"")
+            out.append("\"b64_json\":\"[Ảnh Base64 đã ẩn]\"")
             val colon = text.indexOf(':', jsonKeyStart + 10)
             val valueStart = if (colon >= 0) text.indexOf('"', colon + 1) else -1
             val valueEnd = if (valueStart >= 0) text.indexOf('"', valueStart + 1) else -1

@@ -51,7 +51,7 @@ import top.wkbin.tianxuan.feature.components.R
  * 1. `val anchor = rememberSpotlightAnchor()`，并给目标控件挂 `Modifier.spotlightAnchor(anchor)`；
  * 2. 首次进入时渲染 `SpotlightGuideOverlay(anchor = anchor, title = ..., message = ...)`
  *    （应与页面主布局同层渲染，保证与 [Modifier.spotlightAnchor] 坐标同参照系）；
- * 3. 点击蒙层或确认按钮回调 [onDismiss]，由调用方负责持久化"已看过"标记（如 DataStore）。
+ * 3. 点击蒙层或确认按钮回调 [onDismiss]，由调用方负责持久化"Đã xem qua"标记（如 DataStore）。
  */
 
 /** 记录被高亮控件在根布局中的边界。 */

@@ -66,14 +66,14 @@ class ApprovalPolicyEngine(
                 required = true,
                 riskLevel = if (critical) "critical" else "high",
                 reason = when (action) {
-                    "settings_put" -> "操作将修改真实 Android 系统设置。"
-                    "package_disable", "package_enable", "app_freeze", "app_unfreeze" -> "操作将改变真实 Android 应用的启用状态。"
-                    "app_grant_permission" -> "操作将为真实 Android 应用授予权限。"
-                    "package_uninstall_user" -> "操作将为指定 Android 用户卸载应用；系统应用通常可用 install-existing 恢复，但其数据可能丢失。"
-                    "screen_capture" -> "操作会把真实 Android 屏幕内容写入指定文件。"
+                    "settings_put" -> "Thao tác sẽ sửa đổi cài đặt hệ thống Android thực."
+                    "package_disable", "package_enable", "app_freeze", "app_unfreeze" -> "Thao tác sẽ thay đổi trạng thái bật/tắt của ứng dụng Android thật."
+                    "app_grant_permission" -> "Thao tác sẽ cấp quyền cho ứng dụng Android thật."
+                    "package_uninstall_user" -> "Thao tác sẽ gỡ cài đặt ứng dụng cho người dùng Android được chỉ định; ứng dụng hệ thống thường có thể khôi phục bằng install-existing, nhưng dữ liệu của nó có thể bị mất."
+                    "screen_capture" -> "Thao tác sẽ ghi nội dung màn hình Android thật vào tệp chỉ định."
                     "screen_click", "screen_swipe", "screen_input_text", "screen_key", "app_launch" ->
-                        "操作将操控真实 Android 屏幕或启动应用。"
-                    else -> "命令将通过 Shizuku 或 Root 修改真实 Android 宿主，可能改变系统设置、停用或卸载应用。"
+                        "Thao tác sẽ điều khiển màn hình Android thật hoặc khởi động ứng dụng."
+                    else -> "Lệnh sẽ sửa đổi host Android thật qua Shizuku hoặc Root, có thể thay đổi cài đặt hệ thống, vô hiệu hóa hoặc gỡ cài ứng dụng."
                 },
                 summary = summarize(tool, args),
             )
@@ -103,7 +103,7 @@ class ApprovalPolicyEngine(
 
         val summary = summarize(tool, args, rawToolName)
         if (mode == ApprovalMode.REQUEST) {
-            return ApprovalDecision(true, "normal", "当前权限模式要求所有会改变状态或产生外部副作用的工具操作先获得批准。", summary)
+            return ApprovalDecision(true, "normal", "Chế độ quyền hiện tại yêu cầu mọi thao tác công cụ làm đổi trạng thái hoặc gây tác dụng phụ bên ngoài phải được phê duyệt trước.", summary)
         }
 
         return when (tool) {
@@ -112,7 +112,7 @@ class ApprovalPolicyEngine(
                 if (workspace.isNotBlank() && isWithinWorkspace(path, workspace)) {
                     ApprovalDecision(false)
                 } else {
-                    ApprovalDecision(true, "high", "写入目标不在当前工作区内，可能影响工作区之外的文件。", summary)
+                    ApprovalDecision(true, "high", "Mục tiêu ghi không nằm trong vùng làm việc hiện tại, có thể ảnh hưởng tệp bên ngoài vùng làm việc.", summary)
                 }
             }
             HarnessTool.BASE -> {
@@ -126,17 +126,17 @@ class ApprovalPolicyEngine(
                     if (isRoutineCommand(command)) ApprovalDecision(false)
                     else ApprovalDecision(true, if (isDestructiveCommand(command)) "critical" else "high", reasonForCommand(command), summary)
                 }
-                "stop" -> ApprovalDecision(true, "high", "停止操作会终止一个由 TianXuan 托管的后台进程。", summary)
+                "stop" -> ApprovalDecision(true, "high", "Dừng thao tác sẽ kết thúc một tiến trình nền do TianXuan quản lý.", summary)
                 else -> ApprovalDecision(false)
             }
-            HarnessTool.DOWNLOAD -> ApprovalDecision(true, "high", "下载会访问外部网络并写入工作区文件。", summary)
-            HarnessTool.BUILD_SCRIPT -> ApprovalDecision(true, "normal", "操作将修改构建脚本或项目挂载关系。", summary)
-            HarnessTool.HOST -> error("HOST 已在审批策略入口处理")
+            HarnessTool.DOWNLOAD -> ApprovalDecision(true, "high", "Tải xuống sẽ truy cập mạng ngoài và ghi tệp vào workspace.", summary)
+            HarnessTool.BUILD_SCRIPT -> ApprovalDecision(true, "normal", "Thao tác sẽ sửa đổi script build hoặc quan hệ mount dự án.", summary)
+            HarnessTool.HOST -> error("HOST đã xử lý tại cổng chính sách phê duyệt")
             HarnessTool.MCP -> when (mcpBrowserRisk(effectiveMcpToolName(tool, args, rawToolName))) {
-                "medium" -> ApprovalDecision(true, "medium", "浏览器操作会改变页面状态或新开会话。", summary)
-                "high" -> ApprovalDecision(true, "high", "浏览器操作将修改页面内容或写入本地存储。", summary)
-                "critical" -> ApprovalDecision(true, "critical", "浏览器操作涉及代码执行或读取敏感数据（Cookie/页面源码）。", summary)
-                else -> ApprovalDecision(true, "high", "MCP 工具可能访问外部服务或产生工作区之外的副作用。", summary)
+                "medium" -> ApprovalDecision(true, "medium", "Thao tác trình duyệt sẽ thay đổi trạng thái trang hoặc mở phiên mới.", summary)
+                "high" -> ApprovalDecision(true, "high", "Thao tác trình duyệt sẽ sửa đổi nội dung trang hoặc ghi vào bộ nhớ cục bộ.", summary)
+                "critical" -> ApprovalDecision(true, "critical", "Thao tác trình duyệt liên quan đến thực thi mã hoặc đọc dữ liệu nhạy cảm (Cookie/mã nguồn trang).", summary)
+                else -> ApprovalDecision(true, "high", "Công cụ MCP có thể truy cập dịch vụ bên ngoài hoặc tạo tác dụng phụ ngoài workspace.", summary)
             }
             // 刻意不写 else：本 when 必须穷尽 HarnessTool 全部成员。新增成员若漏配策略，
             // 编译器会报 "must be exhaustive"；写了 else 则被静默判为免审，成为免审后门。
@@ -170,31 +170,31 @@ class ApprovalPolicyEngine(
         HarnessTool.BASE -> if (isReadOnlyCommand(args["command"]?.jsonPrimitive?.content.orEmpty())) {
             null
         } else {
-            "base 命令不是只读检索：只读规划模式仅允许 ls / cat / rg / grep / find / git status 等查看类命令，不允许安装、构建、测试或写文件。"
+            "Lệnh base không phải truy xuất chỉ đọc: chế độ quy hoạch chỉ đọc chỉ cho phép các lệnh xem như ls / cat / rg / grep / find / git status, không cho phép cài đặt, build, test hay ghi tệp."
         }
         HarnessTool.PROCESS -> if (processAction(args) in setOf("status", "logs", "list")) {
             null
         } else {
-            "process 仅允许查看（status / logs / list），不允许启动或停止进程。"
+            "process chỉ cho phép xem (status / logs / list), không cho phép khởi động hoặc dừng tiến trình."
         }
         HarnessTool.HOST ->
             if (args["action"]?.jsonPrimitive?.content.orEmpty().trim().lowercase() in HOST_READ_ONLY_ACTIONS) {
                 null
             } else {
-                "宿主操作仅允许只读查询（status / settings_get / package_list / app_list / logcat / device_status / screen_observe），不允许改动真实 Android 系统。"
+                "Thao tác máy chủ chỉ cho phép truy vấn chỉ đọc (status / settings_get / package_list / app_list / logcat / device_status / screen_observe), không cho phép thay đổi hệ thống Android thực."
             }
         HarnessTool.MCP -> if (isReadOnlyMcpCall(args, rawToolName)) {
             null
         } else {
-            "MCP 仅允许只读能力查询（use_capability 的 list / inspect / decline）与低风险浏览器只读工具。"
+            "MCP chỉ cho phép truy vấn năng lực chỉ đọc (list / inspect / decline của use_capability) và công cụ trình duyệt chỉ đọc rủi ro thấp."
         }
         HarnessTool.BUILD_SCRIPT -> if (args["action"]?.jsonPrimitive?.content.orEmpty().trim().lowercase() in setOf("list", "get")) {
             null
         } else {
-            "build_script 仅允许查看（list / get），不允许创建、绑定或删除脚本。"
+            "build_script chỉ cho phép xem (list / get), không cho phép tạo, gắn kết hay xoá script."
         }
         // 其余（write / edit / download / subagent 等）一律拦截。
-        else -> "该工具会写入文件、访问外部网络或改变状态，只读规划模式下不可用。"
+        else -> "Công cụ này sẽ ghi tệp, truy cập mạng ngoài hoặc thay đổi trạng thái, không khả dụng ở chế độ lập kế hoạch chỉ đọc."
     }
 
     /** MCP 只读判定：use_capability 的只读元操作，或内置浏览器风险矩阵中的 low 档工具。 */
@@ -276,7 +276,7 @@ class ApprovalPolicyEngine(
             """^(head|tail|grep|wc|cat|uniq|tr|cut)(\s|$)""",
         )
 
-        /** "看似只读实则可执行"的特性黑名单：awk system()/getline、rg --pre 等（纵深防御）。
+        /** "Trông như chỉ đọc nhưng thực ra thực thi được"的特性黑名单：awk system()/getline、rg --pre 等（纵深防御）。
          *  --pre 用 (\s|=|$) 而非 \b 结尾：`--pre-glob` 是无害旗标不应误伤，`--pre=`/`--pre x` 必须命中。 */
         private val UNSAFE_EXEC_FEATURES = Regex("""system\s*\(|getline|popen|\|&|--pre(\s|=|$)""")
 
@@ -497,8 +497,8 @@ class ApprovalPolicyEngine(
     ).any { it.containsMatchIn(command) }
 
     private fun reasonForCommand(command: String): String = if (isDestructiveCommand(command)) {
-        "命令匹配到删除、格式化、设备写入或关机等不可逆高危模式。"
+        "Lệnh khớp với mẫu nguy hiểm cao không thể đảo ngược như xóa, định dạng, ghi thiết bị hoặc tắt máy."
     } else {
-        "命令可能安装软件、访问外部网络、修改系统状态或影响工作区之外的资源。"
+        "Lệnh có thể cài phần mềm, truy cập mạng ngoài, sửa trạng thái hệ thống hoặc ảnh hưởng tài nguyên ngoài vùng làm việc."
     }
 }

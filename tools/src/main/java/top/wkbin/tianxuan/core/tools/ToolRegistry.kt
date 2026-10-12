@@ -85,8 +85,8 @@ class ToolRegistry(
 
     suspend fun updateSigned(request: SignedRegistryRequest): AppResult<Int> = withContext(Dispatchers.IO) {
         try {
-            require(request.manifestUrl.startsWith("https://", ignoreCase = true)) { "工具清单必须使用 HTTPS" }
-            require(request.signatureUrl.startsWith("https://", ignoreCase = true)) { "签名地址必须使用 HTTPS" }
+            require(request.manifestUrl.startsWith("https://", ignoreCase = true)) { "Danh sách công cụ phải dùng HTTPS" }
+            require(request.signatureUrl.startsWith("https://", ignoreCase = true)) { "Địa chỉ ký phải dùng HTTPS" }
 
             val publicKeyBase64 = effectivePublicKey(request)
             // 信任锚说明：官方内置清单（assets/registry/tools.json）在构建期随 APK 分发、运行时只读，
@@ -103,8 +103,8 @@ class ToolRegistry(
             val signatureBytes = decodeSignature(download(request.signatureUrl))
             verifySignature(manifestBytes, signatureBytes, publicKeyBase64)
             val manifests = parseAndValidate(manifestBytes.toString(Charsets.UTF_8))
-            val parent = persistedFile.parentFile ?: error("无法创建 Registry 目录")
-            check(parent.exists() || parent.mkdirs()) { "无法创建 Registry 目录" }
+            val parent = persistedFile.parentFile ?: error("Không thể tạo thư mục Registry")
+            check(parent.exists() || parent.mkdirs()) { "Không thể tạo thư mục Registry" }
             val staging = File(parent, "tools.json.part")
             staging.writeBytes(manifestBytes)
             commitPersistedRegistry(staging)
@@ -113,7 +113,7 @@ class ToolRegistry(
             AppResult.Failure(
                 AppError(
                     code = if (throwable is SecurityException) ErrorCode.SECURITY else ErrorCode.NETWORK,
-                    message = "工具清单更新失败：${throwable.message ?: "未知错误"}",
+                    message = "Cập nhật danh sách công cụ thất bại: ${throwable.message ?: "未知错误"}",
                     cause = throwable,
                 ),
             )
@@ -129,7 +129,7 @@ class ToolRegistry(
         if (PINNED_REGISTRY_KEY_BASE64.isNotBlank()) {
             return PINNED_REGISTRY_KEY_BASE64
         }
-        require(request.publicKeyBase64.isNotBlank()) { "未配置签名公钥" }
+        require(request.publicKeyBase64.isNotBlank()) { "Chưa cấu hình khóa công khai ký" }
         return request.publicKeyBase64
     }
 
@@ -156,7 +156,7 @@ class ToolRegistry(
                 ),
             )
         } catch (throwable: Throwable) {
-            AppResult.Failure(AppError(ErrorCode.SECURITY, "本地插件预览失败：${throwable.message ?: "未知错误"}", throwable))
+            AppResult.Failure(AppError(ErrorCode.SECURITY, "Xem trước plugin cục bộ thất bại: ${throwable.message ?: "未知错误"}", throwable))
         }
     }
 
@@ -175,12 +175,12 @@ class ToolRegistry(
                     val entry = entries.nextElement()
                     val name = validatePluginEntryName(entry.name)
                     if (name == "manifest.json" && !entry.isDirectory) {
-                        require(manifestEntry == null) { "插件包包含重复的 manifest.json" }
+                        require(manifestEntry == null) { "Gói plugin chứa manifest.json trùng lặp" }
                         manifestEntry = entry
                     }
                 }
-                val entry = manifestEntry ?: error("插件包缺少 manifest.json")
-                require(entry.size < 0L || entry.size <= MAX_MANIFEST_BYTES) { "manifest.json 过大" }
+                val entry = manifestEntry ?: error("Gói plugin thiếu manifest.json")
+                require(entry.size < 0L || entry.size <= MAX_MANIFEST_BYTES) { "manifest.json quá lớn" }
                 return zip.getInputStream(entry).use(::readManifestText)
             }
         }
@@ -197,17 +197,17 @@ class ToolRegistry(
                     }
                 }
             }
-        } ?: error("无法读取插件包")
-        error("插件包缺少 manifest.json")
+        } ?: error("Không thể đọc gói plugin")
+        error("Gói plugin thiếu manifest.json")
     }
 
     private fun validatePluginEntryName(rawName: String): String {
         val name = rawName.replace('\\', '/')
         require(name.isNotBlank() && !name.startsWith('/') && !name.split('/').contains("..")) {
-            "插件包包含不安全路径：$name"
+            "Gói plugin chứa đường dẫn không an toàn：$name"
         }
         require(name == "manifest.json" || name.startsWith("payload/")) {
-            "插件包只允许 manifest.json 与 payload/：$name"
+            "Gói plugin chỉ cho phép manifest.json và payload/: $name"
         }
         return name
     }
@@ -220,7 +220,7 @@ class ToolRegistry(
             val read = input.read(buffer)
             if (read < 0) break
             total += read
-            require(total <= MAX_MANIFEST_BYTES) { "manifest.json 过大" }
+            require(total <= MAX_MANIFEST_BYTES) { "manifest.json quá lớn" }
             output.write(buffer, 0, read)
         }
         return output.toByteArray().toString(Charsets.UTF_8)
@@ -259,10 +259,10 @@ class ToolRegistry(
                         currentEntry = name
                         reportProgress(force = true)
                         require(name.isNotBlank() && !name.startsWith('/') && !name.split('/').contains("..")) {
-                            "插件包包含不安全路径：$name"
+                            "Gói plugin chứa đường dẫn không an toàn：$name"
                         }
                         require(name == "manifest.json" || name.startsWith("payload/")) {
-                            "插件包只允许 manifest.json 与 payload/：$name"
+                            "Gói plugin chỉ cho phép manifest.json và payload/: $name"
                         }
                         if (entry.isDirectory) continue
                         // 与 inspectLocal/inspectSeekableManifest 保持一致：重复的
@@ -271,7 +271,7 @@ class ToolRegistry(
                         // 攻击者可以把「通过校验的 manifest」放在前面充当预览，
                         // 把真正生效的放在后面。两条路径必须同一判定。
                         if (name == "manifest.json") {
-                            require(manifestText == null) { "插件包包含重复的 manifest.json" }
+                            require(manifestText == null) { "Gói plugin chứa manifest.json trùng lặp" }
                         }
                         val target = File(staging, name)
                         target.parentFile?.mkdirs()
@@ -281,7 +281,7 @@ class ToolRegistry(
                                 val read = zip.read(buffer)
                                 if (read < 0) break
                                 bytes += read
-                                require(bytes <= MAX_PACKAGE_BYTES) { "插件包超过大小限制" }
+                                require(bytes <= MAX_PACKAGE_BYTES) { "Gói plugin vượt giới hạn kích thước" }
                                 output.write(buffer, 0, read)
                                 reportProgress()
                             }
@@ -290,12 +290,12 @@ class ToolRegistry(
                     }
                 }
                 reportProgress(force = true)
-            } ?: error("无法读取插件包")
-            onProgress(LocalPluginImportProgress(totalBytes ?: bytes, totalBytes, "正在校验 manifest.json"))
-            val parsed = json.decodeFromString<ToolManifest>(manifestText ?: error("插件包缺少 manifest.json"))
+            } ?: error("Không thể đọc gói plugin")
+            onProgress(LocalPluginImportProgress(totalBytes ?: bytes, totalBytes, "Đang kiểm tra manifest.json"))
+            val parsed = json.decodeFromString<ToolManifest>(manifestText ?: error("Gói plugin thiếu manifest.json"))
             val manifest = parsed.copy(source = "LOCAL", offlineOnly = true, installMethod = "LOCAL_PACKAGE")
             ToolManifestValidator.validateAll(listOf(manifest))
-            onProgress(LocalPluginImportProgress(totalBytes ?: bytes, totalBytes, "正在保存插件"))
+            onProgress(LocalPluginImportProgress(totalBytes ?: bytes, totalBytes, "Đang lưu plugin"))
             val versionDir = File(localRoot, "${manifest.id}/${manifest.version}")
             // 纵深防御：ToolManifestValidator 已用白名单拒绝含 "/"、".." 的版本号，
             // 但落盘前仍做一次规范化包含性检查。versionDir 一旦逃出 localRoot，
@@ -303,7 +303,7 @@ class ToolRegistry(
             // 等于给了攻击者一个对应用私有目录的任意覆盖写原语。
             val canonicalLocalRoot = localRoot.canonicalFile.toPath()
             require(versionDir.canonicalFile.toPath().startsWith(canonicalLocalRoot)) {
-                "本地插件安装路径逃逸：${manifest.id}/${manifest.version}"
+                "Đường dẫn cài plugin cục bộ thoát ra ngoài: ${manifest.id}/${manifest.version}"
             }
             versionDir.parentFile?.mkdirs()
             // 同版本覆盖导入：离线包作者经常在不 bump 版本号的情况下重新打包
@@ -313,19 +313,19 @@ class ToolRegistry(
             // 影响已安装实例；下次安装自动使用新 payload。
             if (versionDir.exists()) {
                 val legacy = File(versionDir.parentFile, ".legacy-${manifest.version}-${System.nanoTime()}")
-                check(versionDir.renameTo(legacy)) { "无法替换已导入的同版本插件" }
+                check(versionDir.renameTo(legacy)) { "Không thể thay thế plugin cùng phiên bản đã nhập" }
                 if (!staging.renameTo(versionDir)) {
                     legacy.renameTo(versionDir)
-                    error("无法提交本地插件包")
+                    error("Không thể nộp gói plugin cục bộ")
                 }
                 legacy.deleteRecursively()
             } else {
-                check(staging.renameTo(versionDir)) { "无法提交本地插件包" }
+                check(staging.renameTo(versionDir)) { "Không thể nộp gói plugin cục bộ" }
             }
             committed = true
             AppResult.Success(manifest)
         } catch (throwable: Throwable) {
-            AppResult.Failure(AppError(ErrorCode.SECURITY, "本地插件导入失败：${throwable.message ?: "未知错误"}", throwable))
+            AppResult.Failure(AppError(ErrorCode.SECURITY, "Nhập plugin cục bộ thất bại: ${throwable.message ?: "未知错误"}", throwable))
         } finally {
             if (!committed) staging.deleteRecursively()
         }
@@ -378,11 +378,11 @@ class ToolRegistry(
         val response = httpClient.newCall(Request.Builder().url(url).build()).execute()
         response.use {
             if (!it.request.url.isHttps) {
-                throw RegistrySecurityException("工具清单请求被重定向到非 HTTPS 地址")
+                throw RegistrySecurityException("Yêu cầu danh sách công cụ bị chuyển hướng tới địa chỉ không phải HTTPS")
             }
             check(it.isSuccessful) { "HTTP ${it.code}" }
             val body = it.body
-            check(body.contentLength() <= MAX_REGISTRY_BYTES) { "工具清单超过大小限制" }
+            check(body.contentLength() <= MAX_REGISTRY_BYTES) { "Danh sách công cụ vượt giới hạn dung lượng" }
             val output = ByteArrayOutputStream(minOf(body.contentLength().coerceAtLeast(0), MAX_REGISTRY_BYTES).toInt())
             body.byteStream().use { input ->
                 val buffer = ByteArray(16 * 1024)
@@ -390,7 +390,7 @@ class ToolRegistry(
                     val read = input.read(buffer)
                     if (read < 0) break
                     if (output.size() + read > MAX_REGISTRY_BYTES) {
-                        throw IllegalStateException("工具清单超过大小限制")
+                        throw IllegalStateException("Danh sách công cụ vượt giới hạn dung lượng")
                     }
                     output.write(buffer, 0, read)
                 }
@@ -412,11 +412,11 @@ class ToolRegistry(
         val publicKey = runCatching {
             KeyFactory.getInstance("Ed25519")
                 .generatePublic(X509EncodedKeySpec(Base64.decode(publicKeyBase64, Base64.DEFAULT)))
-        }.getOrElse { throw RegistrySecurityException("工具清单公钥无效", it) }
+        }.getOrElse { throw RegistrySecurityException("Public key manifest công cụ không hợp lệ", it) }
         Signature.getInstance("Ed25519").apply {
             initVerify(publicKey)
             update(payload)
-            if (!verify(signatureBytes)) throw RegistrySecurityException("工具清单签名校验失败")
+            if (!verify(signatureBytes)) throw RegistrySecurityException("Kiểm tra chữ ký manifest công cụ thất bại")
         }
     }
 
@@ -430,8 +430,8 @@ class ToolRegistry(
             json.decodeFromString<List<ToolManifest>>(text)
         }.getOrElse {
             val document = json.decodeFromString<ToolRegistryDocument>(text)
-            require(document.schemaVersion == 1) { "不支持的 Registry Schema：${document.schemaVersion}" }
-            require(document.version > 0) { "Registry 版本必须为正数" }
+            require(document.schemaVersion == 1) { "Registry Schema không được hỗ trợ: ${document.schemaVersion}" }
+            require(document.version > 0) { "Phiên bản Registry phải là số dương" }
             document.tools
         }
         return ToolManifestValidator.validateAll(manifests)
@@ -451,7 +451,7 @@ class ToolRegistry(
                 persistedFile.toPath(),
                 StandardCopyOption.REPLACE_EXISTING,
             )
-        }.getOrElse { throw IllegalStateException("无法提交工具清单", it) }
+        }.getOrElse { throw IllegalStateException("Không thể nộp danh sách công cụ", it) }
     }
 
     companion object {

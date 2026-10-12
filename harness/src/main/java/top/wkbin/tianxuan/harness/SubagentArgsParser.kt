@@ -12,7 +12,7 @@ object SubagentArgsParser {
 
     fun parse(
         args: JsonObject,
-        defaultTaskName: String = "子任务",
+        defaultTaskName: String = "Nhiệm vụ con",
         maxTasks: Int = DEFAULT_MAX_TASKS,
     ): List<SubagentTaskSpec> {
         val nested = args["subagents"]

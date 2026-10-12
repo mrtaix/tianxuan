@@ -94,7 +94,7 @@ fun EnvironmentVariableSettingsScreen(
         RuntimeAlertDialog(
             onDismissRequest = { deleteKey = null },
             title = { Text("删除环境变量") },
-            text = { Text("确定删除 ${entry.key}？") },
+            text = { Text("Chắc chắn xóa ${entry.key}?") },
             confirmButton = { TextButton(onClick = { viewModel.deleteEnvironmentVariable(entry.id); deleteKey = null }) { Text("删除") } },
             dismissButton = { TextButton(onClick = { deleteKey = null }) { Text("取消") } },
         )
@@ -126,8 +126,8 @@ fun EnvironmentVariableSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Shield,
-                        title = "Agent 隐私遮盖",
-                        subtitle = "仅遮盖发送给 Agent 和写入对话的变量值；本页仍显示明文",
+                        title = "Che giấu riêng tư Agent",
+                        subtitle = "Chỉ che giá trị biến gửi cho Agent và ghi vào hội thoại; trang này vẫn hiển thị văn bản thuần",
                         trailing = { Switch(checked = privacyMode, onCheckedChange = viewModel::setEnvironmentPrivacyMode) },
                     )
                 }
@@ -143,12 +143,12 @@ fun EnvironmentVariableSettingsScreen(
                         RuntimeIcon(RuntimeIconName.Alert, tint = MaterialTheme.colorScheme.tertiary)
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                "警告 · 修改环境变量可能导致运行异常",
+                                "Cảnh báo · Sửa đổi biến môi trường có thể gây lỗi chạy",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                             )
                             Text(
-                                "错误覆盖 JAVA_HOME、GRADLE_HOME、LANG 等变量，可能使终端、构建工具或插件无法启动。请只修改你明确了解用途的变量；TianXuan 运行时关键变量会被强制保护。",
+                                "Ghi đè sai các biến như JAVA_HOME, GRADLE_HOME, LANG có thể khiến terminal, công cụ xây dựng hoặc plugin không khởi động được. Vui lòng chỉ sửa các biến mà bạn hiểu rõ mục đích; các biến quan trọng của runtime Thiên Huyền sẽ được bảo vệ cưỡng chế.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                             )
@@ -158,7 +158,7 @@ fun EnvironmentVariableSettingsScreen(
             }
             item {
                 Text(
-                    "用户变量保存在 $activeDistroId 的 Linux /etc/profile.d 中，并在下一次命令或终端会话启动时生效。值以受限文件权限保存。",
+                    "Biến người dùng được lưu trong /etc/profile.d của Linux thuộc $activeDistroId, và có hiệu lực ở lần chạy lệnh hoặc phiên terminal kế tiếp. Giá trị được lưu với quyền tệp hạn chế.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -177,8 +177,8 @@ fun EnvironmentVariableSettingsScreen(
             }
             item {
                 SectionHeader(
-                    title = "用户变量",
-                    subtitle = "可编辑的 TianXuan 用户配置",
+                    title = "Biến người dùng",
+                    subtitle = "Cấu hình người dùng TianXuan có thể chỉnh sửa",
                     trailing = { Text(entries.size.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 )
             }
@@ -189,7 +189,7 @@ fun EnvironmentVariableSettingsScreen(
                     }
                 }
             } else if (entries.isEmpty()) {
-                item { RuntimeCard(modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text("暂无用户变量", style = MaterialTheme.typography.titleMedium); Text("点击右上角 + 添加", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
+                item { RuntimeCard(modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text("Chưa có biến người dùng", style = MaterialTheme.typography.titleMedium); Text("点击右上角 + 添加", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
             } else {
                 items(entries, key = { it.id }) { entry ->
                     RuntimeCard(
@@ -215,7 +215,7 @@ fun EnvironmentVariableSettingsScreen(
                                     )
                                 }
                                 Text(
-                                    values[entry.key].orEmpty().ifEmpty { "（空值）" },
+                                    values[entry.key].orEmpty().ifEmpty { "(Giá trị rỗng)" },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontFamily = FontFamily.Monospace,
@@ -231,8 +231,8 @@ fun EnvironmentVariableSettingsScreen(
             }
             item {
                 SectionHeader(
-                    title = "当前有效环境",
-                    subtitle = "新命令实际可见的变量与值",
+                    title = "Môi trường hiệu lực hiện tại",
+                    subtitle = "Biến và giá trị thực tế mà lệnh mới nhìn thấy",
                     trailing = { Text(effectiveEntries.size.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 )
             }
@@ -245,7 +245,7 @@ fun EnvironmentVariableSettingsScreen(
             } else if (effectiveEntries.isEmpty()) {
                 item {
                     RuntimeCard(modifier = Modifier.fillMaxWidth()) {
-                        Text("暂无可读取的运行时环境", modifier = Modifier.padding(20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Chưa có môi trường runtime nào có thể đọc", modifier = Modifier.padding(20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             } else {
@@ -257,7 +257,7 @@ fun EnvironmentVariableSettingsScreen(
                             SettingsRow(
                                 icon = RuntimeIconName.Key,
                                 title = entry.key,
-                                subtitle = entry.value.ifEmpty { "（空值）" },
+                                subtitle = entry.value.ifEmpty { "(Giá trị rỗng)" },
                                 onClick = {
                                     if (managedEntry == null) {
                                         openEnvironmentEditor(null, entry.key, entry.value)
@@ -295,9 +295,9 @@ private fun EnvironmentVariableEditor(
                     RuntimeIcon(RuntimeIconName.Alert, Modifier.size(18.dp), MaterialTheme.colorScheme.tertiary)
                     Text(
                         if (entry == null && initialKey.isNotBlank()) {
-                            "这会在用户配置中覆盖 Linux 当前值。错误配置可能导致相关命令无法运行。"
+                            "Điều này sẽ ghi đè giá trị Linux hiện tại trong cấu hình người dùng. Cấu hình sai có thể khiến các lệnh liên quan không chạy được."
                         } else {
-                            "修改后会影响新启动的命令与终端，请确认变量名称和值正确。"
+                            "Sau khi sửa sẽ ảnh hưởng tới lệnh và terminal mới khởi động, hãy xác nhận tên biến và giá trị đúng."
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.tertiary,

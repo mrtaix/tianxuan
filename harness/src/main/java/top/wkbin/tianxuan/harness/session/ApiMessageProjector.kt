@@ -86,9 +86,9 @@ object ApiMessageProjector {
                             i++
                         }
                         is ToolResult -> {
-                            val name = toolNames[message.toolCallId] ?: "工具"
-                            val status = if (message.success) "成功" else "失败"
-                            val content = "【工具 $name 执行结果·$status】\n${message.output}"
+                            val name = toolNames[message.toolCallId] ?: "Công cụ"
+                            val status = if (message.success) "Thành công" else "失败"
+                            val content = "[Công cụ $name kết quả thực thi·$status]\n${message.output}"
                             add(ApiMessage(role = "user", content = content))
                             visionBridgeMessage(message, visionEnabled)?.let { add(it) }
                             i++
@@ -178,7 +178,7 @@ object ApiMessageProjector {
         if (!visionEnabled || !message.success) return null
         return ApiMessage(
             role = "user",
-            content = "[read 工具读取的图片，已作为多模态图像提供]",
+            content = "[Ảnh do công cụ read đọc, đã cung cấp dưới dạng ảnh đa phương thức]",
             imageUrls = listOf(payload),
         )
     }

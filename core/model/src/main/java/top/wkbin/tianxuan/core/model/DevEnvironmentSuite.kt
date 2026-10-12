@@ -28,7 +28,7 @@ data class PluginBundle(
     val summary: String,
     val description: String,
     val iconName: String = "Code",
-    val category: String = "开发套件",
+    val category: String = "Bộ công cụ phát triển",
     val components: List<PluginComponent> = emptyList(),
 )
 
@@ -42,16 +42,16 @@ object BuiltinPluginBundles {
     val bundles: List<PluginBundle> = listOf(
         PluginBundle(
             id = "android-suite",
-            name = "Android & 移动全栈开发套件",
-            summary = "Gradle 8.14、ARM64 AAPT2/NDK 与可选 Flutter、逆向审计",
-            description = "集成 OpenJDK 17、Gradle 8.14.2、固定摘要的 ARM64 AAPT2 与 lzhiyong/termux-ndk，并提供可选 Flutter、C/C++ 和 JADX/APKTool 工具链。构建期禁止自动下载官方 x86_64 主机工具。",
+            name = "Bộ công cụ phát triển full-stack Android & di động",
+            summary = "Gradle 8.14, AAPT2/NDK ARM64 và Flutter tùy chọn, kiểm toán dịch ngược",
+            description = "Tích hợp OpenJDK 17, Gradle 8.14.2, ARM64 AAPT2 với digest cố định và lzhiyong/termux-ndk, đồng thời cung cấp các chuỗi công cụ tùy chọn Flutter, C/C++ và JADX/APKTool. Trong khi xây dựng cấm tự động tải công cụ máy chủ x86_64 chính thức.",
             iconName = "Android",
-            category = "移动开发",
+            category = "Phát triển di động",
             components = listOf(
                 PluginComponent(
                     id = "android-core",
-                    name = "Android 核心基础环境",
-                    description = "OpenJDK 17、Android 34、Build Tools 35、Gradle 8.14.2、不可变 ARM64 AAPT2、lzhiyong NDK r29、ADB 与国内 Maven 镜像，全部在装配期一次性就位",
+                    name = "Môi trường cơ sở cốt lõi Android",
+                    description = "OpenJDK 17, Android 34, Build Tools 35, Gradle 8.14.2, ARM64 AAPT2 bất biến, lzhiyong NDK r29, ADB và mirror Maven trong nước, tất cả sẵn sàng một lần trong khi lắp ráp",
                     isRequired = true,
                     // aapt/zipalign/apksigner come from the downloaded Google
                     // Build-Tools archive. Installing Ubuntu's similarly named
@@ -65,8 +65,8 @@ object BuiltinPluginBundles {
                 ),
                 PluginComponent(
                     id = "flutter",
-                    name = "Flutter 跨平台开发环境",
-                    description = "Flutter ARM64 SDK、Dart 运行时与 Android APK 构建依赖（需要 Android 核心基础环境）",
+                    name = "Môi trường phát triển đa nền tảng Flutter",
+                    description = "Flutter ARM64 SDK, runtime Dart và phụ thuộc build APK Android (cần môi trường cơ sở lõi Android)",
                     isRequired = false,
                     // Archives are extracted by the setup script (Python/BusyBox);
                     // Ubuntu's unzip package is unreliable in PRoot during dpkg
@@ -79,8 +79,8 @@ object BuiltinPluginBundles {
                 ),
                 PluginComponent(
                     id = "android-ndk",
-                    name = "C/C++ & NDK 原生构建链",
-                    description = "lzhiyong/termux-ndk r29 Linux AArch64 工具链，以及 CMake、Ninja、GCC/G++、Clang 等原生构建辅助工具",
+                    name = "Chuỗi build native C/C++ & NDK",
+                    description = "Chuỗi công cụ lzhiyong/termux-ndk r29 Linux AArch64, cùng CMake, Ninja, GCC/G++, Clang và các công cụ hỗ trợ build native khác",
                     isRequired = false,
                     aptPackages = listOf("cmake", "ninja-build", "gcc", "g++", "clang", "make", "pkg-config", "util-linux"),
                     postInstallSteps = listOf(
@@ -90,8 +90,8 @@ object BuiltinPluginBundles {
                 ),
                 PluginComponent(
                     id = "android-re",
-                    name = "Android 逆向分析与代码审计",
-                    description = "APKTool 资源回编译、JADX-CLI Java 源码反编译器与内置 APK 逆向 MCP 服务（python3 为其运行依赖）",
+                    name = "Phân tích đảo ngược và kiểm toán mã Android",
+                    description = "Biên dịch lại tài nguyên APKTool, trình dịch ngược mã nguồn Java JADX-CLI và dịch vụ MCP đảo ngược APK tích hợp (python3 là phụ thuộc chạy của nó)",
                     isRequired = false,
                     aptPackages = listOf("openjdk-17-jdk-headless", "curl", "apktool", "python3"),
                     postInstallSteps = listOf(
@@ -101,8 +101,8 @@ object BuiltinPluginBundles {
                 ),
                 PluginComponent(
                     id = "rust-dev",
-                    name = "Rust 系统与 Android JNI 交叉编译链",
-                    description = "Rust 1.85+ ARM64 独立开发工具链、Cargo 包管理、Android ARM64 原生架构交叉编译标准库及 NDK Clang 链接器绑定",
+                    name = "Chuỗi biên dịch chéo hệ thống Rust và Android JNI",
+                    description = "Chuỗi công cụ phát triển độc lập Rust 1.85+ ARM64, quản lý gói Cargo, thư viện chuẩn biên dịch chéo kiến trúc gốc Android ARM64 và liên kết trình link NDK Clang",
                     isRequired = false,
                     aptPackages = listOf("curl", "ca-certificates", "build-essential"),
                     postInstallSteps = listOf(
@@ -114,16 +114,16 @@ object BuiltinPluginBundles {
         ),
         PluginBundle(
             id = "code-search-suite",
-            name = "代码检索与终端效率套件",
-            summary = "rg、fd、fzf、bat 代码检索四件套",
-            description = "集成 ripgrep 全文检索、fd 文件查找、fzf 模糊筛选与 bat 语法高亮预览，并统一 Debian/Ubuntu 下的命令名称。",
+            name = "Bộ công cụ truy xuất mã và hiệu suất terminal",
+            summary = "Bộ tứ truy xuất mã rg, fd, fzf, bat",
+            description = "Tích hợp tìm kiếm toàn văn ripgrep, tìm tệp fd, lọc mờ fzf và xem trước tô sáng cú pháp bat, đồng thời thống nhất tên lệnh trên Debian/Ubuntu.",
             iconName = "Search",
-            category = "开发效率",
+            category = "Hiệu suất phát triển",
             components = listOf(
                 PluginComponent(
                     id = "code-search-toolkit",
-                    name = "代码检索四件套 (rg / fd / fzf / bat)",
-                    description = "高速全文检索、文件发现、交互式模糊筛选与带语法高亮的源码预览",
+                    name = "Bộ tứ truy xuất mã (rg / fd / fzf / bat)",
+                    description = "Tìm kiếm toàn văn tốc độ cao, phát hiện tệp, lọc mờ tương tác và xem trước mã nguồn có tô sáng cú pháp",
                     isRequired = true,
                     aptPackages = listOf("ripgrep", "fd-find", "fzf", "bat"),
                     checkCommand = "(command -v rg >/dev/null 2>&1 || test -x /opt/tianxuan/bin/rg) && (command -v fd >/dev/null 2>&1 || command -v fdfind >/dev/null 2>&1 || test -x /usr/local/bin/fd) && (command -v fzf >/dev/null 2>&1 || test -x /usr/bin/fzf) && (command -v bat >/dev/null 2>&1 || command -v batcat >/dev/null 2>&1 || test -x /usr/local/bin/bat)",
@@ -132,24 +132,24 @@ object BuiltinPluginBundles {
         ),
         PluginBundle(
             id = "python-suite",
-            name = "Python & AI 开发者套件",
-            summary = "Python 3 运行时、pip、venv 虚拟环境与 AI 科学计算编译依赖",
-            description = "包含完整的 Python 3 运行环境、pip 包管理、venv 隔离环境以及编译 Python C 扩展轮子所需的 build-essential 基础库。",
+            name = "Bộ công cụ phát triển Python & AI",
+            summary = "Runtime Python 3, pip, môi trường ảo venv và phụ thuộc biên dịch tính toán khoa học AI",
+            description = "Bao gồm môi trường chạy Python 3 đầy đủ, quản lý gói pip, môi trường cách ly venv cùng thư viện nền build-essential cần để biên dịch wheel mở rộng Python C.",
             iconName = "Code",
-            category = "AI 与脚本",
+            category = "AI và script",
             components = listOf(
                 PluginComponent(
                     id = "python-core",
-                    name = "Python 3 核心运行基座",
-                    description = "Python 3 解释器、pip 包管理器与 venv 虚拟环境工具",
+                    name = "Nền tảng chạy lõi Python 3",
+                    description = "Trình thông dịch Python 3, trình quản lý gói pip và công cụ môi trường ảo venv",
                     isRequired = true,
                     aptPackages = listOf("python3", "python3-pip", "python3-venv"),
                     checkCommand = "command -v python3 && command -v pip3",
                 ),
                 PluginComponent(
                     id = "python-ai-dev",
-                    name = "AI 科学计算与 C 扩展编译库",
-                    description = "python3-dev、build-essential、pkg-config 与底层系统头文件",
+                    name = "Thư viện tính toán khoa học AI và biên dịch mở rộng C",
+                    description = "python3-dev, build-essential, pkg-config và các header hệ thống tầng thấp",
                     isRequired = false,
                     aptPackages = listOf("python3-dev", "build-essential", "pkg-config", "libffi-dev"),
                     checkCommand = "dpkg -s python3-dev 2>/dev/null || test -f /usr/include/python3*/Python.h",
@@ -158,24 +158,24 @@ object BuiltinPluginBundles {
         ),
         PluginBundle(
             id = "nodejs-suite",
-            name = "Node.js & Web 全栈套件",
-            summary = "Node.js 运行时、npm、pnpm 与现代前端全栈生态",
-            description = "集成 Node.js 现代 LTS 运行时、npm 包管理器，支持 pnpm 等现代包管理与 JavaScript / TypeScript 全栈开发。",
+            name = "Bộ công cụ full-stack Node.js & Web",
+            summary = "Runtime Node.js, npm, pnpm và hệ sinh thái full-stack frontend hiện đại",
+            description = "Tích hợp runtime Node.js LTS hiện đại, trình quản lý gói npm, hỗ trợ pnpm cùng các trình quản lý gói hiện đại và phát triển full-stack JavaScript / TypeScript.",
             iconName = "Globe",
-            category = "全栈开发",
+            category = "Phát triển full-stack",
             components = listOf(
                 PluginComponent(
                     id = "nodejs-core",
-                    name = "Node.js 核心运行时",
-                    description = "Node.js 运行时与 npm 包管理器",
+                    name = "Runtime cốt lõi Node.js",
+                    description = "Runtime Node.js và trình quản lý gói npm",
                     isRequired = true,
                     aptPackages = listOf("nodejs", "npm"),
                     checkCommand = "command -v node && command -v npm",
                 ),
                 PluginComponent(
                     id = "nodejs-pkg",
-                    name = "现代包管理器与编译加速 (pnpm / yarn)",
-                    description = "pnpm 与 yarn 高性能本地包缓存管理器",
+                    name = "Trình quản lý gói hiện đại và tăng tốc biên dịch (pnpm / yarn)",
+                    description = "Trình quản lý cache gói cục bộ hiệu năng cao pnpm và yarn",
                     isRequired = false,
                     postInstallSteps = listOf(
                         "/bin/sh /opt/tianxuan/scripts/setup_pnpm.sh",

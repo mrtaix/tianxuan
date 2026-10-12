@@ -41,7 +41,7 @@ class TianXuanWebChatAgentGateway(
         sessions.upsert(
             HarnessSessionEntity(
                 id = id,
-                title = title.trim().ifBlank { "新会话" },
+                title = title.trim().ifBlank { "Phiên mới" },
                 createdAt = now,
                 updatedAt = now,
                 modelId = defaultModel?.id,
@@ -115,7 +115,7 @@ class TianXuanWebChatAgentGateway(
                     putJsonArray("attachments") {
                         message.imageUrls.forEachIndexed { index, url ->
                             add(buildJsonObject {
-                                put("name", "图片 ${index + 1}")
+                                put("name", "Ảnh ${index + 1}")
                                 put("dataUrl", url)
                                 put("isImage", true)
                             })
@@ -154,7 +154,7 @@ class TianXuanWebChatAgentGateway(
             type = 2,
             content = buildJsonObject {
                 put("type", "agent_tool_summary")
-                put("toolTitle", "工具结果")
+                put("toolTitle", "Kết quả công cụ")
                 put("toolType", "tool")
                 put("status", if (message.success) "success" else "error")
                 put("output", message.output)
@@ -182,7 +182,7 @@ class TianXuanWebChatAgentGateway(
             type = 2,
             content = buildJsonObject {
                 put("type", "agent_tool_summary")
-                put("toolTitle", "技能建议: ${message.skillName}")
+                put("toolTitle", "Gợi ý kỹ năng: ${message.skillName}")
                 put("toolType", "skill_suggestion")
                 put("status", message.status)
                 put("action", message.action)
