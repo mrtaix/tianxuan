@@ -23,11 +23,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Set up JDKs (17 for compile toolchain, 25 for Gradle daemon)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          # Gradle daemon 由 gradle/gradle-daemon-jvm.properties 固定 toolchainVersion=25，
+          # 而工程编译 toolchain 走 jvmToolchain(17)/VERSION_17。两者都必须在 runner 上存在，
+          # 否则 daemon 启动即报 "Cannot find a Java installation ... languageVersion=25"。
+          java-version: |
+            17
+            25
           cache: 'gradle'
 
       - name: Set up Android SDK
@@ -44,7 +49,14 @@ jobs:
         env:
           TIANXUAN_DEV_BUILD: "1"
         run: |
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          # gradle.properties 里 org.gradle.java.installations.paths 固定的是沙盒机的本地路径
+          # (/usr/lib/jvm/java-17-openjdk-amd64 等)，在 GitHub runner 上并不存在，且 auto-detect=false，
+          # 导致 Gradle daemon (toolchainVersion=25) 与编译 toolchain(17) 都找不到 JDK。
+          # 这里用 setup-java 导出的 JAVA_HOME_*_X64 覆盖安装路径，指向 runner 上真实的 JDK。
+          ./gradlew assembleDebug --no-daemon --stacktrace \
+            -Dorg.gradle.java.installations.auto-detect=false \
+            -Dorg.gradle.java.installations.auto-download=false \
+            -Dorg.gradle.java.installations.paths="${JAVA_HOME_17_X64},${JAVA_HOME_25_X64}" 
 
       - name: Identify and Rename Output APK
         run: |
