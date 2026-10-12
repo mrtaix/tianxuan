@@ -58,7 +58,7 @@ val tianxuanLeakCanary: Boolean = providers.gradleProperty("tianxuan.leakcanary"
     ?: false
 
 // TianXuanDev 双包构建开关：CI（.github/workflows/tianxuandev-build.yml）设 TIANXUAN_DEV_BUILD=1 时，
-// 产出独立预览包 top.wkbin.tianxuan.dev / 应用名 TianXuanDev / 版本后缀 -dev，
+// 产出独立预览包 com.mvibe.mobi / 应用名 Mvibe / 版本后缀 -dev，
 // 与正式版（top.wkbin.tianxuan）及本地调试包（top.wkbin.tianxuan.debug）完全共存互不干扰。
 val tianXuanDevBuild = System.getenv("TIANXUAN_DEV_BUILD") == "1"
 
@@ -75,13 +75,13 @@ extensions.configure<ApplicationExtension> {
     ndkVersion = "30.0.15729638"
 
     defaultConfig {
-        applicationId = if (tianXuanDevBuild) "top.wkbin.tianxuan.dev" else "top.wkbin.tianxuan"
+        applicationId = if (tianXuanDevBuild) "com.mvibe.mobi" else "top.wkbin.tianxuan"
         minSdk = 29
         targetSdk = 37
         versionCode = appVersionCode
         versionName = appVersionName
-        // 应用名统一走 manifest placeholder：TianXuanDev 构建显示 "TianXuanDev"，其余显示 "天玄"。
-        manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "TianXuanDev" else "天玄"
+        // 应用名统一走 manifest placeholder：Mvibe 构建显示 "Mvibe"，其余显示 "天玄"。
+        manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "Mvibe" else "天玄"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += "arm64-v8a"
@@ -143,7 +143,7 @@ extensions.configure<ApplicationExtension> {
         debug {
             // TianXuanDev 双包构建：包名与应用名已在 defaultConfig 按 tianXuanDevBuild 分流，
             // 此处只控制后缀——本地调试包保持 top.wkbin.tianxuan.debug/-debug，
-            // TianXuanDev 预览包（top.wkbin.tianxuan.dev）不再叠加额外后缀，版本后缀为 -dev。
+            // Mvibe 预览包（com.mvibe.mobi）不再叠加额外后缀，版本后缀为 -dev。
             if (!tianXuanDevBuild) {
                 applicationIdSuffix = ".debug"
             }
@@ -153,7 +153,7 @@ extensions.configure<ApplicationExtension> {
             }
         }
         release {
-            manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "TianXuanDev" else "天玄"
+            manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "Mvibe" else "天玄"
             // 内测阶段不开R8 混淆与资源压缩。
             //
             // 关闭的是「防反编译」，不是签名：签名是 Android 的安装前提，

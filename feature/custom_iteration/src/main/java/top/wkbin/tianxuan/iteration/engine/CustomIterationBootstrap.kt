@@ -26,6 +26,47 @@ object CustomIterationBootstrap {
     const val WORKSPACE_NAME = "custom_tianxuan"
     const val OFFICIAL_REPO: String = TIANXUAN_OFFICIAL_REPO
 
+    /**
+     * 双包共存身份：自定义迭代（TIANXUAN_DEV_BUILD=1）产出的预览包标识。
+     *
+     * 这组常量是「唯一真源」里对人类可读的那一份镜像——真正决定构建产物的是
+     * `app/build.gradle.kts` 的 `tianXuanDevBuild` 分支。两边必须保持一致：
+     * 若日后改了 build 脚本却忘了这里，单元测试 CustomIterationIdentityTest 会红，
+     * 以此逼出「只改一处」的回退。
+     */
+    const val DEV_APPLICATION_ID: String = "com.mvibe.mobi"
+    const val DEV_APP_LABEL: String = "Mvibe"
+
+    /** 正式版包名——预览包必须与之不同，才能共存安装、互不覆盖。 */
+    const val OFFICIAL_APPLICATION_ID: String = "top.wkbin.tianxuan"
+
+    /**
+     * 校验预览包标识是否满足共存前提：
+     * 1. applicationId 为合法 reverse-DNS（至少两段、仅含 [a-z0-9_] 且不以数字开头的段）；
+     * 2. 与正式版包名不相等（否则会覆盖安装、抢占无障碍/输入法权限）；
+     * 3. 应用名非空。
+     *
+     * 返回 null 表示通过；否则返回人类可读的失败原因（供日志/UI 使用）。
+     */
+    fun validateDevIdentity(
+        applicationId: String = DEV_APPLICATION_ID,
+        appLabel: String = DEV_APP_LABEL,
+    ): String? {
+        if (appLabel.isBlank()) return "应用名不能为空"
+        if (applicationId == OFFICIAL_APPLICATION_ID) {
+            return "预览包包名不能与正式版相同（$OFFICIAL_APPLICATION_ID），否则无法共存"
+        }
+        val segments = applicationId.split('.')
+        if (segments.size < 2) return "包名至少需要两段（reverse-DNS），实际为 \"$applicationId\""
+        val segmentPattern = Regex("^[a-z][a-z0-9_]*$")
+        for (seg in segments) {
+            if (!segmentPattern.matches(seg)) {
+                return "包名段 \"$seg\" 非法：每段须以小写字母开头，仅含 [a-z0-9_]"
+            }
+        }
+        return null
+    }
+
     const val BOOTSTRAP_PROMPT = """我准备在天玄（TianXuan）的手机 Linux 虚拟沙盒中进行 TianXuan 自定义迭代。
 
 请按以下步骤引导我：

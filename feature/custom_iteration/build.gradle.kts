@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "top.wkbin.tianxuan.feature.custom_iteration"
 }
+
+dependencies {
+    testImplementation(libs.junit)
+}
