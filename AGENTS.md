@@ -4,7 +4,7 @@
 
 ## 是什么
 
-Android 无 Root 下用 PRoot 跑 Linux 多发行版沙箱 + AI Agent Harness + 原生 PTY 终端。Kotlin 2.4 / Compose / Koin / Room / Navigation3，仅 `arm64-v8a`。当前版本 v0.36.0 — 已完成 DeepSeek Harness 全核心机制对齐（33 项增强，全部真实接入运行链路）。
+Android 无 Root 下用 PRoot 跑 Linux 多发行版沙箱 + AI Agent Harness + 原生 PTY 终端。Kotlin 2.4 / Compose / Koin / Room / Navigation3，仅 `arm64-v8a`。当前版本 v0.36.4 — 已完成 DeepSeek Harness 全核心机制对齐（33 项增强，全部真实接入运行链路），并完成多轮逐文件深挖修复（并发原子性、协程取消透传等）。
 
 ## 模块
 
