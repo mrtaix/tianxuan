@@ -63,6 +63,7 @@ class SubagentOrchestrator(
     private val fileAccess: WorkspaceFileAccess,
     private val providerClient: ProviderClient,
     private val logger: AppLogger,
+    private val subagentTaskDao: top.wkbin.tianxuan.core.database.SubagentTaskDao,
 ) {
     /**
      * Application-wide budget: a three-agent fan-out should actually run three lanes at once,
@@ -80,18 +81,32 @@ class SubagentOrchestrator(
         if (specs.isEmpty()) {
             return@withContext false to "未解析到有效的 subagents 任务列表，请检查参数"
         }
+
+        // 委派深度递归预算（对齐 DSH SessionHeader.delegationDepth）：
+        // 从父会话的持久化 delegationDepth 读取当前深度，超过预算拒绝创建子代理，
+        // 防止递归子代理无限深递导致资源耗尽。
+        val parentDepth = sessionDao.findById(parentSessionId)?.delegationDepth
+        if (!top.wkbin.tianxuan.harness.session.DelegationDepthGuard.canDelegate(parentDepth)) {
+            val current = parentDepth ?: 0
+            return@withContext false to
+                "已达到最大委派深度（当前 $current，上限 ${top.wkbin.tianxuan.harness.session.DelegationDepthGuard.MAX_DELEGATION_DEPTH}）。" +
+                "递归子代理会耗尽资源，本次没有启动任何子任务。请在当前会话内直接完成任务，或把结果汇总给上层智能体。"
+        }
+        val childDepth = top.wkbin.tianxuan.harness.session.DelegationDepthGuard.childDepth(parentDepth)
+
         val background = args["background"]?.jsonPrimitive?.booleanOrNull == true
         if (background) {
             return@withContext false to
                 "background=true 暂不可用：移动端后台子任务尚未接入持久批次恢复与前台服务保活。" +
                 "为避免应用退后台后任务静默丢失，本次没有启动任何子任务；请移除 background 并以前台模式重试。"
         }
-        runBatch(specs, parentSessionId)
+        runBatch(specs, parentSessionId, childDepth)
     }
 
     private suspend fun runBatch(
         specs: List<SubagentTaskSpec>,
         parentSessionId: String,
+        childDelegationDepth: Int? = null,
     ): Pair<Boolean, String> {
         return supervisorScope {
         val parentSession = sessionDao.findById(parentSessionId)
@@ -103,6 +118,34 @@ class SubagentOrchestrator(
             return@supervisorScope false to "当前没有启用的子智能体角色，请先在 Agent 设置中添加或启用角色"
         }
         val parentLeaf = laneManager.get(parentSessionId, "main")?.leafId
+
+        // 子代理谱系持久化（对齐 DSH SessionHeader.delegationDepth）：
+        // 子代理会话继承父会话的委派深度 + 1，并标记 origin=subagent 与 parentSessionId。
+        // childDepth 由 executeSubagents 传入（已由 DelegationDepthGuard 校验预算）。
+        for (spec in specs) {
+            val laneName = spec.taskId?.trim()?.takeIf { it.isNotBlank() }
+                ?: "subagent:${profileIndex.firstOrNull()?.id ?: "unknown"}:${java.util.UUID.randomUUID()}"
+            runCatching {
+                sessionDao.upsert(
+                    top.wkbin.tianxuan.core.database.HarnessSessionEntity(
+                        id = laneName,
+                        title = "子代理：${spec.taskName}",
+                        createdAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                        modelId = modelId,
+                        modelVariant = modelVariant,
+                        workspace = workspace,
+                        projectType = "",
+                        approvalMode = parentSession?.approvalMode ?: "request",
+                        runMode = parentSession?.runMode ?: "build",
+                        parentSessionId = parentSessionId,
+                        isSeeded = false,
+                        origin = "subagent",
+                        delegationDepth = childDelegationDepth,
+                    ),
+                )
+            }
+        }
 
         // 写租约协调：把任务按 write_paths 冲突切成若干"写不冲突"的波。
         // 同一波内的写路径互不相交 → 可并行（受 globalParallelism 约束）；跨波顺序执行。
@@ -254,6 +297,24 @@ class SubagentOrchestrator(
             profile = resolved
             laneName = "subagent:${profile.id}:${java.util.UUID.randomUUID()}"
             laneManager.create(parentSessionId, laneName, parentLeaf)
+            // 持久化子代理任务（对齐 DSH subagent descriptor）：进程被杀后可从 Room
+            // 识别 running 状态任务并恢复，而非依赖内存 LaneManager 丢失后无法续跑。
+            runCatching {
+                subagentTaskDao.upsert(
+                    top.wkbin.tianxuan.core.database.SubagentTaskEntity(
+                        id = laneName,
+                        sessionId = parentSessionId,
+                        laneName = laneName,
+                        taskName = spec.taskName,
+                        status = "running",
+                        description = spec.prompt.take(500),
+                        profileId = profile.id,
+                        modelId = modelId,
+                        modelVariant = modelVariant,
+                        currentStep = 0,
+                    ),
+                )
+            }
         }
         val readOnlyWriteIntent = spec.writePaths.isEmpty() && declaresWriteIntent(spec.prompt)
         val prompt = if (resumeLaneName != null) {
@@ -287,7 +348,7 @@ class SubagentOrchestrator(
             )
         }
         val laneLockKey = "$parentSessionId::$laneName"
-        val laneLock = resumeLaneLocks.getOrPut(laneLockKey) { Mutex() }
+        val laneLock = resumeLaneLocks.computeIfAbsent(laneLockKey) { Mutex() }
         if (!laneLock.tryLock()) {
             return SubagentExecutionOutcome(
                 spec = spec,
@@ -365,6 +426,16 @@ class SubagentOrchestrator(
                     claimAdjudication = adjudication,
                 )
             }
+        }
+        // 子代理任务完成时更新持久化状态（对齐 DSH durable descriptor 结算）
+        runCatching {
+            subagentTaskDao.updateStatus(
+                taskId = laneName,
+                status = if (outcome.isSuccess) "completed" else "failed",
+                currentStep = outcome.toolCallCount,
+                errorMessage = if (!outcome.isSuccess) outcome.summary.take(500) else null,
+                updatedAt = System.currentTimeMillis(),
+            )
         }
         return outcome
     }

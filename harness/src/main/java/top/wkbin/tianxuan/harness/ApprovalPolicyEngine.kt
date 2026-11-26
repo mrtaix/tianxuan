@@ -20,6 +20,8 @@ data class ApprovalDecision(
 /** Host-side policy. The model prompt is deliberately not part of this decision. */
 class ApprovalPolicyEngine(
     private val pathResolver: HarnessPathResolver,
+    /** 审批审计写入器（对齐 DSH user-approval）：approval/asked + approval/decided 事件。 */
+    private val approvalAuditWriter: top.wkbin.tianxuan.harness.events.ApprovalAuditWriter? = null,
 ) {
     /**
      * 内置 browser server 在工具 API 名里可能出现的 server 段集合：
@@ -143,7 +145,10 @@ class ApprovalPolicyEngine(
             HarnessTool.READ, HarnessTool.MEMORY, HarnessTool.PLAN, HarnessTool.SCRATCHPAD,
             HarnessTool.HISTORY_SEARCH, HarnessTool.HISTORY_READ, HarnessTool.SUBAGENT, HarnessTool.LOAD_RULE,
             HarnessTool.LOAD_SKILL, HarnessTool.RENDER_SURFACE, HarnessTool.COMPRESS, HarnessTool.ASK_USER,
-            HarnessTool.KNOWLEDGE, HarnessTool.KB_ADD, HarnessTool.KB_LIST ->
+            HarnessTool.KNOWLEDGE, HarnessTool.KB_ADD, HarnessTool.KB_LIST,
+            HarnessTool.GOAL_CREATE, HarnessTool.GOAL_PAUSE, HarnessTool.GOAL_RESUME,
+            HarnessTool.GOAL_COMPLETE, HarnessTool.GOAL_BLOCK, HarnessTool.GOAL_STATUS,
+            HarnessTool.GOAL_CLEAR, HarnessTool.BATCH ->
                 ApprovalDecision(false)
         }
     }
@@ -166,7 +171,10 @@ class ApprovalPolicyEngine(
         HarnessTool.READ, HarnessTool.MEMORY, HarnessTool.PLAN, HarnessTool.SCRATCHPAD,
         HarnessTool.HISTORY_SEARCH, HarnessTool.HISTORY_READ, HarnessTool.LOAD_RULE,
         HarnessTool.LOAD_SKILL, HarnessTool.COMPRESS, HarnessTool.ASK_USER,
-        HarnessTool.KNOWLEDGE, HarnessTool.KB_ADD, HarnessTool.KB_LIST -> null
+        HarnessTool.KNOWLEDGE, HarnessTool.KB_ADD, HarnessTool.KB_LIST,
+        HarnessTool.GOAL_CREATE, HarnessTool.GOAL_PAUSE, HarnessTool.GOAL_RESUME,
+        HarnessTool.GOAL_COMPLETE, HarnessTool.GOAL_BLOCK, HarnessTool.GOAL_STATUS,
+        HarnessTool.GOAL_CLEAR, HarnessTool.BATCH -> null
         HarnessTool.BASE -> if (isReadOnlyCommand(args["command"]?.jsonPrimitive?.content.orEmpty())) {
             null
         } else {
@@ -215,6 +223,13 @@ class ApprovalPolicyEngine(
         operationId: String? = null,
     ): AgentApprovalRequestEntity {
         val now = System.currentTimeMillis()
+        // 审批审计：记录 approval/asked 事件（对齐 DSH user-approval）
+        approvalAuditWriter?.logAsked(
+            sessionId = sessionId,
+            toolName = toolCall.rawToolName ?: toolCall.tool.name.lowercase(),
+            toolCallId = toolCall.id,
+            reason = decision.reason,
+        )
         return AgentApprovalRequestEntity(
             id = UUID.randomUUID().toString(),
             sessionId = sessionId,

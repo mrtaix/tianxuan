@@ -30,7 +30,16 @@ enum class HarnessTool {
     @SerialName("kb_search") KNOWLEDGE,
     @SerialName("kb_add") KB_ADD,
     @SerialName("kb_list") KB_LIST,
+    @SerialName("goal_create") GOAL_CREATE,
+    @SerialName("goal_pause") GOAL_PAUSE,
+    @SerialName("goal_resume") GOAL_RESUME,
+    @SerialName("goal_complete") GOAL_COMPLETE,
+    @SerialName("goal_block") GOAL_BLOCK,
+    @SerialName("goal_status") GOAL_STATUS,
+    @SerialName("goal_clear") GOAL_CLEAR,
+    @SerialName("batch") BATCH,
 }
+
 
 /**
  * Harness 会话消息。序列化格式即持久化格式（Room 存 payloadJson），

@@ -270,6 +270,8 @@ class OnboardingViewModel(
                         _pluginInstallProgress.value = event.message
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e // 取消必须透传
             } catch (e: Exception) {
                 // 忽略异常保证流程顺畅
             } finally {

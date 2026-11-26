@@ -8,6 +8,7 @@ import top.wkbin.tianxuan.harness.text.UnifiedDiffGenerator
 import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 data class WorkspaceEntry(
@@ -36,6 +37,32 @@ class WorkspaceFileAccess(
     private val globalRootCanonical: File? = null,
 ) {
     private val rootCanonical: File = root.absoluteFile.canonicalFile
+
+    /**
+     * 当前文件写效果策略（对齐 DSH SandboxMode）。
+     * 默认 [WORKSPACE_WRITE]（只允许写工作区内）。
+     * [READ_ONLY] 时所有写操作直接拒绝。
+     * [DANGER_FULL_ACCESS] 时放行工作区外写入。
+     */
+    @Volatile
+    var sandboxMode: top.wkbin.tianxuan.core.model.SandboxMode = top.wkbin.tianxuan.core.model.SandboxMode.WORKSPACE_WRITE
+
+    /**
+     * 文件版本守卫（对齐 DeepSeek Harness fs 模块）：read 时记录文件版本，
+     * write/edit 时校验版本未变，防止多 agent 并发写同一文件时静默覆盖。
+     * 版本 token = `size:lastModified`（简单可靠，文件被外部修改即变化）。
+     */
+    private val fileVersions = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    /** per-file 写互斥锁：同一文件的 read→edit→write 窗口串行化，防止交错。 */
+    private val fileLocks = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
+
+    private fun versionOf(file: File): String = "${file.length()}:${file.lastModified()}"
+
+    private fun lockFor(path: String): kotlinx.coroutines.sync.Mutex =
+        // computeIfAbsent 原子；getOrPut 是 get-then-put，并发首建同一路径会各得一把锁，
+        // 使 per-file 互斥与 stale-version 守卫失效。
+        fileLocks.computeIfAbsent(path) { kotlinx.coroutines.sync.Mutex() }
 
     suspend fun list(path: String): AppResult<List<WorkspaceEntry>> = withContext(Dispatchers.IO) {
         try {
@@ -74,7 +101,7 @@ class WorkspaceFileAccess(
                 "文件过大（${file.length()} 字节，上限 ${if (pagedSpillRead) MAX_HARNESS_ARTIFACT_BYTES else MAX_READ_BYTES}）。" +
                     "请用 base 执行 grep -n 定位关键行号，再用 read(path, offset, limit) 分段精读。"
             }
-            if (pagedSpillRead) {
+            val result = if (pagedSpillRead) {
                 AppResult.Success(readPagedLines(file, path, offset!!, limit!!))
             } else {
                 val content = file.readText(Charsets.UTF_8)
@@ -91,6 +118,11 @@ class WorkspaceFileAccess(
                     AppResult.Success(header + selected.joinToString("\n"))
                 }
             }
+            // 读取成功后记录文件版本（供 write/edit 的 stale-version 校验）
+            if (result is AppResult.Success) {
+                fileVersions[path] = versionOf(file)
+            }
+            result
         } catch (throwable: Throwable) {
             failure(path, throwable)
         }
@@ -114,31 +146,40 @@ class WorkspaceFileAccess(
     }
 
     suspend fun write(path: String, content: String): AppResult<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val contentBytes = content.toByteArray(Charsets.UTF_8).size
-            require(contentBytes <= MAX_WRITE_BYTES) { "内容过长（$contentBytes 字节，上限 $MAX_WRITE_BYTES）" }
-            val file = resolveWritable(path)
-            file.parentFile?.mkdirs()
-            val temporary = File(file.parentFile, ".${file.name}.tmp-${System.nanoTime()}")
-            try {
-                temporary.writeText(content, Charsets.UTF_8)
-                if (!temporary.renameTo(file)) {
-                    temporary.copyTo(file, overwrite = true)
-                    temporary.delete()
-                }
-            } finally {
-                temporary.delete()
-            }
-            AppResult.Success(Unit)
-        } catch (throwable: Throwable) {
-            failure(path, throwable)
-        }
+        lockFor(path).withLock { writeLocked(path, content) }
     }
 
-    /**
-     * Harness 内部产物写入：不经过模型 write 工具的 1 MiB 限制，但仍受工作区边界、
-     * 原子替换和独立 16 MiB 配额约束。仅供日志/子代理产物引流使用。
-     */
+    /** 已持 [lockFor] 锁时的落盘实现；与 write 共用，避免 Mutex 重入导致 edit 自死锁。 */
+    private fun writeLocked(path: String, content: String): AppResult<Unit> = try {
+        val contentBytes = content.toByteArray(Charsets.UTF_8).size
+        require(contentBytes <= MAX_WRITE_BYTES) { "内容过长（$contentBytes 字节，上限 $MAX_WRITE_BYTES）" }
+        val file = resolveWritable(path)
+        file.parentFile?.mkdirs()
+        // stale-version 守卫：已有记录且当前版本不一致（已被外部修改）时拒绝覆盖
+        fileVersions[path]?.let { recorded ->
+            if (recorded != versionOf(file)) {
+                return failure(path, IllegalStateException("文件已被外部修改（stale version），请重新 read 确认最新内容后再写。"))
+            }
+        }
+        val temporary = File(file.parentFile, ".${file.name}.tmp-${System.nanoTime()}")
+        try {
+            temporary.writeText(content, Charsets.UTF_8)
+            if (!temporary.renameTo(file)) {
+                // copy 兜底会跟随符号链接：写前重新 canonical 校验，封堵越界符号链接 TOCTOU
+                require(isInside(globalRootCanonical ?: rootCanonical, file.canonicalFile)) { "目标路径越界：${display(path)}" }
+                temporary.copyTo(file, overwrite = true)
+                temporary.delete()
+            }
+        } finally {
+            temporary.delete()
+        }
+        fileVersions[path] = versionOf(file)
+        AppResult.Success(Unit)
+    } catch (throwable: Throwable) {
+        failure(path, throwable)
+    }
+
+    /** Harness 内部产物写入：不受 write 工具的 1 MiB 限制，但同样受工作区边界与原子替换约束。 */
     internal suspend fun writeHarnessArtifact(path: String, content: String): AppResult<Unit> = withContext(Dispatchers.IO) {
         try {
             val bytes = content.toByteArray(Charsets.UTF_8)
@@ -172,31 +213,46 @@ class WorkspaceFileAccess(
      */
     suspend fun editDetailed(path: String, oldText: String, newText: String): AppResult<WorkspaceEditOutcome> =
         withContext(Dispatchers.IO) {
-            try {
-                require(oldText.isNotEmpty()) { "oldText 不能为空" }
-                val file = resolveWritable(path)
-                check(file.isFile) { "不是文件：${display(path)}" }
-                check(file.length() <= MAX_EDIT_BYTES) {
-                    "文件过大（${file.length()} 字节，上限 $MAX_EDIT_BYTES），请使用 base 的流式文本工具进行定点修改"
+            // per-file 互斥锁 + stale-version 守卫：防止并发 edit 交错覆盖
+            lockFor(path).withLock {
+                try {
+                    require(oldText.isNotEmpty()) { "oldText 不能为空" }
+                    val file = resolveWritable(path)
+                    check(file.isFile) { "不是文件：${display(path)}" }
+                    check(file.length() <= MAX_EDIT_BYTES) {
+                        "文件过大（${file.length()} 字节，上限 $MAX_EDIT_BYTES），请使用 base 的流式文本工具进行定点修改"
+                    }
+                    // stale-version 守卫：edit 前确认文件未被外部修改
+                    fileVersions[path]?.let { recorded ->
+                        if (recorded != versionOf(file)) {
+                            return@withLock failure(path, IllegalStateException("文件已被外部修改（stale version），请重新 read 确认最新内容后再编辑。"))
+                        }
+                    }
+                    val content = file.readText(Charsets.UTF_8)
+                    val result = TextReplacerEngine.replace(content, oldText, newText)
+                    // 已持 lockFor(path)，只能用不加锁的 writeLocked；调用 write 会重复取锁自死锁
+                    writeLocked(path, result.updated)
+                        .errorOrNull()?.let { throw it.cause ?: IllegalStateException(it.message) }
+                    AppResult.Success(
+                        WorkspaceEditOutcome(
+                            strategy = result.strategy,
+                            replacements = result.replacements,
+                            diff = UnifiedDiffGenerator.diff(content, result.updated, path.trim().trimStart('/')),
+                        ),
+                    )
+                } catch (throwable: Throwable) {
+                    failure(path, throwable)
                 }
-                val content = file.readText(Charsets.UTF_8)
-                val result = TextReplacerEngine.replace(content, oldText, newText)
-                write(path, result.updated)
-                    .errorOrNull()?.let { throw it.cause ?: IllegalStateException(it.message) }
-                AppResult.Success(
-                    WorkspaceEditOutcome(
-                        strategy = result.strategy,
-                        replacements = result.replacements,
-                        diff = UnifiedDiffGenerator.diff(content, result.updated, path.trim().trimStart('/')),
-                    ),
-                )
-            } catch (throwable: Throwable) {
-                failure(path, throwable)
             }
         }
 
     /** 解析路径并强制其位于工作区内；目录可以不存在（用于写入）。 */
     private fun resolveWritable(path: String): File {
+        // 沙箱模式校验（对齐 DSH sandbox 三级）：
+        // READ_ONLY 拒绝所有写；WORKSPACE_WRITE 只允许工作区内（默认行为，原有 resolve 校验）
+        if (sandboxMode == top.wkbin.tianxuan.core.model.SandboxMode.READ_ONLY) {
+            throw SecurityException("当前文件策略为只读（read-only），禁止写入：${display(path)}")
+        }
         val resolved = resolve(path)
             ?: throw IllegalArgumentException("路径越界：${display(path)}")
         if (resolved.exists() && resolved.isDirectory) {

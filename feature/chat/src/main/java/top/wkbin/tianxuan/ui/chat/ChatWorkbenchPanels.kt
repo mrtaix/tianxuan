@@ -317,15 +317,9 @@ internal fun BranchBrowserSheet(
                     BranchCard(branch, enabled = !running && !branch.isBusy, onClick = { onSwitch(branch) })
                 }
                 if (subagents.isNotEmpty()) {
-                    item(key = "branch_sheet_subagent_header") {
-                        SectionLabel(stringResource(R.string.chat_subagent_lanes), subagents.size)
-                    }
-                    items(subagents, key = ::branchUiKey) { branch ->
-                        BranchCard(
-                            branch = branch,
-                            enabled = branch.laneName != null,
-                            onClick = { onOpenSubagent(branch) },
-                        )
+                    item(key = "branch_sheet_subagent_board") {
+                        // 子代理并行看板：实时状态（运行/异常/空闲）+ 步数，点击展开泳道
+                        SubagentFleetBoard(subagents, onOpenSubagent)
                     }
                 }
             }
@@ -829,7 +823,7 @@ internal fun RuntimeTimelineSheet(
                 }
 
                 // 最新一轮在最上，组内按发生顺序链式展示；轮间以分隔线区隔。
-                items(rounds.asReversed()) { round ->
+                items(rounds.asReversed(), key = { it.key }) { round ->
                     RoundSection(round, onNavigateToMessage)
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
@@ -1445,6 +1439,18 @@ private fun eventVisual(event: HarnessEvent): EventVisual = when (event) {
         },
         "工序 ${event.stepId} · ${event.title}",
         event.resultSummary ?: "状态: ${event.status}",
+    )
+    is HarnessEvent.ApprovalAsked -> EventVisual(
+        RuntimeIconName.Shield,
+        MaterialTheme.colorScheme.tertiary,
+        "审批请求",
+        "${event.toolName}: ${event.reason}".takeIf { it.isNotBlank() } ?: event.toolName,
+    )
+    is HarnessEvent.ApprovalDecided -> EventVisual(
+        if (event.outcome == "ALLOWED_ONCE") RuntimeIconName.Check else RuntimeIconName.Stop,
+        if (event.outcome == "ALLOWED_ONCE") Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+        "审批结果",
+        event.outcome,
     )
 }
 

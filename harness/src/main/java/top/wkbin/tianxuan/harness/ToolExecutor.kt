@@ -89,6 +89,11 @@ class ToolExecutor(
     private val skillRepository: top.wkbin.tianxuan.core.database.AgentSkillRepository? = null,
     private val settingsDataStore: AgentPreferences? = null,
     private val knowledgeManager: top.wkbin.tianxuan.harness.knowledge.KnowledgeManager? = null,
+    private val goalManager: top.wkbin.tianxuan.harness.goal.GoalManager? = null,
+    private val repeatToolReminder: top.wkbin.tianxuan.harness.guard.RepeatToolReminder? = null,
+    private val spillPolicy: top.wkbin.tianxuan.harness.effects.SpillPolicy? = null,
+    private val ptcDispatchLogger: top.wkbin.tianxuan.harness.ptc.PtcDispatchLogger? = null,
+    private val skillRegistry: top.wkbin.tianxuan.harness.skill.SkillRegistry? = null,
 ) {
     suspend fun execute(
         toolCall: ToolCall,
@@ -100,6 +105,20 @@ class ToolExecutor(
         operationId: String? = null,
     ): ToolResult {
         val now = System.currentTimeMillis()
+
+        // 重复工具调用提醒（对齐 DSH guard/repeat-tool-reminder）：
+        // 检测连续相同工具+参数调用，阈值处注入提醒防止模型死循环。
+        // 在审批/执行之前检查——死循环检测属于安全守卫，不应被审批豁免。
+        repeatToolReminder?.check(sessionId, toolCall.tool, toolCall.args.toString())?.let { reminder ->
+            return ToolResult(
+                id = UUID.randomUUID().toString(),
+                createdAt = now,
+                toolCallId = toolCall.id,
+                success = false,
+                output = reminder,
+            )
+        }
+
         // ask_user 是向用户提问的动作本身，不走审批门控（策略引擎对它亦豁免）：
         // 校验参数 → 落一条 pending 请求（复用审批请求的暂停/恢复管道）→ 返回
         // awaitingApproval 让整轮暂停；UI 渲染问题卡，答案由 HarnessLoop.resolveQuestion
@@ -119,7 +138,7 @@ class ToolExecutor(
             return executeAskUser(toolCall, sessionId, workspace, operationId, now)
         }
         val toolMetadata = mutableMapOf<String, String>()
-        val outcome = try {
+        val outcome = runCatching {
             if (!bypassApproval && sessionId.isNotBlank()) {
                 val repository = approvalRepository
                 // 一次查询同时取审批模式与运行意图（两级：会话级优先，回落全局默认）。
@@ -205,10 +224,23 @@ class ToolExecutor(
                     )
                 }
             }
-            executeTool(toolCall.tool, toolCall.args, toolCall.rawToolName, sessionId, workspace, progressReporter, operationId, toolMetadata)
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (throwable: Throwable) {
+            // 工具调用超时强制（对齐 DSH guard/timeout-policy）：
+            // 对 shouldEnforce=true 的工具用 withTimeout 强制。
+            // 豁免 BASE/PROCESS/ASK_USER（自带超时或原生等待语义）。
+            if (top.wkbin.tianxuan.harness.guard.ToolTimeoutPolicy.shouldEnforce(toolCall.tool)) {
+                val timeoutMs = top.wkbin.tianxuan.harness.guard.ToolTimeoutPolicy.timeoutFor(toolCall.tool)
+                try {
+                    kotlinx.coroutines.withTimeout(timeoutMs) {
+                        executeTool(toolCall.tool, toolCall.args, toolCall.rawToolName, sessionId, workspace, progressReporter, operationId, toolMetadata)
+                    }
+                } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
+                    top.wkbin.tianxuan.harness.guard.ToolTimeoutPolicy.timeoutResult(toolCall.tool, timeoutMs)
+                }
+            } else {
+                executeTool(toolCall.tool, toolCall.args, toolCall.rawToolName, sessionId, workspace, progressReporter, operationId, toolMetadata)
+            }
+        }.getOrElse { throwable ->
+            if (throwable is CancellationException) throw throwable
             false to "工具执行异常：${throwable.message ?: throwable::class.simpleName}"
         }
         val (success, rawOutput) = outcome
@@ -227,13 +259,21 @@ class ToolExecutor(
             } ?: true,
         )
         val imagePayload = toolMetadata.remove("image_payload")
+        // Spill token 预算保留（对齐 DSH spill-policy）：
+        // 在截断之前应用——如果输出超长，先按 token 预算保留头尾+间隔标记，
+        // 再走原有 truncateOutput 落盘引流逻辑。两层正交：
+        // SpillPolicy 控制"进入模型上下文的 token 量"，
+        // truncateOutput + ToolOutputSpillStore 控制"工作区落盘上限"。
+        val spillAppliedOutput = spillPolicy?.run {
+            redactedOutput.let { apply(ToolResult(UUID.randomUUID().toString(), now, toolCall.id, success, it)) }
+        }?.output ?: redactedOutput
         return ToolResult(
             id = UUID.randomUUID().toString(),
             createdAt = now,
             toolCallId = toolCall.id,
             success = success,
             output = truncateOutput(
-                redactedOutput,
+                spillAppliedOutput,
                 toolCall.rawToolName ?: HarnessApiMapper.apiName(toolCall.tool),
                 if (workspace.isNotBlank()) fileAccess.withBase(workspace) else null,
             ),
@@ -260,9 +300,31 @@ class ToolExecutor(
         val spillPath = fileAccess?.let { ToolOutputSpillStore.spill(it, toolName, output) }
         // 差异化截断：命令/构建/日志保留尾部（报错在末尾），读取/搜索保留头部。
         val retention = ToolOutputRetention.forTool(toolName)
+        // 双段保留（对齐 DSH OutputLedger）：默认保留尾部 80% + 头部 20%，
+        // 确保关键上下文（命令开头参数）不丢失
         val kept = when (retention) {
-            OutputRetention.TAIL -> keepTailWholeLines(folded, TRUNCATE_KEEP_LENGTH)
-            OutputRetention.HEAD -> keepHeadWholeLines(folded, TRUNCATE_KEEP_LENGTH)
+            OutputRetention.TAIL -> {
+                val tailBudget = (TRUNCATE_KEEP_LENGTH * 4) / 5
+                val headBudget = TRUNCATE_KEEP_LENGTH / 5
+                val tail = keepTailWholeLines(folded, tailBudget)
+                val head = keepHeadWholeLines(folded, headBudget)
+                if (tail.length + head.length < folded.length) {
+                    head + "\n\n[... 中间内容已省略 ...]\n\n" + tail
+                } else {
+                    tail
+                }
+            }
+            OutputRetention.HEAD -> {
+                val headBudget = (TRUNCATE_KEEP_LENGTH * 4) / 5
+                val tailBudget = TRUNCATE_KEEP_LENGTH / 5
+                val head = keepHeadWholeLines(folded, headBudget)
+                val tail = keepTailWholeLines(folded, tailBudget)
+                if (head.length + tail.length < folded.length) {
+                    head + "\n\n[... 中间内容已省略 ...]\n\n" + tail
+                } else {
+                    head
+                }
+            }
         }
         val totalLines = output.count { it == '\n' } + 1
         val keptLines = kept.count { it == '\n' } + 1
@@ -392,6 +454,14 @@ class ToolExecutor(
             HarnessTool.KNOWLEDGE -> executeKnowledgeSearch(args)
             HarnessTool.KB_ADD -> executeKnowledgeAdd(args)
             HarnessTool.KB_LIST -> executeKnowledgeList()
+            HarnessTool.GOAL_CREATE -> executeGoalCreate(args)
+            HarnessTool.GOAL_PAUSE -> executeGoalPause()
+            HarnessTool.GOAL_RESUME -> executeGoalResume()
+            HarnessTool.GOAL_COMPLETE -> executeGoalComplete()
+            HarnessTool.GOAL_BLOCK -> executeGoalBlock(args)
+            HarnessTool.GOAL_STATUS -> executeGoalStatus()
+            HarnessTool.GOAL_CLEAR -> executeGoalClear()
+            HarnessTool.BATCH -> executeBatch(args, sessionId, workspace)
             HarnessTool.BUILD_SCRIPT -> buildScriptToolExecutor?.execute(args, workspace) ?: (false to "未初始化构建脚本管理器")
             HarnessTool.SUBAGENT -> if (rawToolName.equals("invoke_dual_agent", ignoreCase = true)) {
                 dualAgentCoordinator?.executeFromTool(args, sessionId, workspace) ?: (false to "未初始化双智能体编排器")
@@ -408,6 +478,19 @@ class ToolExecutor(
                 // 按需技能加载：目录（元数据）常驻系统提示，命中后由模型主动拉取
                 // 完整指导规则，避免全部正文常驻撑爆上下文。
                 val query = requireString(args, "name").trim().trimStart('/')
+
+                // 技能提供者注册表（对齐 DSH skill registry）：优先从 SkillRegistry 查找，
+                // 未命中时回退到 skillRepository（旧路径），保证向后兼容。
+                if (skillRegistry != null) {
+                    val registryMatch = runCatching {
+                        skillRegistry?.get(query, top.wkbin.tianxuan.harness.skill.SkillViewOptions())
+                    }.getOrNull()
+                    if (registryMatch != null) {
+                        return true to "【技能已加载：${registryMatch.summary.name}】（来源：${registryMatch.summary.provider}）\n" +
+                            registryMatch.content.trim()
+                    }
+                }
+
                 val skills = skillRepository?.activeSkills?.first().orEmpty()
                 if (skills.isEmpty()) {
                     false to "当前没有已启用的技能。请提示用户到「设置 → 智能体」启用技能后重试。"
@@ -1575,6 +1658,8 @@ class ToolExecutor(
                 val text = hits.joinToString("\n\n") { "【${it.docName} · 相似度 ${"%.2f".format(it.score)}】\n${it.text}" }
                 true to text
             }
+        } catch (e: CancellationException) {
+            throw e // 取消必须透传
         } catch (e: Exception) {
             false to "知识库检索失败：${e.message ?: e::class.simpleName}"
         }
@@ -1590,6 +1675,8 @@ class ToolExecutor(
             val docId = km.addDocument(name, content, source = "agent")
             val doc = km.documents.first().firstOrNull { it.id == docId }
             true to "知识库文档「$name」已写入（ID: $docId，分块 ${doc?.chunkCount ?: 0}，状态 ${doc?.status ?: "embedding"}）。"
+        } catch (e: CancellationException) {
+            throw e // 取消必须透传
         } catch (e: Exception) {
             false to "知识库写入失败：${e.message ?: e::class.simpleName}"
         }
@@ -1607,9 +1694,151 @@ class ToolExecutor(
                 }
                 true to "知识库共 ${docs.size} 个文档：\n$text"
             }
+        } catch (e: CancellationException) {
+            throw e // 取消必须透传
         } catch (e: Exception) {
             false to "知识库读取失败：${e.message ?: e::class.simpleName}"
         }
+    }
+
+    private suspend fun executeGoalCreate(args: JsonObject): Pair<Boolean, String> {
+        val gm = goalManager ?: return false to "Goal 管理器未初始化"
+        val objective = args["objective"]?.jsonPrimitive?.contentOrNull?.trim() ?: ""
+        if (objective.isBlank()) return false to "goal_create 需要 objective 参数"
+        val maxRounds = args["max_rounds"]?.jsonPrimitive?.contentOrNull?.toIntOrNull() ?: 256
+        return when (val r = gm.create(objective, maxRounds)) {
+            is top.wkbin.tianxuan.harness.goal.GoalResult.Success -> {
+                true to "Goal 已创建：${r.goal.objective}（ID: ${r.goal.id}，最大轮数: ${r.goal.maxGoalRounds}，状态: ${r.goal.phase}）。模型应在每轮工具调用前调用 goal_status 查看进度，任务完成时调用 goal_complete 标记。"
+            }
+            is top.wkbin.tianxuan.harness.goal.GoalResult.InvalidTransition ->
+                false to "无法创建 Goal：当前 Goal 处于 ${r.current} 状态（需先 goal_complete 或 goal_clear）"
+            else -> false to "Goal 创建失败"
+        }
+    }
+
+    private suspend fun executeGoalPause(): Pair<Boolean, String> {
+        val gm = goalManager ?: return false to "Goal 管理器未初始化"
+        return when (val r = gm.pause()) {
+            is top.wkbin.tianxuan.harness.goal.GoalResult.Success -> true to "Goal 已暂停（可 goal_resume 恢复）"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.NotFound -> false to "无当前 Goal"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.InvalidTransition -> false to "无法暂停：当前 Goal 处于 ${r.current} 状态（仅 ACTIVE 可暂停）"
+            else -> false to "Goal 暂停失败"
+        }
+    }
+
+    private suspend fun executeGoalResume(): Pair<Boolean, String> {
+        val gm = goalManager ?: return false to "Goal 管理器未初始化"
+        return when (val r = gm.resume()) {
+            is top.wkbin.tianxuan.harness.goal.GoalResult.Success -> {
+                true to "Goal 已恢复：${r.goal.objective}（已用轮数 ${r.goal.roundsUsed}/${r.goal.maxGoalRounds}）"
+            }
+            is top.wkbin.tianxuan.harness.goal.GoalResult.NotFound -> false to "无当前 Goal"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.MaxRoundsExceeded ->
+                false to "Goal 轮数已耗尽（${r.roundsUsed}/${r.maxRounds}），需增大 max_rounds 或 goal_clear 后重新创建"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.InvalidTransition ->
+                false to "无法恢复：当前 Goal 处于 ${r.current} 状态"
+            else -> false to "Goal 恢复失败"
+        }
+    }
+
+    private suspend fun executeGoalComplete(): Pair<Boolean, String> {
+        val gm = goalManager ?: return false to "Goal 管理器未初始化"
+        return when (val r = gm.complete()) {
+            is top.wkbin.tianxuan.harness.goal.GoalResult.Success ->
+                true to "Goal 已完成：${r.goal.objective}（共 ${r.goal.roundsUsed} 轮）。"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.NotFound -> false to "无当前 Goal"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.InvalidTransition ->
+                false to "无法完成：当前 Goal 处于 ${r.current} 状态（需先 goal_resume）"
+            else -> false to "Goal 完成失败"
+        }
+    }
+
+    private suspend fun executeGoalBlock(args: JsonObject): Pair<Boolean, String> {
+        val gm = goalManager ?: return false to "Goal 管理器未初始化"
+        val reason = args["reason"]?.jsonPrimitive?.contentOrNull?.trim() ?: ""
+        if (reason.isBlank()) return false to "goal_block 需要 reason 参数"
+        return when (val r = gm.block(reason)) {
+            is top.wkbin.tianxuan.harness.goal.GoalResult.Success ->
+                true to "Goal 已阻塞：${r.goal.blockedReason}。可 goal_resume 恢复或 goal_clear 清除。"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.NotFound -> false to "无当前 Goal"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.InvalidTransition ->
+                false to "无法阻塞：当前 Goal 处于 ${r.current} 状态（仅 ACTIVE 可阻塞）"
+            else -> false to "Goal 阻塞失败"
+        }
+    }
+
+    private suspend fun executeGoalStatus(): Pair<Boolean, String> {
+        val gm = goalManager ?: return false to "Goal 管理器未初始化"
+        val goal = gm.currentGoal.value
+        return if (goal == null) {
+            true to "无当前 Goal。可用 goal_create 创建。"
+        } else {
+            true to buildString {
+                append("Goal: ${goal.objective}\n")
+                append("状态: ${goal.phase}（${goal.activation}）\n")
+                append("轮数: ${goal.roundsUsed}/${goal.maxGoalRounds}")
+                if (goal.blockedReason != null) append("\n阻塞原因: ${goal.blockedReason}")
+            }
+        }
+    }
+
+    private suspend fun executeGoalClear(): Pair<Boolean, String> {
+        val gm = goalManager ?: return false to "Goal 管理器未初始化"
+        return when (val r = gm.clear()) {
+            is top.wkbin.tianxuan.harness.goal.GoalResult.Success ->
+                true to "Goal 已清除（${r.goal.objective}）。"
+            is top.wkbin.tianxuan.harness.goal.GoalResult.NotFound -> false to "无当前 Goal"
+            else -> false to "Goal 清除失败"
+        }
+    }
+
+    /**
+     * batch 工具（PTC 最小可行实现，对齐 DeepSeek Harness PTC 的 run_code 核心价值）：
+     * 模型一次提交多个工具调用（JSON 数组），Harness 按序执行并聚合结果。
+     * 减少模型与工具的往返轮次，适合批量文件操作、多步检查等场景。
+     */
+    private suspend fun executeBatch(
+        args: JsonObject,
+        sessionId: String,
+        workspace: String,
+    ): Pair<Boolean, String> {
+        val callsArray = args["calls"]?.let { it as? kotlinx.serialization.json.JsonArray }
+            ?: return false to "batch 需要 calls 参数（JSON 数组，每项含 tool 和 args）"
+        if (callsArray.isEmpty()) return true to "batch 为空，无操作执行"
+        val results = mutableListOf<String>()
+        var allSuccess = true
+        val rootCallId = args["call_id"]?.jsonPrimitive?.contentOrNull ?: "batch-${System.currentTimeMillis()}"
+        for ((index, callElem) in callsArray.withIndex()) {
+            val callObj = callElem as? JsonObject
+                ?: run { results += "[$index] 无效调用（非对象）"; allSuccess = false; continue }
+            val toolName = callObj["tool"]?.jsonPrimitive?.contentOrNull?.trim()
+                ?: run { results += "[$index] 缺少 tool 名称"; allSuccess = false; continue }
+            val toolArgs = (callObj["args"] as? JsonObject) ?: JsonObject(emptyMap())
+            // PTC 子调度日志（对齐 DSH tool/ptc-dispatch）：记录每个子调用的开始
+            ptcDispatchLogger?.logDispatchStart(sessionId, rootCallId, index, toolName)
+            val startTime = System.currentTimeMillis()
+            val innerResult = execute(
+                ToolCall(
+                    id = java.util.UUID.randomUUID().toString(),
+                    createdAt = System.currentTimeMillis(),
+                    tool = HarnessApiMapper.toolByName(toolName),
+                    args = toolArgs,
+                    rawToolName = toolName,
+                ),
+                sessionId = sessionId,
+                workspace = workspace,
+                allowApprovalRequest = false,
+            )
+            val durationMs = System.currentTimeMillis() - startTime
+            // PTC 子调度日志：记录完成（含耗时/成功/输出摘要）
+            ptcDispatchLogger?.logDispatch(
+                sessionId, rootCallId, index, toolName, toolArgs.toString(),
+                innerResult.success, innerResult.output, durationMs,
+            )
+            results += "[$index] $toolName: ${if (innerResult.success) "成功" else "失败"} — ${innerResult.output.take(200)}"
+            if (!innerResult.success) allSuccess = false
+        }
+        return allSuccess to results.joinToString("\n")
     }
 
     companion object {
