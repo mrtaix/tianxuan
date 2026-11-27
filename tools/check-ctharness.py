@@ -161,6 +161,31 @@ class ForkContractTest(unittest.TestCase):
                 ):
                     self.assertIn(key, resource)
 
+    def test_shizuku_uses_newprocess_compat_runner(self):
+        manager = read(
+            "runtime/src/main/java/top/wkbin/tianxuan/runtime/privilege/"
+            "PrivilegeManager.kt"
+        )
+        self.assertIn("ShizukuCompatClient.start(", manager)
+        self.assertIn("compat.request(listOf(\"/system/bin/sh\", \"-c\", command)", manager)
+        client = read(
+            "runtime/src/main/java/top/wkbin/tianxuan/runtime/privilege/"
+            "ShizukuCompatClient.kt"
+        )
+        self.assertIn("IShizukuService.Stub.asInterface(Shizuku.getBinder())", client)
+        self.assertIn("server.newProcess(", client)
+        self.assertNotIn("Shizuku.bindUserService(", client)
+        runner = read(
+            "runtime/src/main/java/top/wkbin/tianxuan/runtime/privilege/"
+            "ShizukuCompatMain.kt"
+        )
+        self.assertIn("android.system.Os.getuid()", runner.replace("Os.getuid()", "android.system.Os.getuid()"))
+        self.assertIn("ProcessBuilder(request.command)", runner)
+        toml = read("gradle/libs.versions.toml")
+        self.assertIn('shizuku-aidl = { group = "dev.rikka.shizuku", name = "aidl"', toml)
+        keep = read("app/proguard-rules.pro")
+        self.assertIn("-keep class top.wkbin.tianxuan.runtime.privilege.ShizukuCompatMain", keep)
+
     def test_terminology_and_offline_translation_target(self):
         for locale in ("values", "values-en", "values-vi"):
             with self.subTest(locale=locale):

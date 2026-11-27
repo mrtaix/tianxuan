@@ -255,58 +255,29 @@ class PrivilegeManager(
         }
     }
 
-    /**
-     * 使用官方 Shizuku-API 进行 Binder 服务探测与权限检查
-     */
     private suspend fun checkShizukuPrivilege(): PrivilegeCheckResult {
         return try {
-            // The Binder may arrive shortly after the settings screen opens.
-            awaitShizukuBinder()
-            // 1. 探测 Shizuku Binder 服务是否处于运行激活状态
-            val isBinderAlive = Shizuku.pingBinder()
-            if (!isBinderAlive) {
-                return PrivilegeCheckResult.ServiceNotRunning(
-                    ExecutionMode.SHIZUKU,
-                    "Shizuku 服务未运行。请打开 Shizuku App 确保服务状态为“已运行”（可通过无线调试或 Root 启动）。",
-                )
-            }
-
-            // 2. 检查应用是否已获得 Shizuku 权限
-            val isGranted = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-
-            if (isGranted) {
-                PrivilegeCheckResult.Authorized(
-                    ExecutionMode.SHIZUKU,
-                    "Shizuku (v${Shizuku.getVersion()}) 授权成功，已解锁 ADB 级别特权及 Android 12+ 进程上限豁免能力！",
-                )
+            awaitShizukuBinder() // Binder can arrive shortly after the screen opens.
+            if (!Shizuku.pingBinder()) return PrivilegeCheckResult.ServiceNotRunning(ExecutionMode.SHIZUKU,
+                "Shizuku 服务未运行。请打开 Shizuku App 确保服务状态为“已运行”（可通过无线调试或 Root 启动）。")
+            if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+                PrivilegeCheckResult.Authorized(ExecutionMode.SHIZUKU,
+                    "Shizuku (v${Shizuku.getVersion()}) 授权成功，已解锁 ADB 级别特权及 Android 12+ 进程上限豁免能力！")
+            } else if (Shizuku.shouldShowRequestPermissionRationale()) {
+                // A prior denial means Shizuku will not show another dialog.
+                PrivilegeCheckResult.Unauthorized(ExecutionMode.SHIZUKU,
+                    "此前已拒绝 CTHarness 的 Shizuku 授权，不会再次弹窗。请打开 Shizuku App → 应用 → CTHarness，手动允许访问 ADB 特权服务。")
+            } else if (requestShizukuPermission()) {
+                PrivilegeCheckResult.Authorized(ExecutionMode.SHIZUKU,
+                    "Shizuku (v${Shizuku.getVersion()}) 授权成功，已自动切换到 ADB 级别特权模式。")
             } else {
-                if (Shizuku.shouldShowRequestPermissionRationale()) {
-                    // A prior denial means Shizuku will not show another dialog.
-                    PrivilegeCheckResult.Unauthorized(
-                        ExecutionMode.SHIZUKU,
-                        "此前已拒绝 CTHarness 的 Shizuku 授权，不会再次弹窗。请打开 Shizuku App → 应用 → CTHarness，手动允许访问 ADB 特权服务。",
-                    )
-                } else {
-                    val granted = requestShizukuPermission()
-                    if (granted) {
-                        PrivilegeCheckResult.Authorized(
-                            ExecutionMode.SHIZUKU,
-                            "Shizuku (v${Shizuku.getVersion()}) 授权成功，已自动切换到 ADB 级别特权模式。",
-                        )
-                    } else {
-                        PrivilegeCheckResult.Unauthorized(
-                            ExecutionMode.SHIZUKU,
-                            "Shizuku 授权被拒绝或等待超时，请在 Shizuku App → 应用 → CTHarness 中检查授权状态。",
-                        )
-                    }
-                }
+                PrivilegeCheckResult.Unauthorized(ExecutionMode.SHIZUKU,
+                    "Shizuku 授权被拒绝或等待超时，请在 Shizuku App → 应用 → CTHarness 中检查授权状态。")
             }
         } catch (e: Exception) {
             logger.e("检查 Shizuku 发生异常", e)
-            PrivilegeCheckResult.ServiceNotRunning(
-                ExecutionMode.SHIZUKU,
-                "无法连接到 Shizuku 服务 (${e.message})。请检查 Shizuku 是否正常运行。",
-            )
+            PrivilegeCheckResult.ServiceNotRunning(ExecutionMode.SHIZUKU,
+                "无法连接到 Shizuku 服务 (${e.message})。请检查 Shizuku 是否正常运行。")
         }
     }
 
@@ -576,15 +547,32 @@ class PrivilegeManager(
         )
     }
 
-    /**
-     * 通过 Shizuku 以 ADB 级别 (shell uid, UID 2000) 执行命令。
-     */
+    @Volatile private var compatClient: ShizukuCompatClient? = null
+
     private suspend fun executeViaShizuku(command: String, operationId: String): ShellExecResult {
         if (!runCatching { Shizuku.pingBinder() }.getOrDefault(false)) {
             return ShellExecResult(false, -1, "", "Shizuku 服务未运行。请打开 Shizuku App 并确保服务已启动。")
         }
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
             return ShellExecResult(false, -1, "", "Shizuku 未授权。请在 Shizuku App → 应用 → CTHarness 中授予访问权限。")
+        }
+
+        // newProcess() avoids the OEM-sensitive makeApplication() that hangs bindUserService().
+        var compat = compatClient?.takeIf { it.isAlive }
+        if (compat == null) compat = runCatching {
+            ShizukuCompatClient.start(context.applicationInfo.sourceDir) { compatClient = null }
+        }.onFailure { logger.w("Shizuku compat runner unavailable: ${it.message}") }.getOrNull()
+            .also { compatClient = it }
+        if (compat != null) {
+            return try {
+                val raw = compat.request(listOf("/system/bin/sh", "-c", command), 30_000)
+                parseCompatResult(raw)
+            } catch (e: Exception) {
+                logger.e("Shizuku compat execution failed", e)
+                compatClient = null
+                compat.close()
+                ShellExecResult(false, -1, "", "Shizuku 命令执行失败: ${e.message}")
+            }
         }
 
         return try {
@@ -595,13 +583,18 @@ class PrivilegeManager(
         }
     }
 
-    /**
-     * 通过 su 以 root uid (UID 0) 执行命令。
-     */
     private fun executeViaRoot(command: String, operationId: String): ShellExecResult =
         rootRunner.execute(operationId, command)
 
     companion object {
+        private fun parseCompatResult(raw: String): ShellExecResult {
+            val lines = raw.split("\n", limit = 3)
+            val exit = lines.getOrNull(0)?.removePrefix("exit=")?.toIntOrNull() ?: -1
+            val timedOut = lines.getOrNull(1)?.contains("timeout=1") == true
+            val out = lines.getOrNull(2).orEmpty()
+            return ShellExecResult(!timedOut && exit == 0, exit, out, if (timedOut) "命令超时" else "")
+        }
+
         private const val SHIZUKU_STARTUP_WAIT_MS = 3_000L
         private const val SHIZUKU_PERMISSION_WAIT_MS = 60_000L
         private const val SHIZUKU_PERMISSION_REQUEST_CODE = 1001

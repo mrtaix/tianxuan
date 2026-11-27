@@ -62,6 +62,7 @@ androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "a
 hiddenapi-bypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenApiBypass" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
+shizuku-aidl = { group = "dev.rikka.shizuku", name = "aidl", version.ref = "shizuku" }
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "shizuku" }
 kadb = { group = "com.flyfishxu", name = "kadb", version.ref = "kadb" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -172,6 +173,7 @@ ktor-client = [
 ]
 shizuku = [
     "shizuku-api",
+    "shizuku-aidl",
     "shizuku-provider",
 ]
 navigation3 = [
