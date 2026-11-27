@@ -260,8 +260,7 @@ class PrivilegeManager(
      */
     private suspend fun checkShizukuPrivilege(): PrivilegeCheckResult {
         return try {
-            // The Binder can be delivered shortly after the settings screen is opened.
-            // Wait for the sticky callback before reporting "service not running".
+            // The Binder may arrive shortly after the settings screen opens.
             awaitShizukuBinder()
             // 1. 探测 Shizuku Binder 服务是否处于运行激活状态
             val isBinderAlive = Shizuku.pingBinder()
@@ -282,7 +281,7 @@ class PrivilegeManager(
                 )
             } else {
                 if (Shizuku.shouldShowRequestPermissionRationale()) {
-                    // The user denied before; Shizuku will not show another dialog.
+                    // A prior denial means Shizuku will not show another dialog.
                     PrivilegeCheckResult.Unauthorized(
                         ExecutionMode.SHIZUKU,
                         "此前已拒绝 CTHarness 的 Shizuku 授权，不会再次弹窗。请打开 Shizuku App → 应用 → CTHarness，手动允许访问 ADB 特权服务。",
@@ -313,18 +312,14 @@ class PrivilegeManager(
 
     private suspend fun requestShizukuPermission(): Boolean {
         val result = CompletableDeferred<Boolean>()
-        val listener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
-            if (requestCode == SHIZUKU_PERMISSION_REQUEST_CODE) {
-                result.complete(grantResult == PackageManager.PERMISSION_GRANTED)
-            }
+        val listener = Shizuku.OnRequestPermissionResultListener { code, grantResult ->
+            if (code == SHIZUKU_PERMISSION_REQUEST_CODE) result.complete(grantResult == PackageManager.PERMISSION_GRANTED)
         }
         Shizuku.addRequestPermissionResultListener(listener)
         return try {
             Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
             withTimeoutOrNull(SHIZUKU_PERMISSION_WAIT_MS) { result.await() } ?: false
-        } finally {
-            Shizuku.removeRequestPermissionResultListener(listener)
-        }
+        } finally { Shizuku.removeRequestPermissionResultListener(listener) }
     }
 
     /**

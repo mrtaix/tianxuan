@@ -96,7 +96,15 @@ class ForkContractTest(unittest.TestCase):
             "TianXuanNavHost.kt"
         )
         baseline = json.loads(read(".architecture-baseline.json"))
-        self.assertLessEqual(len(read(path).splitlines()), baseline["files"][path])
+        for path in (
+            path,
+            "runtime/src/main/java/top/wkbin/tianxuan/runtime/privilege/PrivilegeManager.kt",
+            "harness/src/main/java/top/wkbin/tianxuan/harness/HarnessLoop.kt",
+            "feature/settings/src/main/java/top/wkbin/tianxuan/ui/settings/"
+            "AppearanceSettingsScreen.kt",
+        ):
+            with self.subTest(file=path):
+                self.assertLessEqual(len(read(path).splitlines()), baseline["files"][path])
 
     def test_app_headers_do_not_render_the_logo(self):
         headers = {

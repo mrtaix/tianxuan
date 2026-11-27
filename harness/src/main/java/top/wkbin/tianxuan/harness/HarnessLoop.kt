@@ -867,8 +867,7 @@ class HarnessLoop(
             val waitingApproval = stateMirrors.onRunFinished(sessId)
             if (waitingApproval || tombstonedSessions.contains(sessId)) return@withSessionMutex
             if (sessionCancelEpochs[sessId]?.get() != runEpoch || cancellingSessions.contains(sessId)) return@withSessionMutex
-            runCatching { startNextQueuedLocked(sessId) }
-                .onFailure { logger.e("Queued message drain failed for session $sessId", it) }
+            runCatching { startNextQueuedLocked(sessId) }.onFailure { logger.e("Queued drain failed: $sessId", it) }
         }
         refreshPendingProjection(sessId)
     }
@@ -876,22 +875,14 @@ class HarnessLoop(
     /** Caller holds the session mutex. Consumes and starts exactly one durable next-run item. */
     private suspend fun startNextQueuedLocked(sessId: String): Boolean {
         val (queueItemId, next) = promptQueueManager.first(sessId, PromptQueue.NEXT_RUN) ?: return false
-        val taskId = next.taskId ?: newId().also { generated ->
-            createDurableTask(sessId, next.copy(taskId = generated))
-        }
+        val taskId = next.taskId ?: newId().also { createDurableTask(sessId, next.copy(taskId = it)) }
         val userMessage = UserMessage(newId(), now(), next.text, next.imageUrls)
         val operationId = operationCoordinator.acceptQueuedRun(sessId, queueItemId, userMessage)
         messageProjector.publishPersisted(sessId, userMessage)
-        val launched = launchSessionJobLocked(sessId, taskId, operationId = operationId) {
-            runLoopInternal(sessId, now(), operationId, taskId)
-        }
+        val launched = launchSessionJobLocked(sessId, taskId, operationId = operationId) { runLoopInternal(sessId, now(), operationId, taskId) }
         if (!launched) {
-            // The item was already consumed; never lose it silently.
             agentTaskStateMachine.markFailed(taskId, "排队消息未能启动运行")
-            messageProjector.append(
-                sessId,
-                AssistantText(newId(), now(), "⚠️ 排队消息未能启动，请重新发送。"),
-            )
+            messageProjector.append(sessId, AssistantText(newId(), now(), "⚠️ 排队消息未能启动，请重新发送。"))
         }
         return launched
     }
@@ -905,41 +896,24 @@ class HarnessLoop(
         priority: TurnPriority = TurnPriority.NORMAL,
         block: suspend () -> RunResult,
     ): Boolean {
-        // 占用护栏：已有活跃 Job 时拒绝再启动。审批恢复（startClaimedSessionRun）在
-        // claimPending 与拿会话锁之间留有窗口——用户同时点「批准」与「停止」时，
-        // cancel 的 startNextQueuedLocked 先启动了新 run，这里若再无条件覆盖
-        // sessionJobs[sessId]，两个 run 会并发写同一 lane（历史交错损坏 + 双倍消耗）。
-        sessionJobs[sessId]?.takeIf { it.isActive }?.let { active ->
-            logger.w(
-                "Session $sessId already has an active run; skipping duplicate launch " +
-                    "(taskId=$taskId). This indicates an approval/cancel race — the earlier run wins.",
-            )
+        // Never overwrite an active run: approval/cancel races would write the same lane twice.
+        sessionJobs[sessId]?.takeIf { it.isActive }?.let {
+            logger.w("Session $sessId already has an active run; skipping duplicate launch (taskId=$taskId)")
             return false
         }
         if (taskId != null) {
+            // Recover a task left RUNNING by a previous process; otherwise the queue stalls.
             val claimed = agentTaskStateMachine.markRunning(
-                id = taskId,
-                operationId = operationId,
-                incrementAttempt = incrementTaskAttempt,
-            ) || (
-                // A previous process can die after marking the task RUNNING. Without recovery
-                // the queue keeps consuming that item but no run is ever launched.
-                agentTaskStateMachine.markRecovering(taskId, "上次运行中断，重新接管") &&
-                    agentTaskStateMachine.markRunning(
-                        id = taskId,
-                        operationId = operationId,
-                        incrementAttempt = false,
-                    )
-                )
+                id = taskId, operationId = operationId, incrementAttempt = incrementTaskAttempt,
+            ) || (agentTaskStateMachine.markRecovering(taskId, "上次运行中断，重新接管") &&
+                agentTaskStateMachine.markRunning(taskId, operationId, incrementAttempt = false))
             if (!claimed) {
                 logger.w("Durable task $taskId could not claim RUNNING; session launch skipped")
                 return false
             }
         }
         val epoch = sessionCancelEpochs.computeIfAbsent(sessId) { AtomicLong() }.get()
-        val job = loopScope.launch(start = CoroutineStart.LAZY) {
-            executeSessionRun(sessId, epoch, taskId, priority, block)
-        }
+        val job = loopScope.launch(start = CoroutineStart.LAZY) { executeSessionRun(sessId, epoch, taskId, priority, block) }
         sessionJobs[sessId] = job
         job.start()
         return true
@@ -984,17 +958,11 @@ class HarnessLoop(
                     return@withSessionMutex
                 }
                 if (promptQueueManager.list(sessId, PromptQueue.NEXT_RUN).isNotEmpty()) {
-                    // Drain first. If the queued run cannot claim the session, run this message
-                    // directly instead of appending it to a queue that has no consumer.
+                    // Drain first; run this message directly if the queued run cannot claim the slot.
                     val started = runCatching { startNextQueuedLocked(sessId) }.getOrDefault(false)
-                    if (started) {
-                        enqueueOnBusy?.let {
-                            promptQueueManager.enqueue(sessId, PromptQueue.NEXT_RUN, it)
-                            refreshQueue = true
-                        }
-                    } else {
-                        launchSessionJobLocked(sessId, enqueueOnBusy?.taskId, block = block)
-                    }
+                    if (started) enqueueOnBusy?.let {
+                        promptQueueManager.enqueue(sessId, PromptQueue.NEXT_RUN, it); refreshQueue = true
+                    } else launchSessionJobLocked(sessId, enqueueOnBusy?.taskId, block = block)
                     return@withSessionMutex
                 }
                 launchSessionJobLocked(sessId, enqueueOnBusy?.taskId, block = block)

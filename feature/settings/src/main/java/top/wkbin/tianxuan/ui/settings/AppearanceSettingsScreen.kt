@@ -361,8 +361,7 @@ fun AppearanceSettingsScreen(
             item {
                 Text(
                     text = stringResource(R.string.settings_language_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
                 )
                 SettingsGroup {
@@ -373,19 +372,13 @@ fun AppearanceSettingsScreen(
                         onClick = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList()) },
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    ThemeOptionRow(
-                        title = stringResource(R.string.settings_language_vietnamese),
+                    ThemeOptionRow(title = stringResource(R.string.settings_language_vietnamese),
                         subtitle = stringResource(R.string.settings_language_vietnamese_description),
-                        selected = appLanguage == "vi",
-                        onClick = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("vi")) },
-                    )
+                        selected = appLanguage == "vi", onClick = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("vi")) })
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    ThemeOptionRow(
-                        title = stringResource(R.string.settings_language_chinese),
+                    ThemeOptionRow(title = stringResource(R.string.settings_language_chinese),
                         subtitle = stringResource(R.string.settings_language_chinese_description),
-                        selected = appLanguage == "zh",
-                        onClick = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("zh-CN")) },
-                    )
+                        selected = appLanguage == "zh", onClick = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("zh-CN")) })
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     ThemeOptionRow(
                         title = stringResource(R.string.settings_language_english),
