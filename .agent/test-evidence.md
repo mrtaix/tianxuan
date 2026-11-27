@@ -85,6 +85,16 @@ Branch: `feat/ctharness-vi`.
 - Shizuku timeout investigation: decompiled the installed `top.wkbin.tianxuan` APK with apktool (smali) and compared `ShizukuHostServiceClient`, `ShizukuHostUserService`, `PrivilegeManager.checkShizukuPrivilege`, `bindUserService`, manifest provider and permission grants against the fork and the CTHarnessDev APK. Both installed and fork use `bindUserService`, `CONNECTION_TIMEOUT_MS=20000`, `BIND_MAX_RETRIES=2`, the same `tianxuan-host-shell-v1` tag and the same `ProcessBuilder("/system/bin/sh","-c")` runner. No alternative fix exists in the installed APK to copy; it works because that package is authorized and its service instance is healthy. Both packages show `moe.shizuku.manager.permission.API_V23: granted=true`.
 - Fork keeps its own improvements (late-Binder wait, actionable re-authorization text, stale-service reset helper) but has NOT resolved the UserService bind timeout. AndroidHarness itself uses a different `IShizukuService.newProcess()` + stdin/stdout runner path, but `moe.shizuku.server` is not a declared dependency of this fork; adopting it would be a larger runtime change, not a copy of the installed app's fix.
 
+## 2026-11-27: Shizuku root-cause fix (newProcess compat runner)
+
+- Root cause identified: `bindUserService()` makes Shizuku load the app's full `TianXuanApplication` via `makeApplication()`, which cannot initialize under the shell UID (Koin/Room/DataStore/HarnessLoop). `onServiceConnected` never arrives, so `withTimeout(20000){ deferred.await() }` in `bindOnce()` always times out. AndroidHarness on this device avoids this with `IShizukuService.newProcess()` + a stdin/stdout runner; its `ShizukuCompatMain` comment explicitly says it skips the OEM-sensitive `makeApplication()` step.
+- Fix implemented in fork: added `shizuku-aidl` dependency; new `ShizukuCompatMain` (runs via `app_process`, no Application), `ShizukuCompatProtocol` (JSON over pipes) and `ShizukuCompatClient` (`newProcess()`, UID assertion, `id -u` probe). `PrivilegeManager.executeViaShizuku()` now tries the compat runner first and keeps UserService as fallback. Added `-keep` rules for the three compat classes.
+- PASS: `python3 tools/check-ctharness.py` — 16 tests, exit 0.
+- PASS: `:runtime:compileDebugKotlin` — `BUILD SUCCESSFUL in 5m 3s`, exit 0 (`.agent/compile-shizuku2.log`). Local build needed the ARM64 `aidl` binary plus `LD_LIBRARY_PATH` pointing at the `.release` prefix; this is environment-only and not committed to project config.
+- PASS: GitHub CI run `46022915023` — build and packaging succeeded, artifact `tianxuandev-apk` produced.
+- Installed the CI APK on device (after uninstalling the old debug-signed build because signatures differed) and granted `moe.shizuku.manager.permission.API_V23` to `com.ctharness.app.dev`. App launches without crash; HostBridge listens on 127.0.0.1:7980.
+- NOT VERIFIED: end-to-end `host exec`/`tianxuan-host shell 'id'` success. The bridge API key is generated in-process (`UUID.randomUUID()`), is not logged and cannot be read externally, so the shell command could not be triggered from outside the app. Need to run the in-app host action and confirm the 20 s timeout is gone.
+
 ## Review boundaries
 
 The original constellation icon contains no lettering. Its graphic and JNI
