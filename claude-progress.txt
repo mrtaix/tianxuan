@@ -51,5 +51,5 @@
 2. Assemble and sign a debug APK, then verify on device: Vietnamese on first launch, a later system-language choice, the customization flow, and the updated sponsor list and installer links.
 3. Decide whether the sponsor email and QQ group should stay upstream support channels or become CTHarness channels; both need a real replacement destination first.
 4. For the next translation unit, localize knowledge end to end: KnowledgeScreen.kt, AddDocumentDialog.kt, EmbeddingSettingsCard.kt and the ViewModel validation message. Preserve @kb: syntax, model IDs, endpoints and stored status codes.
-5. Build and install the CTHarness APK, then reproduce the three reported defects before calling CTH-VI-006 fixed: grant Shizuku to the new package, queue messages during a run and after an interrupted task, and attach a file larger than 50 MB.
+5. GitHub CI is running on `feat/ctharness-vi`; download the CTHarnessDev artifact from the run and install it, then reproduce the three reported defects before calling CTH-VI-006 fixed: grant Shizuku to the new package, queue messages during a run and after an interrupted task, and attach a file larger than 50 MB.
 6. Do not mark any feature verified until its documented device criteria actually pass.
