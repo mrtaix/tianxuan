@@ -593,7 +593,6 @@ fun RuntimeTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                if (onBack == null) TianXuanBrandBadge(30.dp)
                 Column {
                     Text(
                         text = title,

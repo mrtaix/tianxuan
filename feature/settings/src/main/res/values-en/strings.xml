@@ -2,7 +2,7 @@
 <resources>
     <string name="settings_language_title">App language</string>
     <string name="settings_language_system">Follow system language</string>
-    <string name="settings_language_system_description">Use Chinese or English based on the Android system language</string>
+    <string name="settings_language_system_description">Use Vietnamese, Chinese or English based on the Android system language</string>
     <string name="settings_language_chinese">Simplified Chinese</string>
     <string name="settings_language_chinese_description">Display the app interface in Simplified Chinese</string>
     <string name="settings_language_english">English</string>
@@ -46,8 +46,8 @@
     <string name="settings_color_dark_description">An immersive Material 3 obsidian dark theme</string>
     <string name="settings_interface_scale">Interface scale</string>
     <string name="settings_scale">Scale</string>
-    <string name="settings_terminal_preview_command">tianxuan@debian:~$ echo \"TianXuan sandbox is running normally 🚀\"</string>
-    <string name="settings_terminal_preview_output">TianXuan sandbox is running normally 🚀</string>
+    <string name="settings_terminal_preview_command">tianxuan@debian:~$ echo \"CTHarness sandbox is running normally 🚀\"</string>
+    <string name="settings_terminal_preview_output">CTHarness sandbox is running normally 🚀</string>
     <string name="settings_tool_center_empty_category_title">No tools in this category</string>
     <string name="settings_tool_center_empty_category_subtitle">Try another category, or refresh the tool registry later</string>
 </resources>

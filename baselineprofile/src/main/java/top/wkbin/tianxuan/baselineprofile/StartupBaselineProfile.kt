@@ -52,6 +52,6 @@ class StartupBaselineProfile {
          * 生成流程使用 nonMinified 变体（继承 release 签名，applicationId 无 .debug 后缀）；
          * 此处固定填写正式包名即可同时覆盖 release 与 debug 构建。
          */
-        const val PACKAGE_NAME = "top.wkbin.tianxuan"
+        const val PACKAGE_NAME = "com.ctharness.app"
     }
 }

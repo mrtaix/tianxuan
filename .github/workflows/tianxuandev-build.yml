@@ -1,4 +1,4 @@
-name: Build TianXuanDev APK
+name: Build CTHarnessDev APK
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: Build & Package TianXuanDev
+    name: Build & Package CTHarnessDev
     runs-on: ubuntu-24.04
     timeout-minutes: 45
 
@@ -40,7 +40,7 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      - name: Build TianXuanDev APK
+      - name: Build CTHarnessDev APK
         env:
           TIANXUAN_DEV_BUILD: "1"
         run: |
@@ -51,14 +51,14 @@ jobs:
           mkdir -p output
           APK_PATH=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
           if [ -f "$APK_PATH" ]; then
-            cp "$APK_PATH" output/TianXuanDev-arm64-debug.apk
-            sha256sum output/TianXuanDev-arm64-debug.apk > output/TianXuanDev-arm64-debug.apk.sha256
-            echo "APK ready: output/TianXuanDev-arm64-debug.apk"
+            cp "$APK_PATH" output/CTHarnessDev-arm64-debug.apk
+            sha256sum output/CTHarnessDev-arm64-debug.apk > output/CTHarnessDev-arm64-debug.apk.sha256
+            echo "APK ready: output/CTHarnessDev-arm64-debug.apk"
           else
             echo "Error: No APK generated!" && exit 1
           fi
 
-      - name: Upload TianXuanDev APK Artifact
+      - name: Upload CTHarnessDev APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: tianxuandev-apk
@@ -70,7 +70,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "${{ github.event.inputs.release_tag }}"
-          name: "TianXuanDev Preview ${{ github.event.inputs.release_tag }}"
+          name: "CTHarnessDev Preview ${{ github.event.inputs.release_tag }}"
           files: output/*
           draft: false
           prerelease: true

@@ -172,10 +172,10 @@ jobs:
           APK_PATH="${{ env.APK_PATH }}"
           if [ -f "$APK_PATH" ]; then
             TAG="${{ env.TARGET_TAG }}"
-            cp "$APK_PATH" "output/TianXuan-arm64-${TAG}.apk"
-            sha256sum "output/TianXuan-arm64-${TAG}.apk" > "output/TianXuan-arm64-${TAG}.apk.sha256"
-            echo "APK_FILE=output/TianXuan-arm64-${TAG}.apk" >> $GITHUB_ENV
-            echo "SHA_FILE=output/TianXuan-arm64-${TAG}.apk.sha256" >> $GITHUB_ENV
+            cp "$APK_PATH" "output/CTHarness-arm64-${TAG}.apk"
+            sha256sum "output/CTHarness-arm64-${TAG}.apk" > "output/CTHarness-arm64-${TAG}.apk.sha256"
+            echo "APK_FILE=output/CTHarness-arm64-${TAG}.apk" >> $GITHUB_ENV
+            echo "SHA_FILE=output/CTHarness-arm64-${TAG}.apk.sha256" >> $GITHUB_ENV
             echo "TAG=$TAG" >> $GITHUB_ENV
           else
             echo "Error: No release APK generated!" && exit 1

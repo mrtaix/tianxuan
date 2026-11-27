@@ -4,9 +4,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,10 +18,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -51,6 +49,7 @@ import top.wkbin.tianxuan.ui.settings.ModelProfilesScreen
 import top.wkbin.tianxuan.ui.settings.LocalLlmScreen
 import top.wkbin.tianxuan.ui.settings.SettingsScreen
 import top.wkbin.tianxuan.ui.settings.SettingsViewModel
+import top.wkbin.tianxuan.feature.custom_iteration.R as IterationR
 import top.wkbin.tianxuan.ui.iteration.CustomIterationScreen
 import top.wkbin.tianxuan.ui.terminal.TerminalScreen
 import top.wkbin.tianxuan.ui.browser.BrowserScreen
@@ -744,11 +743,12 @@ fun TianXuanNavHost(
                 }
             }
             entry<CustomIterationDestination> {
+                val iterationChatTitle = stringResource(IterationR.string.iteration_chat_title)
                 GuardedEntry(CustomIterationDestination) {
                     CustomIterationScreen(
                         onBack = ::popBack,
                         onNavigateToChat = { prompt ->
-                            pendingHealingTask = HealingTask("🚀 自定义迭代", prompt)
+                            pendingHealingTask = HealingTask(iterationChatTitle, prompt)
                             selectedMain = MainDestination.Agent
                         },
                     )

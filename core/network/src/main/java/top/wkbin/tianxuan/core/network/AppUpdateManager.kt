@@ -49,12 +49,12 @@ class AppUpdateManager(
             add(config.githubLatestApi)
         }.distinct()
 
-        var lastError: Throwable = IllegalStateException("未配置任何更新源")
+        var lastError: Throwable = IllegalStateException(context.getString(R.string.network_update_no_source))
         for (url in candidates) {
             val result = runCatching { fetchManifest(url, currentVersionName) }
             result.onSuccess { info ->
                 if (info != null) return@withContext Result.success(info)
-                lastError = IllegalStateException("清单内容不完整: $url")
+                lastError = IllegalStateException(context.getString(R.string.network_update_incomplete_manifest, url))
             }.onFailure { lastError = it }
         }
         Result.failure(lastError)
@@ -65,13 +65,13 @@ class AppUpdateManager(
         val request = Request.Builder()
             .url(url)
             .header("Accept", "application/vnd.github.v3+json, application/json")
-            .header("User-Agent", "TianXuan-App/$currentVersionName")
+            .header("User-Agent", "CTHarness-App/$currentVersionName")
             .get()
             .build()
 
         httpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IllegalStateException("更新源响应 HTTP ${response.code}")
+                throw IllegalStateException(context.getString(R.string.network_update_http_error, response.code))
             }
             return UpdateManifestParser.parseLatest(
                 body = response.body.string(),
@@ -103,21 +103,21 @@ class AppUpdateManager(
             add("https://api.github.com/repos/$repo/releases/tags/$tag")
         }.distinct()
 
-        var lastError: Throwable = IllegalStateException("未配置更新源")
+        var lastError: Throwable = IllegalStateException(context.getString(R.string.network_update_no_source))
         for (url in candidates) {
             runCatching {
                 val request = Request.Builder()
                     .url(url)
                     .header("Accept", "application/vnd.github.v3+json, application/json")
-                    .header("User-Agent", "TianXuan-App/$versionName")
+                    .header("User-Agent", "CTHarness-App/$versionName")
                     .get()
                     .build()
                 httpClient.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
-                        throw IllegalStateException("更新源响应 HTTP ${response.code}")
+                        throw IllegalStateException(context.getString(R.string.network_update_http_error, response.code))
                     }
                     UpdateManifestParser.parseTagNotes(response.body.string())
-                        ?: throw IllegalStateException("清单无更新说明")
+                        ?: throw IllegalStateException(context.getString(R.string.network_update_no_notes))
                 }
             }.onSuccess { notes ->
                 return@withContext Result.success(notes)
@@ -150,13 +150,13 @@ class AppUpdateManager(
 
             val response = httpClient.newCall(request).execute()
             if (!response.isSuccessful) {
-                throw IllegalStateException("下载失败 HTTP ${response.code}")
+                throw IllegalStateException(context.getString(R.string.network_update_download_error, response.code))
             }
 
             val body = response.body
             val contentLength = body.contentLength().takeIf { it > 0 }
             val downloadDir = File(context.cacheDir, "updates").apply { mkdirs() }
-            val apkFile = File(downloadDir, "tianxuan-latest.apk")
+            val apkFile = File(downloadDir, "ctharness-latest.apk")
             if (apkFile.exists()) apkFile.delete()
 
             body.byteStream().use { input ->
@@ -182,6 +182,11 @@ class AppUpdateManager(
      * 调起系统安装器安装 APK
      */
     fun installApk(apkFile: File) {
+        val archivePackage = context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, 0)?.packageName
+        require(archivePackage == context.packageName) {
+            context.getString(R.string.network_update_package_mismatch, context.packageName)
+        }
+
         val uri: Uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",

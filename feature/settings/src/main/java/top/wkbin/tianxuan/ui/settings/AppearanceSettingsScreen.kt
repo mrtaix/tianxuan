@@ -374,6 +374,13 @@ fun AppearanceSettingsScreen(
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     ThemeOptionRow(
+                        title = stringResource(R.string.settings_language_vietnamese),
+                        subtitle = stringResource(R.string.settings_language_vietnamese_description),
+                        selected = appLanguage == "vi",
+                        onClick = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("vi")) },
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    ThemeOptionRow(
                         title = stringResource(R.string.settings_language_chinese),
                         subtitle = stringResource(R.string.settings_language_chinese_description),
                         selected = appLanguage == "zh",

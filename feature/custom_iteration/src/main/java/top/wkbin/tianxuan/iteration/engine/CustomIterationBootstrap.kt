@@ -2,6 +2,7 @@ package top.wkbin.tianxuan.iteration.engine
 
 import android.content.Context
 import java.io.File
+import top.wkbin.tianxuan.feature.custom_iteration.R
 
 /**
  * CustomIterationBootstrap — 天玄自定义迭代环境自举引擎。
@@ -19,42 +20,12 @@ import java.io.File
  * 保持同一坐标；本模块刻意不依赖 core/network，以免破坏架构依赖白名单，
  * 故改仓库时三处需同步。
  */
-const val TIANXUAN_OFFICIAL_REPO: String = "https://github.com/xiaozhe7772222/tianxuan"
+const val TIANXUAN_OFFICIAL_REPO: String = "https://github.com/mrtaix/tianxuan"
 
 object CustomIterationBootstrap {
 
     const val WORKSPACE_NAME = "custom_tianxuan"
     const val OFFICIAL_REPO: String = TIANXUAN_OFFICIAL_REPO
-
-    const val BOOTSTRAP_PROMPT = """我准备在天玄（TianXuan）的手机 Linux 虚拟沙盒中进行 TianXuan 自定义迭代。
-
-请按以下步骤引导我：
-1. 检查本地开发环境：
-   - 确认当前命令在 Linux PRoot 沙盒中执行；
-   - 确认独立工作区为 ~/custom_tianxuan；
-   - 优先使用 GitHub Actions 构建 TianXuanDev APK，无需在手机本地安装庞大的 Android SDK/NDK。
-
-2. 检查并配置 GitHub 认证：
-   - 检查 gh CLI 与 Git 配置；
-   - 引导我使用 gh auth login（设备码流程）或 SSH Key 完成登录验证；
-   - 不要把 Token、私钥写入命令历史或日志中。
-
-3. 验证与克隆仓库：
-   - 为官方仓库 $OFFICIAL_REPO 点星；
-   - Fork main 分支到我自己的 GitHub 账户；
-   - 将 Fork 后的仓库克隆到 ~/custom_tianxuan。
-
-4. 遵循 tianxuan-custom-iteration Skill 开发规范：
-   - 按照天玄的 Jetpack Compose、Koin 和多模块规范进行修改；
-   - 编写或调整功能后运行单元测试验证；
-   - 提交修改并推送到 Fork 仓库的特性分支。
-
-5. 通过 GitHub Actions 构建独立的 TianXuanDev APK：
-   - 触发 .github/workflows/tianxuandev-build.yml 编译；
-   - 实时监控构建进度并在成功后下载 APK 至手机；
-   - 校验包名 top.wkbin.tianxuan.dev 和应用名 TianXuanDev，与正式版独立共存。
-
-6. 若体验满意，协助我生成标准 PR 提交到 $OFFICIAL_REPO。"""
 
     /**
      * 初始化自定义迭代环境与工作区。
@@ -82,7 +53,7 @@ object CustomIterationBootstrap {
             return BootstrapResult(
                 success = true,
                 workspacePath = workspaceDir.absolutePath,
-                prompt = BOOTSTRAP_PROMPT
+                prompt = context.getString(R.string.iteration_bootstrap_prompt, OFFICIAL_REPO, WORKSPACE_NAME)
             )
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e // 取消必须透传

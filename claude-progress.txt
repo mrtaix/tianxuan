@@ -1,0 +1,55 @@
+# Progress Log
+
+## 2026-11-27 — CTHarness localization continuation
+
+### Scope
+- CTH-VI-002: localize the complete app-customization entry flow without redesigning its UI or changing its execution protocol.
+- Keep branch feat/ctharness-vi and all preexisting uncommitted changes. No commit, push, release, APK installation or signing.
+
+### Changes implemented
+- Extracted 15 customization-screen strings and the generated chat title into Chinese, English and Vietnamese resources.
+- Moved the user-visible customization prompt into localized resources and format it with the fork URL and existing workspace name.
+- Updated customization source metadata to mrtaix/tianxuan and prompt guidance to CTHarness Dev / com.ctharness.app.dev.
+- Preserved custom_tianxuan, tianxuan-custom-iteration, tianxuandev-build.yml and tianxuandev-apk identifiers.
+- Corrected UI claims: a separate directory is not a security boundary; skill installation and CI setup are prerequisites, not completed actions.
+- Added two contract regression tests and feature_list.json for ongoing tracking.
+
+### Verification observed so far
+- BASELINE PASS: python3 tools/check-ctharness.py — original 7/7 tests passed.
+- RED EXPECTED: same command after adding the two regressions — 2 failures, caused by untranslated screen strings and old repository metadata. See .agent/iteration-red.log.
+- PASS: same command after implementation — 9/9 tests passed. See .agent/iteration-check.log.
+- PASS: aapt2 compile on all 41 strings.xml / legacy_strings.xml files — exit 0. Resource compilation only, not APK linking. See .agent/iteration-aapt2.log.
+- PASS: git diff --check after implementation.
+- Inventory: 1,787 Vietnamese string keys in 16 resource XML files.
+- Environment: installed openjdk-25 through the approved package tool; java -version executed successfully and reported 25.0.5.1. SDK inspection found only android-35; project requires compileSdk 37.1.
+- PASS: `:feature:navigation:compileDebugKotlin` — `BUILD SUCCESSFUL in 15m 21s`, `GRADLE_EXIT=0`; changed Kotlin for custom_iteration, navigation and settings modules compiled. See .agent/iteration-gradle-nav.log.
+- Environment-only additions for that build: openjdk-17 and openjdk-25 installed; SDK licences accepted at the user's explicit approval; build-tools 36.0.0 and platform android-37.1 downloaded; `.agent/build-nav.sh` swaps the x86 bundled aidl for the phone's ARM64 aidl.
+- NOT RUN: APK assembly/link, signing, installation and device smoke tests for locale, customization and links. A module compile is not an APK build.
+
+### Latest session — header logo and three runtime defects
+- CTH-VI-005: removed TianXuanBrandBadge from RuntimeTopBar, ChatTopBar and SessionsPaneHeader. The new regression failed on all three before the edit.
+- CTH-VI-006: raised streamed attachment cap from 50 MB to 500 MB; made queued-message launches report success, recover stale RUNNING tasks and surface failures instead of losing messages; made Shizuku wait for a late Binder and give an actionable re-authorization message with CTHarness branding.
+- PASS: `python3 tools/check-ctharness.py` — 13 tests, exit 0.
+- PASS: `:feature:navigation:compileDebugKotlin` after all edits — `BUILD SUCCESSFUL in 5m 41s`, exit 0. Transitively compiled chat, components, custom_iteration, harness, runtime and navigation.
+- NOT RUN: APK build/install and device reproduction of the Shizuku, queue and heavy-attachment reports. The phone still has upstream `top.wkbin.tianxuan` 0.36.4 installed.
+
+### Feature status
+- CTH-VI-001: in_progress; identity and locale static checks plus module compiles passed, no APK/device verification.
+- CTH-VI-002: in_progress; implementation, static contracts, resource compilation and Kotlin compilation passed; device smoke test outstanding.
+- CTH-VI-004: in_progress; link targets verified live and static contracts pass; in-app click-through not verified on device.
+- CTH-VI-005: in_progress; static regression and Kotlin compile pass; device appearance not checked.
+- CTH-VI-006: in_progress; static regression and Kotlin compile pass; user-reported symptoms not reproduced or confirmed fixed on device.
+- CTH-VI-003: pending; whole-app localization is not complete.
+
+### Remaining localization audit
+- Read-only audit call_GP3oEobQnNAUMPKAqWuUO3Pm found confirmed lower-bound uncovered UI occurrences: browser >=31, workflow >=152, preview >=60, knowledge >=34, navigation 3, components 4. These are occurrence counts, not unique keys or an exhaustive census.
+- Customization screen had no remaining Chinese UI literals on the audit recheck.
+- The settings LocalizedText bridge covers many source literals, but does not automatically cover shared-component arguments or AnnotatedString overloads.
+
+### Exact next steps
+1. Publish a release in `mrtaix/tianxuan`; until then update checks return no release and the release-history page is empty.
+2. Assemble and sign a debug APK, then verify on device: Vietnamese on first launch, a later system-language choice, the customization flow, and the updated sponsor list and installer links.
+3. Decide whether the sponsor email and QQ group should stay upstream support channels or become CTHarness channels; both need a real replacement destination first.
+4. For the next translation unit, localize knowledge end to end: KnowledgeScreen.kt, AddDocumentDialog.kt, EmbeddingSettingsCard.kt and the ViewModel validation message. Preserve @kb: syntax, model IDs, endpoints and stored status codes.
+5. Build and install the CTHarness APK, then reproduce the three reported defects before calling CTH-VI-006 fixed: grant Shizuku to the new package, queue messages during a run and after an interrupted task, and attach a file larger than 50 MB.
+6. Do not mark any feature verified until its documented device criteria actually pass.

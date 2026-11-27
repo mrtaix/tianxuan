@@ -32,10 +32,10 @@ data class UpdateSourceConfig(
 
     companion object {
         const val ASSET_PATH = "update_source.properties"
-        const val DEFAULT_REPO = "xiaozhe7772222/tianxuan"
+        const val DEFAULT_REPO = "mrtaix/tianxuan"
 
         /** 自建服务的默认基址（经 nginx 反代到子路径） */
-        const val DEFAULT_BASE_URL = "https://124.222.37.253"
+        const val DEFAULT_BASE_URL = "https://api.github.com/repos/$DEFAULT_REPO"
 
         fun load(context: Context): UpdateSourceConfig {
             val props = runCatching {
@@ -55,7 +55,7 @@ data class UpdateSourceConfig(
             val repo = props["update.repo"]?.takeIf { it.contains('/') } ?: DEFAULT_REPO
             val prefix = props["update.manifestPrefix"]
                 ?.let { p -> if (p.isBlank()) "" else "/" + p.trim('/') + "/" }
-                ?: "/tx-update/"
+                ?: "/releases/"
             val base = (props["update.baseUrl"]?.takeIf { it.startsWith("http") }
                 ?: DEFAULT_BASE_URL).trimEnd('/')
 
@@ -68,7 +68,7 @@ data class UpdateSourceConfig(
                     .map { it.trim() }
                     .filter { it.startsWith("http") },
                 versionsUrl = props["update.versionsUrl"]?.takeIf { it.startsWith("http") }
-                    ?: "$base$prefix" + "versions",
+                    ?: "",
                 repoUrl = props["update.repoUrl"]?.takeIf { it.startsWith("http") }
                     ?: "https://github.com/$repo",
             )

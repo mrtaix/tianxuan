@@ -287,7 +287,7 @@ class SettingsViewModel(
                 }
             }
             _isDownloading.value = false
-            res.onSuccess { apkFile ->
+            res.mapCatching { apkFile ->
                 _downloadProgress.value = 1f
                 appUpdateManager.installApk(apkFile)
             }.onFailure { err ->

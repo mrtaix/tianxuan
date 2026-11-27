@@ -16,11 +16,9 @@ if ! command -v unzip >/dev/null 2>&1 && [ -x "${TIANXUAN_TOOL_DIR:-/opt/tianxua
     export PATH="/usr/local/bin:/usr/bin:$PATH"
 fi
 
-JADX_VERSION="v1.5.0"
+JADX_VERSION="1.5.0"
 JADX_URLS="
-https://mirror.ghproxy.com/https://github.com/skylot/jadx/releases/download/${JADX_VERSION}/jadx-${JADX_VERSION}.zip
-https://gh-proxy.com/https://github.com/skylot/jadx/releases/download/${JADX_VERSION}/jadx-${JADX_VERSION}.zip
-https://github.com/skylot/jadx/releases/download/${JADX_VERSION}/jadx-${JADX_VERSION}.zip
+https://github.com/skylot/jadx/releases/download/v${JADX_VERSION}/jadx-${JADX_VERSION}.zip
 "
 
 # Java 运行时预检（jadx 是 Java 程序，无 JVM 时给出明确指引而非静默失败）

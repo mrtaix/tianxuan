@@ -72,15 +72,15 @@ fun AdbLogcatScreen(
     val logcatOutput by viewModel.logcatOutput.collectAsStateWithLifecycle()
     val adbNotificationEnabled by viewModel.adbNotificationEnabled.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
     var pairingCode by rememberSaveable { mutableStateOf("") }
     var explicitPort by rememberSaveable { mutableStateOf("") }
-    var logcatPackage by rememberSaveable { mutableStateOf("top.wkbin.tianxuan") }
+    var logcatPackage by rememberSaveable { mutableStateOf(context.packageName) }
     var logcatTag by rememberSaveable { mutableStateOf("") }
     var logcatKeyword by rememberSaveable { mutableStateOf("") }
     var logcatLines by rememberSaveable { mutableStateOf("200") }
     var logcatPriority by rememberSaveable { mutableStateOf('V') }
 
-    val context = LocalContext.current
     val connected = adbState as? EmbeddedAdbManager.ConnectionState.Connected
 
     LaunchedEffect(adbState) {
@@ -286,7 +286,7 @@ fun AdbLogcatScreen(
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FilledTonalButton(
-                        onClick = { logcatPackage = "top.wkbin.tianxuan" },
+                        onClick = { logcatPackage = context.packageName },
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                     ) {
                         Text("填入天玄", style = MaterialTheme.typography.labelSmall)

@@ -14,13 +14,7 @@ NDK_RELEASE="r29"
 NDK_ARCHIVE_NAME="android-ndk-r29-aarch64.tar.xz"
 NDK_SHA256="02e10e4ddfe8deaeb0bd0cf29d04c981ed5bc8a5d6b560ebb9e7661f472d684b"
 NDK_UPSTREAM_URL="https://github.com/lzhiyong/termux-ndk/releases/download/android-ndk/${NDK_ARCHIVE_NAME}"
-NDK_URLS="
-https://ghfast.top/${NDK_UPSTREAM_URL}
-https://ghproxy.net/${NDK_UPSTREAM_URL}
-https://gh.llkk.cc/${NDK_UPSTREAM_URL}
-https://gh-proxy.com/${NDK_UPSTREAM_URL}
-${NDK_UPSTREAM_URL}
-"
+NDK_URLS="${NDK_UPSTREAM_URL}"
 
 TOOLCHAIN_ROOT="/opt/tianxuan/toolchains/android"
 NDK_ARTIFACT_DIR="$TOOLCHAIN_ROOT/ndk/artifacts/$NDK_SHA256"

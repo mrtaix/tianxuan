@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         val splashScreen = installSplashScreen()
         splashScreen.setKeepOnScreenCondition { keepSplashOnScreen.value }
         super.onCreate(savedInstanceState)
+        initializeAppLanguage(this)
         handleNavigationIntent(intent)
         enableEdgeToEdge()
         setContent {
@@ -267,7 +268,7 @@ class MainActivity : AppCompatActivity() {
                                                 if (tot != null && tot > 0) downloadProgress = dl.toFloat() / tot.toFloat()
                                             }
                                             isDownloading = false
-                                            res.onSuccess { apkFile ->
+                                            res.mapCatching { apkFile ->
                                                 downloadProgress = 1f
                                                 appUpdateManager.installApk(apkFile)
                                                 updateInfo = null

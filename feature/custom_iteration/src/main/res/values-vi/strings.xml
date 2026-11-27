@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="iteration_error_bootstrap">Không khởi tạo được không gian làm việc cho vòng lặp phát triển. Hãy kiểm tra kết nối mạng và bộ nhớ rồi thử lại.</string>
+    <string name="iteration_title">Tùy biến ứng dụng (thử nghiệm)</string>
+    <string name="iteration_hero_title">Tạo phiên bản CTHarness Dev của riêng bạn</string>
+    <string name="iteration_hero_description">CTHarness kết hợp môi trường thực thi Linux trên điện thoại với tác nhân AI. Bạn có thể nhờ tác nhân chỉnh sửa mã nguồn ứng dụng, cấu hình GitHub Actions để xây dựng APK CTHarness Dev riêng và đóng góp thay đổi qua pull request.</string>
+    <string name="iteration_features_title">Khả năng chính</string>
+    <string name="iteration_features_subtitle">Chuẩn bị một lần, phát triển liên tục</string>
+    <string name="iteration_workspace_title">Không gian làm việc riêng</string>
+    <string name="iteration_workspace_description">Mã nguồn tùy biến được đặt tại ~/custom_tianxuan, tách khỏi các dự án khác. Đây không phải ranh giới cách ly bảo mật.</string>
+    <string name="iteration_skill_title">Quy tắc phát triển cho tác nhân AI</string>
+    <string name="iteration_skill_description">Tuân thủ quy tắc đa mô-đun, Compose và bảo mật; dùng kỹ năng tianxuan-custom-iteration nếu đã được cài đặt.</string>
+    <string name="iteration_ci_title">Xây dựng trên GitHub Actions</string>
+    <string name="iteration_ci_description">Sau khi cấu hình CI, xây dựng APK CTHarness Dev riêng với package com.ctharness.app.dev mà không cần biên dịch trên điện thoại.</string>
+    <string name="iteration_coexist_title">Cài song song và đóng góp qua PR</string>
+    <string name="iteration_coexist_description">Bản thử nghiệm dùng package riêng để cài song song với bản chính. Kiểm chứng thay đổi trước khi chuẩn bị pull request.</string>
+    <string name="iteration_preparing">Đang chuẩn bị không gian làm việc…</string>
+    <string name="iteration_start">Bắt đầu tùy biến</string>
+    <string name="iteration_chat_title">🚀 Tùy biến ứng dụng</string>
+    <string name="iteration_bootstrap_prompt">Tôi muốn tùy biến CTHarness trong môi trường Linux PRoot trên điện thoại.\n\nHãy hướng dẫn tôi theo các bước sau:\n1. Kiểm tra môi trường và không gian làm việc riêng ~/%2$s. Ưu tiên GitHub Actions để xây dựng APK CTHarness Dev, không tự cài Android SDK/NDK lên điện thoại.\n2. Kiểm tra gh CLI và cấu hình Git. Nếu cần đăng nhập, hướng dẫn tôi dùng gh auth login theo luồng mã thiết bị hoặc khóa SSH. Không ghi token hoặc khóa riêng vào lịch sử lệnh hay nhật ký.\n3. Xác minh nguồn mã tại %1$s. Dùng git clone để lấy mã vào ~/%2$s sau khi xác nhận kho và nhánh. Kiểm tra nhánh feat/ctharness-vi chứa các thay đổi CTHarness đã có trên remote; nếu chưa có, hỏi tôi nguồn mã thay vì tự chuyển sang main. Chỉ tạo fork nếu cần và được tôi đồng ý.\n4. Tuân thủ quy tắc Jetpack Compose, Koin và kiến trúc đa mô-đun của CTHarness. Dùng kỹ năng tianxuan-custom-iteration nếu có. Chạy kiểm thử sau khi sửa mã. Chỉ commit hoặc push khi tôi cho phép.\n5. Sau khi được tôi đồng ý, chạy gh workflow run tianxuandev-build.yml --ref BRANCH trên kho đã xác nhận. Theo dõi bằng gh run watch RUN_ID --exit-status và tải APK bằng gh run download RUN_ID -n tianxuandev-apk. Xác minh package com.ctharness.app.dev và tên CTHarness Dev trước khi đề nghị cài đặt; không tự cài APK.\n6. Khi các thay đổi đã được kiểm chứng và tôi yêu cầu, chuẩn bị pull request về %1$s.</string>
+</resources>

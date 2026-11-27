@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="network_update_no_source">No update source is configured</string>
+    <string name="network_update_incomplete_manifest">The update manifest is incomplete: %1$s</string>
+    <string name="network_update_http_error">The update source returned HTTP %1$d</string>
+    <string name="network_update_no_notes">The manifest contains no release notes</string>
+    <string name="network_update_download_error">Download failed: HTTP %1$d</string>
+    <string name="network_update_package_mismatch">The update package is invalid or does not belong to %1$s. Installation was not started.</string>
+</resources>

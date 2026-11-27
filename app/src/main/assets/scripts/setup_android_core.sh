@@ -22,10 +22,6 @@ ARM64_TOOLS_SHA256="DB1CEA2C4454D5F9C5A802646B2D1CF560B4EE7BADBE23E51AB8E1881BB5
 ARM64_TOOLS_ARTIFACT_ID="db1cea2c4454d5f9c5a802646b2d1cf560b4ee7badbe23e51ab8e1881bb50fc2"
 ARM64_TOOLS_URL="https://github.com/lzhiyong/android-sdk-tools/releases/download/${ARM64_TOOLS_VERSION}/android-sdk-tools-static-aarch64.zip"
 ARM64_TOOLS_URLS="
-https://ghfast.top/${ARM64_TOOLS_URL}
-https://ghproxy.net/${ARM64_TOOLS_URL}
-https://gh.llkk.cc/${ARM64_TOOLS_URL}
-https://gh-proxy.com/${ARM64_TOOLS_URL}
 ${ARM64_TOOLS_URL}
 "
 ARM64_TOOLS_DIR="/opt/tianxuan/toolchains/android/sdk-tools/artifacts/${ARM64_TOOLS_ARTIFACT_ID}"

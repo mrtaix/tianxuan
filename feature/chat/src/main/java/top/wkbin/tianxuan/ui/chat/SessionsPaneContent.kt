@@ -202,7 +202,6 @@ private fun SessionsPaneHeader(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.weight(1f, fill = false),
         ) {
-            top.wkbin.tianxuan.ui.components.TianXuanBrandBadge(size = 24.dp)
             Text(
                 text = stringResource(R.string.chat_title),
                 style = MaterialTheme.typography.titleMedium,

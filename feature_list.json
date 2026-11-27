@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "project": "CTHarness",
+  "updated_at": "2026-11-27",
+  "features": [
+    {
+      "id": "CTH-VI-001",
+      "name": "Fork identity and Vietnamese default language",
+      "status": "in_progress",
+      "priority": "high",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "Launcher label is CTHarness and the main application ID is com.ctharness.app.",
+        "A fresh installation starts in Vietnamese; later language choices persist.",
+        "Vietnamese resources preserve source keys and format placeholders.",
+        "The APK builds and language persistence is checked on device."
+      ],
+      "tests": ["python3 tools/check-ctharness.py", "Gradle unit tests, assembleDebug and device language smoke test"],
+      "evidence": [".agent/test-evidence.md", ".agent/ctharness-check.log"],
+      "notes": "Existing work from the previous session. Static checks and Kotlin compilation passed; APK build and device tests remain unverified. Preserve uncommitted changes and the feat/ctharness-vi branch."
+    },
+    {
+      "id": "CTH-VI-002",
+      "name": "Localize the app-customization flow",
+      "status": "in_progress",
+      "priority": "high",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "Customization screen labels and the generated chat title use locale resources.",
+        "The generated user-visible prompt is available in Vietnamese, English and Chinese.",
+        "The prompt uses mrtaix/tianxuan, CTHarness Dev and com.ctharness.app.dev while preserving workflow identifiers.",
+        "Resource checks pass and the affected Kotlin code compiles; the flow is smoke-tested on device."
+      ],
+      "tests": ["python3 tools/check-ctharness.py", "AAPT2 resource compilation", "Gradle compilation and device customization-flow smoke test"],
+      "evidence": [".agent/iteration-red.log", ".agent/iteration-check.log", ".agent/test-evidence.md"],
+      "notes": "Two localization regressions failed before implementation; a third regression covers the navigation architecture size ratchet. All static contract tests and the Kotlin compilation now pass. Device smoke test is still required; do not mark verified without it."
+    },
+    {
+      "id": "CTH-VI-004",
+      "name": "Durable in-app link targets",
+      "status": "in_progress",
+      "priority": "high",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "User-facing and installer links resolve to maintained upstream artifacts instead of retired mirrors or another person's repository.",
+        "Sponsor list, repository links, release links and update endpoints point at the CTHarness fork.",
+        "Installer scripts keep artifact names, checksums and fallbacks valid and pass shell syntax checks.",
+        "Live target availability is verified and recorded; unreachable or empty targets are reported, not hidden."
+      ],
+      "tests": [
+        "python3 tools/check-ctharness.py",
+        "sh -n on each changed installer script",
+        "Live GitHub API target checks in .agent/link-target-checks.json"
+      ],
+      "evidence": [".agent/links-red.log", ".agent/links-green.log", ".agent/link-target-checks.json"],
+      "notes": "Current session scope. Sponsor email, QQ group and third-party mirrors outside the audited scope are unchanged; the fork still has no published release, so update checks and the release-history page remain empty until one is published."
+    },
+    {
+      "id": "CTH-VI-005",
+      "name": "Remove the logo from app headers",
+      "status": "in_progress",
+      "priority": "medium",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "RuntimeTopBar, ChatTopBar and SessionsPaneHeader no longer render TianXuanBrandBadge.",
+        "Brand badge remains available for onboarding and the catalog preview where it is not a header.",
+        "Kotlin compiles and the headers are smoke-tested on device."
+      ],
+      "tests": ["python3 tools/check-ctharness.py", "Gradle :feature:navigation:compileDebugKotlin"],
+      "evidence": [".agent/logo-green.log", ".agent/test-evidence.md"],
+      "notes": "A regression test failed on all three headers before the edit and now passes. Kotlin compilation passed. Device appearance not checked."
+    },
+    {
+      "id": "CTH-VI-006",
+      "name": "Shizuku, queued messages and heavy attachments",
+      "status": "in_progress",
+      "priority": "high",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "A stale RUNNING durable task can be reclaimed so queued messages are not stranded.",
+        "A failed queue launch is visible instead of silently dropping the message.",
+        "Attachments up to 500 MB can be streamed into the sandbox.",
+        "Shizuku waits for a late Binder and gives an actionable manual-grant message after a previous denial.",
+        "Behavior is verified on device with all three user-reported symptoms reproduced and resolved."
+      ],
+      "tests": ["python3 tools/check-ctharness.py", "Gradle :feature:navigation:compileDebugKotlin"],
+      "evidence": [".agent/test-evidence.md"],
+      "notes": "Static regression and Kotlin compilation passed. No device reproduction or APK install was possible in this session, so the three user reports are not yet confirmed fixed in practice."
+    },
+    {
+      "id": "CTH-VI-003",
+      "name": "Remaining hardcoded user-interface text",
+      "status": "pending",
+      "priority": "high",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "Audit remaining UI modules and localize one bounded flow per session.",
+        "Do not translate tool IDs, protocol keys, commands or source comments as UI.",
+        "Verify affected screens and language switching on device."
+      ],
+      "tests": ["Per-flow regression tests, resource compilation and device smoke tests"],
+      "evidence": [],
+      "notes": "Whole-app localization is not complete. See the progress log for the next audited target."
+    }
+  ]
+}

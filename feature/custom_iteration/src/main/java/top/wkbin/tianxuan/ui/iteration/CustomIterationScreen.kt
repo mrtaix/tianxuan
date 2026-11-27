@@ -26,11 +26,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import top.wkbin.tianxuan.feature.custom_iteration.R
 import top.wkbin.tianxuan.ui.components.NoticeBanner
 import top.wkbin.tianxuan.ui.components.RuntimeButton
 import top.wkbin.tianxuan.ui.components.RuntimeCard
@@ -48,7 +49,7 @@ fun CustomIterationScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { RuntimeTopBar(title = "自定义迭代（实验）", onBack = onBack) }
+        topBar = { RuntimeTopBar(title = stringResource(R.string.iteration_title), onBack = onBack) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -62,13 +63,13 @@ fun CustomIterationScreen(
             RuntimeCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "全面自定义专属的 TianXuanDev",
+                        text = stringResource(R.string.iteration_hero_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "天玄（TianXuan）是一款致力于构建手机端 Linux 运行时与自主 Agent 的开源基础设施。通过「自定义迭代」，你可以在掌中调用天玄 AI 修改天玄自身、通过云端 GitHub Actions 自动化编译出独立的 TianXuanDev APK，并与社区开发者共同交流贡献。",
+                        text = stringResource(R.string.iteration_hero_description),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 22.sp
@@ -77,29 +78,32 @@ fun CustomIterationScreen(
             }
 
             // 特性清单
-            SectionHeader(title = "核心能力矩阵", subtitle = "一次准备，持续共建")
+            SectionHeader(
+                title = stringResource(R.string.iteration_features_title),
+                subtitle = stringResource(R.string.iteration_features_subtitle)
+            )
 
             IterationFeatureItem(
-                title = "隔离迭代工作区",
-                description = "独立路径 ~/custom_tianxuan，所有修改与宿主环境完全物理隔离。",
+                title = stringResource(R.string.iteration_workspace_title),
+                description = stringResource(R.string.iteration_workspace_description),
                 badgeColor = MaterialTheme.colorScheme.primary
             )
 
             IterationFeatureItem(
-                title = "专属 Agent 规范 Skill",
-                description = "内置 tianxuan-custom-iteration Skill，严格遵循多模块、Compose 与安全规则。",
+                title = stringResource(R.string.iteration_skill_title),
+                description = stringResource(R.string.iteration_skill_description),
                 badgeColor = MaterialTheme.colorScheme.secondary
             )
 
             IterationFeatureItem(
-                title = "GitHub Actions 云端 CI 构建",
-                description = "免去手机端繁琐编译，自动化生成 TianXuanDev（top.wkbin.tianxuan.dev）独立 APK。",
+                title = stringResource(R.string.iteration_ci_title),
+                description = stringResource(R.string.iteration_ci_description),
                 badgeColor = MaterialTheme.colorScheme.tertiary
             )
 
             IterationFeatureItem(
-                title = "双包共存与开源 PR 闭环",
-                description = "测试版与正式版完美共存，功能验证完毕后一键提交标准 PR 参与社区共建。",
+                title = stringResource(R.string.iteration_coexist_title),
+                description = stringResource(R.string.iteration_coexist_description),
                 badgeColor = MaterialTheme.colorScheme.primary
             )
 
@@ -134,10 +138,10 @@ fun CustomIterationScreen(
                         strokeWidth = 2.dp,
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("正在准备迭代工作区…")
+                    Text(stringResource(R.string.iteration_preparing))
                 } else {
                     Text(
-                        text = "开启自定义迭代",
+                        text = stringResource(R.string.iteration_start),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold
                     )

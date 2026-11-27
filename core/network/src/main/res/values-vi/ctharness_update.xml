@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="network_update_no_source">Chưa cấu hình nguồn cập nhật</string>
+    <string name="network_update_incomplete_manifest">Bản kê cập nhật chưa đầy đủ: %1$s</string>
+    <string name="network_update_http_error">Nguồn cập nhật trả về HTTP %1$d</string>
+    <string name="network_update_no_notes">Bản kê không có ghi chú phát hành</string>
+    <string name="network_update_download_error">Tải xuống thất bại: HTTP %1$d</string>
+    <string name="network_update_package_mismatch">Gói cập nhật không hợp lệ hoặc không thuộc %1$s. Chưa bắt đầu cài đặt.</string>
+</resources>

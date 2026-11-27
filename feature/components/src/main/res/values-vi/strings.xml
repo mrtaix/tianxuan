@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="components_nav_home">Trang chủ</string>
+    <string name="components_nav_agent">Tác nhân AI</string>
+    <string name="components_nav_workspace">Không gian làm việc</string>
+    <string name="components_nav_settings">Cài đặt</string>
+    <string name="components_back">Quay lại</string>
+    <string name="components_tianxuan_logo">Logo CTHarness</string>
+    <string name="components_close">Đóng</string>
+    <string name="components_guide_confirm">Đã hiểu</string>
+    <string name="components_nav_subtitle_home">Tổng quan</string>
+    <string name="components_nav_subtitle_agent">Tác nhân</string>
+    <string name="components_nav_subtitle_workspace">Không gian làm việc</string>
+    <string name="components_nav_subtitle_settings">Cài đặt</string>
+    <string name="components_md_web_content">Ảnh trên mạng</string>
+    <string name="components_md_image_preview">Xem trước ảnh</string>
+    <string name="components_md_image_load_failed">Không tải được ảnh</string>
+    <string name="components_md_image_saved">Đã lưu ảnh vào thư viện</string>
+    <string name="components_md_image_save_failed">Không lưu được ảnh</string>
+    <string name="components_md_save_image">Lưu ảnh</string>
+    <string name="components_md_code_clipboard_label">Mã</string>
+    <string name="components_md_code_copied">Đã sao chép mã vào bộ nhớ tạm</string>
+    <string name="components_md_code_badge">MÃ</string>
+    <string name="components_md_copy">Sao chép</string>
+</resources>

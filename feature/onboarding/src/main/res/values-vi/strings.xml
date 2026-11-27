@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">CTHarness · Bắt đầu</string>
+    <string name="onboarding_description">Đang chuẩn bị môi trường cô lập Linux PRoot không cần Root và không gian làm việc với mã nguồn.</string>
+    <string name="onboarding_distribution">Bản phân phối Linux</string>
+    <string name="onboarding_mirror">Máy chủ tải xuống</string>
+    <string name="onboarding_mirror_auto">Tự chọn máy chủ tốt nhất (khuyên dùng)</string>
+    <string name="onboarding_mirror_official">Nguồn chính thức (CDN toàn cầu)</string>
+    <string name="onboarding_mirror_china">Máy chủ tăng tốc tại Trung Quốc</string>
+    <string name="onboarding_initialization_failed">Khởi tạo thất bại. Hãy kiểm tra kết nối mạng rồi thử lại.</string>
+    <string name="onboarding_retry">Thử tải và thiết lập lại</string>
+    <string name="onboarding_preparing">Đang chuẩn bị môi trường…</string>
+    <string name="onboarding_initialize">Khởi tạo môi trường cô lập</string>
+    <string name="onboarding_recheck">Đã cài môi trường? Nhấn để kiểm tra lại mà không tải lại</string>
+    <string name="onboarding_import">Nhập bản phân phối Linux từ tệp</string>
+    <string name="onboarding_import_hint">Hỗ trợ tệp RootFS ARM64: .tar, .tar.gz, .tgz, .tar.xz, .tar.zst; cần có Bash, /bin/sh và os-release.</string>
+    <string name="onboarding_connect_model">Kết nối mô hình AI</string>
+    <string name="onboarding_connect_model_description">Cấu hình nhà cung cấp mô hình và khóa API bạn muốn dùng để bắt đầu lập trình cùng AI.</string>
+    <string name="onboarding_base_url">URL cơ sở (địa chỉ API)</string>
+    <string name="onboarding_api_key">Khóa API (không bắt buộc)</string>
+    <string name="onboarding_model_selection">Mô hình / cấu hình gợi ý</string>
+    <string name="onboarding_model_empty">Hãy làm mới hoặc nhập mô hình thủ công</string>
+    <string name="onboarding_model_id">ID mô hình (có thể nhập thủ công)</string>
+    <string name="onboarding_later">Cấu hình sau</string>
+    <string name="onboarding_enter">Vào CTHarness</string>
+    <string name="onboarding_provider_preset">Cấu hình nhà cung cấp</string>
+</resources>

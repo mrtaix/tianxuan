@@ -10,7 +10,7 @@
     <string name="terminal_console_title">天玑 · 矩阵控制台</string>
     <string name="terminal_copy">复制</string>
     <string name="terminal_paste">粘贴</string>
-    <string name="terminal_starting">启动天玄 Linux 环境中…</string>
+    <string name="terminal_starting">启动CTHarness Linux 环境中…</string>
     <string name="terminal_reset_complete">已重置并重启终端</string>
     <string name="terminal_default_label">终端 %1$d</string>
     <string name="terminal_quick_main">主终端</string>

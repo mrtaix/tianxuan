@@ -75,13 +75,13 @@ extensions.configure<ApplicationExtension> {
     ndkVersion = "30.0.15729638"
 
     defaultConfig {
-        applicationId = if (tianXuanDevBuild) "top.wkbin.tianxuan.dev" else "top.wkbin.tianxuan"
+        applicationId = if (tianXuanDevBuild) "com.ctharness.app.dev" else "com.ctharness.app"
         minSdk = 29
         targetSdk = 37
         versionCode = appVersionCode
         versionName = appVersionName
         // 应用名统一走 manifest placeholder：TianXuanDev 构建显示 "TianXuanDev"，其余显示 "天玄"。
-        manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "TianXuanDev" else "天玄"
+        manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "CTHarness Dev" else "CTHarness"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += "arm64-v8a"
@@ -153,7 +153,7 @@ extensions.configure<ApplicationExtension> {
             }
         }
         release {
-            manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "TianXuanDev" else "天玄"
+            manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "CTHarness Dev" else "CTHarness"
             // 内测阶段不开R8 混淆与资源压缩。
             //
             // 关闭的是「防反编译」，不是签名：签名是 Android 的安装前提，
@@ -348,7 +348,7 @@ tasks.configureEach {
 
 extensions.configure<ApplicationAndroidComponentsExtension> {
     onVariants { variant ->
-        val buildAppName = "tianxuan-v${appVersionName}-${variant.name}.apk"
+        val buildAppName = "ctharness-v${appVersionName}-${variant.name}.apk"
         variant.outputs.forEach { output ->
             output.outputFileName.set(buildAppName)
         }

@@ -69,7 +69,7 @@ class SponsorListRepository(
         runCatching {
             val request = Request.Builder()
                 .url(SPONSORS_JSON_URL)
-                .header("User-Agent", "TianXuan-App")
+                .header("User-Agent", "CTHarness-App")
                 .get()
                 .build()
             httpClient.newCall(request).execute().use { response ->
@@ -86,7 +86,8 @@ class SponsorListRepository(
     }
 
     companion object {
-        // TODO: 把仓库根目录的 sponsors.json 推送到 GitHub 后，确认该地址可访问
-        const val SPONSORS_JSON_URL = "https://raw.githubusercontent.com/wkbin/tianxuan/main/sponsors.json"
+        // 名单随代码维护在 fork 仓库根目录；改用 raw 的 commit 固定地址会漏掉后续新增条目。
+        const val SPONSORS_JSON_URL =
+            "https://raw.githubusercontent.com/mrtaix/tianxuan/main/sponsors.json"
     }
 }

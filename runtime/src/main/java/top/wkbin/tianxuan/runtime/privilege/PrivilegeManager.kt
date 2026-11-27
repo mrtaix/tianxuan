@@ -260,6 +260,9 @@ class PrivilegeManager(
      */
     private suspend fun checkShizukuPrivilege(): PrivilegeCheckResult {
         return try {
+            // The Binder can be delivered shortly after the settings screen is opened.
+            // Wait for the sticky callback before reporting "service not running".
+            awaitShizukuBinder()
             // 1. 探测 Shizuku Binder 服务是否处于运行激活状态
             val isBinderAlive = Shizuku.pingBinder()
             if (!isBinderAlive) {
@@ -279,9 +282,10 @@ class PrivilegeManager(
                 )
             } else {
                 if (Shizuku.shouldShowRequestPermissionRationale()) {
+                    // The user denied before; Shizuku will not show another dialog.
                     PrivilegeCheckResult.Unauthorized(
                         ExecutionMode.SHIZUKU,
-                        "请在 Shizuku 弹窗中允许天玄访问 ADB 特权服务。",
+                        "此前已拒绝 CTHarness 的 Shizuku 授权，不会再次弹窗。请打开 Shizuku App → 应用 → CTHarness，手动允许访问 ADB 特权服务。",
                     )
                 } else {
                     val granted = requestShizukuPermission()
@@ -293,7 +297,7 @@ class PrivilegeManager(
                     } else {
                         PrivilegeCheckResult.Unauthorized(
                             ExecutionMode.SHIZUKU,
-                            "Shizuku 授权被拒绝或等待超时，请在 Shizuku App 中检查天玄的授权状态。",
+                            "Shizuku 授权被拒绝或等待超时，请在 Shizuku App → 应用 → CTHarness 中检查授权状态。",
                         )
                     }
                 }
@@ -585,7 +589,7 @@ class PrivilegeManager(
             return ShellExecResult(false, -1, "", "Shizuku 服务未运行。请打开 Shizuku App 并确保服务已启动。")
         }
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-            return ShellExecResult(false, -1, "", "Shizuku 未授权。请在 Shizuku App 中授予天玄访问权限。")
+            return ShellExecResult(false, -1, "", "Shizuku 未授权。请在 Shizuku App → 应用 → CTHarness 中授予访问权限。")
         }
 
         return try {

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fa2ui_poc_title">Bản thử nghiệm trình kết xuất A2UI</string>
+    <string name="fa2ui_inject_sample">Chèn ví dụ</string>
+    <string name="fa2ui_clear">Xóa hết</string>
+    <string name="fa2ui_empty_hint">Chưa có giao diện A2UI. Hãy yêu cầu tác nhân gọi công cụ render_surface hoặc nhấn “Chèn ví dụ” ở góc trên bên phải để trải nghiệm kết xuất theo giao thức.</string>
+</resources>

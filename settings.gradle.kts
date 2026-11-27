@@ -76,7 +76,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "TianXuan"
+rootProject.name = "CTHarness"
 include(":app")
 include(":baselineprofile")
 include(":core:common")

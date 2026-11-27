@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="iteration_error_bootstrap">Failed to prepare the iteration workspace. Check your network and storage, then try again.</string>
+    <string name="iteration_title">Customize app (experimental)</string>
+    <string name="iteration_hero_title">Build your own CTHarness Dev</string>
+    <string name="iteration_hero_description">CTHarness combines a mobile Linux runtime with AI agents. Ask an agent to modify the app source, configure GitHub Actions to build a separate CTHarness Dev APK, and contribute changes through pull requests.</string>
+    <string name="iteration_features_title">Key capabilities</string>
+    <string name="iteration_features_subtitle">Prepare once, keep developing</string>
+    <string name="iteration_workspace_title">Separate workspace</string>
+    <string name="iteration_workspace_description">Keep customized source in ~/custom_tianxuan, separate from other projects. This is not a security isolation boundary.</string>
+    <string name="iteration_skill_title">Development rules for AI agents</string>
+    <string name="iteration_skill_description">Follow multi-module, Compose and security rules; use the tianxuan-custom-iteration skill if installed.</string>
+    <string name="iteration_ci_title">Build with GitHub Actions</string>
+    <string name="iteration_ci_description">After configuring CI, build a separate CTHarness Dev APK with package com.ctharness.app.dev without compiling on the phone.</string>
+    <string name="iteration_coexist_title">Side-by-side installation and pull requests</string>
+    <string name="iteration_coexist_description">The development build uses a separate package so it can coexist with the main app. Verify changes before preparing a pull request.</string>
+    <string name="iteration_preparing">Preparing the workspace…</string>
+    <string name="iteration_start">Start customizing</string>
+    <string name="iteration_chat_title">🚀 Customize app</string>
+    <string name="iteration_bootstrap_prompt">I want to customize CTHarness in the Linux PRoot environment on my phone.\n\nGuide me through these steps:\n1. Check the environment and the separate workspace ~/%2$s. Prefer GitHub Actions for building the CTHarness Dev APK; do not install Android SDK/NDK on the phone automatically.\n2. Check gh CLI and Git configuration. If authentication is needed, guide me through gh auth login using the device-code flow or an SSH key. Do not write tokens or private keys to command history or logs.\n3. Verify the code source at %1$s. Use git clone to obtain the code in ~/%2$s after confirming the repository and branch. Verify that the remote has the feat/ctharness-vi branch containing CTHarness changes; if not, ask me for the code source instead of silently falling back to main. Create a fork only when needed and approved by me.\n4. Follow CTHarness rules for Jetpack Compose, Koin and multi-module architecture. Use the tianxuan-custom-iteration skill if available. Run tests after changing code. Commit or push only with my permission.\n5. With my approval, run gh workflow run tianxuandev-build.yml --ref BRANCH in the confirmed repository. Monitor it with gh run watch RUN_ID --exit-status and download the APK with gh run download RUN_ID -n tianxuandev-apk. Verify package com.ctharness.app.dev and app name CTHarness Dev before proposing installation; do not install the APK automatically.\n6. Once changes are verified and I request it, prepare a pull request to %1$s.</string>
 </resources>

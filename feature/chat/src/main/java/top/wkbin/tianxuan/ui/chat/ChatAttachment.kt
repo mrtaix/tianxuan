@@ -58,6 +58,10 @@ data class ChatAttachment(
 
 object AttachmentHelper {
     private const val TAG = "AttachmentHelper"
+    // shortcut: fixed 500 MB ceiling for streamed attachments; make it storage-aware when
+    // multi-gigabyte files become a real use case. No in-memory copy: the file is streamed
+    // straight into linux-runtime/attachments and referenced by its sandbox path.
+    private const val MAX_ATTACHMENT_BYTES = 500L * 1024 * 1024
 
     fun processUri(context: Context, uri: Uri, isImage: Boolean): ChatAttachment? {
         val contentResolver = context.contentResolver
@@ -85,7 +89,7 @@ object AttachmentHelper {
                 BoundedStreamCopy.copyToFile(
                     input = input,
                     targetFile = targetFile,
-                    maxBytes = BoundedStreamCopy.DEFAULT_MAX_ATTACHMENT_BYTES,
+                    maxBytes = MAX_ATTACHMENT_BYTES,
                     policy = BoundedStreamCopy.OverflowPolicy.ABORT,
                 )
             } ?: return null

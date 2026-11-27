@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import top.wkbin.tianxuan.ui.components.TianXuanBrandBadge
 import top.wkbin.tianxuan.ui.components.RuntimeIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -88,7 +87,6 @@ internal fun ChatTopBar(
                     .clickable(onClick = onOpenSessions)
                     .padding(vertical = 2.dp, horizontal = 4.dp),
             ) {
-                TianXuanBrandBadge(28.dp)
                 Column {
                     Text(
                         text = stringResource(R.string.chat_title),
