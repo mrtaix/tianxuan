@@ -30,6 +30,14 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      # Gradle 9.7 daemon requests Java 25 via gradle-daemon-jvm.properties;
+      # app modules still compile against the Java 17 toolchain.
+      - name: Set up JDK 25 for the Gradle daemon
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -44,7 +52,9 @@ jobs:
         env:
           TIANXUAN_DEV_BUILD: "1"
         run: |
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace \
+            -Porg.gradle.java.installations.paths="$JAVA_HOME_17_X64,$JAVA_HOME_25_X64" \
+            -Porg.gradle.java.installations.auto-detect=true
 
       - name: Identify and Rename Output APK
         run: |
