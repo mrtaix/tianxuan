@@ -124,6 +124,74 @@ class ForkContractTest(unittest.TestCase):
                     body = body[:declaration]
                 self.assertNotIn("TianXuanBrandBadge(", body)
 
+    def test_onboarding_screen_has_no_hardcoded_chinese(self):
+        screen = read(
+            "feature/onboarding/src/main/java/top/wkbin/tianxuan/ui/onboarding/"
+            "OnboardingScreen.kt"
+        )
+        code = re.sub(r"(?m)^\s*//.*$", "", screen)
+        literals = re.findall(r'"(?:\\.|[^"\\])*"', code)
+        self.assertFalse(
+            [value for value in literals if re.search(r"[\u3400-\u9fff]", value)],
+            "Onboarding screen still contains hardcoded Chinese literals",
+        )
+        for locale in ("values", "values-en", "values-vi"):
+            with self.subTest(locale=locale):
+                resource = strings(
+                    ROOT / "feature/onboarding/src/main/res" / locale / "strings.xml"
+                )
+                for key in (
+                    "onboarding_import_json",
+                    "onboarding_provider_preset_short",
+                    "onboarding_switch",
+                    "onboarding_base_url_hint",
+                    "onboarding_api_key_credential",
+                    "onboarding_filled",
+                    "onboarding_model_hint",
+                    "onboarding_candidate_models",
+                    "onboarding_import_dialog_title",
+                    "onboarding_paste_clipboard",
+                    "onboarding_choose_file",
+                    "onboarding_paste_hint",
+                    "onboarding_clipboard_empty",
+                    "onboarding_paste_action",
+                    "onboarding_choose_json",
+                    "onboarding_loaded_chars",
+                    "onboarding_load",
+                ):
+                    self.assertIn(key, resource)
+
+    def test_terminology_and_offline_translation_target(self):
+        for locale in ("values", "values-en", "values-vi"):
+            with self.subTest(locale=locale):
+                resource = read(f"feature/onboarding/src/main/res/{locale}/strings.xml")
+                self.assertNotIn("tác nhân AI", resource)
+                self.assertNotIn("không gian làm việc", resource)
+        vi = read("feature/onboarding/src/main/res/values-vi/strings.xml")
+        self.assertIn("Không gian", vi)
+        # AI Agent terminology is applied wherever the old phrase existed.
+        for locale in ("values", "values-en", "values-vi"):
+            for path in (
+                "feature/chat/src/main/res/values-vi/strings.xml",
+                "feature/custom_iteration/src/main/res/values-vi/strings.xml",
+                "feature/components/src/main/res/values-vi/strings.xml",
+            ):
+                self.assertNotIn("tác nhân AI", read(path))
+
+        manager = read(
+            "core/common/src/main/java/top/wkbin/tianxuan/core/common/translation/"
+            "TranslationManager.kt"
+        )
+        self.assertIn("setTargetLanguage(TranslateLanguage.VIETNAMESE)", manager)
+        self.assertIn("TranslateRemoteModel.Builder(TranslateLanguage.VIETNAMESE)", manager)
+        self.assertNotIn("TranslateLanguage.CHINESE", manager)
+        card = read(
+            "feature/settings/src/main/java/top/wkbin/tianxuan/ui/settings/"
+            "TranslationModelCard.kt"
+        )
+        self.assertIn("settings_translation_language_pair", card)
+        self.assertNotIn('"英语 (en) → 简体中文 (zh-CN)"', card)
+
     def test_heavy_attachments_queue_recovery_and_shizuku_guidance(self):
         attachment = read(
             "feature/chat/src/main/java/top/wkbin/tianxuan/ui/chat/ChatAttachment.kt"

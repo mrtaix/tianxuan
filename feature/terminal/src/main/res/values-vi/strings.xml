@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="terminal_error_workspace_start">Không khởi động được thiết bị đầu cuối của không gian làm việc</string>
+    <string name="terminal_error_workspace_start">Không khởi động được thiết bị đầu cuối của Không gian</string>
     <string name="terminal_error_start">Không khởi động được thiết bị đầu cuối</string>
     <string name="terminal_error_create_session">Không tạo được phiên</string>
     <string name="terminal_error_close_session">Không đóng được phiên</string>

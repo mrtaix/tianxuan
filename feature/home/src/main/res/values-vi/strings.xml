@@ -70,5 +70,5 @@
     <string name="home_webchat_copy">Sao chép liên kết</string>
     <string name="home_webchat_copied">Đã sao chép liên kết không cần mật khẩu. Mở trên máy tính để tự động vào bàn làm việc!</string>
     <string name="home_webchat_hint">💡 Lưu ý: máy tính và điện thoại phải cùng mạng Wi-Fi. Số thiết bị trực tuyến: %1$d</string>
-    <string name="home_webchat_intro">Không cần cáp: dùng trình duyệt máy tính trong cùng mạng Wi-Fi để kết nối với tác nhân CTHarness, xem xét mã nguồn và quản lý không gian làm việc trong môi trường cô lập.</string>
+    <string name="home_webchat_intro">Không cần cáp: dùng trình duyệt máy tính trong cùng mạng Wi-Fi để kết nối với AI Agent CTHarness, xem xét mã nguồn và quản lý Không gian trong môi trường cô lập.</string>
 </resources>

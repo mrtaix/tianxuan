@@ -18,7 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import top.wkbin.tianxuan.ui.components.RuntimeAlertDialog
 import top.wkbin.tianxuan.ui.components.RuntimeIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import top.wkbin.tianxuan.ui.settings.LocalizedText as Text
 import top.wkbin.tianxuan.ui.components.RuntimeTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue

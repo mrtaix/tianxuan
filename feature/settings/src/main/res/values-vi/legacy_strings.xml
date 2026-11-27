@@ -17,8 +17,8 @@
     <string name="settings_legacy_0015" formatted="false">CTHarness</string>
     <string name="settings_legacy_0016" formatted="false">Cài đặt hệ thống và trung tâm điều khiển</string>
     <string name="settings_legacy_0017" formatted="false">Hệ thống và cấu hình</string>
-    <string name="settings_legacy_0018" formatted="false">Tác nhân và mô hình AI</string>
-    <string name="settings_legacy_0019" formatted="false">Tác nhân và mô hình</string>
+    <string name="settings_legacy_0018" formatted="false">AI Agent và mô hình AI</string>
+    <string name="settings_legacy_0019" formatted="false">AI Agent và mô hình</string>
     <string name="settings_legacy_0020" formatted="false">Hồ sơ mô hình · Trung tâm công cụ và plugin · Kỹ năng và MCP</string>
     <string name="settings_legacy_0021" formatted="false">Hồ sơ mô hình</string>
     <string name="settings_legacy_0022" formatted="false">Quản lý hồ sơ mô hình</string>
@@ -57,7 +57,7 @@
     <string name="settings_legacy_0055" formatted="false">Tiêu đề yêu cầu tùy chỉnh (không bắt buộc)</string>
     <string name="settings_legacy_0056" formatted="false">Không chèn công cụ và chỉ dẫn</string>
     <string name="settings_legacy_0057" formatted="false">Chỉ gửi tin nhắn người dùng, không chèn chỉ dẫn hệ thống hay định nghĩa công cụ (để chẩn đoán lỗi)</string>
-    <string name="settings_legacy_0059" formatted="false">Quản lý tác nhân AI</string>
+    <string name="settings_legacy_0059" formatted="false">Quản lý AI Agent</string>
     <string name="settings_legacy_0060" formatted="false">Hiển thị luồng suy nghĩ, chiến lược nén ngữ cảnh và plugin kỹ năng</string>
     <string name="settings_legacy_0061" formatted="false">Hệ sinh thái công cụ và plugin</string>
     <string name="settings_legacy_0062" formatted="false">Trung tâm plugin và công cụ</string>
@@ -78,7 +78,7 @@
     <string name="settings_legacy_0077" formatted="false">Duy trì chạy nền và chẩn đoán dành cho nhà phát triển</string>
     <string name="settings_legacy_0078" formatted="false">Duy trì chạy nền và chẩn đoán</string>
     <string name="settings_legacy_0079" formatted="false">Tối ưu pin và chạy nền</string>
-    <string name="settings_legacy_0080" formatted="false">Miễn hạn chế pin để tác nhân không bị đóng băng khi tắt màn hình</string>
+    <string name="settings_legacy_0080" formatted="false">Miễn hạn chế pin để AI Agent không bị đóng băng khi tắt màn hình</string>
     <string name="settings_legacy_0081" formatted="false">Giới hạn tiến trình con trên Android 12</string>
     <string name="settings_legacy_0082" formatted="false">Gỡ giới hạn tối đa 32 tiến trình ma chạy nền</string>
     <string name="settings_legacy_0083" formatted="false">Đã gỡ</string>
@@ -130,7 +130,7 @@
     <string name="settings_legacy_0129" formatted="false">Đang kiểm tra đặc quyền và yêu cầu cấp quyền…</string>
     <string name="settings_legacy_0130" formatted="false">Không được cấp quyền cho chế độ thực thi</string>
     <string name="settings_legacy_0131" formatted="false">Biến môi trường</string>
-    <string name="settings_legacy_0132" formatted="false">Chèn biến mã hóa vào thiết bị đầu cuối, tác nhân và công cụ</string>
+    <string name="settings_legacy_0132" formatted="false">Chèn biến mã hóa vào thiết bị đầu cuối, AI Agent và công cụ</string>
     <string name="settings_legacy_0133" formatted="false">Thêm biến môi trường</string>
     <string name="settings_legacy_0134" formatted="false">Sửa biến môi trường</string>
     <string name="settings_legacy_0135" formatted="false">Xóa biến môi trường</string>
@@ -139,7 +139,7 @@
     <string name="settings_legacy_0138" formatted="false">Giá trị mới (để trống để giữ giá trị hiện tại)</string>
     <string name="settings_legacy_0139" formatted="false">Ghi chú (không bắt buộc)</string>
     <string name="settings_legacy_0140" formatted="false">Chế độ riêng tư</string>
-    <string name="settings_legacy_0141" formatted="false">Che giá trị biến đã cấu hình trước khi gửi nội dung cho tác nhân</string>
+    <string name="settings_legacy_0141" formatted="false">Che giá trị biến đã cấu hình trước khi gửi nội dung cho AI Agent</string>
     <string name="settings_legacy_0142" formatted="false">Đã hiểu</string>
     <string name="settings_legacy_0143" formatted="false">Sao chép</string>
     <string name="settings_legacy_0144" formatted="false">Yêu cầu phê duyệt</string>
@@ -150,7 +150,7 @@
     <string name="settings_text_0002" formatted="false">- Ngữ cảnh lỗi và đầu ra nhật ký:</string>
     <string name="settings_text_0003" formatted="false">Plugin AI</string>
     <string name="settings_text_0004" formatted="false">Tự sửa chữa bằng AI</string>
-    <string name="settings_text_0005" formatted="false">Quản lý và cấu hình tác nhân AI</string>
+    <string name="settings_text_0005" formatted="false">Quản lý và cấu hình AI Agent</string>
     <string name="settings_text_0006" formatted="false">Lệnh gỡ giới hạn tiến trình con Android 12</string>
     <string name="settings_text_0007" formatted="false">Môi trường cô lập Linux PRoot và trung tâm cộng tác AI gốc trên Android</string>
     <string name="settings_text_0008" formatted="false">Môi trường cô lập Linux PRoot và trung tâm lập trình cùng AI gốc trên Android</string>
@@ -173,7 +173,7 @@
     <string name="settings_text_0025" formatted="false">mcpServers không phải đối tượng JSON hợp lệ</string>
     <string name="settings_text_0026" formatted="false">v0.3.0 ổn định</string>
     <string name="settings_text_0027" formatted="false">✓ Sẵn sàng</string>
-    <string name="settings_text_0028" formatted="false">[Mục tiêu tự sửa chữa và hướng dẫn hành động cho tác nhân]:</string>
+    <string name="settings_text_0028" formatted="false">[Mục tiêu tự sửa chữa và hướng dẫn hành động cho AI Agent]:</string>
     <string name="settings_text_0029" formatted="false">[Chẩn đoán lỗi cài công cụ hệ thống và tự sửa chữa môi trường cô lập]</string>
     <string name="settings_text_0030" formatted="false">Lệnh chạy một lần</string>
     <string name="settings_text_0031" formatted="false">Cài nhanh</string>
@@ -183,11 +183,11 @@
     <string name="settings_text_0035" formatted="false">Tải xuống</string>
     <string name="settings_text_0036" formatted="false">Thư mục tải xuống (Download)</string>
     <string name="settings_text_0037" formatted="false">Nguồn tải và máy chủ tăng tốc:</string>
-    <string name="settings_text_0038" formatted="false">Tác nhân chính tự chọn vai trò và ủy quyền song song theo nhu cầu tác vụ</string>
+    <string name="settings_text_0038" formatted="false">AI Agent chính tự chọn vai trò và ủy quyền song song theo nhu cầu tác vụ</string>
     <string name="settings_text_0039" formatted="false">Hệ thống chính</string>
     <string name="settings_text_0040" formatted="false">Thiết bị đầu cuối tương tác</string>
     <string name="settings_text_0041" formatted="false">Chỉ dùng làm giá trị ban đầu cho phiên mới. Phiên hiện có có thể đổi riêng ở đầu cuộc trò chuyện.</string>
-    <string name="settings_text_0042" formatted="false">Chỉ ủy quyền khi người dùng yêu cầu rõ ràng việc xử lý song song hoặc phối hợp tác nhân con</string>
+    <string name="settings_text_0042" formatted="false">Chỉ ủy quyền khi người dùng yêu cầu rõ ràng việc xử lý song song hoặc phối hợp AI Agent con</string>
     <string name="settings_text_0043" formatted="false">Chỉ hỗ trợ chữ cái tiếng Anh, chữ số, gạch dưới và gạch nối</string>
     <string name="settings_text_0044" formatted="false">Nhập từ đường dẫn</string>
     <string name="settings_text_0045" formatted="false">Tối ưu lượng token cho tác vụ dài, tránh vượt cửa sổ ngữ cảnh của mô hình</string>
@@ -203,10 +203,10 @@
     <string name="settings_text_0055" formatted="false">Tất cả hệ sinh thái</string>
     <string name="settings_text_0056" formatted="false">Mọi thành phần đã sẵn sàng</string>
     <string name="settings_text_0057" formatted="false">Không đủ bộ nhớ</string>
-    <string name="settings_text_0058" formatted="false">đóng băng tiến trình, khiến suy luận của tác nhân hoặc lệnh đang chạy bị dừng giữa chừng. Nên bật hai mục sau:</string>
+    <string name="settings_text_0058" formatted="false">đóng băng tiến trình, khiến suy luận của AI Agent hoặc lệnh đang chạy bị dừng giữa chừng. Nên bật hai mục sau:</string>
     <string name="settings_text_0059" formatted="false">Đang chuẩn bị tải ảnh hệ thống...</string>
     <string name="settings_text_0060" formatted="false">Đổi chế độ đặc quyền sẽ tự kiểm tra và yêu cầu cấp quyền. Khi được cấp quyền, các khả năng hệ thống và phần cứng nâng cao tương ứng sẽ khả dụng ngay.</string>
-    <string name="settings_text_0061" formatted="false">Xóa tác nhân con</string>
+    <string name="settings_text_0061" formatted="false">Xóa AI Agent con</string>
     <string name="settings_text_0062" formatted="false">Xóa dịch vụ</string>
     <string name="settings_text_0063" formatted="false">Không xóa được mô hình</string>
     <string name="settings_text_0065" formatted="false">Tên trợ lý</string>
@@ -218,11 +218,11 @@
     <string name="settings_text_0071" formatted="false">Gỡ công cụ</string>
     <string name="settings_text_0072" formatted="false">Chiến lược nén ngữ cảnh</string>
     <string name="settings_text_0074" formatted="false">Đối số (cách nhau bằng dấu cách)</string>
-    <string name="settings_text_0075" formatted="false">Có thể nhờ tác nhân CTHarness tự chẩn đoán và sửa chữa trong môi trường cô lập PRoot</string>
+    <string name="settings_text_0075" formatted="false">Có thể nhờ AI Agent CTHarness tự chẩn đoán và sửa chữa trong môi trường cô lập PRoot</string>
     <string name="settings_text_0076" formatted="false">Có thể cập nhật</string>
     <string name="settings_text_0077" formatted="false">Đang cài bộ công cụ phát triển trong nền...</string>
     <string name="settings_text_0078" formatted="false">Miễn tối ưu pin nền · Giám sát gỡ lỗi · Bảng điều khiển PRoot</string>
-    <string name="settings_text_0079" formatted="false">Chèn quy chuẩn chuyên môn và hướng dẫn thao tác vào chỉ dẫn hệ thống của tác nhân</string>
+    <string name="settings_text_0079" formatted="false">Chèn quy chuẩn chuyên môn và hướng dẫn thao tác vào chỉ dẫn hệ thống của AI Agent</string>
     <string name="settings_text_0080" formatted="false">Nếu không, cơ chế tiết kiệm pin của nhà sản xuất vẫn sẽ kết thúc tiến trình.</string>
     <string name="settings_text_0081" formatted="false">Khởi động</string>
     <string name="settings_text_0082" formatted="false">Đang khởi động</string>
@@ -236,7 +236,7 @@
     <string name="settings_text_0090" formatted="false">Nhập chỉ dẫn hệ thống tùy chỉnh tại đây, hỗ trợ biến macro như {{cur_datetime}}...</string>
     <string name="settings_text_0091" formatted="false">Tự kiểm tra và nâng cấp trực tuyến qua GitHub Releases</string>
     <string name="settings_text_0092" formatted="false">Sao chép JSON</string>
-    <string name="settings_text_0093" formatted="false">Tác nhân chính tự quyết định có ủy quyền tác vụ phức tạp, có thể làm song song hay không</string>
+    <string name="settings_text_0093" formatted="false">AI Agent chính tự quyết định có ủy quyền tác vụ phức tạp, có thể làm song song hay không</string>
     <string name="settings_text_0094" formatted="false">Nhiều môi trường cô lập cùng tồn tại và chuyển đổi linh hoạt</string>
     <string name="settings_text_0095" formatted="false">Tự tạo tóm tắt có cấu trúc khi lịch sử vượt ngưỡng token, giữ nguyên nội dung gần đây, trạng thái tác vụ và dấu vết tệp quan trọng</string>
     <string name="settings_text_0096" formatted="false">Ví dụ: sqlite / github / fetch</string>
@@ -250,7 +250,7 @@
     <string name="settings_text_0104" formatted="false">Đang nhận nhật ký cài đặt...</string>
     <string name="settings_text_0105" formatted="false">Đường dẫn cài đặt</string>
     <string name="settings_text_0106" formatted="false">Toàn bộ bộ nhớ dùng chung (/sdcard)</string>
-    <string name="settings_text_0107" formatted="false">Tùy chỉnh vai trò ban đầu, mô tả môi trường và biến macro động của tác nhân</string>
+    <string name="settings_text_0107" formatted="false">Tùy chỉnh vai trò ban đầu, mô tả môi trường và biến macro động của AI Agent</string>
     <string name="settings_text_0108" formatted="false">Đường dẫn gắn trong vùng chứa (Linux)</string>
     <string name="settings_text_0109" formatted="false">Đường dẫn trên thiết bị (Android)</string>
     <string name="settings_text_0110" formatted="false">Nhập</string>
@@ -282,12 +282,12 @@
     <string name="settings_text_0136" formatted="false">Bắt đầu tải</string>
     <string name="settings_text_0137" formatted="false">Bắt đầu cài</string>
     <string name="settings_text_0138" formatted="false">Bất thường</string>
-    <string name="settings_text_0141" formatted="false">Khi phiên liên kết với không gian làm việc, lệnh base mặc định dùng thư mục đó làm thư mục làm việc (cwd)</string>
+    <string name="settings_text_0141" formatted="false">Khi phiên liên kết với Không gian, lệnh base mặc định dùng thư mục đó làm thư mục làm việc (cwd)</string>
     <string name="settings_text_0142" formatted="false">Khi lịch sử vượt số vòng này, bắt đầu cắt gọn thông minh, giữ nguyên 4 vòng gần nhất</string>
     <string name="settings_text_0143" formatted="false">Đang hoạt động</string>
     <string name="settings_text_0144" formatted="false">Thành phần nền bắt buộc</string>
     <string name="settings_text_0146" formatted="false">Hiển thị suy nghĩ</string>
-    <string name="settings_text_0147" formatted="false">Luồng suy nghĩ, tác nhân con, kỹ năng và plugin</string>
+    <string name="settings_text_0147" formatted="false">Luồng suy nghĩ, AI Agent con, kỹ năng và plugin</string>
     <string name="settings_text_0148" formatted="false">Luồng suy nghĩ và cách hiển thị thực thi</string>
     <string name="settings_text_0149" formatted="false">Quá trình suy nghĩ (gồm cả nội dung đang tạo) mặc định thu gọn; nhấn để mở rộng</string>
     <string name="settings_text_0150" formatted="false">Đã cài tất cả bản phân phối Linux có sẵn!</string>
@@ -314,7 +314,7 @@
     <string name="settings_text_0171" formatted="false">Thư mục tài liệu (Documents)</string>
     <string name="settings_text_0172" formatted="false">Mô hình đa dụng thế hệ mới · Hiện chạy ở chế độ văn bản</string>
     <string name="settings_text_0173" formatted="false">Quyền công cụ mặc định cho phiên mới</string>
-    <string name="settings_text_0174" formatted="false">Thêm vai trò tác nhân con</string>
+    <string name="settings_text_0174" formatted="false">Thêm vai trò AI Agent con</string>
     <string name="settings_text_0175" formatted="false">Thêm điểm gắn bộ nhớ</string>
     <string name="settings_text_0176" formatted="false">Thêm điểm gắn</string>
     <string name="settings_text_0177" formatted="false">Thêm kỹ năng tùy chỉnh</string>
@@ -326,8 +326,8 @@
     <string name="settings_text_0183" formatted="false">Múi giờ</string>
     <string name="settings_text_0184" formatted="false">Giờ</string>
     <string name="settings_text_0185" formatted="false">Tên hiển thị</string>
-    <string name="settings_text_0186" formatted="false">Hệ sinh thái tác nhân</string>
-    <string name="settings_text_0187" formatted="false">Hệ sinh thái và dịch vụ tác nhân</string>
+    <string name="settings_text_0186" formatted="false">Hệ sinh thái AI Agent</string>
+    <string name="settings_text_0187" formatted="false">Hệ sinh thái và dịch vụ AI Agent</string>
     <string name="settings_text_0188" formatted="false">Chưa có nhật ký dịch vụ. Nhấn “Khởi động” cổng để xem thông tin bảng điều khiển và lỗi trực tiếp tại đây.</string>
     <string name="settings_text_0189" formatted="false">Chưa có mô hình</string>
     <string name="settings_text_0190" formatted="false">Chưa có nhật ký sự kiện liên quan</string>
@@ -398,7 +398,7 @@
     <string name="settings_text_0256" formatted="false">Ngoại tuyến</string>
     <string name="settings_text_0257" formatted="false">Trợ lý lập trình trên di động · Phù hợp điện thoại trên 6 GB</string>
     <string name="settings_text_0258" formatted="false">Mô hình chất lượng cao cho di động · Hiện chạy ở chế độ văn bản</string>
-    <string name="settings_text_0259" formatted="false">Điểm cuối không trả về mô hình tác nhân khả dụng</string>
+    <string name="settings_text_0259" formatted="false">Điểm cuối không trả về mô hình AI Agent khả dụng</string>
     <string name="settings_text_0260" formatted="false">Mô tả ngắn</string>
     <string name="settings_text_0261" formatted="false">Tùy chỉnh chỉ dẫn hệ thống và vai trò</string>
     <string name="settings_text_0262" formatted="false">Quy tắc chỉ dẫn hệ thống</string>
@@ -407,7 +407,7 @@
     <string name="settings_text_0265" formatted="false">Điểm gắn nhanh có sẵn</string>
     <string name="settings_text_0266" formatted="false">Quản lý và cấu hình thành phần</string>
     <string name="settings_text_0267" formatted="false">Trợ lý lập trình</string>
-    <string name="settings_text_0268" formatted="false">Sửa vai trò tác nhân con</string>
+    <string name="settings_text_0268" formatted="false">Sửa vai trò AI Agent con</string>
     <string name="settings_text_0269" formatted="false">Dịch vụ cổng</string>
     <string name="settings_text_0270" formatted="false">Tải qua mạng</string>
     <string name="settings_text_0271" formatted="false">Tải GGUF qua mạng</string>
@@ -417,9 +417,9 @@
     <string name="settings_text_0276" formatted="false">Tự đánh giá và chia tác vụ</string>
     <string name="settings_text_0277" formatted="false">Tự tăng tốc</string>
     <string name="settings_text_0278" formatted="false">Chiến lược tự ủy quyền</string>
-    <string name="settings_text_0279" formatted="false">Tự chèn đường dẫn không gian làm việc liên kết</string>
+    <string name="settings_text_0279" formatted="false">Tự chèn đường dẫn Không gian liên kết</string>
     <string name="settings_text_0280" formatted="false">Tùy chỉnh</string>
-    <string name="settings_text_0281" formatted="false">Vai trò tác nhân con tùy chỉnh</string>
+    <string name="settings_text_0281" formatted="false">Vai trò AI Agent con tùy chỉnh</string>
     <string name="settings_text_0282" formatted="false">Kỹ năng tùy chỉnh</string>
     <string name="settings_text_0283" formatted="false">Điểm gắn tùy chỉnh</string>
     <string name="settings_text_0284" formatted="false">Liên kết ánh xạ tùy chỉnh</string>
@@ -483,22 +483,22 @@
     <string name="settings_text_0342" formatted="false">Tên gọi và vai trò</string>
     <string name="settings_text_0343" formatted="false">Xem chỉ dẫn hệ thống mặc định</string>
     <string name="settings_text_0344" formatted="false">Tên tự xưng của mô hình</string>
-    <string name="settings_text_0345" formatted="false">Tác nhân CTHarness</string>
+    <string name="settings_text_0345" formatted="false">AI Agent CTHarness</string>
     <string name="settings_text_0346" formatted="false">Cách gọi người dùng</string>
     <string name="settings_text_0347" formatted="false">Người dùng</string>
     <string name="settings_text_0348" formatted="false">Áp dụng ngay cho mọi cuộc trò chuyện (để trống để khôi phục mặc định); biến macro {{char}} / {{user}} trong chỉ dẫn tùy chỉnh cũng dùng hai giá trị này.</string>
     <string name="settings_text_0349" formatted="false">Chỉ dẫn hệ thống mặc định (core.md)</string>
     <string name="settings_text_0350" formatted="false">(Không tải được chỉ dẫn hệ thống mặc định)</string>
-    <string name="settings_long_001" formatted="false">, target.sizeBytes.toDouble() / (1024 * 1024))} MB dung lượng). Mã nguồn trong không gian làm việc /workspace sẽ không bị ảnh hưởng.</string>
+    <string name="settings_long_001" formatted="false">, target.sizeBytes.toDouble() / (1024 * 1024))} MB dung lượng). Mã nguồn trong Không gian /workspace sẽ không bị ảnh hưởng.</string>
     <string name="settings_long_002" formatted="false">1. Phân tích các lỗi nêu trên trong môi trường cô lập PRoot (ví dụ: hỏng phần phụ thuộc dpkg, khóa còn sót, tải mạng bị chặn, thiếu liên kết mềm commandLinks hoặc thiếu môi trường);</string>
     <string name="settings_long_003" formatted="false">2. Gọi trực tiếp công cụ base để chạy lệnh sửa chữa phù hợp (ví dụ: dọn khóa /var/lib/dpkg, dpkg --configure -a, apt-get --fix-broken install, tải thủ công từ nguồn dự phòng hoặc bổ sung liên kết mềm);</string>
-    <string name="settings_long_004" formatted="false">Android 12+ giám sát tiến trình con do ứng dụng tạo và có thể kết thúc PRoot, trình biên dịch hoặc tác vụ tác nhân khi vượt giới hạn hệ thống. Mục này gỡ giới hạn tiến trình con, không phải số luồng Java/Kotlin.</string>
-    <string name="settings_long_005" formatted="false">MCP là giao thức ngữ cảnh mô hình tiêu chuẩn mở. Khi bật, CTHarness khởi động dịch vụ Stdio tương ứng trong môi trường cô lập PRoot hoặc kết nối điểm cuối SSE cục bộ, rồi chèn khả năng công cụ chuyên môn vào tác nhân.</string>
+    <string name="settings_long_004" formatted="false">Android 12+ giám sát tiến trình con do ứng dụng tạo và có thể kết thúc PRoot, trình biên dịch hoặc tác vụ AI Agent khi vượt giới hạn hệ thống. Mục này gỡ giới hạn tiến trình con, không phải số luồng Java/Kotlin.</string>
+    <string name="settings_long_005" formatted="false">MCP là giao thức ngữ cảnh mô hình tiêu chuẩn mở. Khi bật, CTHarness khởi động dịch vụ Stdio tương ứng trong môi trường cô lập PRoot hoặc kết nối điểm cuối SSE cục bộ, rồi chèn khả năng công cụ chuyên môn vào AI Agent.</string>
     <string name="settings_long_006" formatted="false">https://github.com/mrtaix/tianxuan · Hãy gắn sao để ủng hộ</string>
-    <string name="settings_long_007" formatted="false">CTHarness khởi động dịch vụ tiền cảnh và giữ khóa CPU khi tác nhân thực thi, nhưng sau khi tắt màn hình, cơ chế tối ưu pin của hệ thống vẫn có thể</string>
+    <string name="settings_long_007" formatted="false">CTHarness khởi động dịch vụ tiền cảnh và giữ khóa CPU khi AI Agent thực thi, nhưng sau khi tắt màn hình, cơ chế tối ưu pin của hệ thống vẫn có thể</string>
     <string name="settings_long_008" formatted="false">CTHarness hỗ trợ nhiều hệ thống Linux cùng tồn tại. Mỗi hệ thống tự gắn dự án mã nguồn /workspace; bộ nhớ ngoài /sdcard được chèn theo công tắc trên trang “Gắn và chia sẻ bộ nhớ”. Hệ sinh thái phần mềm và trình quản lý gói của mỗi bản phân phối được cô lập hoàn toàn.</string>
     <string name="settings_long_009" formatted="false">Chưa cấu hình hồ sơ mô hình nào. Vào “Cài đặt → Quản lý hồ sơ mô hình” để thêm Claude, OpenAI hoặc DeepSeek.</string>
-    <string name="settings_long_010" formatted="false">Điểm gắn chỉ ảnh hưởng đến tiến trình trong môi trường cô lập Linux (thiết bị đầu cuối, tác nhân, tác vụ biên dịch và dịch vụ nền), không ảnh hưởng trình duyệt tệp vốn luôn truy cập trực tiếp bộ nhớ thiết bị. Điểm gắn được chèn khi phiên khởi động; thay đổi chỉ áp dụng cho thiết bị đầu cuối / tác vụ biên dịch mới. Để đọc ghi đầy đủ, cần cấp quyền “Truy cập tất cả tệp” trong cài đặt hệ thống.</string>
+    <string name="settings_long_010" formatted="false">Điểm gắn chỉ ảnh hưởng đến tiến trình trong môi trường cô lập Linux (thiết bị đầu cuối, AI Agent, tác vụ biên dịch và dịch vụ nền), không ảnh hưởng trình duyệt tệp vốn luôn truy cập trực tiếp bộ nhớ thiết bị. Điểm gắn được chèn khi phiên khởi động; thay đổi chỉ áp dụng cho thiết bị đầu cuối / tác vụ biên dịch mới. Để đọc ghi đầy đủ, cần cấp quyền “Truy cập tất cả tệp” trong cài đặt hệ thống.</string>
     <string name="settings_long_012" formatted="false">Lưu ý: trên hệ thống Xiaomi/Huawei/OPPO và các hãng khác, còn cần cho phép thủ công “Tự khởi động” và “Chạy nền” trong thông tin ứng dụng,</string>
     <string name="settings_long_013" formatted="false">Dịch vụ chưa khởi động. Nhấn “Khởi động” trong thẻ “Dịch vụ cổng” trước. Khi thành công, liên kết truy cập sẽ hiển thị ở đây. Có thể tạo token trước để tự chèn lúc khởi động.</string>
     <string name="settings_long_014" formatted="false">Kiến trúc: aarch64 · Ảo hóa không gian người dùng không cần chroot</string>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="developer_text_0001" formatted="false">Khóa công khai Ed25519 (Base64)</string>
-    <string name="developer_text_0002" formatted="false">Môi trường Linux đã được khôi phục về trạng thái ban đầu. Dự án trong không gian làm việc không bị xóa.</string>
+    <string name="developer_text_0002" formatted="false">Môi trường Linux đã được khôi phục về trạng thái ban đầu. Dự án trong Không gian không bị xóa.</string>
     <string name="developer_text_0003" formatted="false">Không đặt lại được môi trường Linux</string>
     <string name="developer_text_0004" formatted="false">RootFS đã là phiên bản mới nhất.</string>
     <string name="developer_text_0005" formatted="false">Đã cập nhật RootFS và giữ nguyên dữ liệu người dùng.</string>
@@ -19,14 +19,14 @@
     <string name="developer_text_0017" formatted="false">Đóng</string>
     <string name="developer_text_0018" formatted="false">Chuẩn bị PRoot</string>
     <string name="developer_text_0019" formatted="false">Chuẩn bị các thành phần khởi động PRoot</string>
-    <string name="developer_text_0020" formatted="false">Tạo không gian làm việc</string>
+    <string name="developer_text_0020" formatted="false">Tạo Không gian</string>
     <string name="developer_text_0021" formatted="false">Tạo thư mục thực thi</string>
     <string name="developer_text_0022" formatted="false">Đang khởi tạo</string>
     <string name="developer_text_0023" formatted="false">Đã khởi tạo.</string>
     <string name="developer_text_0024" formatted="false">Làm mới</string>
     <string name="developer_text_0025" formatted="false">Hủy</string>
     <string name="developer_text_0026" formatted="false">Hủy tải xuống</string>
-    <string name="developer_text_0027" formatted="false">Chỉ xóa các bản tải xuống không còn hoạt động và tệp tạm, không ảnh hưởng đến hệ thống Linux, công cụ hay không gian làm việc.</string>
+    <string name="developer_text_0027" formatted="false">Chỉ xóa các bản tải xuống không còn hoạt động và tệp tạm, không ảnh hưởng đến hệ thống Linux, công cụ hay Không gian.</string>
     <string name="developer_text_0028" formatted="false">Môi trường thực thi có thể dọn</string>
     <string name="developer_text_0029" formatted="false">Tiến trình Linux nền và dung lượng đĩa sử dụng</string>
     <string name="developer_text_0030" formatted="false">Tiến trình nền</string>
@@ -41,8 +41,8 @@
     <string name="developer_text_0039" formatted="false">Sẽ xóa RootFS Linux hiện tại, các công cụ đã cài và bộ nhớ đệm của môi trường cô lập, nhưng giữ nguyên dự án trong /workspace và bộ nhớ dùng chung của điện thoại. Không thể hoàn tác.</string>
     <string name="developer_text_0040" formatted="false">Sẽ tải và xác minh phiên bản mới qua mạng, giữ nguyên /root và /opt/tianxuan. Các tiến trình Linux nền sẽ dừng trong lúc cập nhật. Nếu thất bại, phiên bản cũ sẽ tự động được khôi phục.</string>
     <string name="developer_text_0041" formatted="false">Sẽ xóa các môi trường thực thi dùng chung không được công cụ nào tham chiếu. Không thể tự động khôi phục thao tác này.</string>
-    <string name="developer_text_0042" formatted="false">Không gian làm việc</string>
-    <string name="developer_text_0043" formatted="false">Không gian làm việc có thể ghi</string>
+    <string name="developer_text_0042" formatted="false">Không gian</string>
+    <string name="developer_text_0043" formatted="false">Không gian có thể ghi</string>
     <string name="developer_text_0044" formatted="false">Dữ liệu công cụ</string>
     <string name="developer_text_0045" formatted="false">Đã lưu cấu hình danh mục công cụ.</string>
     <string name="developer_text_0046" formatted="false">Nguồn công cụ</string>
@@ -62,10 +62,10 @@
     <string name="developer_text_0060" formatted="false">Đã sao chép nhật ký</string>
     <string name="developer_text_0061" formatted="false">Đã sao chép nhật ký vào bộ nhớ tạm</string>
     <string name="developer_text_0062" formatted="false">Có</string>
-    <string name="developer_text_0063" formatted="false">Lưu cục bộ luồng thực thi tác nhân, lệnh gọi công cụ và chi tiết lỗi</string>
-    <string name="developer_text_0064" formatted="false">Đã xóa nhật ký tác nhân.</string>
-    <string name="developer_text_0065" formatted="false">Nhật ký gỡ lỗi cục bộ của tác nhân</string>
-    <string name="developer_text_0066" formatted="false">Chẩn đoán tác nhân</string>
+    <string name="developer_text_0063" formatted="false">Lưu cục bộ luồng thực thi AI Agent, lệnh gọi công cụ và chi tiết lỗi</string>
+    <string name="developer_text_0064" formatted="false">Đã xóa nhật ký AI Agent.</string>
+    <string name="developer_text_0065" formatted="false">Nhật ký gỡ lỗi cục bộ của AI Agent</string>
+    <string name="developer_text_0066" formatted="false">Chẩn đoán AI Agent</string>
     <string name="developer_text_0067" formatted="false">Chưa có nhật ký</string>
     <string name="developer_text_0068" formatted="false">Cập nhật RootFS Linux?</string>
     <string name="developer_text_0069" formatted="false">Cập nhật RootFS</string>

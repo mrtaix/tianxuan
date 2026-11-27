@@ -28,7 +28,7 @@
     <string name="workspace_parent_directory">.. (về thư mục cha)</string>
     <string name="workspace_rename">Đổi tên</string>
     <string name="workspace_delete">Xóa</string>
-    <string name="workspace_title">Không gian làm việc</string>
+    <string name="workspace_title">Không gian</string>
     <string name="workspace_active_projects">%1$d dự án đang hoạt động</string>
     <string name="workspace_building_project">Đang biên dịch nền: %1$s</string>
     <string name="workspace_building">Đang thực hiện tác vụ biên dịch…</string>
@@ -43,7 +43,7 @@
     <string name="workspace_shared_permission_banner_hint">Android lọc các tệp của ứng dụng khác trong bộ nhớ dùng chung nên hiện có thể chỉ thấy thư mục. Cấp quyền để duyệt đầy đủ.</string>
     <string name="workspace_shared_permission_go_settings">Cấp quyền</string>
     <string name="workspace_projects_section">Dự án trong môi trường cô lập</string>
-    <string name="workspace_projects_description">Nằm trong /workspace của môi trường cô lập Linux, cho phép tác nhân truy cập theo thời gian thực</string>
+    <string name="workspace_projects_description">Nằm trong /workspace của môi trường cô lập Linux, cho phép AI Agent truy cập theo thời gian thực</string>
     <string name="workspace_no_projects">Chưa có dự án</string>
     <string name="workspace_no_projects_description">Tạo dự án ở góc trên bên phải hoặc nhập dự án có sẵn từ ZIP cục bộ / GitHub</string>
     <string name="workspace_building_device">Đang biên dịch cho điện thoại…</string>
@@ -96,7 +96,7 @@
     <string name="workspace_reverse_ready">Bộ công cụ dịch ngược đã sẵn sàng: apktool / jadx</string>
     <string name="workspace_reverse_missing">Chưa cài bộ công cụ dịch ngược: jadx / apktool chưa khả dụng</string>
     <string name="workspace_runtime_uninitialized">Chưa khởi tạo môi trường cô lập Linux nên chưa thể kiểm tra bộ công cụ</string>
-    <string name="workspace_reverse_output_ready">Đã giải nén, có thể tiếp tục dịch ngược chuyên sâu bằng thiết bị đầu cuối hoặc tác nhân</string>
+    <string name="workspace_reverse_output_ready">Đã giải nén, có thể tiếp tục dịch ngược chuyên sâu bằng thiết bị đầu cuối hoặc AI Agent</string>
     <string name="workspace_reverse_component_needed">Đã giải nén; dịch ngược chuyên sâu cần cài thành phần “Phân tích dịch ngược Android và kiểm tra mã nguồn”</string>
     <string name="workspace_apk_creation_available">Có thể trích xuất và giải nén APK mà không cần môi trường cô lập. Khởi tạo môi trường để dùng bộ công cụ đầy đủ.</string>
     <string name="workspace_install_components">Cài thành phần</string>
@@ -194,7 +194,7 @@
     <string name="workspace_menu_import">Nhập</string>
     <string name="workspace_menu_templates">Quản lý mẫu</string>
     <string name="workspace_menu_plugins">Plugin</string>
-    <string name="workspace_menu_settings">Cài đặt không gian làm việc</string>
+    <string name="workspace_menu_settings">Cài đặt Không gian</string>
     <string name="workspace_action_next">Tiếp theo</string>
     <string name="workspace_action_previous">Trước đó</string>
     <string name="workspace_action_close">Đóng</string>
@@ -211,8 +211,8 @@
     <string name="workspace_cd_save">Lưu</string>
     <string name="workspace_cd_delete_template">Xóa mẫu</string>
     <string name="workspace_cd_dismiss">Đóng thông báo</string>
-    <string name="workspace_guide_more_title">Thêm khả năng cho không gian làm việc</string>
-    <string name="workspace_guide_more_message">Menu này có “Trung tâm plugin” và “Cài đặt không gian làm việc”: cài plugin môi trường phát triển trực tuyến/ngoại tuyến, cấu hình đường dẫn SDK và chữ ký APK. Nhấn nút ở góc trên bên phải để mở.</string>
+    <string name="workspace_guide_more_title">Thêm khả năng cho Không gian</string>
+    <string name="workspace_guide_more_message">Menu này có “Trung tâm plugin” và “Cài đặt Không gian”: cài plugin môi trường phát triển trực tuyến/ngoại tuyến, cấu hình đường dẫn SDK và chữ ký APK. Nhấn nút ở góc trên bên phải để mở.</string>
     <string name="workspace_template_scripts_title">Hook tạo dự án từ mẫu</string>
     <string name="workspace_trust_scripts_title">Cho phép chạy hook của mẫu</string>
     <string name="workspace_trust_scripts_hint_runtime">Tập lệnh chạy trong môi trường cô lập Linux với thư mục làm việc là dự án mới, tối đa 60 giây. Chỉ tin cậy mẫu từ nguồn đáng tin.</string>
@@ -237,7 +237,7 @@
     <string name="workspace_spec_manifest">Yêu cầu danh mục</string>
     <string name="workspace_spec_manifest_body">id chỉ chấp nhận chữ thường, chữ số, dấu chấm, gạch dưới và gạch ngang; builtin. là tiền tố dành riêng cho hệ thống. projectType hỗ trợ ANDROID, FLUTTER, GENERAL. category dùng để nhóm các mẫu.</string>
     <string name="workspace_spec_variables">Biến và tệp</string>
-    <string name="workspace_spec_variables_body">Tên và đường dẫn dự án do không gian làm việc điền. Mẫu khai báo trường động qua variables, hỗ trợ TEXT, MULTILINE, NUMBER, BOOLEAN, SELECT, SECRET. Nội dung và đường dẫn tệp có thể dùng {{variableName}}; tệp văn bản có thể thêm hậu tố .template và hậu tố này sẽ bị bỏ khi tạo. Thư mục gói dùng TIANXUAN_PACKAGE_PATH. Biến bắt buộc bị ẩn phải có giá trị mặc định, trừ biến do hệ thống suy ra.</string>
+    <string name="workspace_spec_variables_body">Tên và đường dẫn dự án do Không gian điền. Mẫu khai báo trường động qua variables, hỗ trợ TEXT, MULTILINE, NUMBER, BOOLEAN, SELECT, SECRET. Nội dung và đường dẫn tệp có thể dùng {{variableName}}; tệp văn bản có thể thêm hậu tố .template và hậu tố này sẽ bị bỏ khi tạo. Thư mục gói dùng TIANXUAN_PACKAGE_PATH. Biến bắt buộc bị ẩn phải có giá trị mặc định, trừ biến do hệ thống suy ra.</string>
     <string name="workspace_spec_preview">Ảnh xem trước</string>
     <string name="workspace_spec_preview_body">Hỗ trợ PNG, JPEG, WebP, GIF, tối đa 4 MiB mỗi ảnh. Ảnh xem trước có tỷ lệ 1:1 và kích thước phải đúng 270×270 px.</string>
     <string name="workspace_spec_hooks">Tập lệnh hook</string>
@@ -258,7 +258,7 @@
     <string name="workshop_script_dirty_message">Tập lệnh có thay đổi chưa lưu. Lưu trước khi quay lại?</string>
     <string name="workshop_script_save_and_exit">Lưu và quay lại</string>
     <string name="workshop_script_discard">Bỏ thay đổi</string>
-    <string name="workshop_settings_title">Cài đặt không gian làm việc</string>
+    <string name="workshop_settings_title">Cài đặt Không gian</string>
     <string name="workshop_settings_subtitle">Môi trường biên dịch, chữ ký và tập lệnh</string>
     <string name="workshop_settings_env_section">Môi trường phát triển</string>
     <string name="workshop_settings_env_section_desc">Xem và điều chỉnh bộ công cụ Android và Flutter</string>

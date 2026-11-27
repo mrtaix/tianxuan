@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="onboarding_title">CTHarness · Bắt đầu</string>
-    <string name="onboarding_description">Đang chuẩn bị môi trường cô lập Linux PRoot không cần Root và không gian làm việc với mã nguồn.</string>
+    <string name="onboarding_description">Đang chuẩn bị môi trường cô lập Linux PRoot không cần Root và Không gian với mã nguồn.</string>
     <string name="onboarding_distribution">Bản phân phối Linux</string>
     <string name="onboarding_mirror">Máy chủ tải xuống</string>
     <string name="onboarding_mirror_auto">Tự chọn máy chủ tốt nhất (khuyên dùng)</string>
@@ -24,4 +24,27 @@
     <string name="onboarding_later">Cấu hình sau</string>
     <string name="onboarding_enter">Vào CTHarness</string>
     <string name="onboarding_provider_preset">Cấu hình nhà cung cấp</string>
+    <string name="onboarding_import_json">Nhập cấu hình từ JSON</string>
+    <string name="onboarding_provider_preset_short">Cấu hình nhà cung cấp</string>
+    <string name="onboarding_switch">Đổi</string>
+    <string name="onboarding_base_url_hint">Địa chỉ API (Base URL)</string>
+    <string name="onboarding_api_key_credential">Thông tin API Key</string>
+    <string name="onboarding_filled">Đã điền</string>
+    <string name="onboarding_model_hint">Ví dụ: gpt-4o / deepseek-chat</string>
+    <string name="onboarding_model_select">Chọn mô hình (Model ID)</string>
+    <string name="onboarding_candidate_models">Gợi ý mô hình (nhấn để điền nhanh):</string>
+    <string name="onboarding_import_success">Đã tải cấu hình mô hình: %1$s</string>
+    <string name="onboarding_parse_failed">Phân tích thất bại: %1$s</string>
+    <string name="onboarding_file_loaded">Đã tải nội dung tệp</string>
+    <string name="onboarding_file_read_failed">Đọc tệp thất bại: %1$s</string>
+    <string name="onboarding_import_dialog_title">Nhập cấu hình mô hình</string>
+    <string name="onboarding_paste_clipboard">Dán từ bảng nhớ tạm</string>
+    <string name="onboarding_choose_file">Chọn tệp trong máy</string>
+    <string name="onboarding_paste_hint">Dán cấu hình mô hình JSON đã xuất (một hoặc nhiều)</string>
+    <string name="onboarding_clipboard_empty">Bảng nhớ tạm trống</string>
+    <string name="onboarding_paste_action">Dán nội dung bảng nhớ tạm</string>
+    <string name="onboarding_choose_json">Chọn tệp JSON trong máy</string>
+    <string name="onboarding_loaded_chars">Đã tải %1$d ký tự</string>
+    <string name="onboarding_load">Tải cấu hình</string>
+    <string name="onboarding_cancel">Hủy</string>
 </resources>

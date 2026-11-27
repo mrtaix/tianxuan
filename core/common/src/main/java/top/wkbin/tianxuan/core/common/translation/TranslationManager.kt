@@ -77,7 +77,7 @@ class TranslationManager(
 
     private val translatorOptions = TranslatorOptions.Builder()
         .setSourceLanguage(TranslateLanguage.ENGLISH)
-        .setTargetLanguage(TranslateLanguage.CHINESE)
+        .setTargetLanguage(TranslateLanguage.VIETNAMESE)
         .build()
 
     private val translator: Translator by lazy {
@@ -86,7 +86,7 @@ class TranslationManager(
 
     private val modelManager = RemoteModelManager.getInstance()
     private val englishModel = TranslateRemoteModel.Builder(TranslateLanguage.ENGLISH).build()
-    private val chineseModel = TranslateRemoteModel.Builder(TranslateLanguage.CHINESE).build()
+    private val vietnameseModel = TranslateRemoteModel.Builder(TranslateLanguage.VIETNAMESE).build()
 
     /** 内存翻译缓存，避免重复推演计算，最多保存 100 条思考片段 */
     private val translationCache = Collections.synchronizedMap(
@@ -107,8 +107,8 @@ class TranslationManager(
             _status.value = TranslationModelStatus.Checking
             try {
                 val enReady = modelManager.isModelDownloaded(englishModel).awaitResult()
-                val zhReady = modelManager.isModelDownloaded(chineseModel).awaitResult()
-                _status.value = if (enReady && zhReady) {
+                val viReady = modelManager.isModelDownloaded(vietnameseModel).awaitResult()
+                _status.value = if (enReady && viReady) {
                     TranslationModelStatus.Ready
                 } else {
                     TranslationModelStatus.NotDownloaded
@@ -174,11 +174,11 @@ class TranslationManager(
             val conditions = conditionsBuilder.build()
 
             val enDownloaded = runCatching { modelManager.isModelDownloaded(englishModel).awaitResult() }.getOrDefault(false)
-            val zhDownloaded = runCatching { modelManager.isModelDownloaded(chineseModel).awaitResult() }.getOrDefault(false)
+            val viDownloaded = runCatching { modelManager.isModelDownloaded(vietnameseModel).awaitResult() }.getOrDefault(false)
 
             val queue = mutableListOf<Pair<TranslateRemoteModel, String>>()
             if (!enDownloaded) queue.add(englishModel to "英语语言模型 (en，约 30MB)")
-            if (!zhDownloaded) queue.add(chineseModel to "中文语言模型 (zh，约 30MB)")
+            if (!viDownloaded) queue.add(vietnameseModel to "越南语语言模型 (vi，约 30MB)")
 
             if (queue.isEmpty()) {
                 _status.value = TranslationModelStatus.Ready
@@ -269,7 +269,7 @@ class TranslationManager(
     suspend fun deleteModel(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             modelManager.deleteDownloadedModel(englishModel).awaitResult()
-            modelManager.deleteDownloadedModel(chineseModel).awaitResult()
+            modelManager.deleteDownloadedModel(vietnameseModel).awaitResult()
             _status.value = TranslationModelStatus.NotDownloaded
             translationCache.clear()
             appLogger.i("TranslationManager: ML Kit translation models deleted successfully")
@@ -283,7 +283,7 @@ class TranslationManager(
         }
     }
 
-    /** 执行文本离线翻译（英文 -> 中文） */
+    /** 执行文本离线翻译（英文 -> 越南语） */
     suspend fun translate(text: String): Result<String> = withContext(Dispatchers.IO) {
         if (text.isBlank()) return@withContext Result.success("")
 
@@ -294,8 +294,8 @@ class TranslationManager(
 
         if (_status.value !is TranslationModelStatus.Ready) {
             val enReady = runCatching { modelManager.isModelDownloaded(englishModel).awaitResult() }.getOrDefault(false)
-            val zhReady = runCatching { modelManager.isModelDownloaded(chineseModel).awaitResult() }.getOrDefault(false)
-            if (enReady && zhReady) {
+            val viReady = runCatching { modelManager.isModelDownloaded(vietnameseModel).awaitResult() }.getOrDefault(false)
+            if (enReady && viReady) {
                 _status.value = TranslationModelStatus.Ready
             } else {
                 return@withContext Result.failure(IllegalStateException("离线翻译模型尚未下载"))

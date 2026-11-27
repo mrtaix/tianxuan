@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import top.wkbin.tianxuan.feature.settings.R
 import top.wkbin.tianxuan.ui.settings.LocalizedText as Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -68,12 +70,12 @@ fun TranslationModelCard(
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "英语 (en) → 简体中文 (zh-CN)",
+                    text = stringResource(R.string.settings_translation_language_pair),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "Google ML Kit 离线翻译包 (约 60MB)",
+                    text = stringResource(R.string.settings_translation_offline_package),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -184,20 +186,20 @@ fun TranslationModelCard(
                 )
 
                 Text(
-                    text = "首次配置需从 Google 存储库拉取离线语言包。下载完成后留存本机，不消耗流量即可离线翻译。",
+                    text = stringResource(R.string.settings_translation_offline_intro),
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                 )
             }
         } else if (status is TranslationModelStatus.Error) {
             Text(
-                text = "${status.message}（若网络连接受限，可尝试检查网络或开启代理后重试）",
+                text = stringResource(R.string.settings_translation_error_hint, status.message),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )
         } else {
             Text(
-                text = "完全在手机端侧运行，不依赖云端，思考流离线秒级转译为中文，保护隐私且不消耗额外 Token。",
+                text = stringResource(R.string.settings_translation_privacy),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             )

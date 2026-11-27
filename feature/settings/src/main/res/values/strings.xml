@@ -50,4 +50,9 @@
     <string name="settings_terminal_preview_output">CTHarness沙箱运行正常 🚀</string>
     <string name="settings_tool_center_empty_category_title">该分类下暂无工具</string>
     <string name="settings_tool_center_empty_category_subtitle">换一个分类，或稍后刷新插件目录再试</string>
+    <string name="settings_translation_language_pair">英语 (en) → 越南语 (vi)</string>
+    <string name="settings_translation_offline_package">Google ML Kit 离线翻译包 (约 60MB)</string>
+    <string name="settings_translation_offline_intro">首次配置需从 Google 存储库拉取离线语言包。下载完成后留存本机，不消耗流量即可离线翻译。</string>
+    <string name="settings_translation_error_hint">%1$s（若网络连接受限，可尝试检查网络或开启代理后重试）</string>
+    <string name="settings_translation_privacy">完全在手机端侧运行，不依赖云端，思考流离线秒级转译为越南语，保护隐私且不消耗额外 Token。</string>
 </resources>

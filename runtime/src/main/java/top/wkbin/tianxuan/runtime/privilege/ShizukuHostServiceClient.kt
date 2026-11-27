@@ -68,6 +68,14 @@ class ShizukuHostServiceClient(
         service?.takeIf { it.asBinder().isBinderAlive }?.cancel(operationId) == true
     }.getOrDefault(false)
 
+    /** Dọn UserService treo để lần gọi sau có thể bind lại thay vì dùng binder chết. */
+    fun resetStaleService() {
+        service = null
+        pendingConnection?.completeExceptionally(IllegalStateException("Shizuku UserService bị đặt lại"))
+        pendingConnection = null
+        runCatching { Shizuku.unbindUserService(serviceArgs, connection, false) }
+    }
+
     private suspend fun requireService(): IShizukuHostService = connectionMutex.withLock {
         service?.takeIf { it.asBinder().isBinderAlive }?.let { return@withLock it }
         check(Shizuku.pingBinder()) { "Shizuku 服务未运行" }

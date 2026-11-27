@@ -24,4 +24,27 @@
     <string name="onboarding_later">稍后配置</string>
     <string name="onboarding_enter">进入CTHarness</string>
     <string name="onboarding_provider_preset">服务商预设</string>
+    <string name="onboarding_import_json">从 JSON 导入配置</string>
+    <string name="onboarding_provider_preset_short">服务商预设</string>
+    <string name="onboarding_switch">切换</string>
+    <string name="onboarding_base_url_hint">接口地址 (Base URL)</string>
+    <string name="onboarding_api_key_credential">API Key 凭据</string>
+    <string name="onboarding_filled">已填写</string>
+    <string name="onboarding_model_hint">例如：gpt-4o / deepseek-chat</string>
+    <string name="onboarding_model_select">选择模型 (Model ID)</string>
+    <string name="onboarding_cancel">取消</string>
+    <string name="onboarding_candidate_models">候选模型标签（点击一键填入）：</string>
+    <string name="onboarding_import_success">成功载入模型配置「%1$s」</string>
+    <string name="onboarding_parse_failed">解析失败: %1$s</string>
+    <string name="onboarding_file_loaded">已载入文件内容</string>
+    <string name="onboarding_file_read_failed">读取文件失败: %1$s</string>
+    <string name="onboarding_import_dialog_title">导入模型配置</string>
+    <string name="onboarding_paste_clipboard">剪贴板粘贴</string>
+    <string name="onboarding_choose_file">选择本地文件</string>
+    <string name="onboarding_paste_hint">粘贴导出的 JSON 模型配置（单个或 bundle 均支持）</string>
+    <string name="onboarding_clipboard_empty">剪贴板为空</string>
+    <string name="onboarding_paste_action">一键粘贴剪贴板内容</string>
+    <string name="onboarding_choose_json">选择本地 JSON 文件</string>
+    <string name="onboarding_loaded_chars">已载入 %1$d 字符</string>
+    <string name="onboarding_load">载入配置</string>
 </resources>

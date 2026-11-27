@@ -24,4 +24,27 @@
     <string name="onboarding_later">Configure later</string>
     <string name="onboarding_enter">Enter CTHarness</string>
     <string name="onboarding_provider_preset">Provider preset</string>
+    <string name="onboarding_import_json">Import config from JSON</string>
+    <string name="onboarding_provider_preset_short">Provider preset</string>
+    <string name="onboarding_switch">Switch</string>
+    <string name="onboarding_base_url_hint">Base URL</string>
+    <string name="onboarding_api_key_credential">API key credential</string>
+    <string name="onboarding_filled">Filled</string>
+    <string name="onboarding_model_hint">Example: gpt-4o / deepseek-chat</string>
+    <string name="onboarding_model_select">Select a model (Model ID)</string>
+    <string name="onboarding_candidate_models">Suggested model tags (tap to fill):</string>
+    <string name="onboarding_import_success">Model config loaded: %1$s</string>
+    <string name="onboarding_parse_failed">Parse failed: %1$s</string>
+    <string name="onboarding_file_loaded">File content loaded</string>
+    <string name="onboarding_file_read_failed">Failed to read file: %1$s</string>
+    <string name="onboarding_import_dialog_title">Import model config</string>
+    <string name="onboarding_paste_clipboard">Paste from clipboard</string>
+    <string name="onboarding_choose_file">Choose local file</string>
+    <string name="onboarding_paste_hint">Paste an exported JSON model config (single or bundle)</string>
+    <string name="onboarding_clipboard_empty">Clipboard is empty</string>
+    <string name="onboarding_paste_action">Paste clipboard content</string>
+    <string name="onboarding_choose_json">Choose local JSON file</string>
+    <string name="onboarding_loaded_chars">Loaded %1$d characters</string>
+    <string name="onboarding_load">Load config</string>
+    <string name="onboarding_cancel">Cancel</string>
 </resources>

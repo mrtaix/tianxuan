@@ -5,8 +5,8 @@
     <string name="fgit_tab_branches">Nhánh</string>
     <string name="fgit_tab_branches_count">Nhánh %1$d</string>
     <string name="fgit_tab_commits">Commit</string>
-    <string name="fgit_not_repo_title">Không gian làm việc hiện tại không phải kho Git</string>
-    <string name="fgit_not_repo_hint">Yêu cầu tác nhân chạy git init / git clone hoặc chọn “Nhập từ Git” khi tạo dự án. Sau đó bạn có thể quản lý nhánh và commit tại đây.</string>
+    <string name="fgit_not_repo_title">Không gian hiện tại không phải kho Git</string>
+    <string name="fgit_not_repo_hint">Yêu cầu AI Agent chạy git init / git clone hoặc chọn “Nhập từ Git” khi tạo dự án. Sau đó bạn có thể quản lý nhánh và commit tại đây.</string>
     <string name="fgit_pull">Kéo về</string>
     <string name="fgit_push">Đẩy lên</string>
     <string name="fgit_detached">HEAD tách rời</string>
@@ -32,7 +32,7 @@
     <string name="fgit_unshallow_running">Đang tải lịch sử…</string>
     <string name="fgit_tab_changes">Thay đổi</string>
     <string name="fgit_tab_changes_count">Thay đổi %1$d</string>
-    <string name="fgit_no_changes">Không gian làm việc sạch, không có thay đổi chờ commit</string>
+    <string name="fgit_no_changes">Không gian sạch, không có thay đổi chờ commit</string>
     <string name="fgit_staged_count">Đã đưa vào vùng chờ %1$d / %2$d</string>
     <string name="fgit_stage_all">Đưa tất cả vào vùng chờ</string>
     <string name="fgit_staged">Đã đưa vào vùng chờ</string>

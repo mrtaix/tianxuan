@@ -35,8 +35,8 @@ import top.wkbin.tianxuan.ui.components.RuntimeRadioButton as RadioButton
 import top.wkbin.tianxuan.ui.components.RuntimeTextButton as TextButton
 import top.wkbin.tianxuan.ui.components.RuntimeSlider as Slider
 import top.wkbin.tianxuan.ui.components.RuntimeSwitch as Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import top.wkbin.tianxuan.ui.settings.LocalizedText as Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf

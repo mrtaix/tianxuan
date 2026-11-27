@@ -50,4 +50,9 @@
     <string name="settings_terminal_preview_output">Môi trường cô lập CTHarness hoạt động bình thường 🚀</string>
     <string name="settings_tool_center_empty_category_title">Chưa có công cụ trong danh mục này</string>
     <string name="settings_tool_center_empty_category_subtitle">Thử danh mục khác hoặc làm mới danh mục plugin sau</string>
+    <string name="settings_translation_language_pair">Tiếng Anh (en) → Tiếng Việt (vi)</string>
+    <string name="settings_translation_offline_package">Gói dịch ngoại tuyến Google ML Kit (~60 MB)</string>
+    <string name="settings_translation_offline_intro">Gói ngôn ngữ được tải từ Google khi thiết lập lần đầu, sau đó lưu trên máy để dịch ngoại tuyến không tốn dữ liệu.</string>
+    <string name="settings_translation_error_hint">%1$s (kiểm tra kết nối hoặc dùng proxy nếu mạng bị hạn chế)</string>
+    <string name="settings_translation_privacy">Chạy hoàn toàn trên thiết bị, không phụ thuộc đám mây. Nội dung suy luận được dịch sang tiếng Việt ngay trên máy, bảo vệ quyền riêng tư và không tốn thêm token.</string>
 </resources>
