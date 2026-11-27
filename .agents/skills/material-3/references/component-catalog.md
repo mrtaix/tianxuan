@@ -1,34 +1,34 @@
-# MD3 Component Catalog
+# Danh mục Component MD3
 
-Complete reference for Material Design 3 components. **Primary mappings:** Jetpack Compose (`androidx.compose.material3`) where most users ship UIs today; **web** uses `@material/web` element names and imports — [Material Web is maintenance-only](https://m3.material.io/develop/web).
+Tài liệu tham khảo đầy đủ về component của Material Design 3. **Ánh xạ chính:** Jetpack Compose (`androidx.compose.material3`) — nơi hầu hết người dùng triển khai UI hiện nay; **web** dùng tên phần tử và import của `@material/web` — [Material Web chỉ ở chế độ maintenance](https://m3.material.io/develop/web).
 
-## Google I/O 2026 Component Updates
+## Cập nhật Component tại Google I/O 2026
 
-Material's [I/O 2026 update](https://m3.material.io/blog/whats-new-at-io26) highlights refreshed expressive guidance for **lists**, **menus**, **search**, and **search app bars**, with Jetpack Compose as the primary implementation path. When implementing these in Android:
+[Bản cập nhật I/O 2026](https://m3.material.io/blog/whats-new-at-io26) của Material nhấn mạnh hướng dẫn expressive được làm mới cho **list**, **menu**, **search** và **search app bar**, với Jetpack Compose là đường triển khai chính. Khi triển khai những cái này trên Android:
 
-- Prefer current `androidx.compose.material3` components and verify expressive APIs against the active Material3 BOM.
-- Expect expressive variants to include richer visual style, motion, and flexible configuration.
-- Treat web implementations as spec-aligned approximations unless Material Web exposes an equivalent component; Material Web remains maintenance-only.
+- Ưu tiên component `androidx.compose.material3` hiện tại và kiểm tra API expressive với Material3 BOM đang dùng.
+- Kỳ vọng biến thể expressive có phong cách thị giác phong phú hơn, chuyển động và cấu hình linh hoạt hơn.
+- Coi implementation web là xấp xỉ theo đặc tả trừ khi Material Web cung cấp component tương đương; Material Web vẫn ở chế độ maintenance.
 
 ## Actions
 
-### Buttons
+### Button
 
-MD3 has 5 button types ordered by emphasis: Filled > Filled Tonal > Elevated > Outlined > Text.
+MD3 có 5 loại button, xếp theo mức nhấn mạnh: Filled > Filled Tonal > Elevated > Outlined > Text.
 
-**General attributes** (shared by all button types):
+**Thuộc tính chung** (dùng cho mọi loại button):
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `disabled` | boolean | Disables the button |
-| `href` | string | Turns button into a link |
-| `target` | string | Link target (`_blank`, etc.) |
-| `trailing-icon` | boolean | Moves icon to trailing position |
-| `type` | string | Form type: `button`, `submit`, `reset` |
+| `disabled` | boolean | Vô hiệu hóa button |
+| `href` | string | Biến button thành liên kết |
+| `target` | string | Đích liên kết (`_blank`, v.v.) |
+| `trailing-icon` | boolean | Di chuyển icon sang vị trí cuối |
+| `type` | string | Kiểu form: `button`, `submit`, `reset` |
 
 #### Filled Button
 **Element**: `md-filled-button` | **Import**: `@material/web/button/filled-button.js`
-**Use when**: Primary action, highest emphasis.
+**Dùng khi**: Hành động chính, mức nhấn mạnh cao nhất.
 
 ```html
 <md-filled-button>Get started</md-filled-button>
@@ -38,21 +38,21 @@ MD3 has 5 button types ordered by emphasis: Filled > Filled Tonal > Elevated > O
 </md-filled-button>
 ```
 
-**Customize**: `--md-filled-button-container-color`, `--md-filled-button-label-text-color`, `--md-filled-button-container-shape`, `--md-filled-button-container-height`
+**Tùy biến**: `--md-filled-button-container-color`, `--md-filled-button-label-text-color`, `--md-filled-button-container-shape`, `--md-filled-button-container-height`
 
 #### Filled Tonal Button
 **Element**: `md-filled-tonal-button` | **Import**: `@material/web/button/filled-tonal-button.js`
-**Use when**: Medium emphasis, softer than filled. Secondary actions alongside a filled button.
+**Dùng khi**: Nhấn mạnh trung bình, mềm hơn filled. Hành động phụ bên cạnh một filled button.
 
 ```html
 <md-filled-tonal-button>Save draft</md-filled-tonal-button>
 ```
 
-**Customize**: `--md-filled-tonal-button-container-color`, `--md-filled-tonal-button-label-text-color`
+**Tùy biến**: `--md-filled-tonal-button-container-color`, `--md-filled-tonal-button-label-text-color`
 
 #### Elevated Button
 **Element**: `md-elevated-button` | **Import**: `@material/web/button/elevated-button.js`
-**Use when**: Medium emphasis with shadow. Use on colored backgrounds where tonal button blends in.
+**Dùng khi**: Nhấn mạnh trung bình kèm bóng. Dùng trên nền có màu nơi tonal button bị hòa vào nền.
 
 ```html
 <md-elevated-button>Add to cart</md-elevated-button>
@@ -60,24 +60,24 @@ MD3 has 5 button types ordered by emphasis: Filled > Filled Tonal > Elevated > O
 
 #### Outlined Button
 **Element**: `md-outlined-button` | **Import**: `@material/web/button/outlined-button.js`
-**Use when**: Medium emphasis, neutral. Good for secondary actions.
+**Dùng khi**: Nhấn mạnh trung bình, trung tính. Phù hợp cho hành động phụ.
 
 ```html
 <md-outlined-button>Cancel</md-outlined-button>
 ```
 
-**Customize**: `--md-outlined-button-outline-color`, `--md-outlined-button-outline-width`
+**Tùy biến**: `--md-outlined-button-outline-color`, `--md-outlined-button-outline-width`
 
 #### Text Button
 **Element**: `md-text-button` | **Import**: `@material/web/button/text-button.js`
-**Use when**: Lowest emphasis. Inline actions, dialog actions, less important options.
+**Dùng khi**: Nhấn mạnh thấp nhất. Hành động inline, hành động trong dialog, tùy chọn ít quan trọng.
 
 ```html
 <md-text-button>Learn more</md-text-button>
 ```
 
-#### Button Sizes (Expressive)
-Buttons now support 5 sizes: extra-small, small (default), medium, large, extra-large. Set via CSS:
+#### Kích thước Button (Expressive)
+Button hiện hỗ trợ 5 kích thước: extra-small, small (mặc định), medium, large, extra-large. Đặt qua CSS:
 ```css
 md-filled-button { --md-filled-button-container-height: 32px; } /* XS */
 md-filled-button { --md-filled-button-container-height: 40px; } /* S (default) */
@@ -86,11 +86,11 @@ md-filled-button { --md-filled-button-container-height: 56px; } /* L */
 md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 ```
 
-**A11y**: Buttons have built-in button role. Use `aria-label` when using icon-only buttons. Minimum touch target 48x48dp.
+**A11y**: Button có sẵn role button. Dùng `aria-label` khi dùng button chỉ có icon. Vùng chạm tối thiểu 48x48dp.
 
 ### Button Group
 **Element**: `md-button-group` | **Import**: `@material/web/button/button-group.js`
-**Use when**: Grouping related actions together with connected visual treatment.
+**Dùng khi**: Nhóm các hành động liên quan lại với nhau với cách trình bày kết nối.
 
 ```html
 <md-button-group>
@@ -102,13 +102,13 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 
 ### FAB (Floating Action Button)
 **Element**: `md-fab` | **Import**: `@material/web/fab/fab.js`
-**Use when**: The single most important action on a screen.
+**Dùng khi**: Hành động quan trọng nhất trên một màn hình.
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `size` | string | `small`, `medium` (default), `large` |
+| `size` | string | `small`, `medium` (mặc định), `large` |
 | `variant` | string | `surface`, `primary`, `secondary`, `tertiary` |
-| `label` | string | Text label (for extended FAB) |
+| `label` | string | Nhãn văn bản (cho extended FAB) |
 
 ```html
 <md-fab aria-label="Create new">
@@ -120,12 +120,12 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 </md-fab>
 ```
 
-**Customize**: `--md-fab-container-color`, `--md-fab-container-shape`, `--md-fab-icon-color`
-**A11y**: Always provide `aria-label` since FABs are icon-only.
+**Tùy biến**: `--md-fab-container-color`, `--md-fab-container-shape`, `--md-fab-icon-color`
+**A11y**: Luôn cung cấp `aria-label` vì FAB chỉ có icon.
 
 ### Extended FAB
 **Element**: `md-extended-fab` | **Import**: `@material/web/fab/extended-fab.js`
-**Use when**: Primary action with explanatory text.
+**Dùng khi**: Hành động chính kèm văn bản giải thích.
 
 ```html
 <md-extended-fab label="New message">
@@ -136,19 +136,19 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 ### Icon Button
 **Element**: `md-icon-button` | **Import**: `@material/web/iconbutton/icon-button.js`
 
-4 variants with separate elements:
+4 biến thể với phần tử riêng:
 
-| Variant | Element | Import |
+| Biến thể | Element | Import |
 |---------|---------|--------|
 | Standard | `md-icon-button` | `@material/web/iconbutton/icon-button.js` |
 | Filled | `md-filled-icon-button` | `@material/web/iconbutton/filled-icon-button.js` |
 | Filled Tonal | `md-filled-tonal-icon-button` | `@material/web/iconbutton/filled-tonal-icon-button.js` |
 | Outlined | `md-outlined-icon-button` | `@material/web/iconbutton/outlined-icon-button.js` |
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `toggle` | boolean | Enables toggle behavior |
-| `selected` | boolean | Selected state (when toggle) |
+| `toggle` | boolean | Bật hành vi toggle |
+| `selected` | boolean | Trạng thái selected (khi toggle) |
 
 ```html
 <md-icon-button aria-label="Settings">
@@ -162,10 +162,10 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 </md-icon-button>
 ```
 
-**A11y**: Always provide `aria-label`. Toggle buttons should have descriptive labels for both states.
+**A11y**: Luôn cung cấp `aria-label`. Toggle button nên có nhãn mô tả cho cả hai trạng thái.
 
-### Segmented Buttons
-**No @material/web element yet.** Implement with standard HTML + MD3 tokens:
+### Segmented Button
+**Chưa có element @material/web.** Triển khai bằng HTML chuẩn + token MD3:
 
 ```html
 <div class="md3-segmented-buttons" role="group" aria-label="View options">
@@ -207,7 +207,7 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 ## Communication
 
 ### Badge
-**No @material/web element yet.** Implement with CSS:
+**Chưa có element @material/web.** Triển khai bằng CSS:
 
 ```html
 <div class="md3-badge-container">
@@ -218,6 +218,7 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 
 ```css
 .md3-badge-container { position: relative; display: inline-flex; }
+
 .md3-badge {
   position: absolute;
   top: -4px;
@@ -232,15 +233,15 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 ```
 
 ### Progress Indicator
-**Elements**: `md-linear-progress`, `md-circular-progress`
+**Element**: `md-linear-progress`, `md-circular-progress`
 **Import**: `@material/web/progress/linear-progress.js`, `@material/web/progress/circular-progress.js`
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `value` | number | Current progress (0–1) |
-| `max` | number | Maximum value (default 1) |
-| `indeterminate` | boolean | Shows indeterminate animation |
-| `four-color` | boolean | Four-color indeterminate variant |
+| `value` | number | Tiến trình hiện tại (0–1) |
+| `max` | number | Giá trị tối đa (mặc định 1) |
+| `indeterminate` | boolean | Hiện hoạt ảnh indeterminate |
+| `four-color` | boolean | Biến thể indeterminate bốn màu |
 
 ```html
 <!-- Determinate -->
@@ -252,11 +253,11 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 <md-circular-progress indeterminate></md-circular-progress>
 ```
 
-**Customize**: `--md-linear-progress-active-indicator-color`, `--md-circular-progress-active-indicator-color`
-**A11y**: Has built-in `progressbar` role. Add `aria-label` for context (e.g., "Loading messages").
+**Tùy biến**: `--md-linear-progress-active-indicator-color`, `--md-circular-progress-active-indicator-color`
+**A11y**: Có sẵn role `progressbar`. Thêm `aria-label` để cung cấp ngữ cảnh (vd. "Loading messages").
 
 ### Snackbar
-**No @material/web element yet.** Implement with standard HTML:
+**Chưa có element @material/web.** Triển khai bằng HTML chuẩn:
 
 ```html
 <div class="md3-snackbar" role="status" aria-live="polite">
@@ -283,22 +284,22 @@ md-filled-button { --md-filled-button-container-height: 64px; } /* XL */
 ```
 
 ### Tooltip
-**No @material/web element yet.**
+**Chưa có element @material/web.**
 
-Two types:
-- **Plain**: Short text label, appears on hover/focus. Use for icon buttons and truncated text.
-- **Rich**: Multi-line with optional actions. Use for complex explanations.
+Hai loại:
+- **Plain**: Nhãn văn bản ngắn, xuất hiện khi hover/focus. Dùng cho icon button và văn bản bị cắt bớt.
+- **Rich**: Nhiều dòng với hành động tùy chọn. Dùng cho giải thích phức tạp.
 
 ## Containment
 
 ### Card
-**No @material/web element yet.** Three variants:
+**Chưa có element @material/web.** Ba biến thể:
 
-| Variant | Appearance | Elevation |
+| Biến thể | Ngoại quan | Elevation |
 |---------|-----------|-----------|
-| Filled | Surface-container-highest fill, no border | Level 0 |
-| Outlined | Surface fill, outline-variant border | Level 0 |
-| Elevated | Surface-container-low fill, shadow | Level 1 |
+| Filled | Tô surface-container-highest, không viền | Cấp 0 |
+| Outlined | Tô surface, viền outline-variant | Cấp 0 |
+| Elevated | Tô surface-container-low, có bóng | Cấp 1 |
 
 ```html
 <!-- Outlined card -->
@@ -344,10 +345,10 @@ Two types:
 ### Dialog
 **Element**: `md-dialog` | **Import**: `@material/web/dialog/dialog.js`
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `open` | boolean | Shows the dialog |
-| `type` | string | `alert` (default) |
+| `open` | boolean | Hiện dialog |
+| `type` | string | `alert` (mặc định) |
 
 ```html
 <md-dialog id="confirm-dialog">
@@ -362,22 +363,22 @@ Two types:
 </md-dialog>
 ```
 
-**A11y**: Dialog traps focus automatically. Use `slot="headline"` for accessible title.
+**A11y**: Dialog tự động giữ focus bên trong. Dùng `slot="headline"` cho tiêu đề truy cập được.
 
 ### Bottom Sheet
-**No @material/web element yet.** Two variants: Standard (persistent, coexists with content) and Modal (blocks interaction, has scrim).
+**Chưa có element @material/web.** Hai biến thể: Standard (liên tục, cùng tồn tại với nội dung) và Modal (chặn tương tác, có scrim).
 
 ### Side Sheet
-**No @material/web element yet.** Two variants: Standard (docked alongside content) and Modal (overlays content with scrim).
+**Chưa có element @material/web.** Hai biến thể: Standard (đậu cạnh nội dung) và Modal (phủ lên nội dung kèm scrim).
 
 ### Divider
 **Element**: `md-divider` | **Import**: `@material/web/divider/divider.js`
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `inset` | boolean | Adds inset on both sides |
-| `inset-start` | boolean | Adds inset on start side |
-| `inset-end` | boolean | Adds inset on end side |
+| `inset` | boolean | Thêm inset ở cả hai bên |
+| `inset-start` | boolean | Thêm inset ở phía đầu |
+| `inset-end` | boolean | Thêm inset ở phía cuối |
 
 ```html
 <md-divider></md-divider>
@@ -385,22 +386,22 @@ Two types:
 ```
 
 ### Carousel
-**No @material/web element yet.** Three configurations:
-- **Multi-browse**: Multiple items visible, scrollable
-- **Uncontained**: Items extend beyond viewport edges
-- **Hero**: One large featured item with smaller previews
+**Chưa có element @material/web.** Ba cấu hình:
+- **Multi-browse**: Nhiều mục hiển thị, có thể cuộn
+- **Uncontained**: Mục vượt ra ngoài cạnh viewport
+- **Hero**: Một mục nổi bật lớn kèm các bản xem trước nhỏ hơn
 
 ## Input
 
 ### Checkbox
 **Element**: `md-checkbox` | **Import**: `@material/web/checkbox/checkbox.js`
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `checked` | boolean | Checked state |
-| `indeterminate` | boolean | Indeterminate state |
-| `disabled` | boolean | Disabled state |
-| `required` | boolean | Required for form validation |
+| `checked` | boolean | Trạng thái checked |
+| `indeterminate` | boolean | Trạng thái indeterminate |
+| `disabled` | boolean | Trạng thái disabled |
+| `required` | boolean | Bắt buộc để xác thực form |
 
 ```html
 <label>
@@ -414,18 +415,18 @@ Two types:
 </label>
 ```
 
-**A11y**: Wrap in `<label>` or use `aria-label`. Checkbox has built-in checkbox role.
+**A11y**: Bọc trong `<label>` hoặc dùng `aria-label`. Checkbox có sẵn role checkbox.
 
 ### Chips
-**Elements**: `md-chip-set`, `md-assist-chip`, `md-filter-chip`, `md-input-chip`, `md-suggestion-chip`
+**Element**: `md-chip-set`, `md-assist-chip`, `md-filter-chip`, `md-input-chip`, `md-suggestion-chip`
 **Import**: `@material/web/chips/*.js`
 
-| Variant | Element | Use |
+| Biến thể | Element | Cách dùng |
 |---------|---------|-----|
-| Assist | `md-assist-chip` | Smart suggestions, shortcuts |
-| Filter | `md-filter-chip` | Filtering content, multi-select |
-| Input | `md-input-chip` | User input tokens (email recipients) |
-| Suggestion | `md-suggestion-chip` | Suggested responses, queries |
+| Assist | `md-assist-chip` | Gợi ý thông minh, lối tắt |
+| Filter | `md-filter-chip` | Lọc nội dung, multi-select |
+| Input | `md-input-chip` | Token đầu vào của người dùng (người nhận email) |
+| Suggestion | `md-suggestion-chip` | Phản hồi/truy vấn gợi ý |
 
 ```html
 <md-chip-set>
@@ -440,15 +441,15 @@ Two types:
 ```
 
 ### Menu
-**Elements**: `md-menu`, `md-menu-item`, `md-sub-menu`
+**Element**: `md-menu`, `md-menu-item`, `md-sub-menu`
 **Import**: `@material/web/menu/menu.js`, `@material/web/menu/menu-item.js`
 
-**I/O 2026 note:** Expressive menus have updated Material guidance for more flexible, vibrant configurations. In Jetpack Compose, prefer current Material3 menu APIs and expressive variants when available in your BOM. On web, use `md-menu` / `md-menu-item` for token-backed menus, or build custom spec-aligned variants when expressive behavior is required.
+**Ghi chú I/O 2026:** Menu expressive có hướng dẫn Material cập nhật cho cấu hình linh hoạt và rực rỡ hơn. Trong Jetpack Compose, ưu tiên API menu Material3 hiện tại và biến thể expressive khi có trong BOM. Trên web, dùng `md-menu` / `md-menu-item` cho menu dựa trên token, hoặc xây biến thể tùy chỉnh theo đặc tả khi cần hành vi expressive.
 
-| Attribute (menu) | Type | Description |
+| Thuộc tính (menu) | Kiểu | Mô tả |
 |-----------------|------|-------------|
-| `anchor` | string | ID of the anchor element |
-| `open` | boolean | Shows the menu |
+| `anchor` | string | ID của phần tử neo |
+| `open` | boolean | Hiện menu |
 | `positioning` | string | `absolute`, `fixed`, `popover` |
 
 ```html
@@ -484,21 +485,21 @@ Two types:
 </div>
 ```
 
-**A11y**: Group radios in a container with `role="radiogroup"` and `aria-label`.
+**A11y**: Nhóm radio trong một container có `role="radiogroup"` và `aria-label`.
 
 ### Slider
 **Element**: `md-slider` | **Import**: `@material/web/slider/slider.js`
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `value` | number | Current value |
-| `min` | number | Minimum value |
-| `max` | number | Maximum value |
-| `step` | number | Step increment (makes discrete) |
-| `labeled` | boolean | Shows value label |
-| `range` | boolean | Enables range selection |
-| `value-start` | number | Start value (range mode) |
-| `value-end` | number | End value (range mode) |
+| `value` | number | Giá trị hiện tại |
+| `min` | number | Giá trị tối thiểu |
+| `max` | number | Giá trị tối đa |
+| `step` | number | Bước nhảy (tạo dạng discrete) |
+| `labeled` | boolean | Hiện nhãn giá trị |
+| `range` | boolean | Bật chọn khoảng |
+| `value-start` | number | Giá trị đầu (chế độ range) |
+| `value-end` | number | Giá trị cuối (chế độ range) |
 
 ```html
 <!-- Continuous -->
@@ -514,11 +515,11 @@ Two types:
 ### Switch
 **Element**: `md-switch` | **Import**: `@material/web/switch/switch.js`
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `selected` | boolean | On state |
-| `icons` | boolean | Show on/off icons |
-| `disabled` | boolean | Disabled state |
+| `selected` | boolean | Trạng thái bật |
+| `icons` | boolean | Hiện icon bật/tắt |
+| `disabled` | boolean | Trạng thái disabled |
 
 ```html
 <label>
@@ -532,27 +533,27 @@ Two types:
 </label>
 ```
 
-**Customize**: `--md-switch-selected-handle-color`, `--md-switch-selected-track-color`
+**Tùy biến**: `--md-switch-selected-handle-color`, `--md-switch-selected-track-color`
 
 ### Text Field
-**Elements**: `md-filled-text-field`, `md-outlined-text-field`
+**Element**: `md-filled-text-field`, `md-outlined-text-field`
 **Import**: `@material/web/textfield/filled-text-field.js`, `@material/web/textfield/outlined-text-field.js`
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `label` | string | Label text |
-| `value` | string | Current value |
-| `type` | string | Input type (text, email, password, number, textarea, etc.) |
-| `placeholder` | string | Placeholder text |
-| `required` | boolean | Required validation |
-| `disabled` | boolean | Disabled state |
-| `error` | boolean | Error state |
-| `error-text` | string | Error message |
-| `supporting-text` | string | Helper text |
-| `prefix-text` | string | Prefix text |
-| `suffix-text` | string | Suffix text |
-| `max-length` | number | Character limit (shows counter) |
-| `rows` | number | Rows (for textarea) |
+| `label` | string | Văn bản nhãn |
+| `value` | string | Giá trị hiện tại |
+| `type` | string | Kiểu input (text, email, password, number, textarea, v.v.) |
+| `placeholder` | string | Văn bản placeholder |
+| `required` | boolean | Xác thực bắt buộc |
+| `disabled` | boolean | Trạng thái disabled |
+| `error` | boolean | Trạng thái lỗi |
+| `error-text` | string | Thông báo lỗi |
+| `supporting-text` | string | Văn bản hỗ trợ |
+| `prefix-text` | string | Văn bản tiền tố |
+| `suffix-text` | string | Văn bản hậu tố |
+| `max-length` | number | Giới hạn ký tự (hiện bộ đếm) |
+| `rows` | number | Số dòng (cho textarea) |
 
 ```html
 <!-- Outlined (recommended for most uses) -->
@@ -589,11 +590,11 @@ Two types:
 </md-outlined-text-field>
 ```
 
-**Customize**: `--md-outlined-text-field-container-shape`, `--md-outlined-text-field-focus-outline-color`, `--md-filled-text-field-container-color`
+**Tùy biến**: `--md-outlined-text-field-container-shape`, `--md-outlined-text-field-focus-outline-color`, `--md-filled-text-field-container-color`
 
 #### Jetpack Compose
 
-Use **`OutlinedTextField`** / **`TextField`** from **`androidx.compose.material3`**. Prefer **state-based** APIs (`TextFieldState`, `rememberTextFieldState()`) when targeting current Material3 releases — see the [package overview](https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary). Map labels, supporting text, and error state to MD3 roles (`MaterialTheme.colorScheme`, `TextFieldDefaults`).
+Dùng **`OutlinedTextField`** / **`TextField`** từ **`androidx.compose.material3`**. Ưu tiên API **dựa trên state** (`TextFieldState`, `rememberTextFieldState()`) khi nhắm tới bản Material3 hiện tại — xem [tổng quan gói](https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary). Ánh xạ label, supporting text và trạng thái lỗi tới vai trò MD3 (`MaterialTheme.colorScheme`, `TextFieldDefaults`).
 
 ```kotlin
 // Illustrative — API names vary slightly by Material3 version
@@ -609,29 +610,29 @@ OutlinedTextField(
 ```
 
 ### Date Picker
-**No @material/web element yet.** Three configurations:
-- **Docked**: Inline calendar attached to input
-- **Modal**: Full dialog for date selection
-- **Range**: Select a date range
+**Chưa có element @material/web.** Ba cấu hình:
+- **Docked**: Lịch inline gắn với input
+- **Modal**: Dialog toàn diện để chọn ngày
+- **Range**: Chọn một khoảng ngày
 
 ### Time Picker
-**No @material/web element yet.** Two configurations:
-- **Docked**: Inline time input
-- **Modal**: Clock dial in dialog
+**Chưa có element @material/web.** Hai cấu hình:
+- **Docked**: Input giờ inline
+- **Modal**: Mặt đồng hồ trong dialog
 
 ## Navigation
 
 ### App Bar (Top)
-**No @material/web element yet.** Four variants:
+**Chưa có element @material/web.** Bốn biến thể:
 
-| Variant | Height | Title position | Scroll behavior |
+| Biến thể | Chiều cao | Vị trí tiêu đề | Hành vi cuộn |
 |---------|--------|---------------|----------------|
-| Center-aligned | 64dp | Center | Elevate on scroll |
-| Small | 64dp | Left | Elevate on scroll |
-| Medium | 112dp | Left, bottom | Collapse to small on scroll |
-| Large | 152dp | Left, bottom | Collapse to small on scroll |
+| Center-aligned | 64dp | Giữa | Nâng khi cuộn |
+| Small | 64dp | Trái | Nâng khi cuộn |
+| Medium | 112dp | Trái, dưới | Thu về small khi cuộn |
+| Large | 152dp | Trái, dưới | Thu về small khi cuộn |
 
-**Jetpack Compose:** `TopAppBar`, `CenterAlignedTopAppBar`, `MediumTopAppBar`, `LargeTopAppBar`, and expressive variants (e.g. large flexible) may require **`@OptIn(ExperimentalMaterial3ExpressiveApi::class)`** depending on BOM — check your `material3` version.
+**Jetpack Compose:** `TopAppBar`, `CenterAlignedTopAppBar`, `MediumTopAppBar`, `LargeTopAppBar`, và biến thể expressive (vd. large flexible) có thể cần **`@OptIn(ExperimentalMaterial3ExpressiveApi::class)`** tùy BOM — kiểm tra phiên bản `material3` của bạn.
 
 ```html
 <header class="md3-top-app-bar md3-top-app-bar--small">
@@ -661,7 +662,7 @@ OutlinedTextField(
 
 ### Navigation Bar
 **Element**: `md-navigation-bar` | **Import**: `@material/web/navigation/navigation-bar.js`
-**Use when**: 3–5 primary destinations, mobile/compact screens, persistent.
+**Dùng khi**: 3–5 điểm đến chính, màn hình mobile/compact, liên tục.
 
 ```html
 <md-navigation-bar>
@@ -682,12 +683,12 @@ OutlinedTextField(
 
 ### Navigation Drawer
 **Element**: `md-navigation-drawer` | **Import**: `@material/web/navigation/navigation-drawer.js`
-**Use when**: Many destinations, larger screens, can be modal or persistent.
+**Dùng khi**: Nhiều điểm đến, màn hình lớn hơn, có thể dạng modal hoặc liên tục.
 
-| Attribute | Type | Description |
+| Thuộc tính | Kiểu | Mô tả |
 |-----------|------|-------------|
-| `opened` | boolean | Open state |
-| `type` | string | `standard` or `modal` |
+| `opened` | boolean | Trạng thái mở |
+| `type` | string | `standard` hoặc `modal` |
 
 ```html
 <md-navigation-drawer opened>
@@ -706,7 +707,7 @@ OutlinedTextField(
 ```
 
 ### Navigation Rail
-**No @material/web element yet.** Use when: 3–7 destinations, medium screens (600–839dp), persistent side navigation.
+**Chưa có element @material/web.** Dùng khi: 3–7 điểm đến, màn hình trung bình (600–839dp), điều hướng bên liên tục.
 
 ```html
 <nav class="md3-nav-rail" aria-label="Main">
@@ -751,20 +752,20 @@ OutlinedTextField(
 ```
 
 ### Search
-**No @material/web element yet.** Two patterns:
-- **Search bar**: Persistent search field in top app bar area
-- **Search view**: Expandable search overlay with suggestions
+**Chưa có element @material/web.** Hai mẫu:
+- **Search bar**: Trường tìm kiếm liên tục trong khu vực top app bar
+- **Search view**: Lớp phủ tìm kiếm mở rộng kèm gợi ý
 
-**I/O 2026 note:** Expressive search and search app bar guidance adds a refreshed visual style, motion, and more flexible trailing icon behavior. In Jetpack Compose, use the current Material3 search APIs and expressive app bar variants where available. On web, implement search as a custom component using MD3 shape, color, spacing, and motion tokens.
+**Ghi chú I/O 2026:** Hướng dẫn search và search app bar expressive thêm phong cách thị giác làm mới, chuyển động và hành vi icon cuối linh hoạt hơn. Trong Jetpack Compose, dùng API search Material3 hiện tại và biến thể app bar expressive khi có. Trên web, triển khai search như component tùy chỉnh dùng token shape, color, spacing và motion của MD3.
 
 ### Tabs
-**Elements**: `md-tabs`, `md-primary-tab`, `md-secondary-tab`
+**Element**: `md-tabs`, `md-primary-tab`, `md-secondary-tab`
 **Import**: `@material/web/tabs/tabs.js`, `@material/web/tabs/primary-tab.js`, `@material/web/tabs/secondary-tab.js`
 
-| Variant | Element | Use |
+| Biến thể | Element | Cách dùng |
 |---------|---------|-----|
-| Primary | `md-primary-tab` | Top-level navigation within a page |
-| Secondary | `md-secondary-tab` | Sub-sections within primary tabs |
+| Primary | `md-primary-tab` | Điều hướng cấp cao nhất trong một trang |
+| Secondary | `md-secondary-tab` | Phần phụ trong primary tab |
 
 ```html
 <md-tabs>
@@ -783,24 +784,24 @@ OutlinedTextField(
 </md-tabs>
 ```
 
-**A11y**: Tab set has built-in tablist role. Connect tabs to panels with `aria-controls`.
+**A11y**: Bộ tab có sẵn role tablist. Kết nối tab với panel qua `aria-controls`.
 
 ### Toolbar
-**No @material/web element yet.** Displays frequently used actions relevant to current page context. Typically placed below top app bar or in contextual positions.
+**Chưa có element @material/web.** Hiện các hành động thường dùng liên quan đến ngữ cảnh trang hiện tại. Thường đặt bên dưới top app bar hoặc ở vị trí ngữ cảnh.
 
 ## Data Display
 
 ### List
-**Elements**: `md-list`, `md-list-item`
+**Element**: `md-list`, `md-list-item`
 **Import**: `@material/web/list/list.js`, `@material/web/list/list-item.js`
 
-**I/O 2026 note:** Expressive lists add more vibrant styles and flexible item configurations. In Compose, prefer Material3 list patterns and keep spacing, leading/trailing content, supporting text, and dividers token-driven. On web, `md-list` is useful for standard lists; custom CSS may be needed for expressive list treatments.
+**Ghi chú I/O 2026:** List expressive thêm phong cách rực rỡ hơn và cấu hình mục linh hoạt. Trong Compose, ưu tiên mẫu list Material3 và giữ spacing, nội dung đầu/cuối, supporting text và divider đều dựa trên token. Trên web, `md-list` hữu ích cho list chuẩn; có thể cần CSS tùy chỉnh cho cách trình bày list expressive.
 
-| Attribute (list-item) | Type | Description |
+| Thuộc tính (list-item) | Kiểu | Mô tả |
 |----------------------|------|-------------|
-| `type` | string | `text` (default), `button`, `link` |
-| `href` | string | URL (when type="link") |
-| `disabled` | boolean | Disabled state |
+| `type` | string | `text` (mặc định), `button`, `link` |
+| `href` | string | URL (khi type="link") |
+| `disabled` | boolean | Trạng thái disabled |
 
 ```html
 <md-list>
@@ -833,4 +834,7 @@ OutlinedTextField(
 </md-list>
 ```
 
-**Slots**: `start` (leading element), `end` (trailing element), `headline` (primary text), `supporting-text` (secondary text), `trailing-supporting-text` (trailing metadata), `overline` (above headline)
+**Slot**: `start` (phần tử đầu), `end` (phần tử cuối), `headline` (văn bản chính), `supporting-text` (văn bản phụ), `trailing-supporting-text` (metadata cuối), `overline` (phía trên headline)
+
+
+

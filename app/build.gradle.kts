@@ -57,9 +57,9 @@ val tianxuanLeakCanary: Boolean = providers.gradleProperty("tianxuan.leakcanary"
     .orNull?.trim()?.toBooleanStrictOrNull()
     ?: false
 
-// TianXuanDev 双包构建开关：CI（.github/workflows/tianxuandev-build.yml）设 TIANXUAN_DEV_BUILD=1 时，
-// 产出独立预览包 top.wkbin.tianxuan.dev / 应用名 TianXuanDev / 版本后缀 -dev，
-// 与正式版（top.wkbin.tianxuan）及本地调试包（top.wkbin.tianxuan.debug）完全共存互不干扰。
+// CI dùng TIANXUAN_DEV_BUILD=1 để chọn hậu tố phiên bản -dev.
+// Mọi biến thể cùng dùng package com.ctharness.app và tên hiển thị CTHarness;
+// debug/Dev không còn được cài song song như các ứng dụng riêng.
 val tianXuanDevBuild = System.getenv("TIANXUAN_DEV_BUILD") == "1"
 
 plugins {
@@ -75,13 +75,13 @@ extensions.configure<ApplicationExtension> {
     ndkVersion = "30.0.15729638"
 
     defaultConfig {
-        applicationId = if (tianXuanDevBuild) "com.ctharness.app.dev" else "com.ctharness.app"
+        applicationId = "com.ctharness.app"
         minSdk = 29
         targetSdk = 37
         versionCode = appVersionCode
         versionName = appVersionName
-        // 应用名统一走 manifest placeholder：TianXuanDev 构建显示 "TianXuanDev"，其余显示 "天玄"。
-        manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "CTHarness Dev" else "CTHarness"
+        // Tên hiển thị thống nhất cho mọi biến thể qua manifest placeholder.
+        manifestPlaceholders["appLabel"] = "CTHarness"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += "arm64-v8a"
@@ -141,28 +141,21 @@ extensions.configure<ApplicationExtension> {
 
     buildTypes {
         debug {
-            // TianXuanDev 双包构建：包名与应用名已在 defaultConfig 按 tianXuanDevBuild 分流，
-            // 此处只控制后缀——本地调试包保持 top.wkbin.tianxuan.debug/-debug，
-            // TianXuanDev 预览包（top.wkbin.tianxuan.dev）不再叠加额外后缀，版本后缀为 -dev。
-            if (!tianXuanDevBuild) {
-                applicationIdSuffix = ".debug"
-            }
+            // Chỉ thêm hậu tố phiên bản, không đổi package hoặc tên hiển thị.
             versionNameSuffix = if (tianXuanDevBuild) "-dev" else "-debug"
             if (signingConfigured) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
         release {
-            manifestPlaceholders["appLabel"] = if (tianXuanDevBuild) "CTHarness Dev" else "CTHarness"
+            manifestPlaceholders["appLabel"] = "CTHarness"
             // 内测阶段不开R8 混淆与资源压缩。
             //
             // 关闭的是「防反编译」，不是签名：签名是 Android 的安装前提，
             // 与保密无关，下面照样用 release keystore 签。
             //
-            // 为什么仍要走 release 变体而不是直接发 debug 包：
-            // debug 带 applicationIdSuffix=".debug"，包名是 top.wkbin.tianxuan.debug，
-            // 与正式包 top.wkbin.tianxuan 是两个不同应用。用户先装内测包再装正式版时，
-            // 会出现两个「天玄」并存、互相抢无障碍与输入法权限，且无法覆盖升级。
+            // Bản phát hành vẫn dùng biến thể release thay vì debug.
+            // Hai biến thể có cùng package; muốn cài đè cần chữ ký tương thích.
             //
             // 开关放在 gradle.properties：正式对外发布前把 tianxuan.minify 置 true 即可
             // 恢复混淆（proguard 规则已就绪，无需再改代码）。

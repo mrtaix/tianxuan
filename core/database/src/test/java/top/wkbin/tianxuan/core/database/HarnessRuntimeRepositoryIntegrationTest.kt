@@ -215,6 +215,50 @@ class HarnessRuntimeRepositoryIntegrationTest {
     }
 
     @Test
+    fun `finishOperation preserves next run prompts including legacy operation ownership`() = runBlocking {
+        val sessionId = "queued-after-tool"
+        val op = operation("running-tool", sessionId)
+        dao.acceptOperation(
+            entry("user-a", sessionId, null),
+            lane(sessionId, leafId = "user-a", currentOperationId = op.id),
+            op,
+        )
+        // Mô phỏng dữ liệu cũ: B/C gắn với A; D dùng vòng đời NEXT_RUN mới.
+        listOf(
+            HarnessQueueItemEntity("b", sessionId, "main", op.id, "next_run", 1L, "{\"text\":\"B\"}"),
+            HarnessQueueItemEntity("c", sessionId, "main", op.id, "next_run", 2L, "{\"text\":\"C\"}"),
+            HarnessQueueItemEntity("d", sessionId, "main", null, "next_run", 3L, "{\"text\":\"D\"}"),
+            HarnessQueueItemEntity("steer", sessionId, "main", op.id, "steer", 4L, "{}"),
+            HarnessQueueItemEntity("follow", sessionId, "main", op.id, "follow_up", 5L, "{}"),
+            HarnessQueueItemEntity("other", sessionId, "worker", "other-op", "steer", 6L, "{}"),
+        ).forEach { dao.insertQueueItem(it) }
+
+        repository.finishOperation(
+            HarnessLaneResultEntity(sessionId, "main", op.id, "completed", "user-a", null, 7L),
+            lane(sessionId, leafId = "user-a", currentOperationId = null),
+        )
+
+        val pending = repository.listQueue(sessionId, "main", "next_run")
+        assertEquals(listOf("b", "c", "d"), pending.map { it.id })
+        assertTrue(pending.all { it.operationId == null })
+        assertEquals(listOf("{\"text\":\"B\"}", "{\"text\":\"C\"}", "{\"text\":\"D\"}"), pending.map { it.payloadJson })
+        assertTrue(repository.listQueue(sessionId, "main", "steer").isEmpty())
+        assertTrue(repository.listQueue(sessionId, "main", "follow_up").isEmpty())
+        assertEquals(listOf("other"), repository.listQueue(sessionId, "worker", "steer").map { it.id })
+        assertNull(repository.findLane(sessionId, "main")!!.currentOperationId)
+        assertNull(repository.findOperation(op.id))
+
+        // B được tiếp quản đúng một lần; C/D vẫn còn để các lượt sau xử lý.
+        repository.acceptQueuedOperation(
+            "b", entry("user-b", sessionId, "user-a"),
+            lane(sessionId, leafId = "user-b", currentOperationId = "run-b"),
+            operation("run-b", sessionId),
+        )
+        assertEquals(listOf("c", "d"), repository.listQueue(sessionId, "main", "next_run").map { it.id })
+        assertEquals(listOf("user-a", "user-b"), repository.listEntries(sessionId).map { it.id })
+    }
+
+    @Test
     fun `deleteSessionData cascades across all runtime tables`() = runBlocking {
         val sessionId = "s5"
         val op = operation("op-5", sessionId)

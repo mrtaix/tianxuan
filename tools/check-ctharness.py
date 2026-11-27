@@ -29,18 +29,19 @@ def strings(path):
 class ForkContractTest(unittest.TestCase):
     def test_application_ids_and_labels(self):
         build = read("app/build.gradle.kts")
-        self.assertRegex(
-            build,
-            r'applicationId\s*=\s*if \(tianXuanDevBuild\) '
-            r'"com\.ctharness\.app\.dev" else "com\.ctharness\.app"',
+        self.assertEqual(
+            ['"com.ctharness.app"'],
+            re.findall(r'^\s*applicationId\s*=\s*(.+)', build, re.MULTILINE),
         )
         labels = re.findall(r'manifestPlaceholders\["appLabel"\]\s*=\s*(.+)', build)
         self.assertTrue(labels)
         for label in labels:
-            self.assertEqual(
-                'if (tianXuanDevBuild) "CTHarness Dev" else "CTHarness"', label
-            )
-        self.assertIn('applicationIdSuffix = ".debug"', build)
+            self.assertEqual('"CTHarness"', label)
+        self.assertNotRegex(build, r'(?m)^\s*applicationIdSuffix\s*=')
+        manifest = ET.parse(ROOT / "app/src/main/AndroidManifest.xml").getroot()
+        self.assertEqual("${appLabel}", manifest.find("application").attrib[ANDROID + "label"])
+        app_strings = strings(ROOT / "app/src/main/res/values/strings.xml")
+        self.assertEqual("CTHarness", app_strings["tianxuan_app_name"].text)
         self.assertIn('"ctharness-v${appVersionName}-${variant.name}.apk"', build)
 
     def test_native_namespaces_are_preserved(self):
@@ -232,7 +233,11 @@ class ForkContractTest(unittest.TestCase):
         self.assertIn("block: suspend () -> RunResult,\n    ): Boolean {", loop)
         self.assertIn("agentTaskStateMachine.markRecovering(taskId", loop)
         self.assertIn("val launched = launchSessionJobLocked(", loop)
-        self.assertIn("排队消息未能启动，请重新发送", loop)
+        self.assertIn("Không thể khởi chạy tin nhắn đang chờ. Vui lòng gửi lại.", loop)
+        # Queued drain: a failed launch must close the operation already opened by
+        # acceptQueuedRun, otherwise the lane stays busy and later messages are dropped.
+        launched_branch = loop.split("if (!launched) {", 1)[1].split("return launched", 1)[0]
+        self.assertIn("operationCoordinator.finish(sessId, \"failed\"", launched_branch)
 
         privilege = read(
             "runtime/src/main/java/top/wkbin/tianxuan/runtime/privilege/"

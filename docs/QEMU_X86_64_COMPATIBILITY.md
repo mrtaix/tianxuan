@@ -1,58 +1,58 @@
-# QEMU x86_64 兼容构建
+# Build tương thích QEMU x86_64
 
-## 目标
+## Mục tiêu
 
-天玄设备与默认构建工具链保持 `arm64-v8a`。QEMU 兼容环境只处理第三方项目依赖的 **x86_64 Linux 主机构建工具**，不会让最终 APK 自动包含 x86 ABI。
+Thiết bị chạy CTHarness và bộ công cụ build mặc định vẫn dùng `arm64-v8a`. Môi trường tương thích QEMU chỉ xử lý **công cụ build chạy trên máy chủ Linux x86_64** mà dự án bên thứ ba phụ thuộc, không khiến APK cuối cùng tự động chứa ABI x86.
 
-## 启用方式
+## Cách bật
 
-进入「设置 → 系统保活与开发者诊断」，在本地插件中心导入并安装 `qemu-x86-64-compat`，检测到插件就绪后才能打开「QEMU x86_64 兼容模式」。
+Vào "Cài đặt → Duy trì hoạt động hệ thống và chẩn đoán cho nhà phát triển", nhập và cài `qemu-x86-64-compat` trong trung tâm plugin cục bộ. Chỉ khi phát hiện plugin đã sẵn sàng mới có thể bật "Chế độ tương thích QEMU x86_64".
 
-插件下载并校验：
+Plugin tải xuống và kiểm tra:
 
-- ARM64 `qemu-x86_64` 用户态模拟器；
-- 隔离的 x86_64 Ubuntu Base RootFS；
-- x86_64 动态链接器、glibc 和基础用户态库。
+- Trình giả lập chế độ người dùng `qemu-x86_64` chạy trên ARM64;
+- RootFS Ubuntu Base x86_64 cách ly;
+- Trình liên kết động x86_64, glibc và các thư viện chế độ người dùng cơ bản.
 
-插件只提供 QEMU user-mode 兼容层，不再捆绑 JDK、Gradle、Android SDK 或 Flutter。
+Plugin chỉ cung cấp lớp tương thích QEMU user-mode, không còn đóng gói kèm JDK, Gradle, Android SDK hay Flutter.
 
-关闭开关只会停止后续自动选择兼容模式，不会立即删除已下载资源。资源应通过插件中心卸载，避免误删正在使用的兼容环境。
+Tắt công tắc chỉ ngừng việc tự động chọn chế độ tương thích về sau, không xóa ngay tài nguyên đã tải. Nên gỡ tài nguyên qua trung tâm plugin để tránh xóa nhầm môi trường tương thích đang được sử dụng.
 
-## 隔离目录
+## Thư mục cách ly
 
 ```text
 /opt/tianxuan/compat/x86_64/
-├── qemu-x86_64       # ARM64 可执行文件
-└── rootfs/            # x86_64 Linux 用户态
+├── qemu-x86_64       # Tệp thực thi ARM64
+└── rootfs/            # Không gian người dùng Linux x86_64
 ```
 
-普通 ARM64 RootFS 不添加 `proot -q`。只有同时满足以下条件的专用会话才能追加 `-q`：
+RootFS ARM64 thông thường không thêm `proot -q`. Chỉ phiên chuyên dụng đáp ứng đồng thời các điều kiện sau mới được thêm `-q`:
 
-1. 用户已开启兼容模式；
-2. QEMU 插件验证通过；
-3. 选择的是隔离 x86_64 RootFS；
-4. 构建入口明确请求兼容模式。
+1. Người dùng đã bật chế độ tương thích;
+2. Plugin QEMU đã vượt qua kiểm tra;
+3. RootFS được chọn là x86_64 cách ly;
+4. Điểm vào build yêu cầu rõ chế độ tương thích.
 
-## 与 proot-distro 的关系
+## Quan hệ với proot-distro
 
-QEMU user-mode 并不是 `proot-distro` 专属能力。`proot-distro` 只是替你准备 RootFS、QEMU 路径和启动参数；实际生效的是 PRoot 自身的 `-q` 参数，例如：
+QEMU user-mode không phải năng lực riêng của `proot-distro`. `proot-distro` chỉ chuẩn bị giúp RootFS, đường dẫn QEMU và tham số khởi chạy; tham số thực sự có tác dụng là `-q` của chính PRoot, ví dụ:
 
 ```text
 proot -q /path/to/qemu-x86_64 -r /path/to/x86_64-rootfs /bin/sh
 ```
 
-先进入普通 ARM64 Linux，再执行一次 `proot-distro` 的 QEMU 关联命令，不会让当前 Linux 永久或全局获得 x86_64 能力。每个需要运行 x86_64 ELF 的进程都必须位于带 `-q` 的专用 PRoot 会话里。天玄因此使用隔离的 x86_64 RootFS 会话，而不会给普通 ARM64 RootFS 全局追加 QEMU。
+Vào Linux ARM64 thông thường rồi thực hiện một lệnh liên quan đến QEMU của `proot-distro` không khiến Linux hiện tại có năng lực x86_64 vĩnh viễn hay trên toàn hệ thống. Mọi tiến trình cần chạy ELF x86_64 đều phải nằm trong phiên PRoot chuyên dụng có `-q`. Vì vậy CTHarness dùng phiên RootFS x86_64 cách ly, không thêm QEMU trên toàn bộ RootFS ARM64 thông thường.
 
-## 当前边界
+## Giới hạn hiện tại
 
-第二阶段已接入统一工作区构建入口：默认先执行 ARM64 的 `build_android.sh` / `build_flutter.sh`；只有脚本明确返回 ELF/主机架构不兼容（通常为退出码 126），且设置开关开启、兼容插件校验通过时，才会重试 `build_android_qemu.sh` / `build_flutter_qemu.sh`。不会静默把普通终端整体切到 QEMU。
+Giai đoạn hai đã tích hợp vào điểm vào build workspace thống nhất: mặc định chạy `build_android.sh` / `build_flutter.sh` của ARM64 trước; chỉ khi script báo rõ ELF/kiến trúc máy chủ không tương thích (thường là mã thoát 126), công tắc cài đặt đã bật và plugin tương thích vượt kiểm tra, mới thử lại bằng `build_android_qemu.sh` / `build_flutter_qemu.sh`. Không âm thầm chuyển toàn bộ terminal thông thường sang QEMU.
 
-终端里直接执行 `./gradlew` 或 `flutter build apk` 仍可能绕过统一构建入口。正式兜底应通过命令包装器或 Agent 构建 Skill 完成，而不是全局篡改 Shell。
+Chạy trực tiếp `./gradlew` hoặc `flutter build apk` trong terminal vẫn có thể bỏ qua điểm vào build thống nhất. Cơ chế dự phòng chính thức nên được thực hiện qua trình bọc lệnh hoặc Skill build của agent, thay vì sửa Shell trên toàn hệ thống.
 
-## 安全说明
+## Lưu ý bảo mật
 
-- QEMU 本体必须是 ARM64 ELF（ELF machine `183`）。
-- x86_64 RootFS 的 `/bin/sh` 和动态链接器必须存在。
-- 插件下载的 Ubuntu Base 包使用固定 SHA256 校验。
-- QEMU/PRoot 不提供完整 namespace、cgroup、内核模块或硬件虚拟化能力。
-- 跨架构构建速度和内存占用会显著高于原生 ARM64。
+- Bản thân QEMU phải là ELF ARM64 (ELF machine `183`).
+- `/bin/sh` và trình liên kết động của RootFS x86_64 phải tồn tại.
+- Gói Ubuntu Base do plugin tải về được kiểm tra bằng SHA256 cố định.
+- QEMU/PRoot không cung cấp đầy đủ namespace, cgroup, module kernel hay năng lực ảo hóa phần cứng.
+- Build chéo kiến trúc sẽ chậm hơn và tiêu tốn bộ nhớ nhiều hơn đáng kể so với chạy trực tiếp trên ARM64.

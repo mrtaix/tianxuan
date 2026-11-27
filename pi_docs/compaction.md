@@ -1,50 +1,50 @@
-# Compaction & Branch Summarization
+# Compaction & Tóm tắt nhánh (Branch Summarization)
 
-LLMs have limited context windows. When conversations grow too long, Pi uses compaction to summarize older content while preserving recent work. This page covers both auto-compaction and branch summarization.
+LLM có context window hạn chế. Khi cuộc hội thoại quá dài, Pi dùng compaction để tóm tắt nội dung cũ trong khi vẫn bảo toàn công việc gần đây. Trang này đề cập cả auto-compaction lẫn branch summarization.
 
-**Source files** ([pi](https://github.com/earendil-works/pi)):
-- [`packages/coding-agent/src/core/compaction/compaction.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) - Auto-compaction logic
+**Tệp nguồn** ([pi](https://github.com/earendil-works/pi)):
+- [`packages/coding-agent/src/core/compaction/compaction.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) - Logic auto-compaction
 - [`packages/coding-agent/src/core/compaction/branch-summarization.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) - Branch summarization
-- [`packages/coding-agent/src/core/compaction/utils.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/utils.ts) - Shared utilities (file tracking, serialization)
-- [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts) - Entry types (`CompactionEntry`, `BranchSummaryEntry`)
-- [`packages/coding-agent/src/core/extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) - Extension event types
+- [`packages/coding-agent/src/core/compaction/utils.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/utils.ts) - Tiện ích dùng chung (theo dõi tệp, serialize)
+- [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts) - Kiểu entry (`CompactionEntry`, `BranchSummaryEntry`)
+- [`packages/coding-agent/src/core/extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) - Kiểu sự kiện extension
 
-For TypeScript definitions in your project, inspect `node_modules/@earendil-works/pi-coding-agent/dist/`.
+Để xem định nghĩa TypeScript trong dự án của bạn, hãy kiểm tra `node_modules/@earendil-works/pi-coding-agent/dist/`.
 
-## Overview
+## Tổng quan (Overview)
 
-Pi has two summarization mechanisms:
+Pi có hai cơ chế tóm tắt:
 
 | Mechanism | Trigger | Purpose |
 |-----------|---------|---------|
 | Compaction | Context exceeds threshold, or `/compact` | Summarize old messages to free up context |
 | Branch summarization | `/tree` navigation | Preserve context when switching branches |
 
-Both use the same structured summary format and track file operations cumulatively. Compaction and branch-summary requests use fresh routing session IDs and, where supported by the provider, disable prompt-cache writes because these one-off prompts are unlikely to be reused.
+Cả hai dùng cùng định dạng tóm tắt có cấu trúc và theo dõi các thao tác tệp một cách tích lũy. Các yêu cầu compaction và branch-summary dùng routing session ID mới và, ở nơi provider hỗ trợ, vô hiệu hóa ghi prompt-cache vì các prompt một lần này khó có thể được tái sử dụng.
 
 ## Compaction
 
-### When It Triggers
+### Khi nào kích hoạt (When It Triggers)
 
-Auto-compaction triggers when:
+Auto-compaction kích hoạt khi:
 
 ```
 contextTokens > contextWindow - reserveTokens
 ```
 
-By default, `reserveTokens` is 16384 tokens (configurable in `~/.pi/agent/settings.json` or `<project-dir>/.pi/settings.json`). This leaves room for the LLM's response.
+Theo mặc định, `reserveTokens` là 16384 token (có thể cấu hình trong `~/.pi/agent/settings.json` hoặc `<project-dir>/.pi/settings.json`). Điều này chừa chỗ cho phản hồi của LLM.
 
-During a multi-turn agent run, Pi checks this threshold after tools finish and their results are appended, before starting the next assistant response. If the threshold is crossed, Pi compacts inside the same agent run and resumes with the summary and retained messages. It skips this between-turn check when the completed tool batch terminates the run and no queued message requires another response. Pi also checks the threshold before a new user prompt and after a low-level agent run ends.
+Trong một lần chạy agent nhiều lượt, Pi kiểm tra ngưỡng này sau khi tools kết thúc và kết quả của chúng được nối vào, trước khi bắt đầu phản hồi assistant tiếp theo. Nếu vượt ngưỡng, Pi thực hiện compaction ngay trong cùng lần chạy agent và tiếp tục với bản tóm tắt cùng các tin nhắn được giữ lại. Nó bỏ qua bước kiểm tra giữa các lượt này khi batch tool đã hoàn thành kết thúc lần chạy và không có tin nhắn xếp hàng nào cần phản hồi khác. Pi cũng kiểm tra ngưỡng trước một prompt user mới và sau khi một lần chạy agent cấp thấp kết thúc.
 
-You can also trigger manually with `/compact [instructions]`, where optional instructions focus the summary.
+Bạn cũng có thể kích hoạt thủ công bằng `/compact [instructions]`, trong đó instructions tùy chọn giúp tập trung vào nội dung tóm tắt.
 
-### How It Works
+### Cách hoạt động (How It Works)
 
-1. **Find cut point**: Walk backwards from newest message, accumulating token estimates until `keepRecentTokens` (default 20k, configurable in `~/.pi/agent/settings.json` or `<project-dir>/.pi/settings.json`) is reached
-2. **Extract messages**: Collect messages from the previous kept boundary (or session start) up to the cut point
-3. **Generate summary**: Call LLM to summarize with structured format, passing the previous summary as iterative context when present
-4. **Append entry**: Save `CompactionEntry` with summary and `firstKeptEntryId`
-5. **Rebuilds context**: Session rebuilds the context for the next request, using summary + messages from `firstKeptEntryId` onwards
+1. **Tìm điểm cắt (cut point)**: Đi ngược từ tin nhắn mới nhất, cộng dồn ước lượng token cho đến khi đạt `keepRecentTokens` (mặc định 20k, có thể cấu hình trong `~/.pi/agent/settings.json` hoặc `<project-dir>/.pi/settings.json`)
+2. **Trích xuất tin nhắn**: Thu thập các tin nhắn từ ranh giới được giữ trước đó (hoặc đầu session) tới điểm cắt
+3. **Tạo tóm tắt**: Gọi LLM để tóm tắt theo định dạng có cấu trúc, truyền bản tóm tắt trước đó làm ngữ cảnh lặp khi có
+4. **Nối entry**: Lưu `CompactionEntry` kèm tóm tắt và `firstKeptEntryId`
+5. **Dựng lại context**: Session dựng lại context cho yêu cầu tiếp theo, dùng tóm tắt + các tin nhắn từ `firstKeptEntryId` trở đi
 
 ```
 Before compaction:
@@ -78,13 +78,13 @@ What the LLM sees:
     prompt   from cmp          messages from firstKeptEntryId
 ```
 
-On repeated compactions, the summarized span starts at the previous compaction's kept boundary (`firstKeptEntryId`), not at the compaction entry itself, falling back to the entry after the previous compaction if that kept entry cannot be found in the path. This preserves messages that survived the earlier compaction by including them in the next summarization pass as well. Pi also recalculates `tokensBefore` from the rebuilt session context before writing the new `CompactionEntry`, so the token count reflects the actual pre-compaction context being replaced.
+Khi compaction lặp lại, đoạn được tóm tắt bắt đầu từ ranh giới được giữ lại của lần compaction trước (`firstKeptEntryId`), không phải từ chính entry compaction, và quay về entry ngay sau lần compaction trước nếu không tìm thấy entry đã giữ đó trong đường dẫn. Điều này bảo toàn các tin nhắn đã sống sót qua compaction trước bằng cách đưa chúng vào luồng tóm tắt tiếp theo. Pi cũng tính lại `tokensBefore` từ context session đã dựng lại trước khi ghi `CompactionEntry` mới, để số token phản ánh đúng context thực tế trước compaction đang bị thay thế.
 
-### Split Turns
+### Lượt bị tách (Split Turns)
 
-A "turn" starts with a user message and includes all assistant responses and tool calls until the next user message. Normally, compaction cuts at turn boundaries.
+Một "turn" bắt đầu bằng tin nhắn user và bao gồm tất cả phản hồi assistant cùng tool call cho đến tin nhắn user tiếp theo. Thông thường, compaction cắt tại ranh giới turn.
 
-When a single turn exceeds `keepRecentTokens`, the cut point lands mid-turn at an assistant message. This is a "split turn":
+Khi một turn đơn vượt quá `keepRecentTokens`, điểm cắt nằm giữa turn tại một tin nhắn assistant. Đó là "split turn":
 
 ```
 Split turn (one huge turn exceeds budget):
@@ -104,23 +104,23 @@ Split turn (one huge turn exceeds budget):
   turnPrefixMessages = [usr, ass, tool, ass, tool, tool]
 ```
 
-For split turns, Pi generates two summaries and merges them:
-1. **History summary**: Previous context (if any)
-2. **Turn prefix summary**: The early part of the split turn
+Với split turn, Pi tạo hai bản tóm tắt rồi hợp nhất:
+1. **History summary**: Ngữ cảnh trước đó (nếu có)
+2. **Turn prefix summary**: Phần đầu của turn bị tách
 
-### Cut Point Rules
+### Quy tắc điểm cắt (Cut Point Rules)
 
-Valid cut points are:
-- User messages
-- Assistant messages
-- BashExecution messages
-- Custom messages (custom_message, branch_summary)
+Các điểm cắt hợp lệ là:
+- Tin nhắn user
+- Tin nhắn assistant
+- Tin nhắn BashExecution
+- Tin nhắn custom (custom_message, branch_summary)
 
-Never cut at tool results (they must stay with their tool call).
+Không bao giờ cắt tại kết quả tool (chúng phải ở cùng với tool call của mình).
 
-### CompactionEntry Structure
+### Cấu trúc CompactionEntry
 
-Defined in [`session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts):
+Định nghĩa trong [`session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts):
 
 ```typescript
 interface CompactionEntry<T = unknown> {
@@ -143,23 +143,23 @@ interface CompactionDetails {
 }
 ```
 
-Extensions can store any JSON-serializable data in `details`. The default compaction tracks file operations, but custom extension implementations can use their own structure. Generated and extension-provided summaries store their LLM `usage` when available so session totals include summarization work.
+Extension có thể lưu bất kỳ dữ liệu nào có thể serialize JSON trong `details`. Compaction mặc định theo dõi các thao tác tệp, nhưng các triển khai extension tùy chỉnh có thể dùng cấu trúc riêng. Bản tóm tắt do hệ thống tạo và do extension cung cấp đều lưu `usage` của LLM khi có, để tổng số token của session tính cả công việc tóm tắt.
 
-See [`prepareCompaction()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) and [`compact()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) for the implementation. For direct programmatic summarization, `generateSummary()` returns the summary text and `generateSummaryWithUsage()` returns `{ text, usage }`.
+Xem [`prepareCompaction()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) và [`compact()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) để biết triển khai. Để tóm tắt trực tiếp bằng lập trình, `generateSummary()` trả về văn bản tóm tắt và `generateSummaryWithUsage()` trả về `{ text, usage }`.
 
-## Branch Summarization
+## Branch Summarization (Tóm tắt nhánh)
 
-### When It Triggers
+### Khi nào kích hoạt (When It Triggers)
 
-When you use `/tree` to navigate to a different branch, Pi offers to summarize the work you're leaving. This injects context from the left branch into the new branch.
+Khi bạn dùng `/tree` để điều hướng sang nhánh khác, Pi đề nghị tóm tắt công việc bạn đang rời đi. Điều này đưa ngữ cảnh từ nhánh bị bỏ vào nhánh mới.
 
-### How It Works
+### Cách hoạt động (How It Works)
 
-1. **Find common ancestor**: Deepest node shared by old and new positions
-2. **Collect entries**: Walk from old leaf back to common ancestor
-3. **Prepare with budget**: Include messages up to token budget (newest first)
-4. **Generate summary**: Call LLM with structured format
-5. **Append entry**: Save `BranchSummaryEntry` at navigation point
+1. **Tìm tổ tiên chung (common ancestor)**: Node sâu nhất được cả vị trí cũ và mới chia sẻ
+2. **Thu thập entry**: Đi từ leaf cũ ngược về tổ tiên chung
+3. **Chuẩn bị theo ngân sách (budget)**: Bao gồm các tin nhắn trong giới hạn token (mới nhất trước)
+4. **Tạo tóm tắt**: Gọi LLM với định dạng có cấu trúc
+5. **Nối entry**: Lưu `BranchSummaryEntry` tại điểm điều hướng
 
 ```
 Tree before navigation:
@@ -178,17 +178,17 @@ After navigation with summary:
          └─ E ─ F ─ [summary of B,C,D] (new leaf)
 ```
 
-### Cumulative File Tracking
+### Theo dõi tệp tích lũy (Cumulative File Tracking)
 
-Both compaction and branch summarization track files cumulatively. When generating a summary, pi extracts file operations from:
-- Tool calls in the messages being summarized
-- Previous compaction or branch summary `details` (if any)
+Cả compaction và branch summarization đều theo dõi tệp một cách tích lũy. Khi tạo tóm tắt, pi trích xuất các thao tác tệp từ:
+- Tool call trong các tin nhắn đang được tóm tắt
+- `details` của compaction hoặc branch summary trước đó (nếu có)
 
-This means file tracking accumulates across multiple compactions or nested branch summaries, preserving the full history of read and modified files.
+Điều này nghĩa là việc theo dõi tệp tích lũy qua nhiều lần compaction hoặc branch summary lồng nhau, bảo toàn lịch sử đầy đủ của các tệp đã đọc và đã sửa.
 
-### BranchSummaryEntry Structure
+### Cấu trúc BranchSummaryEntry
 
-Defined in [`session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts):
+Định nghĩa trong [`session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts):
 
 ```typescript
 interface BranchSummaryEntry<T = unknown> {
@@ -210,13 +210,13 @@ interface BranchSummaryDetails {
 }
 ```
 
-Same as compaction, extensions can store custom data in `details`.
+Giống như compaction, extension có thể lưu dữ liệu tùy chỉnh trong `details`.
 
-See [`collectEntriesForBranchSummary()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts), [`prepareBranchEntries()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts), and [`generateBranchSummary()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) for the implementation.
+Xem [`collectEntriesForBranchSummary()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts), [`prepareBranchEntries()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) và [`generateBranchSummary()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) để biết triển khai.
 
-## Summary Format
+## Định dạng tóm tắt (Summary Format)
 
-Both compaction and branch summarization use the same structured format:
+Cả compaction và branch summarization đều dùng cùng định dạng có cấu trúc:
 
 ```markdown
 ## Goal
@@ -254,9 +254,9 @@ path/to/changed.ts
 </modified-files>
 ```
 
-### Message Serialization
+### Serialize tin nhắn (Message Serialization)
 
-Before summarization, messages are serialized to text via [`serializeConversation()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/utils.ts):
+Trước khi tóm tắt, tin nhắn được serialize thành văn bản qua [`serializeConversation()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/utils.ts):
 
 ```
 [User]: What they said
@@ -266,17 +266,17 @@ Before summarization, messages are serialized to text via [`serializeConversatio
 [Tool result]: Output from tool
 ```
 
-This prevents the model from treating it as a conversation to continue.
+Điều này ngăn model coi đây là cuộc hội thoại cần tiếp tục.
 
-Tool results are truncated to 2000 characters during serialization. Content beyond that limit is replaced with a marker indicating how many characters were truncated. This keeps summarization requests within reasonable token budgets, since tool results (especially from `read` and `bash`) are typically the largest contributors to context size.
+Kết quả tool bị cắt ngắn ở 2000 ký tự trong quá trình serialize. Nội dung vượt quá giới hạn được thay bằng một marker cho biết đã cắt bao nhiêu ký tự. Điều này giữ cho yêu cầu tóm tắt nằm trong ngân sách token hợp lý, vì kết quả tool (đặc biệt từ `read` và `bash`) thường là nguồn đóng góp lớn nhất vào kích thước context.
 
-## Custom Summarization via Extensions
+## Tóm tắt tùy chỉnh qua Extension
 
-Extensions can intercept and customize both compaction and branch summarization. See [`extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) for event type definitions.
+Extension có thể chặn và tùy chỉnh cả compaction lẫn branch summarization. Xem [`extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) để biết định nghĩa kiểu sự kiện.
 
 ### session_before_compact
 
-Fired before auto-compaction or `/compact`. Can cancel or provide custom summary. See `SessionBeforeCompactEvent` and `CompactionPreparation` in the types file.
+Kích hoạt trước auto-compaction hoặc `/compact`. Có thể hủy hoặc cung cấp bản tóm tắt tùy chỉnh. Xem `SessionBeforeCompactEvent` và `CompactionPreparation` trong tệp types.
 
 ```typescript
 pi.on("session_before_compact", async (event, ctx) => {
@@ -311,9 +311,9 @@ pi.on("session_before_compact", async (event, ctx) => {
 });
 ```
 
-#### Converting Messages to Text
+#### Chuyển tin nhắn thành văn bản
 
-To generate a summary with your own model, convert messages to text using `serializeConversation`:
+Để tạo tóm tắt bằng model của riêng bạn, hãy chuyển tin nhắn thành văn bản bằng `serializeConversation`:
 
 ```typescript
 import { convertToLlm, serializeConversation } from "@earendil-works/pi-coding-agent";
@@ -346,11 +346,11 @@ pi.on("session_before_compact", async (event, ctx) => {
 });
 ```
 
-See [custom-compaction.ts](../examples/extensions/custom-compaction.ts) for a complete example using a different model.
+Xem [custom-compaction.ts](../examples/extensions/custom-compaction.ts) để có ví dụ hoàn chỉnh dùng một model khác.
 
 ### session_compact_failed
 
-Fired when manual or automatic compaction fails or is aborted. This is useful for telemetry extensions that need to pair `session_before_compact` attempts with terminal outcomes.
+Kích hoạt khi compaction thủ công hoặc tự động thất bại hoặc bị hủy. Hữu ích cho extension telemetry cần ghép các cố gắng `session_before_compact` với kết quả cuối cùng.
 
 ```typescript
 pi.on("session_compact_failed", async (event, ctx) => {
@@ -365,7 +365,7 @@ pi.on("session_compact_failed", async (event, ctx) => {
 
 ### session_before_tree
 
-Fired before `/tree` navigation. Always fires regardless of whether user chose to summarize. Can cancel navigation or provide custom summary.
+Kích hoạt trước điều hướng `/tree`. Luôn kích hoạt bất kể người dùng có chọn tóm tắt hay không. Có thể hủy điều hướng hoặc cung cấp bản tóm tắt tùy chỉnh.
 
 ```typescript
 pi.on("session_before_tree", async (event, ctx) => {
@@ -393,11 +393,11 @@ pi.on("session_before_tree", async (event, ctx) => {
 });
 ```
 
-See `SessionBeforeTreeEvent` and `TreePreparation` in the types file.
+Xem `SessionBeforeTreeEvent` và `TreePreparation` trong tệp types.
 
 ## Settings
 
-Configure compaction in `~/.pi/agent/settings.json` or `<project-dir>/.pi/settings.json`:
+Cấu hình compaction trong `~/.pi/agent/settings.json` hoặc `<project-dir>/.pi/settings.json`:
 
 ```json
 {
@@ -415,11 +415,11 @@ Configure compaction in `~/.pi/agent/settings.json` or `<project-dir>/.pi/settin
 | `reserveTokens` | `16384` | Tokens to reserve for LLM response |
 | `keepRecentTokens` | `20000` | Recent tokens to keep (not summarized) |
 
-Disable auto-compaction with `"enabled": false`. You can still compact manually with `/compact`.
+Vô hiệu hóa auto-compaction với `"enabled": false`. Bạn vẫn có thể compact thủ công bằng `/compact`.
 
-### Per-model overrides
+### Ghi đè theo từng model (Per-model overrides)
 
-Use `compaction.modelOverrides` to tune token budgets for different models:
+Dùng `compaction.modelOverrides` để tinh chỉnh ngân sách token cho các model khác nhau:
 
 ```json
 {
@@ -435,10 +435,10 @@ Use `compaction.modelOverrides` to tune token budgets for different models:
 }
 ```
 
-For a model with a 1M context window, this override triggers compaction above 600K tokens and keeps the ordinary 20000 recent tokens. Other models retain the ordinary 16384-token reserve. `reserveTokens` also influences summarization output limits, capped by the model's maximum output tokens; it is not solely a trigger threshold.
+Đối với model có context window 1M, ghi đè này kích hoạt compaction trên 600K token và giữ nguyên 20000 token gần đây như thường. Các model khác giữ nguyên reserve 16384 token như thường. `reserveTokens` cũng ảnh hưởng đến giới hạn đầu ra tóm tắt, bị chặn bởi số token đầu ra tối đa của model; nó không chỉ là ngưỡng kích hoạt.
 
-Keys are exact, case-sensitive `provider/modelId` values, including any slashes within the model ID. Each `reserveTokens` and `keepRecentTokens` value falls back independently from the model override to the ordinary setting to the built-in default. Values must be non-negative safe integers. Invalid values in the matching model override produce an error when read; only omitted fields fall back to the ordinary setting. Model override entries must be objects. Invalid ordinary token settings produce an error when read, even if the active model has a valid override. Only omitted ordinary values use built-in defaults. `enabled` remains global, not model-specific.
+Khóa là giá trị `provider/modelId` chính xác, phân biệt chữ hoa/thường, bao gồm cả các dấu gạch chéo trong model ID. Mỗi giá trị `reserveTokens` và `keepRecentTokens` được fallback độc lập từ ghi đè model đến setting thường đến giá trị mặc định tích hợp. Giá trị phải là số nguyên an toàn không âm. Giá trị không hợp lệ trong ghi đè model khớp sẽ gây lỗi khi đọc; chỉ các trường bị bỏ sót mới fallback về setting thường. Các mục ghi đè model phải là đối tượng. Setting token thường không hợp lệ gây lỗi khi đọc, ngay cả khi model đang hoạt động có ghi đè hợp lệ. Chỉ các giá trị thường bị bỏ sót mới dùng giá trị mặc định tích hợp. `enabled` vẫn mang tính toàn cục, không theo từng model.
 
-These resolved values are used for manual compaction, all automatic threshold checks, overflow recovery, and extension-visible `preparation.settings`. Model switches affect subsequent checks and compactions without changing ordinary settings. Compaction already in progress uses the model and settings captured for that operation. Branch summarization settings are unaffected.
+Các giá trị đã resolve này được dùng cho compaction thủ công, mọi kiểm tra ngưỡng tự động, phục hồi overflow và `preparation.settings` visible với extension. Việc đổi model ảnh hưởng đến các kiểm tra và compaction sau đó mà không thay đổi setting thường. Compaction đang tiến hành dùng model và settings đã được ghi nhận cho thao tác đó. Setting branch summarization không bị ảnh hưởng.
 
-Overrides work in both global and project settings. The files merge recursively before lookup, so a global model-specific value beats a project-wide fallback; a project must override that model entry to change it. See [settings.md](settings.md#per-model-compaction-overrides) for details.
+Ghi đè hoạt động trong cả settings toàn cục lẫn dự án. Các tệp được hợp nhất đệ quy trước khi tra cứu, nên giá trị global theo model cụ thể sẽ thắng fallback toàn dự án; dự án phải ghi đè chính mục model đó thì mới thay đổi được. Xem [settings.md](settings.md#per-model-compaction-overrides) để biết chi tiết.

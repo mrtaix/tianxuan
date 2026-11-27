@@ -1,16 +1,16 @@
-# MD3 Typography, Shape, Elevation, and Motion
+# Typography, Shape, Elevation và Motion trong MD3
 
-Reference for Material Design 3's visual token systems beyond color.
+Tài liệu tham khảo về các hệ thống token thị giác của Material Design 3 ngoài màu sắc.
 
 ## Typography
 
-### Type Scale
+### Thang kiểu chữ (Type Scale)
 
-MD3 uses 15 baseline styles + 15 emphasized styles organized in 5 categories (Display, Headline, Title, Body, Label) with 3 sizes each (Large, Medium, Small).
+MD3 dùng 15 kiểu cơ sở + 15 kiểu nhấn mạnh (emphasized), tổ chức thành 5 danh mục (Display, Headline, Title, Body, Label), mỗi danh mục 3 kích thước (Large, Medium, Small).
 
-#### Baseline Type Scale (Default Values)
+#### Thang kiểu chữ cơ sở (giá trị mặc định)
 
-| Style | Font | Weight | Size (sp) | Size (rem) | Line Height | Tracking |
+| Kiểu | Font | Weight | Kích thước (sp) | Kích thước (rem) | Chiều cao dòng | Tracking |
 |-------|------|--------|-----------|------------|-------------|----------|
 | Display Large | Roboto | 400 | 57 | 3.5625 | 64sp / 4rem | -0.25px |
 | Display Medium | Roboto | 400 | 45 | 2.8125 | 52sp / 3.25rem | 0 |
@@ -28,21 +28,21 @@ MD3 uses 15 baseline styles + 15 emphasized styles organized in 5 categories (Di
 | Label Medium | Roboto | 500 | 12 | 0.75 | 16sp / 1rem | 0.5px |
 | Label Small | Roboto | 500 | 11 | 0.6875 | 16sp / 1rem | 0.5px |
 
-#### Emphasized Type Styles (Expressive Update)
+#### Kiểu chữ nhấn mạnh (Emphasized — cập nhật Expressive)
 
-The 15 emphasized styles mirror the baseline scale but with **higher weight** and minor adjustments. Use for:
-- Selected/active states in components
-- Primary action buttons
-- Headlines needing emphasis
-- Unread/important content
+15 kiểu nhấn mạnh phản chiếu thang cơ sở nhưng có **weight cao hơn** và vài điều chỉnh nhỏ. Dùng cho:
+- Trạng thái selected/active trong component
+- Button hành động chính
+- Headline cần nhấn mạnh
+- Nội dung chưa đọc/quan trọng
 
-To use: swap the baseline token for the emphasized version:
-- Baseline: `md.sys.typescale.display-large`
-- Emphasized: `md.sys.typescale.emphasized.display-large`
+Cách dùng: thay token cơ sở bằng phiên bản emphasized:
+- Cơ sở: `md.sys.typescale.display-large`
+- Nhấn mạnh: `md.sys.typescale.emphasized.display-large`
 
 ### CSS Custom Properties
 
-Each type style maps to individual axis tokens:
+Mỗi kiểu chữ ánh xạ tới các token trục riêng lẻ:
 
 ```css
 /* Example: Body Large */
@@ -67,9 +67,9 @@ Each type style maps to individual axis tokens:
 --md-sys-typescale-label-large-tracking: 0.00625rem;
 ```
 
-### Using Type Styles in CSS
+### Dùng kiểu chữ trong CSS
 
-Apply using individual properties:
+Áp dụng bằng các thuộc tính riêng lẻ:
 
 ```css
 .headline {
@@ -81,7 +81,7 @@ Apply using individual properties:
 }
 ```
 
-Or use the shorthand font property for convenience (note: requires defining the shorthand token):
+Hoặc dùng thuộc tính viết tắt `font` cho tiện (lưu ý: cần định nghĩa token dạng viết tắt):
 
 ```css
 .headline {
@@ -93,13 +93,13 @@ Or use the shorthand font property for convenience (note: requires defining the 
 }
 ```
 
-### Typeface Customization
+### Tùy biến typeface
 
-MD3 uses two typeface roles:
-- **Brand**: Used for Display and Headline styles (expression-focused)
-- **Plain**: Used for Title, Body, and Label styles (readability-focused)
+MD3 dùng hai vai trò typeface:
+- **Brand**: Dùng cho kiểu Display và Headline (tập trung vào biểu cảm)
+- **Plain**: Dùng cho kiểu Title, Body và Label (tập trung vào khả năng đọc)
 
-Both default to Roboto. To customize:
+Cả hai mặc định là Roboto. Để tùy biến:
 
 ```css
 :root {
@@ -112,7 +112,7 @@ Both default to Roboto. To customize:
 
 ### Roboto Flex
 
-Roboto Flex is a variable font supporting multiple axes:
+Roboto Flex là font biến đổi hỗ trợ nhiều trục:
 - **Weight** (wght): 100–1000
 - **Width** (wdth): 25–151
 - **Optical size** (opsz): 8–144
@@ -126,18 +126,18 @@ Roboto Flex is a variable font supporting multiple axes:
 }
 ```
 
-### Font Size Units
+### Đơn vị kích thước font
 
-| Platform | Unit | Conversion |
+| Nền tảng | Đơn vị | Chuyển đổi |
 |----------|------|------------|
 | Android | sp | 1:1 |
-| Web | rem | sp / 16 = rem (assuming 16px root) |
+| Web | rem | sp / 16 = rem (giả sử root 16px) |
 
-Examples: 10sp = 0.625rem, 12sp = 0.75rem, 14sp = 0.875rem, 16sp = 1rem, 24sp = 1.5rem
+Ví dụ: 10sp = 0.625rem, 12sp = 0.75rem, 14sp = 0.875rem, 16sp = 1rem, 24sp = 1.5rem
 
-### Component Type Usage
+### Cách dùng kiểu chữ theo Component
 
-| Component | Type Style |
+| Component | Kiểu chữ |
 |-----------|-----------|
 | Button label | Label Large |
 | Card title | Title Medium |
@@ -158,20 +158,20 @@ Examples: 10sp = 0.625rem, 12sp = 0.75rem, 14sp = 0.875rem, 16sp = 1rem, 24sp = 
 
 ## Shape
 
-### Corner Radius Scale
+### Thang bán kính góc
 
-| Token | Value (dp) | Value (px/CSS) | Default components |
+| Token | Giá trị (dp) | Giá trị (px/CSS) | Component mặc định |
 |-------|-----------|----------------|-------------------|
 | `none` | 0 | 0px | — |
 | `extra-small` | 4 | 4px | Snackbar |
-| `small` | 8 | 8px | Text fields, menus, chips |
-| `medium` | 12 | 12px | Cards |
+| `small` | 8 | 8px | Text field, menu, chip |
+| `medium` | 12 | 12px | Card |
 | `large` | 16 | 16px | FAB, extended FAB, nav drawer |
-| `large-increased` | 20 | 20px | (Expressive update) |
-| `extra-large` | 28 | 28px | Dialogs, bottom sheets, side sheets |
-| `extra-large-increased` | 32 | 32px | (Expressive update) |
-| `extra-extra-large` | 48 | 48px | (Expressive update) |
-| `full` | — | 9999px | Buttons, badges, pills, sliders |
+| `large-increased` | 20 | 20px | (cập nhật Expressive) |
+| `extra-large` | 28 | 28px | Dialog, bottom sheet, side sheet |
+| `extra-large-increased` | 32 | 32px | (cập nhật Expressive) |
+| `extra-extra-large` | 48 | 48px | (cập nhật Expressive) |
+| `full` | — | 9999px | Button, badge, pill, slider |
 
 ### CSS Custom Properties
 
@@ -190,71 +190,72 @@ Examples: 10sp = 0.625rem, 12sp = 0.75rem, 14sp = 0.875rem, 16sp = 1rem, 24sp = 
 }
 ```
 
-### Component Shape Mapping
+### Ánh xạ Shape theo Component
 
-| Component | Default Shape Token |
+| Component | Shape token mặc định |
 |-----------|-------------------|
-| Buttons (all types) | `full` |
+| Button (mọi loại) | `full` |
 | FAB | `large` |
 | Extended FAB | `large` |
 | Icon button | `full` |
-| Chips | `small` |
-| Cards | `medium` |
-| Dialogs | `extra-large` |
-| Text fields | `small` (top corners) |
-| Menus | `small` |
-| Navigation drawer | `large` (end corners) |
-| Bottom sheets | `extra-large` (top corners) |
+| Chip | `small` |
+| Card | `medium` |
+| Dialog | `extra-large` |
+| Text field | `small` (góc trên) |
+| Menu | `small` |
+| Navigation drawer | `large` (góc cuối) |
+| Bottom sheet | `extra-large` (góc trên) |
 | Snackbar | `extra-small` |
-| Badges | `full` |
-| Sliders (handle) | `full` |
+| Badge | `full` |
+| Slider (handle) | `full` |
+
 | Switch (track) | `full` |
-| Tabs (indicator) | `full` (top corners) |
+| Tabs (indicator) | `full` (góc trên) |
 | Search bar | `full` |
 
-### Shape Morphing (Expressive)
+### Biến đổi hình dạng (Shape Morphing — Expressive)
 
-In the M3 Expressive update, components can morph between shapes on interaction:
-- Button shapes morph when pressed
-- Selected states can change shape
-- Loading indicators use shape morphing to show progress
+Trong bản cập nhật M3 Expressive, component có thể biến đổi hình dạng khi tương tác:
+- Hình dạng button thay đổi khi được nhấn
+- Trạng thái selected có thể đổi hình dạng
+- Loading indicator dùng shape morphing để thể hiện tiến trình
 
-**Platform notes**: Shape morphing is **not** in `@material/web` ([Material Web is maintenance-only; Expressive not on Web](https://m3.material.io/develop/web)). **Jetpack Compose** is where Google documents expressive shape/motion behavior for Android. **Flutter:** check current Material 3 / expressive docs for your SDK. **Web:** approximate with CSS transitions on `border-radius`.
+**Ghi chú nền tảng**: Shape morphing **không có** trong `@material/web` ([Material Web chỉ maintenance; Expressive không có trên Web](https://m3.material.io/develop/web)). **Jetpack Compose** là nơi Google ghi lại hành vi shape/motion expressive cho Android. **Flutter:** kiểm tra tài liệu Material 3 / expressive hiện tại cho SDK của bạn. **Web:** xấp xỉ bằng CSS transition trên `border-radius`.
 
 ## Elevation
 
-### Elevation Levels
+### Cấp độ Elevation
 
-| Level | DP Height | Use |
+| Cấp | Độ cao DP | Cách dùng |
 |-------|-----------|-----|
-| 0 | 0dp | Most resting components |
-| 1 | 1dp | Elevated variants (cards, sheets) |
-| 2 | 3dp | Menus, nav bar, scrolled app bar |
-| 3 | 6dp | FAB, dialogs, search, date/time pickers |
-| 4 | 8dp | Hover/focus increase only |
-| 5 | 12dp | Hover/focus increase only |
+| 0 | 0dp | Hầu hết component ở trạng thái nghỉ |
+| 1 | 1dp | Biến thể nâng (card, sheet) |
+| 2 | 3dp | Menu, nav bar, app bar khi cuộn |
+| 3 | 6dp | FAB, dialog, search, date/time picker |
+| 4 | 8dp | Chỉ tăng khi hover/focus |
+| 5 | 12dp | Chỉ tăng khi hover/focus |
 
-### Tonal Elevation (Not Shadows)
+### Elevation tonal (không phải bóng đổ)
 
-MD3 uses **tonal surface color** to communicate elevation, not shadows. Higher elevation = lighter surface tone (in light theme) or lighter surface tone (in dark theme).
+MD3 dùng **màu bề mặt tonal** để truyền đạt elevation, không phải bóng đổ. Elevation càng cao = tone bề mặt càng sáng (trong theme sáng) hoặc tone bề mặt càng sáng (trong theme tối).
 
-The surface container roles map to this concept:
-- Level 0: `surface` (flattest)
-- Level 1: `surface-container-low`
-- Level 2: `surface-container`
-- Level 3: `surface-container-high`
-- Level 4-5: `surface-container-highest`
+Các vai trò surface container ánh xạ tới khái niệm này:
+- Cấp 0: `surface` (phẳng nhất)
+- Cấp 1: `surface-container-low`
+- Cấp 2: `surface-container`
+- Cấp 3: `surface-container-high`
+- Cấp 4-5: `surface-container-highest`
 
-### When to Use Shadows
+### Khi nào dùng bóng đổ
 
-Shadows are only appropriate when:
-- A component floats over content that may be visually busy (e.g., FAB over images)
-- Additional depth cue is needed beyond color (e.g., overlapping elements)
-- The platform convention expects shadows (some Android components)
+Bóng chỉ phù hợp khi:
+- Component nổi trên nội dung có thể nhiều chi tiết thị giác (vd. FAB trên hình ảnh)
+- Cần thêm tín hiệu độ sâu ngoài màu sắc (vd. phần tử chồng lên nhau)
+- Quy ước nền tảng mong đợi bóng đổ (một số component Android)
 
-### CSS Shadow Values
+### Giá trị bóng CSS
 
-When shadows are needed:
+Khi cần bóng:
 
 ```css
 /* Level 1 */
@@ -273,79 +274,79 @@ box-shadow: 0 6px 10px 4px rgba(0,0,0,0.15), 0 2px 3px rgba(0,0,0,0.3);
 box-shadow: 0 8px 12px 6px rgba(0,0,0,0.15), 0 4px 4px rgba(0,0,0,0.3);
 ```
 
-### Component Elevation Mapping
+### Ánh xạ Elevation theo Component
 
-| Level | Components at Rest |
+| Cấp | Component ở trạng thái nghỉ |
 |-------|--------------------|
-| 0 | App bar (flat), filled/tonal/outlined buttons, button groups, filled/outlined cards, carousel, chips, full-screen dialogs, icon buttons, lists, nav rail, segmented buttons, sliders, split buttons, tabs |
-| 1 | Banners, modal bottom sheet, elevated button, elevated card, elevated chips, modal nav drawer, modal side sheet |
-| 2 | App bar (scrolled), menus, nav bar, rich tooltips, toolbar |
-| 3 | Date pickers, modal dialogs, extended FAB, FAB, FAB menu close button, search, time pickers |
+| 0 | App bar (phẳng), button filled/tonal/outlined, button group, card filled/outlined, carousel, chip, dialog toàn màn hình, icon button, list, nav rail, segmented button, slider, split button, tab |
+| 1 | Banner, modal bottom sheet, elevated button, elevated card, elevated chip, modal nav drawer, modal side sheet |
+| 2 | App bar (khi cuộn), menu, nav bar, rich tooltip, toolbar |
+| 3 | Date picker, dialog dạng modal, extended FAB, FAB, nút đóng FAB menu, search, time picker |
 
-**Hover/focus**: Most interactive components increase by 1 level on hover/focus (e.g., FAB goes from level 3 to level 4).
+**Hover/focus**: Hầu hết component tương tác tăng thêm 1 cấp khi hover/focus (vd. FAB từ cấp 3 lên cấp 4).
 
 ## Motion
 
-### Spring-Based Motion (Expressive Update)
+### Chuyển động dựa trên lò xo (Spring — cập nhật Expressive)
 
-MD3 Expressive (May 2025) introduced spring-based motion physics for component animations. Springs create more natural, responsive motion:
+MD3 Expressive (tháng 5/2025) giới thiệu vật lý chuyển động dựa trên lò xo cho hoạt ảnh component. Lò xo tạo chuyển động tự nhiên và đáp ứng hơn:
 
-- Springs have no fixed duration — they respond dynamically to input
-- Two schemes: **standard** (utilitarian) and **expressive** (bouncy)
-- **Jetpack Compose** exposes motion schemes / spring-oriented APIs in current Material3 (see `MotionScheme` and your BOM). **MDC-Android** may differ by version. **Web:** Material Web does not implement Expressive motion physics — use easing/duration or custom CSS/JS. **Flutter:** check your Flutter/Material version for parity.
+- Lò xo không có thời lượng cố định — chúng phản ứng động với đầu vào
+- Hai scheme: **standard** (thực dụng) và **expressive** (nảy)
+- **Jetpack Compose** cung cấp motion scheme / API hướng lò xo trong Material3 hiện tại (xem `MotionScheme` và BOM của bạn). **MDC-Android** có thể khác theo phiên bản. **Web:** Material Web không triển khai vật lý chuyển động Expressive — dùng easing/duration hoặc CSS/JS tùy chỉnh. **Flutter:** kiểm tra phiên bản Flutter/Material của bạn để biết mức tương đương.
 
-### Easing and Duration (Transitions)
+### Easing và Duration (Transition)
 
-The easing/duration system is used for **transitions** (entering, exiting, shared-axis) and as a web fallback:
+Hệ thống easing/duration được dùng cho **transition** (vào, ra, shared-axis) và làm phương án dự phòng trên web:
 
-#### Easing Sets
+#### Bộ Easing
 
-**Emphasized** (recommended for most transitions — captures the MD3 style):
-| Type | CSS Cubic-bezier | Use |
+**Emphasized** (khuyến nghị cho hầu hết transition — bắt đúng phong cách MD3):
+| Kiểu | CSS Cubic-bezier | Cách dùng |
 |------|-----------------|-----|
-| Emphasized | `cubic-bezier(0.2, 0, 0, 1)` | Begin and end on screen |
-| Emphasized Decelerate | `cubic-bezier(0.05, 0.7, 0.1, 1)` | Enter the screen |
-| Emphasized Accelerate | `cubic-bezier(0.3, 0, 0.8, 0.15)` | Exit the screen |
+| Emphasized | `cubic-bezier(0.2, 0, 0, 1)` | Bắt đầu và kết thúc trên màn hình |
+| Emphasized Decelerate | `cubic-bezier(0.05, 0.7, 0.1, 1)` | Vào màn hình |
+| Emphasized Accelerate | `cubic-bezier(0.3, 0, 0.8, 0.15)` | Rời màn hình |
 
-**Standard** (for utility transitions, web fallback):
-| Type | CSS Cubic-bezier | Use |
+**Standard** (cho transition tiện ích, dự phòng web):
+| Kiểu | CSS Cubic-bezier | Cách dùng |
 |------|-----------------|-----|
-| Standard | `cubic-bezier(0.2, 0, 0, 1)` | Begin and end on screen |
-| Standard Decelerate | `cubic-bezier(0, 0, 0, 1)` | Enter the screen |
-| Standard Accelerate | `cubic-bezier(0.3, 0, 1, 1)` | Exit the screen |
+| Standard | `cubic-bezier(0.2, 0, 0, 1)` | Bắt đầu và kết thúc trên màn hình |
+| Standard Decelerate | `cubic-bezier(0, 0, 0, 1)` | Vào màn hình |
+| Standard Accelerate | `cubic-bezier(0.3, 0, 1, 1)` | Rời màn hình |
 
-#### Duration Scale
+#### Thang Duration
 
-| Token | Value | Use |
+| Token | Giá trị | Cách dùng |
 |-------|-------|-----|
-| Short 1 | 50ms | Micro-interactions |
-| Short 2 | 100ms | Small transitions |
-| Short 3 | 150ms | Small transitions |
-| Short 4 | 200ms | Exit transitions |
-| Medium 1 | 250ms | Medium transitions |
-| Medium 2 | 300ms | Standard transitions |
-| Medium 3 | 350ms | Medium transitions |
-| Medium 4 | 400ms | Enter transitions |
-| Long 1 | 450ms | Large transitions |
-| Long 2 | 500ms | Large, emphasized transitions |
-| Long 3 | 550ms | Complex transitions |
-| Long 4 | 600ms | Complex transitions |
-| Extra Long 1 | 700ms | Page transitions |
-| Extra Long 2 | 800ms | Page transitions |
-| Extra Long 3 | 900ms | Complex page transitions |
-| Extra Long 4 | 1000ms | Complex page transitions |
+| Short 1 | 50ms | Tương tác vi mô |
+| Short 2 | 100ms | Transition nhỏ |
+| Short 3 | 150ms | Transition nhỏ |
+| Short 4 | 200ms | Transition rời |
+| Medium 1 | 250ms | Transition trung bình |
+| Medium 2 | 300ms | Transition chuẩn |
+| Medium 3 | 350ms | Transition trung bình |
+| Medium 4 | 400ms | Transition vào |
+| Long 1 | 450ms | Transition lớn |
+| Long 2 | 500ms | Transition lớn, nhấn mạnh |
+| Long 3 | 550ms | Transition phức tạp |
+| Long 4 | 600ms | Transition phức tạp |
+| Extra Long 1 | 700ms | Transition trang |
+| Extra Long 2 | 800ms | Transition trang |
+| Extra Long 3 | 900ms | Transition trang phức tạp |
+| Extra Long 4 | 1000ms | Transition trang phức tạp |
 
-#### Suggested Pairings
+#### Kết hợp gợi ý
 
 | Transition | Easing | Duration |
 |-----------|--------|----------|
-| Element stays on screen | Emphasized | 500ms |
-| Element enters screen | Emphasized Decelerate | 400ms |
-| Element exits permanently | Emphasized Accelerate | 200ms |
-| Element exits temporarily | Emphasized | 300ms |
-| Small utility transition | Standard | 300ms |
+| Phần tử ở lại trên màn hình | Emphasized | 500ms |
+| Phần tử vào màn hình | Emphasized Decelerate | 400ms |
+| Phần tử rời hẳn | Emphasized Accelerate | 200ms |
+| Phần tử rời tạm thời | Emphasized | 300ms |
+| Transition tiện ích nhỏ | Standard | 300ms |
 
-### CSS Implementation
+### Triển khai CSS
 
 ```css
 :root {
@@ -398,3 +399,4 @@ The easing/duration system is used for **transitions** (entering, exiting, share
   to { opacity: 0; }
 }
 ```
+

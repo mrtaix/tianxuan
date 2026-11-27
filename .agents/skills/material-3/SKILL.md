@@ -1,49 +1,49 @@
 ---
 name: material-3
 description: >
-  Implement Google's Material Design 3 (Material You) UI system. Primary: Jetpack Compose
-  Material3 (MaterialTheme, components, adaptive layout). Also Flutter and limited web
-  (@material/web, maintenance mode). Covers tokens, 30+ components, layout, theming,
-  M3 Expressive (platform matrix), and accessibility. Use when: "material design", "MD3",
+  Triển khai hệ thống UI Material Design 3 (Material You) của Google. Chính: Jetpack Compose
+  Material3 (MaterialTheme, components, adaptive layout). Có cả Flutter và web hạn chế
+  (@material/web, chế độ maintenance). Bao gồm tokens, 30+ components, layout, theming,
+  M3 Expressive (platform matrix), và accessibility. Dùng khi: "material design", "MD3",
   "material you", "Jetpack Compose", "MaterialTheme", "material component", "md3 button".
 user-invokable: true
-argument-hint: "[component|theme|layout|scaffold|audit] [description or URL]"
+argument-hint: "[component|theme|layout|scaffold|audit] [mô tả hoặc URL]"
 ---
 
 # Material Design 3
 
-This skill guides implementation of Google's Material Design 3 (MD3) — a personal, adaptive, expressive design system. MD3 uses dynamic color, tonal surfaces, rounded shapes, and spring-based motion to create UIs that feel alive and personal.
+Skill này hướng dẫn triển khai Material Design 3 (MD3) của Google — một hệ thống thiết kế cá nhân hóa, thích ứng và biểu cảm. MD3 dùng dynamic color, bề mặt tonal, hình bo góc và chuyển động dựa trên lò xo (spring) để tạo ra giao diện cảm giác sống động và mang tính cá nhân.
 
-## Philosophy
+## Triết lý
 
-MD3 is built on three principles:
-- **Personal**: Dynamic color adapts UI to the user's wallpaper or content. Theming is individual, not one-size-fits-all.
-- **Adaptive**: Layouts transform across 5 window size classes. Components resize, reposition, and change form factor responsively.
-- **Expressive**: Shape morphing, spring physics, and emphasized typography create moments of delight without sacrificing usability.
+MD3 được xây dựng trên ba nguyên tắc:
+- **Cá nhân (Personal)**: Dynamic color điều chỉnh UI theo hình nền hoặc nội dung của người dùng. Việc tạo theme mang tính cá thể, không phải giải pháp chung cho tất cả.
+- **Thích ứng (Adaptive)**: Layout chuyển đổi qua 5 lớp kích thước cửa sổ (window size classes). Các component thay đổi kích thước, vị trí và hình dạng một cách đáp ứng.
+- **Biểu cảm (Expressive)**: Biến đổi hình dạng (shape morphing), vật lý lò xo và typography nhấn mạnh tạo ra những khoảnh khắc thú vị mà không làm giảm khả năng sử dụng.
 
-## Current Updates: Google I/O 2026
+## Cập nhật hiện tại: Google I/O 2026
 
-Material's [Google I/O 2026 update](https://m3.material.io/blog/whats-new-at-io26) reinforces a **Compose-first** Android path and expands expressive/adaptive guidance:
+[Bản cập nhật Google I/O 2026](https://m3.material.io/blog/whats-new-at-io26) của Material củng cố hướng đi **Compose-first** trên Android và mở rộng hướng dẫn expressive/adaptive:
 
-- **Material Android is Compose-first**: For new Android work, prefer Jetpack Compose Material3 for the latest components, expressive APIs, adaptive scaffolds, and Styles API integration. Android Views may remain necessary in existing apps, but they should not be treated as the default path for new Material 3 implementations.
-- **Expressive layout system**: Use an expressive layout scaffold to adapt screens across mobile, desktop, foldables, watches, XR, and other spatial form factors. Start from adaptive scaffolds/window size classes instead of fixed phone-first layouts.
-- **8dp spacing system**: Apply spacing tokens for margins, padding, and gaps so layouts and components can adapt programmatically to device type and density.
-- **New/updated expressive components**: Lists, menus, search, and search app bars have refreshed expressive guidance, with Jetpack Compose as the primary implementation target.
-- **Watches and XR**: Watches emphasize physics-based motion, arc text, and edge-hugging containers. XR emphasizes spatial panels and depth-based elevation.
+- **Material Android là Compose-first**: Với các công việc Android mới, hãy ưu tiên Jetpack Compose Material3 để có các component mới nhất, API expressive, adaptive scaffold và tích hợp Styles API. Android Views có thể vẫn cần thiết trong các ứng dụng hiện có, nhưng không nên xem chúng là đường mặc định cho các triển khai Material 3 mới.
+- **Hệ thống layout expressive**: Dùng expressive layout scaffold để thích ứng màn hình trên mobile, desktop, thiết bị gập, đồng hồ, XR và các dạng hình không gian khác. Bắt đầu từ adaptive scaffold/window size classes thay vì layout cố định theo kiểu phone-first.
+- **Hệ thống khoảng cách 8dp**: Áp dụng spacing token cho margin, padding và gap để layout và component có thể thích ứng theo lập trình với loại thiết bị và mật độ màn hình.
+- **Component expressive mới/cập nhật**: Lists, menus, search và search app bar có hướng dẫn expressive được làm mới, với Jetpack Compose là mục tiêu triển khai chính.
+- **Đồng hồ và XR**: Đồng hồ nhấn mạnh chuyển động dựa trên vật lý, văn bản cong (arc text) và container sát cạnh. XR nhấn mạnh panel không gian và độ cao (elevation) theo chiều sâu.
 
-**Key differences from MD2:**
-- Tonal surfaces replace elevation shadows as the primary depth cue
-- Dynamic color generates full schemes from a single seed color
-- Fully rounded corners by default (not slightly rounded)
-- Spring-based motion physics replace fixed easing curves for components
-- 3 levels of user-controlled contrast (standard/medium/high)
+**Khác biệt chính so với MD2:**
+- Bề mặt tonal thay thế bóng đổ elevation làm tín hiệu độ sâu chính
+- Dynamic color tạo ra toàn bộ bảng màu từ một màu gốc duy nhất
+- Bo góc hoàn toàn theo mặc định (không chỉ bo nhẹ)
+- Vật lý chuyển động lò xo thay thế các đường cong easing cố định cho component
+- 3 mức tương phản do người dùng kiểm soát (standard/medium/high)
 
-**Relationship with frontend-design skill:**
-When both skills are active, MD3 provides the design system (tokens, components, layout rules) and frontend-design provides creative direction within those constraints. MD3 rules take precedence for component structure and token usage. Note: Roboto/Roboto Flex IS the correct default typeface in MD3 — the frontend-design guidance to avoid Roboto does not apply when implementing MD3.
+**Quan hệ với skill frontend-design:**
+Khi cả hai skill cùng hoạt động, MD3 cung cấp hệ thống thiết kế (tokens, components, quy tắc layout) còn frontend-design cung cấp định hướng sáng tạo trong những ràng buộc đó. Quy tắc MD3 được ưu tiên cho cấu trúc component và cách dùng token. Lưu ý: Roboto/Roboto Flex CHÍNH LÀ typeface mặc định đúng trong MD3 — hướng dẫn của frontend-design là tránh Roboto không áp dụng khi triển khai MD3.
 
-## Decision Tree
+## Cây quyết định
 
-**What are you building?**
+**Bạn đang xây dựng cái gì?**
 ```
 Full app scaffold        → See "Common Patterns: App Shell" + references/layout-and-responsive.md
 Single component         → See "Component Quick Reference" table → references/component-catalog.md
@@ -53,7 +53,7 @@ Navigation structure     → See references/navigation-patterns.md
 Data display             → See references/component-catalog.md § Data Display
 ```
 
-**What platform?**
+**Nền tảng nào?**
 ```
 Jetpack Compose          → Primary: androidx.compose.material3, MaterialTheme, references/*
 Flutter                  → useMaterial3: true in ThemeData, ColorScheme.fromSeed()
@@ -62,91 +62,91 @@ Web (React/Vue/Svelte)   → CSS custom properties + wrapper components (no offi
 Web (CSS-only)           → MD3 token values as CSS custom properties (no <md-*> elements)
 ```
 
-## Design Token System
+## Hệ thống Design Token
 
-All MD3 tokens use the `md.sys` namespace. **Jetpack Compose** maps roles to `MaterialTheme.colorScheme`, `MaterialTheme.typography`, and `MaterialTheme.shapes` (same semantic roles as the spec). **On the web**, these map to CSS custom properties (`--md-sys-*`):
+Tất cả token MD3 dùng namespace `md.sys`. **Jetpack Compose** ánh xạ các vai trò tới `MaterialTheme.colorScheme`, `MaterialTheme.typography` và `MaterialTheme.shapes` (cùng vai trò ngữ nghĩa với đặc tả). **Trên web**, chúng ánh xạ tới CSS custom properties (`--md-sys-*`):
 
 ### Color Tokens (`--md-sys-color-*`)
-| Token | Purpose |
+| Token | Mục đích |
 |-------|---------|
-| `primary` | High-emphasis fills, text, icons against surface |
-| `on-primary` | Text/icons on primary |
-| `primary-container` | Standout fill for key components (FAB, etc.) |
-| `on-primary-container` | Text/icons on primary-container |
-| `secondary` / `on-secondary` | Less prominent accents |
-| `secondary-container` / `on-secondary-container` | Recessive components (tonal buttons) |
-| `tertiary` / `on-tertiary` | Contrasting accents |
-| `tertiary-container` / `on-tertiary-container` | Complementary containers |
-| `error` / `on-error` | Error states (static — doesn't change with dynamic color) |
-| `error-container` / `on-error-container` | Error container fills |
-| `surface` | Default background |
-| `on-surface` | Text/icons on any surface |
-| `on-surface-variant` | Lower-emphasis text/icons on surface |
-| `surface-container-lowest` | Lowest-emphasis container |
-| `surface-container-low` | Low-emphasis container |
-| `surface-container` | Default container (nav areas) |
-| `surface-container-high` | High-emphasis container |
-| `surface-container-highest` | Highest-emphasis container |
-| `surface-dim` / `surface-bright` | Maintain relative brightness across light/dark |
-| `inverse-surface` / `inverse-on-surface` / `inverse-primary` | Contrasting elements (snackbars) |
-| `outline` | Important boundaries (text field borders) |
-| `outline-variant` | Decorative elements (dividers) |
+| `primary` | Vùng tô nhấn mạnh cao, văn bản, icon trên surface |
+| `on-primary` | Văn bản/icon trên primary |
+| `primary-container` | Vùng tô nổi bật cho component quan trọng (FAB, v.v.) |
+| `on-primary-container` | Văn bản/icon trên primary-container |
+| `secondary` / `on-secondary` | Điểm nhấn ít nổi bật hơn |
+| `secondary-container` / `on-secondary-container` | Component lùi lại (tonal button) |
+| `tertiary` / `on-tertiary` | Điểm nhấn tương phản |
+| `tertiary-container` / `on-tertiary-container` | Container bổ trợ |
+| `error` / `on-error` | Trạng thái lỗi (tĩnh — không đổi theo dynamic color) |
+| `error-container` / `on-error-container` | Vùng tô container lỗi |
+| `surface` | Nền mặc định |
+| `on-surface` | Văn bản/icon trên mọi surface |
+| `on-surface-variant` | Văn bản/icon nhấn mạnh thấp hơn trên surface |
+| `surface-container-lowest` | Container nhấn mạnh thấp nhất |
+| `surface-container-low` | Container nhấn mạnh thấp |
+| `surface-container` | Container mặc định (khu vực điều hướng) |
+| `surface-container-high` | Container nhấn mạnh cao |
+| `surface-container-highest` | Container nhấn mạnh cao nhất |
+| `surface-dim` / `surface-bright` | Duy trì độ sáng tương đối giữa sáng/tối |
+| `inverse-surface` / `inverse-on-surface` / `inverse-primary` | Phần tử tương phản (snackbar) |
+| `outline` | Đường viền quan trọng (viền text field) |
+| `outline-variant` | Phần tử trang trí (divider) |
 
-Full details: `references/color-system.md`
+Chi tiết đầy đủ: `references/color-system.md`
 
 ### Typography Tokens (`--md-sys-typescale-*`)
-| Scale | Sizes | Use |
+| Thang | Kích thước | Cách dùng |
 |-------|-------|-----|
-| Display | L / M / S | Hero text, large numbers |
-| Headline | L / M / S | Section headers |
-| Title | L / M / S | Smaller headers, card titles |
-| Body | L / M / S | Paragraph text, descriptions |
-| Label | L / M / S | Buttons, chips, captions |
+| Display | L / M / S | Văn bản tiêu điểm, số lớn |
+| Headline | L / M / S | Tiêu đề phần |
+| Title | L / M / S | Tiêu đề nhỏ hơn, tiêu đề card |
+| Body | L / M / S | Văn bản đoạn, mô tả |
+| Label | L / M / S | Button, chip, chú thích |
 
-Each style has tokens for: `-font`, `-weight`, `-size`, `-line-height`, `-tracking`
-Plus 15 **emphasized** variants (higher weight) via `--md-sys-typescale-emphasized-*`
+Mỗi kiểu có token cho: `-font`, `-weight`, `-size`, `-line-height`, `-tracking`
+Cộng thêm 15 biến thể **emphasized** (weight cao hơn) qua `--md-sys-typescale-emphasized-*`
 
-Full details: `references/typography-and-shape.md`
+Chi tiết đầy đủ: `references/typography-and-shape.md`
 
 ### Shape Tokens (`--md-sys-shape-corner-*`)
-| Token | Value | Example components |
+| Token | Giá trị | Component ví dụ |
 |-------|-------|-------------------|
 | `none` | 0dp | — |
-| `extra-small` | 4dp | Chips, snackbars |
-| `small` | 8dp | Text fields, menus |
-| `medium` | 12dp | Cards |
-| `large` | 16dp | FABs, navigation drawer |
+| `extra-small` | 4dp | Chip, snackbar |
+| `small` | 8dp | Text field, menu |
+| `medium` | 12dp | Card |
+| `large` | 16dp | FAB, navigation drawer |
 | `large-increased` | 20dp | (Expressive) |
-| `extra-large` | 28dp | Dialogs, bottom sheets |
+| `extra-large` | 28dp | Dialog, bottom sheet |
 | `extra-large-increased` | 32dp | (Expressive) |
 | `extra-extra-large` | 48dp | (Expressive) |
-| `full` | 9999px | Buttons, chips, badges |
+| `full` | 9999px | Button, chip, badge |
 
-### Elevation Levels
-| Level | DP | Tonal offset | Use |
+### Cấp độ Elevation
+| Cấp | DP | Tonal offset | Cách dùng |
 |-------|-----|-------------|-----|
-| 0 | 0dp | None | Flat surfaces, most components at rest |
-| 1 | 1dp | +5% primary | Elevated cards, modal sheets |
-| 2 | 3dp | +8% primary | Menus, nav bar, scrolled app bar |
-| 3 | 6dp | +11% primary | FAB, dialogs, search, date/time pickers |
-| 4 | 8dp | +12% primary | (hover/focus increase only) |
-| 5 | 12dp | +14% primary | (hover/focus increase only) |
+| 0 | 0dp | None | Bề mặt phẳng, hầu hết component ở trạng thái nghỉ |
+| 1 | 1dp | +5% primary | Card nâng, sheet dạng modal |
+| 2 | 3dp | +8% primary | Menu, nav bar, app bar khi cuộn |
+| 3 | 6dp | +11% primary | FAB, dialog, search, date/time picker |
+| 4 | 8dp | +12% primary | (chỉ tăng khi hover/focus) |
+| 5 | 12dp | +14% primary | (chỉ tăng khi hover/focus) |
 
-Elevation in MD3 is communicated through **tonal surface color**, not shadows. Shadows are only used when needed for additional protection against busy backgrounds.
+Elevation trong MD3 được truyền đạt qua **màu bề mặt tonal**, không phải bóng đổ. Bóng chỉ dùng khi cần bảo vệ thêm khỏi nền quá nhiều chi tiết.
 
-### Motion
-MD3 Expressive (May 2025) introduced **spring-based motion physics** for components. The legacy easing/duration system is still used for **transitions** (enter/exit/shared-axis):
+### Chuyển động (Motion)
+MD3 Expressive (tháng 5/2025) giới thiệu **vật lý chuyển động dựa trên lò xo** cho component. Hệ thống easing/duration cũ vẫn được dùng cho **transition** (vào/ra/shared-axis):
 
-| Easing | Duration | Transition type |
+| Easing | Thời lượng | Loại transition |
 |--------|----------|-----------------|
-| Emphasized | 500ms | Begin and end on screen |
-| Emphasized decelerate | 400ms | Enter the screen |
-| Emphasized accelerate | 200ms | Exit the screen |
-| Standard | 300ms | Begin and end on screen (utility) |
-| Standard decelerate | 250ms | Enter screen (utility) |
-| Standard accelerate | 200ms | Exit screen (utility) |
+| Emphasized | 500ms | Bắt đầu và kết thúc trên màn hình |
+| Emphasized decelerate | 400ms | Vào màn hình |
+| Emphasized accelerate | 200ms | Rời màn hình |
+| Standard | 300ms | Bắt đầu và kết thúc trên màn hình (utility) |
+| Standard decelerate | 250ms | Vào màn hình (utility) |
+| Standard accelerate | 200ms | Rời màn hình (utility) |
 
-CSS easing values:
+Giá trị easing CSS:
 - Emphasized: `cubic-bezier(0.2, 0, 0, 1)`
 - Emphasized decelerate: `cubic-bezier(0.05, 0.7, 0.1, 1)`
 - Emphasized accelerate: `cubic-bezier(0.3, 0, 0.8, 0.15)`
@@ -154,11 +154,11 @@ CSS easing values:
 - Standard decelerate: `cubic-bezier(0, 0, 0, 1)`
 - Standard accelerate: `cubic-bezier(0.3, 0, 1, 1)`
 
-## Component Quick Reference
+## Tham chiếu nhanh Component
 
-| Component | Web Element | Key Variants | Category |
+| Component | Web Element | Biến thể chính | Danh mục |
 |-----------|------------|--------------|----------|
-| Button | `md-filled-button`, `md-outlined-button`, `md-text-button`, `md-elevated-button`, `md-filled-tonal-button` | Filled, Outlined, Text, Elevated, Tonal; 5 sizes (XS–XL); toggle | Actions |
+| Button | `md-filled-button`, `md-outlined-button`, `md-text-button`, `md-elevated-button`, `md-filled-tonal-button` | Filled, Outlined, Text, Elevated, Tonal; 5 kích thước (XS–XL); toggle | Actions |
 | Button group | `md-button-group` | Standard, connected | Actions |
 | Extended FAB | `md-extended-fab` | Surface, Primary, Secondary, Tertiary | Actions |
 | FAB | `md-fab` | Small, Medium, Large | Actions |
@@ -183,7 +183,7 @@ CSS easing values:
 | Menu | `md-menu`, `md-menu-item` | — | Input |
 | Radio button | `md-radio` | — | Input |
 | Slider | `md-slider` | Continuous, Discrete, Range | Input |
-| Switch | `md-switch` | With/without icon | Input |
+| Switch | `md-switch` | Có/không icon | Input |
 | Text field | `md-filled-text-field`, `md-outlined-text-field` | Filled, Outlined | Input |
 | Time picker | — | Docked, Modal | Input |
 | App bar (top) | — | Center-aligned, Small, Medium, Large | Navigation |
@@ -195,18 +195,18 @@ CSS easing values:
 | Toolbar | — | — | Navigation |
 | List | `md-list`, `md-list-item` | One-line, Two-line, Three-line | Data Display |
 
-**Note:** Components marked with `—` for web element don't have @material/web implementations yet. Use CSS custom properties with standard HTML for these. **Compose** mappings and examples live in `references/component-catalog.md`.
+**Lưu ý:** Component được đánh dấu `—` ở cột web element chưa có implementation `@material/web`. Hãy dùng CSS custom properties với HTML chuẩn cho những component này. Ánh xạ và ví dụ **Compose** nằm trong `references/component-catalog.md`.
 
-Full component details with code examples: `references/component-catalog.md`
+Chi tiết đầy đủ component kèm ví dụ code: `references/component-catalog.md`
 
-## Jetpack Compose (primary)
+## Jetpack Compose (chính)
 
-Use **`androidx.compose.material3`** with `MaterialTheme` and Material 3 composables (`Scaffold`, `Button`, `NavigationBar`, top app bars, etc.).
+Dùng **`androidx.compose.material3`** với `MaterialTheme` và các composable Material 3 (`Scaffold`, `Button`, `NavigationBar`, top app bar, v.v.).
 
-- **Theming**: `MaterialTheme(colorScheme = …, typography = …, shapes = …)`. Prefer `dynamicLightColorScheme` / `dynamicDarkColorScheme` on **Android 12+ (API 31+)** when dynamic color is desired; otherwise `lightColorScheme` / `darkColorScheme` or generated theme code from Material Theme Builder.
-- **Adaptive UI**: Window size classes, list-detail and supporting-pane layouts, foldables — see `references/layout-and-responsive.md` and `references/navigation-patterns.md`.
-- **Edge-to-edge & insets**: Lay out content with `WindowInsets` / scaffold padding so bars and IME behave correctly — see `references/layout-and-responsive.md`.
-- **Experimental APIs**: Some Material 3 APIs require `@OptIn(ExperimentalMaterial3Api::class)` or expressive opt-ins; match your BOM and compiler.
+- **Theming**: `MaterialTheme(colorScheme = …, typography = …, shapes = …)`. Ưu tiên `dynamicLightColorScheme` / `dynamicDarkColorScheme` trên **Android 12+ (API 31+)** khi muốn dynamic color; nếu không thì dùng `lightColorScheme` / `darkColorScheme` hoặc mã theme được tạo bởi Material Theme Builder.
+- **UI thích ứng (Adaptive)**: Window size class, layout list-detail và supporting-pane, thiết bị gập — xem `references/layout-and-responsive.md` và `references/navigation-patterns.md`.
+- **Edge-to-edge & insets**: Bố trí nội dung với `WindowInsets` / padding của scaffold để thanh và IME hoạt động đúng — xem `references/layout-and-responsive.md`.
+- **API thử nghiệm**: Một số API Material 3 cần `@OptIn(ExperimentalMaterial3Api::class)` hoặc opt-in expressive; hãy khớp với BOM và compiler của bạn.
 
 ```kotlin
 MaterialTheme(
@@ -218,19 +218,19 @@ MaterialTheme(
 }
 ```
 
-## Web (limited): @material/web
+## Web (hạn chế): @material/web
 
-**Important:** Per [Material Design 3 for Web](https://m3.material.io/develop/web), **Material Web Components are in maintenance mode** and **M3 Expressive is not implemented on Web**. Use `@material/web` for token-backed web UIs when appropriate, but do not treat it as equivalent to Compose for current Expressive features.
+**Quan trọng:** Theo [Material Design 3 for Web](https://m3.material.io/develop/web), **Material Web Components đang ở chế độ maintenance** và **M3 Expressive chưa được triển khai trên Web**. Dùng `@material/web` cho UI web dựa trên token khi phù hợp, nhưng đừng coi nó tương đương Compose cho các tính năng Expressive hiện tại.
 
-### Setup
+### Thiết lập
 
 ```bash
 npm install @material/web
 ```
 
-### Import Components Individually
+### Import từng Component
 
-Always import only the components you use — importing the entire package bloats the bundle:
+Luôn chỉ import những component bạn dùng — import toàn bộ gói sẽ làm phình bundle:
 
 ```javascript
 // Good — individual imports
@@ -243,7 +243,7 @@ import '@material/web/icon/icon.js';
 import '@material/web'; // imports everything
 ```
 
-### Basic Usage
+### Cách dùng cơ bản
 
 ```html
 <!DOCTYPE html>
@@ -266,9 +266,9 @@ import '@material/web'; // imports everything
 </html>
 ```
 
-### Theming with CSS Custom Properties
+### Tạo theme với CSS Custom Properties
 
-Apply a custom theme by setting CSS custom properties on `:root` or any ancestor:
+Áp dụng theme tùy chỉnh bằng cách đặt CSS custom properties trên `:root` hoặc bất kỳ phần tử tổ tiên nào:
 
 ```css
 :root {
@@ -299,9 +299,9 @@ Apply a custom theme by setting CSS custom properties on `:root` or any ancestor
 }
 ```
 
-### Component-Level Overrides
+### Ghi đè ở cấp Component
 
-Override individual component tokens for specific customization:
+Ghi đè token của từng component để tùy biến cụ thể:
 
 ```css
 md-filled-button {
@@ -317,9 +317,9 @@ md-outlined-text-field {
 }
 ```
 
-### Dark Theme
+### Theme tối (Dark Theme)
 
-Apply dark theme by overriding color tokens on a class or media query:
+Áp dụng theme tối bằng cách ghi đè color token trên một class hoặc media query:
 
 ```css
 @media (prefers-color-scheme: dark) {
@@ -337,13 +337,13 @@ Apply dark theme by overriding color tokens on a class or media query:
 }
 ```
 
-Full theming guide: `references/theming-and-dynamic-color.md`
+Hướng dẫn theming đầy đủ: `references/theming-and-dynamic-color.md`
 
-## Common Patterns
+## Các mẫu thường dùng
 
 ### App Shell
 
-Standard MD3 app with responsive navigation + top app bar + content area:
+App MD3 chuẩn với điều hướng đáp ứng + top app bar + khu vực nội dung:
 
 ```html
 <div class="md3-app">
@@ -429,7 +429,7 @@ Standard MD3 app with responsive navigation + top app bar + content area:
 }
 ```
 
-### Card Grid
+### Lưới Card
 
 ```html
 <div class="md3-card-grid">
@@ -468,7 +468,7 @@ Standard MD3 app with responsive navigation + top app bar + content area:
 .md3-card__media { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
 ```
 
-### Form Layout
+### Bố trí Form
 
 ```html
 <form class="md3-form">
@@ -498,25 +498,25 @@ Standard MD3 app with responsive navigation + top app bar + content area:
 }
 ```
 
-More patterns: `references/navigation-patterns.md`, `references/layout-and-responsive.md`
+Thêm mẫu: `references/navigation-patterns.md`, `references/layout-and-responsive.md`
 
-## Anti-Patterns
+## Anti-Pattern (những việc không nên làm)
 
-**Never do these when implementing MD3:**
+**Không bao giờ làm những điều này khi triển khai MD3:**
 
-- **Mix MD2 and MD3 libraries**: Don't use `@material/mdc-*` (MD2) alongside `@material/web` (MD3). They have incompatible APIs and styling.
-- **Hardcode colors**: Always use `var(--md-sys-color-*)` tokens, never raw hex/rgb values. Hardcoded colors break dynamic theming, dark mode, and contrast adjustment.
-- **Ignore tonal pairing**: Only combine colors in their intended pairs (e.g., `primary` + `on-primary`, `surface-container` + `on-surface`). Arbitrary pairings break contrast in dynamic color and high contrast modes.
-- **Use `outline` for dividers**: Use `outline-variant` for dividers. `outline` is for important boundaries like text field borders.
-- **Import all of @material/web**: Always import individual component modules. Barrel imports include every component and destroy bundle size.
-- **Use `border-radius` directly**: Use shape tokens (`var(--md-sys-shape-corner-medium)`) so shapes stay consistent with theming.
-- **Use shadows for elevation by default**: MD3 communicates elevation through tonal surface color, not shadows. Only add shadows when elements need extra separation from busy backgrounds.
-- **Apply frontend-design "avoid Roboto" rule**: On **Android**, **Roboto** is the default Material typeface; **web** often uses Roboto or Roboto Flex with MD3 tokens. Replace only when intentionally customizing the type scale.
-- **Assume SSR compatibility**: `@material/web` uses Web Components (custom elements) which require JavaScript to render. They won't produce meaningful HTML in SSR without additional hydration strategies.
-- **Ignore foldables and large screens**: MD3 is designed for all screen sizes. Don't ship phone-only layouts — use canonical layouts, multi-pane at 600dp+, and test on foldable/tablet emulators. Place no interactive content across the fold/hinge.
-- **Stretch content to fill wide screens**: On Large (1200dp+) and Extra-large (1600dp+) windows, constrain content to a max width (840–1040dp). Endless-width text lines are unreadable.
+- **Trộn thư viện MD2 và MD3**: Đừng dùng `@material/mdc-*` (MD2) cùng với `@material/web` (MD3). Chúng có API và kiểu dáng không tương thích.
+- **Hardcode màu**: Luôn dùng token `var(--md-sys-color-*)`, không bao giờ dùng giá trị hex/rgb thô. Màu hardcode phá vỡ dynamic theming, dark mode và điều chỉnh tương phản.
+- **Bỏ qua ghép cặp tonal**: Chỉ kết hợp màu theo cặp đã định (ví dụ `primary` + `on-primary`, `surface-container` + `on-surface`). Ghép tùy tiện phá vỡ tương phản trong dynamic color và chế độ tương phản cao.
+- **Dùng `outline` cho divider**: Hãy dùng `outline-variant` cho divider. `outline` dành cho đường viền quan trọng như viền text field.
+- **Import toàn bộ @material/web**: Luôn import từng module component. Barrel import bao gồm mọi component và phá hủy kích thước bundle.
+- **Dùng `border-radius` trực tiếp**: Hãy dùng shape token (`var(--md-sys-shape-corner-medium)`) để hình dạng luôn nhất quán với theming.
+- **Mặc định dùng bóng đổ cho elevation**: MD3 truyền đạt elevation qua màu bề mặt tonal, không phải bóng đổ. Chỉ thêm bóng khi phần tử cần tách biệt thêm khỏi nền nhiều chi tiết.
+- **Áp dụng quy tắc "tránh Roboto" của frontend-design**: Trên **Android**, **Roboto** là typeface Material mặc định; **web** thường dùng Roboto hoặc Roboto Flex với token MD3. Chỉ thay thế khi bạn chủ định tùy biến thang typography.
+- **Giả định tương thích SSR**: `@material/web` dùng Web Components (custom element) cần JavaScript để render. Chúng sẽ không tạo ra HTML có ý nghĩa trong SSR nếu không có chiến lược hydration bổ sung.
+- **Bỏ qua thiết bị gập và màn hình lớn**: MD3 được thiết kế cho mọi kích thước màn hình. Đừng chỉ gửi layout phone-only — hãy dùng canonical layout, multi-pane ở 600dp+ và kiểm tra trên emulator foldable/tablet. Không đặt nội dung tương tác qua đường gập/hinge.
+- **Kéo nội dung căng đầy màn hình rộng**: Trên cửa sổ Large (1200dp+) và Extra-large (1600dp+), giới hạn nội dung ở chiều rộng tối đa (840–1040dp). Dòng văn bản dài vô hạn rất khó đọc.
 
-## Platform Notes
+## Ghi chú nền tảng
 
 ### Flutter
 ```dart
@@ -529,10 +529,10 @@ MaterialApp(
 ```
 
 ### Jetpack Compose
-See **[Jetpack Compose (primary)](#jetpack-compose-primary)** above. Use `LocalContext.current` with `dynamicLightColorScheme` / `dynamicDarkColorScheme` only when `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S` and dynamic color is enabled; otherwise supply static light/dark schemes.
+Xem phần **[Jetpack Compose (chính)](#jetpack-compose-primary)** ở trên. Dùng `LocalContext.current` với `dynamicLightColorScheme` / `dynamicDarkColorScheme` chỉ khi `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S` và dynamic color được bật; nếu không thì cung cấp scheme sáng/tối tĩnh.
 
-### Component Name Mapping
-| Concept | Web | Flutter | Compose |
+### Ánh xạ tên Component
+| Khái niệm | Web | Flutter | Compose |
 |---------|-----|---------|---------|
 | Filled button | `md-filled-button` | `FilledButton` | `Button` |
 | Outlined text field | `md-outlined-text-field` | `OutlinedTextField` | `OutlinedTextField` |
@@ -540,50 +540,50 @@ See **[Jetpack Compose (primary)](#jetpack-compose-primary)** above. Use `LocalC
 | Navigation bar | `md-navigation-bar` | `NavigationBar` | `NavigationBar` |
 | Switch | `md-switch` | `Switch` | `Switch` |
 
-## M3 Expressive (May 2025)
+## M3 Expressive (tháng 5/2025)
 
-The Expressive update adds visual richness while maintaining usability. **Availability differs by platform** — do not assume one stack implements everything.
+Bản cập nhật Expressive thêm sự phong phú thị giác trong khi vẫn giữ khả năng sử dụng. **Tính sẵn có khác nhau theo nền tảng** — đừng giả định một stack triển khai được mọi thứ.
 
-| Capability | Jetpack Compose | Flutter | Web (`@material/web`) |
+| Khả năng | Jetpack Compose | Flutter | Web (`@material/web`) |
 |------------|-----------------|---------|------------------------|
-| Expressive layout scaffold / adaptive layout | Compose-first via Material3 adaptive APIs and window size classes | Use Flutter adaptive/layout primitives | CSS/container queries/manual layout; no Material Web parity |
-| 8dp spacing system | Use design tokens / `Dp` spacing constants; keep margins, padding, and gaps adaptive | Use theme spacing constants | CSS custom properties / design tokens |
-| Expressive lists, menus, search, search app bar | Primary target per current Material guidance; check BOM and opt-ins | Check current Flutter Material docs | Spec-aligned custom implementation; `@material/web` is maintenance-only |
-| Spring / motion physics | Supported in Material 3 (see `MotionScheme`, expressive APIs per BOM) | Varies by Flutter Material version | **Not** in Material Web; use easing/duration or custom motion |
-| Emphasized typography | Via theme / type scale | Via theme | Token/CSS only; no full Expressive component set |
-| Shape morphing | Compose-first in Google’s expressive rollout | Check current Flutter docs | **Not** in `@material/web` |
-| New button sizes (XS–XL), toggle | Follow Compose Material3 components | Follow Flutter MD3 | Height/CSS approximations only |
-| Extra corner tokens (e.g. large-increased) | `MaterialTheme.shapes` / tokens | Theme shapes | CSS `--md-sys-shape-*` |
-| 3 contrast levels | Scheme builders / system | Plugins / manual | `SchemeContent` contrast parameter in JS utilities |
-| Watches / XR form factors | Use Compose/Wear/XR-specific guidance where available | Platform-specific | Web/spatial UI custom implementation |
+| Expressive layout scaffold / adaptive layout | Compose-first qua API adaptive của Material3 và window size class | Dùng primitive adaptive/layout của Flutter | CSS/container query/layout thủ công; không có parity với Material Web |
+| Hệ thống khoảng cách 8dp | Dùng design token / hằng số khoảng cách `Dp`; giữ margin, padding, gap thích ứng | Dùng hằng số spacing của theme | CSS custom property / design token |
+| Expressive list, menu, search, search app bar | Mục tiêu chính theo hướng dẫn Material hiện tại; kiểm tra BOM và opt-in | Kiểm tra tài liệu Flutter Material hiện tại | Tự triển khai theo đặc tả; `@material/web` chỉ maintenance |
+| Vật lý lò xo / chuyển động | Được hỗ trợ trong Material 3 (xem `MotionScheme`, API expressive theo BOM) | Tùy phiên bản Flutter Material | **Không có** trong Material Web; dùng easing/duration hoặc chuyển động tùy chỉnh |
+| Typography nhấn mạnh | Qua theme / type scale | Qua theme | Chỉ token/CSS; không có bộ component Expressive đầy đủ |
+| Biến đổi hình dạng (shape morphing) | Compose-first trong đợt triển khai expressive của Google | Kiểm tra tài liệu Flutter hiện tại | **Không có** trong `@material/web` |
+| Kích thước button mới (XS–XL), toggle | Theo component Compose Material3 | Theo Flutter MD3 | Chỉ xấp xỉ bằng chiều cao/CSS |
+| Token góc bổ sung (vd. large-increased) | `MaterialTheme.shapes` / token | Theme shapes | CSS `--md-sys-shape-*` |
+| 3 mức tương phản | Scheme builder / hệ thống | Plugin / thủ công | Tham số tương phản `SchemeContent` trong utility JS |
+| Dạng đồng hồ / XR | Dùng hướng dẫn riêng Compose/Wear/XR khi có | Theo từng nền tảng | Tự triển khai UI web/không gian |
 
-**Web:** [Material Web is maintenance-only; M3 Expressive is not on Web](https://m3.material.io/develop/web). Use CSS easing/duration tokens as fallback for motion, not spring parity.
+**Web:** [Material Web chỉ maintenance; M3 Expressive không có trên Web](https://m3.material.io/develop/web). Dùng token easing/duration CSS làm phương án dự phòng cho chuyển động, không phải parity lò xo.
 
-**Legacy easing/duration** remains valid for **transitions** (enter/exit/shared-axis) where the spec still references them; see the Motion table below.
+**Easing/duration cũ** vẫn hợp lệ cho **transition** (vào/ra/shared-axis) khi đặc tả còn tham chiếu đến chúng; xem bảng Motion bên dưới.
 
-## MD3 Compliance Audit
+## Kiểm tra tuân thủ MD3
 
-When invoked with `audit` as the argument (e.g., `/material-3 audit`), or when asked to audit/review MD3 compliance, analyze the target app or page and produce a compliance report.
+Khi được gọi với đối số `audit` (ví dụ `/material-3 audit`), hoặc khi được yêu cầu kiểm tra/đánh giá mức tuân thủ MD3, hãy phân tích ứng dụng hoặc trang mục tiêu và tạo báo cáo tuân thủ.
 
-### Audit Procedure
+### Quy trình kiểm tra
 
-1. **Identify the target**: The user provides a URL (use browser tools to inspect), file paths (read source), or a running app.
-2. **Inspect the following categories** and score each 0–10:
+1. **Xác định mục tiêu**: Người dùng cung cấp URL (dùng công cụ trình duyệt để kiểm tra), đường dẫn tệp (đọc mã nguồn), hoặc một ứng dụng đang chạy.
+2. **Kiểm tra các danh mục sau** và chấm điểm từng cái 0–10:
 
-| Category | What to check |
+| Danh mục | Cần kiểm tra |
 |----------|--------------|
-| **Color tokens** | **Web:** `--md-sys-color-*` / generated CSS. **Compose:** `MaterialTheme.colorScheme` roles (no arbitrary `Color(...)` for surfaces without reason). Proper tonal pairing (`onX` on `X`). Dark theme. **Flutter:** `ColorScheme` roles. |
-| **Typography** | MD3 type scale: **Compose** `MaterialTheme.typography`; **web** typescale tokens; correct roles (Display, Headline, Title, Body, Label). |
-| **Shape** | **Compose** `MaterialTheme.shapes` / component `Shape`; **web** `var(--md-sys-shape-*)`. Buttons: full; cards: medium; avoid magic numbers. |
-| **Elevation** | Tonal elevation (`Surface` tonal/shadow as appropriate). **Web:** hover/focus where relevant. |
-| **Components** | **Compose:** Material3 composables (`Button`, `Scaffold`, etc.). **Web:** `@material/web` or spec-aligned HTML/CSS. Correct variants. |
-| **Layout** | Canonical layouts; **Compose** window size class / adaptive APIs; readable max width on large widths; foldable hinge avoidance. |
-| **Navigation** | Bar / rail / drawer / drawers+**Compose** `NavHost` patterns per size class; predictive back where applicable. |
-| **Motion** | **Compose** `MotionScheme` / expressive APIs when used; transitions may still use easing/duration. **Web:** CSS motion tokens fallback. |
-| **Accessibility** | MD3 roles help, but **verify contrast**: UI components often need **3:1** for large text/borders and **4.5:1** for normal text (WCAG 2.x). TalkBack/semantics (Compose), focus order, touch targets (~48dp). **Web:** ARIA, keyboard. |
-| **Theming** | **Compose:** `MaterialTheme` + light/dark/dynamic as designed. **Web:** CSS custom properties on `:root` or subtree. **Flutter:** `ThemeData` + `ColorScheme`. |
+| **Color token** | **Web:** `--md-sys-color-*` / CSS được tạo. **Compose:** vai trò `MaterialTheme.colorScheme` (không dùng `Color(...)` tùy tiện cho surface khi không có lý do). Ghép cặp tonal đúng (`onX` trên `X`). Theme tối. **Flutter:** vai trò `ColorScheme`. |
+| **Typography** | Thang kiểu chữ MD3: **Compose** `MaterialTheme.typography`; **web** token typescale; đúng vai trò (Display, Headline, Title, Body, Label). |
+| **Shape** | **Compose** `MaterialTheme.shapes` / `Shape` của component; **web** `var(--md-sys-shape-*)`. Button: full; card: medium; tránh magic number. |
+| **Elevation** | Elevation tonal (`Surface` tonal/shadow tùy trường hợp). **Web:** hover/focus khi phù hợp. |
+| **Component** | **Compose:** composable Material3 (`Button`, `Scaffold`, v.v.). **Web:** `@material/web` hoặc HTML/CSS theo đặc tả. Đúng biến thể. |
+| **Layout** | Canonical layout; **Compose** window size class / API adaptive; chiều rộng tối đa dễ đọc ở màn hình rộng; tránh đường gập thiết bị gập. |
+| **Điều hướng** | Bar / rail / drawer / drawers + mẫu `NavHost` của **Compose** theo từng size class; predictive back khi áp dụng. |
+| **Motion** | **Compose** `MotionScheme` / API expressive khi dùng; transition vẫn có thể dùng easing/duration. **Web:** token chuyển động CSS dự phòng. |
+| **Khả năng truy cập** | Vai trò MD3 giúp ích, nhưng **phải kiểm tra tương phản**: component UI thường cần **3:1** cho văn bản/viền lớn và **4.5:1** cho văn bản thường (WCAG 2.x). TalkBack/semantics (Compose), thứ tự focus, vùng chạm (~48dp). **Web:** ARIA, bàn phím. |
+| **Theming** | **Compose:** `MaterialTheme` + sáng/tối/dynamic như thiết kế. **Web:** CSS custom property trên `:root` hoặc cây con. **Flutter:** `ThemeData` + `ColorScheme`. |
 
-3. **Generate the report**:
+3. **Tạo báo cáo**:
 
 ```
 # MD3 Compliance Audit Report
@@ -620,20 +620,20 @@ Overall Score: [X/100]
 2. ...
 ```
 
-### Audit Methods
+### Phương pháp kiểm tra
 
-**For a live URL** (browser or devtools):
-- Inspect computed styles and CSS variables (`--md-sys-*`)
-- Resize viewport or use responsive mode for breakpoints
-- Capture screenshots at key widths if helpful
+**Với URL trực tiếp** (trình duyệt hoặc devtools):
+- Kiểm tra style đã tính toán và biến CSS (`--md-sys-*`)
+- Thay đổi kích thước viewport hoặc dùng chế độ responsive cho breakpoint
+- Chụp ảnh màn hình ở các chiều rộng quan trọng nếu hữu ích
 
-**For source code** (file paths provided):
-- **Compose/Kotlin:** `.kt` files — `MaterialTheme`, composables, `Color(0x…)` abuse, hard-coded `Dp`, missing `Modifier.semantics` where needed
+**Với mã nguồn** (được cung cấp đường dẫn tệp):
+- **Compose/Kotlin:** tệp `.kt` — `MaterialTheme`, composable, lạm dụng `Color(0x…)`, `Dp` hard-code, thiếu `Modifier.semantics` khi cần
 - **Flutter:** `.dart` — `ThemeData`, `ColorScheme`
-- **Web:** HTML/JSX/Vue/Svelte; CSS/SCSS for tokens
-- Check **web** imports for `@material/web` vs `@material/mdc-*` (MD2)
+- **Web:** HTML/JSX/Vue/Svelte; CSS/SCSS cho token
+- Kiểm tra import **web** xem dùng `@material/web` hay `@material/mdc-*` (MD2)
 
-**Quick checks** (adapt paths to your stack):
+**Kiểm tra nhanh** (điều chỉnh đường dẫn theo stack của bạn):
 ```
 # Web: hardcoded colors
 grep -rn '#[0-9a-fA-F]\{3,8\}' --include='*.css' --include='*.scss'
@@ -645,23 +645,25 @@ grep -rn 'Color(0x' --include='*.kt'
 grep -rn '@material/mdc-' --include='*.js' --include='*.ts'
 ```
 
-**Browser automation** (if your environment exposes MCP browser tools): navigate, snapshot DOM/CSS variables, resize for breakpoints — optional, not required.
+**Tự động hóa trình duyệt** (nếu môi trường của bạn có công cụ MCP browser): điều hướng, chụp DOM/biến CSS, đổi kích thước cho breakpoint — tùy chọn, không bắt buộc.
 
-### Scoring Guide
+### Hướng dẫn chấm điểm
 
-- **9-10**: Fully MD3 compliant, uses correct tokens and patterns
-- **7-8**: Mostly compliant, minor issues (e.g., a few hardcoded values)
-- **4-6**: Partially compliant, some MD3 patterns but significant gaps
-- **1-3**: Major violations, mostly non-MD3 or MD2 patterns
-- **0**: Not applicable or completely absent
+- **9-10**: Tuân thủ MD3 hoàn toàn, dùng đúng token và mẫu
+- **7-8**: Phần lớn tuân thủ, lỗi nhỏ (vd. vài giá trị hardcode)
+- **4-6**: Tuân thủ một phần, có vài mẫu MD3 nhưng còn khoảng trống đáng kể
+- **1-3**: Vi phạm lớn, chủ yếu là mẫu phi MD3 hoặc MD2
+- **0**: Không áp dụng hoặc hoàn toàn vắng mặt
 
-Status thresholds: **pass** (7+), **warn** (4-6), **fail** (0-3)
+Ngưỡng trạng thái: **pass** (7+), **warn** (4-6), **fail** (0-3)
 
-## Reference Documents
+## Tài liệu tham khảo
 
-- `references/color-system.md` — Color roles, tonal palettes, dynamic color, Compose + CSS mapping
-- `references/typography-and-shape.md` — Type scale, shape corners, elevation, motion, Expressive notes
-- `references/component-catalog.md` — Components: Compose + `@material/web` where applicable
-- `references/navigation-patterns.md` — Navigation selection, Compose-first adaptive patterns
-- `references/layout-and-responsive.md` — Breakpoints, canonical layouts, insets, foldables
-- `references/theming-and-dynamic-color.md` — Theming: Compose first, then Flutter and web
+- `references/color-system.md` — Vai trò màu, bảng tonal, dynamic color, ánh xạ Compose + CSS
+- `references/typography-and-shape.md` — Thang kiểu chữ, góc bo, elevation, chuyển động, ghi chú Expressive
+- `references/component-catalog.md` — Component: Compose + `@material/web` khi áp dụng
+- `references/navigation-patterns.md` — Lựa chọn điều hướng, mẫu adaptive Compose-first
+- `references/layout-and-responsive.md` — Breakpoint, canonical layout, inset, thiết bị gập
+- `references/theming-and-dynamic-color.md` — Theming: Compose trước, sau đó Flutter và web
+
+

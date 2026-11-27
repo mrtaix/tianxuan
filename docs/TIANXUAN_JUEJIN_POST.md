@@ -1,193 +1,182 @@
-# 我把 Linux 沙箱、大模型 Agent 和编译器全塞进了安卓手机：天玄 (TianXuan) 开源了！
+# Tôi đã nhét toàn bộ sandbox Linux, Agent mô hình lớn và trình biên dịch vào điện thoại Android: CTHarness đã mã nguồn mở!
 
-> **“须弥纳于芥子，天玄纳于掌中。”**  
-> 在 Android 严格受限的沙盒与权限边界内，构筑一方可运行、可观测、可自愈、可演进的掌上 Linux 世界。
-
----
-
-![配图 01：头图 / 封面图](https://your-image-url/tianxuan-cover.png)
-> 💡 *【建议配图 01】：天玄 Logo 配合科技感暗黑背景的头图，或者真机展示天玄启动界面的精美海报图。*
+> **"Chứa cả núi Tu-di trong hạt cải, chứa cả CTHarness trong lòng bàn tay."**  
+> Trong ranh giới sandbox và quyền hạn khắt khe của Android, chúng tôi dựng nên một thế giới Linux thu nhỏ trên đầu ngón tay: có thể chạy được, quan sát được, tự phục hồi được và tiến hóa được.
 
 ---
 
-## 📱 01. 楔子：你的旗舰机，算力过剩了吗？
-
-看看你手上的主力机：**骁龙 8 Gen 3/4 或天玑 9300** 芯片、**16GB 甚至 24GB LPDDR5X 内存**、UFS 4.0 极速存储……论单核算力、多核并发与内存吞吐，现在的旗舰机性能完全不输给几年前的轻薄笔记本。
-
-然而现实往往很讽刺：
-- 这么强的移动算力怪兽，绝大多数时候只是在刷短视频、刷信息流、玩两局手游；
-- PC 端的 AI 研发工具如火如荼（Cursor、Claude Code、Windsurf、Cline），而手机上的各种“AI 助手”，绝大部分依然只是千篇一律的 **“API 聊天套壳”**。大模型输出了大段天花乱坠的代码，既落不了盘，也跑不起来，更无法进行环境自我验证；
-- 移动端老牌神器 Termux 确实硬核，但它是一个纯粹的终端，缺少大模型因果链驱动循环、缺少现代移动 IDE 工作区、代码 Diff 和可视化任务看板。
-
-**难道在手机上，大模型就只能当个“陪聊工具人”？**
-
-为了打破这个现状，我们开发并正式开源了这一款面向移动端的全功能 AI 研发运行时——**天玄 (TianXuan)**。
-
-它不搞空头套壳，而是直接把 **免 Root Linux 系统、智能体引擎 (Agent Harness)、C/JNI 原生 PTY 终端与项目工作区** 深度融合。
-
-- 🌐 **GitHub 仓库**：[https://github.com/wkbin/tianxuan](https://github.com/wkbin/tianxuan)
-- 📦 **技术规格**：`Android 10+ (SDK 29+)` · 纯 `arm64-v8a` · `Kotlin 2.4` · `Jetpack Compose` · `Material 3 Expressive`
+![Hình minh họa 01: ảnh đầu / ảnh bìa](https://your-image-url/tianxuan-cover.png)
+> 💡 *【Gợi ý hình 01】: Logo CTHarness trên nền tối công nghệ làm ảnh đầu, hoặc ảnh áp phích đẹp mắt chụp màn hình khởi động của CTHarness trên máy thật.*
 
 ---
 
-## 🌌 02. 何为天玄：不仅仅是终端，更是因果闭环
+## 📱 01. Mở đầu: điện thoại cao cấp của bạn có đang dư thừa sức mạnh tính toán?
 
-《列子·汤问》云：“渤海之东……其中有大壑焉，实惟无底之谷，其下无底，名曰归墟。八纮九野之水，天汉之流，莫不注之，而无增无减焉。”
+Hãy nhìn vào chiếc máy chính bạn đang dùng: chip **Snapdragon 8 Gen 3/4 hay Dimensity 9300**, **RAM LPDDR5X 16GB thậm chí 24GB**, bộ nhớ UFS 4.0 tốc độ cao… Xét về sức mạnh đơn nhân, đa nhân và băng thông bộ nhớ, điện thoại cao cấp hiện tại hoàn toàn không thua kém máy tính xách tay mỏng nhẹ cách đây vài năm.
 
-**天玄**取意于此：它让大模型、系统工具、Linux 沙箱与项目工程共享同一个**同构执行上下文**。
+Nhưng thực tế lại thường rất trớ trêu:
+- Con quái vật sức mạnh di động đó phần lớn thời gian chỉ để lướt video ngắn, đọc bảng tin và chơi vài ván trò chơi;
+- Trên máy tính, công cụ nghiên cứu phát triển AI bùng nổ (Cursor, Claude Code, Windsurf, Cline), trong khi các "trợ lý AI" trên điện thoại hầu hết vẫn chỉ là **"vỏ bọc trò chuyện API"** — mô hình lớn xuất ra cả đoạn mã hoa mỹ nhưng không lưu được vào đĩa, không chạy được, càng không tự kiểm chứng được môi trường;
+- Termux, công cụ kỳ cựu trên thiết bị di động, quả thực rất mạnh, nhưng nó là một terminal thuần túy, thiếu vòng lặp nhân-quả do mô hình lớn dẫn dắt, thiếu không gian làm việc IDE di động hiện đại, thiếu bản so sánh mã và bảng tác vụ trực quan.
 
-用户的每一句自然语言指令，都将在天玄中历经真正的工程闭环：
+**Liệu trên điện thoại, mô hình lớn chỉ được làm "bạn trò chuyện"?**
+
+Để phá vỡ tình trạng này, chúng tôi đã phát triển và chính thức mã nguồn mở bộ môi trường thực thi AI phát triển toàn diện cho thiết bị di động — **CTHarness**.
+
+Nó không làm vỏ bọc suông, mà hợp nhất sâu **hệ điều hành Linux không cần Root, bộ máy Agent, terminal PTY gốc C/JNI và không gian làm việc dự án**.
+
+- 🌐 **Kho GitHub**: [https://github.com/wkbin/tianxuan](https://github.com/wkbin/tianxuan)
+- 📦 **Thông số kỹ thuật**: `Android 10+ (SDK 29+)` · thuần `arm64-v8a` · `Kotlin 2.4` · `Jetpack Compose` · `Material 3 Expressive`
+
+---
+
+## 🌌 02. CTHarness là gì: không chỉ là terminal, mà là vòng lặp nhân-quả
+
+《Liệt tử · Thang vấn》 có câu: "Phía đông biển Bột Hải… có một hố lớn, thật là thung lũng không đáy, gọi là Quy Hư. Nước của tám phương chín cõi, dòng của Ngân Hà, đều đổ vào đó mà không tăng không giảm."
+
+**CTHarness** lấy ý tưởng từ đây: nó để mô hình lớn, công cụ hệ thống, sandbox Linux và dự án kỹ thuật chia sẻ cùng một **ngữ cảnh thực thi đồng cấu**.
+
+Mỗi câu lệnh ngôn ngữ tự nhiên của người dùng đều đi trong CTHarness qua một vòng lặp kỹ thuật thật sự:
 
 ```text
-人的意图 (Intent) ─► 步骤规划 (TaskPlanCard) ─► Linux / MCP / 浏览器工具分派
-                             ▲                               │
-                             │                               ▼
-                      失败自动分析修正 ◄────────────── 真实环境运行验证 (Verification)
+Ý định người dùng (Intent) ─► Lập kế hoạch bước (TaskPlanCard) ─► Phân công công cụ Linux / MCP / trình duyệt
+                                         ▲                                  │
+                                         │                                  ▼
+                              Tự phân tích và sửa lỗi ◄──────────── Chạy và kiểm chứng môi trường thật (Verification)
 ```
 
-![配图 02：天玄整体界面与因果闭环演示](https://your-image-url/tianxuan-overview.png)
-> 💡 *【建议配图 02】：天玄的主界面或者双栏/分屏视图，展示左侧大模型对话拆解任务、右侧终端或代码浏览的视觉全貌。*
+![Hình minh họa 02: giao diện tổng thể CTHarness và minh họa vòng lặp nhân-quả](https://your-image-url/tianxuan-overview.png)
+> 💡 *【Gợi ý hình 02】: màn hình chính của CTHarness hoặc giao diện hai cột/chia đôi, thể hiện tổng thể bên trái là hội thoại mô hình lớn tách tác vụ, bên phải là terminal hoặc trình duyệt mã.*
 
 ---
 
-## ⚡ 03. 核心硬核特性技术拆解
+## ⚡ 03. Giải mã các tính năng cốt lõi "cứng"
 
-### 1. 免 Root 用户态 Linux 沙箱（10+ 主流发行版）
-手机没 Root 也能跑完整 Linux？没错！
-- **PRoot 用户态拦截**：底层通过 `ptrace` 劫持系统调用并做路径重写，无需任何 Root 权限即可提供完整的 Linux 根文件系统；
-- **全系主流发行版**：支持 Ubuntu 24.04、Debian 12、Kali、Arch Linux、Alpine、Fedora 等一键拉取与无缝切换；
-- **OCI Registry 校验与双向挂载**：支持安全的镜像哈希校验；可直接将手机 `/sdcard/Download` 等目录安全挂载进沙箱，外部下载的文件沙箱秒读，沙箱构建出的产物宿主秒存。
+### 1. Sandbox Linux trong không gian người dùng không cần Root (10+ bản phân phối phổ biến)
+Điện thoại không Root vẫn chạy được Linux đầy đủ? Đúng vậy!
+- **PRoot chặn trong không gian người dùng**: tầng dưới dùng `ptrace` để bắt lời gọi hệ thống và viết lại đường dẫn, không cần bất kỳ quyền Root nào nhưng vẫn cung cấp hệ thống tệp gốc Linux hoàn chỉnh;
+- **Đầy đủ bản phân phối phổ biến**: hỗ trợ Ubuntu 24.04, Debian 12, Kali, Arch Linux, Alpine, Fedora… tải về một chạm và chuyển đổi liền mạch;
+- **Kiểm chứng OCI Registry và gắn kết hai chiều**: hỗ trợ kiểm tra giá trị băm ảnh hệ thống an toàn; có thể gắn kết an toàn các thư mục như `/sdcard/Download` của điện thoại vào sandbox, tệp tải ngoài sandbox đọc ngay, sản phẩm dựng trong sandbox lưu ngay ra phía chủ.
 
-![配图 03：Linux 沙箱环境与监控面板](https://your-image-url/proot-dashboard.png)
-> 💡 *【建议配图 03】：沙箱管理界面截屏，展示 Ubuntu 等发行版的运行状态、CPU/内存占用指示器。*
-
----
-
-### 2. 真正的自主 Agent 智能体循环（Harness Engine）
-天玄内置了一套严肃的自研智能体驱动引擎：
-- **主流协议通吃**：深度兼容 OpenAI 标准接口与 Anthropic Messages 协议（完美适配 DeepSeek-R1、Claude 3.7、SiliconFlow 等中转平台）；
-- **思考链深度感知**：完整解析 `reasoning_content`，大模型缜密的思考推理过程流式动态展开；
-- **动态 TaskPlanCard**：自动解析模型输出的 `- [ ]` 步骤清单，转化为带有触觉反馈的动态进度卡片，当前干到哪一步一目了然；
-- **原子工具矩阵**：大模型拥有查看目录、文件读写、精准局部替换 (Edit)、代码符号搜索 (Grep/Find)、沙箱 Shell 命令执行等全套工具；
-- **沙箱离线小模型**：支持在沙箱内部署 `llama.cpp`，离线运行 Qwen2.5-Coder、Llama-3 等 GGUF 编程小模型，断网也能自主写代码！
-
-![配图 04：智能体思考链与 TaskPlanCard 任务执行](https://your-image-url/agent-task-plan.png)
-> 💡 *【建议配图 04】：智枢对话界面截屏，展现 DeepSeek/Claude 的思考折叠卡片、动态 TaskPlanCard 步骤条和工具调用卡片。*
+![Hình minh họa 03: môi trường sandbox Linux và bảng giám sát](https://your-image-url/proot-dashboard.png)
+> 💡 *【Gợi ý hình 03】: ảnh chụp giao diện quản lý sandbox, thể hiện trạng thái chạy của Ubuntu và các bản phân phối khác, chỉ số CPU/bộ nhớ.*
 
 ---
 
-### 3. 会话派生 (SessionFork) 与磁盘级快照安全网
-让大模型在手机上直接改写代码，搞砸了怎么办？
-- **SessionFork 会话树派生**：支持像 Git 创建分支一样随时从某一轮对话派生分支，或者一键「撤回到此轮」（Rewind）；
-- **Checkpoints 磁盘快照**：在智能体每轮开始修改前，自动对工作区创建磁盘级状态快照。一旦 Agent 写偏或改出重大故障，毫秒级无损回滚，没有任何后顾之忧。
+### 2. Vòng lặp Agent tự chủ thật sự (bộ máy Harness)
+CTHarness tích hợp sẵn một bộ máy điều khiển Agent được tự nghiên cứu bài bản:
+- **Thông suốt giao thức chính thống**: tương thích sâu với giao diện chuẩn OpenAI và giao thức Messages của Anthropic (khớp hoàn hảo DeepSeek-R1, Claude 3.7, SiliconFlow và các nền tảng trung gian khác);
+- **Theo dõi sâu chuỗi tư duy**: phân tích đầy đủ `reasoning_content`, quá trình suy luận chặt chẽ của mô hình hiển thị động theo luồng;
+- **TaskPlanCard động**: tự phân tích danh sách bước `- [ ]` trong đầu ra của mô hình, chuyển thành thẻ tiến độ động có phản hồi xúc giác, nhìn là biết đang ở bước nào;
+- **Ma trận công cụ nguyên tử**: mô hình có đủ bộ công cụ xem thư mục, đọc/ghi tệp, thay thế cục bộ chính xác (Edit), tìm kiếm ký hiệu mã (Grep/Find), thực thi lệnh shell trong sandbox…;
+- **Mô hình nhỏ ngoại tuyến trong sandbox**: hỗ trợ triển khai `llama.cpp` bên trong sandbox, chạy ngoại tuyến các mô hình lập trình GGUF như Qwen2.5-Coder, Llama-3, mất mạng vẫn tự viết mã!
+
+![Hình minh họa 04: chuỗi tư duy Agent và thực thi TaskPlanCard](https://your-image-url/agent-task-plan.png)
+> 💡 *【Gợi ý hình 04】: ảnh chụp giao diện hội thoại Tri-Shu, thể hiện thẻ gập tư duy của DeepSeek/Claude, thanh bước TaskPlanCard động và thẻ gọi công cụ.*
 
 ---
 
-### 4. 原生 C/JNI PTY 终端（Matrix Terminal）
-绝非市场上某些简陋的 `TextView` 模拟输入框！
-- **C 语言底层桥接**：自研 `libtianxuan_pty.so`，基于 POSIX `openpty`/`forkpty` 直连 Linux 子进程生命周期；
-- **增量 ANSI/VT100 状态机**：支持流式色彩高亮、光标精准定位与全屏 TUI 交互；
-- **定制触觉按键条 (ExtraKeys)**：专为移动端设计的辅助键盘，提供带振动反馈的 `Ctrl`、`Alt`、`Tab`、`Esc`、方向键以及历史命令轮盘，在手机上敲 Vim / Nano 同样顺畅。
-
-![配图 05：原生 PTY 终端与触觉按键条](https://your-image-url/pty-terminal.png)
-> 💡 *【建议配图 05】：全屏终端截屏，展示彩色 neofetch、htop 运行界面，以及底部专属的 ExtraKeys 辅助虚拟按键条。*
+### 3. SessionFork và lưới an toàn bản chụp trạng thái cấp đĩa
+Để mô hình trực tiếp sửa mã trên điện thoại, nếu hỏng thì sao?
+- **SessionFork phái sinh cây phiên**: hỗ trợ phái sinh nhánh từ bất kỳ vòng hội thoại nào như Git tạo nhánh, hoặc một chạm "quay lại vòng này" (Rewind);
+- **Điểm kiểm tra với bản chụp trạng thái cấp đĩa**: trước mỗi vòng Agent bắt đầu sửa, tự tạo bản chụp trạng thái cấp đĩa cho không gian làm việc. Một khi Agent ghi sai hoặc gây lỗi nghiêm trọng, hoàn tác không mất mát trong mili-giây, không còn lo ngại gì.
 
 ---
 
-### 5. 掌上移动工作区与真机本地编译构建
-- **多元导入**：支持一键 Clone GitHub 仓库（带实时流式下载进度百分比）、本地 ZIP 安全解压（内置严格防 Zip-Slip 路径穿越校验）；
-- **专业级代码查看**：语法高亮文件树与专业级行级 Diff 对比；
-- **沙箱直接构建 APK**：你甚至可以在沙箱内配好 JDK、Android SDK 或 Flutter，手机本地敲击 `./gradlew assembleDebug`，构建产出的 APK 可以直接拉起系统安装器安装上机！
+### 4. Terminal PTY gốc C/JNI (Matrix Terminal)
+Không phải mấy ô nhập liệu mô phỏng `TextView` sơ sài trên thị trường!
+- **Cầu nối tầng thấp bằng C**: tự nghiên cứu `libtianxuan_pty.so`, dựa trên POSIX `openpty`/`forkpty` kết nối trực tiếp vòng đời tiến trình con Linux;
+- **Máy trạng thái ANSI/VT100 tăng dần**: hỗ trợ tô màu theo luồng, định vị con trỏ chính xác và tương tác giao diện văn bản toàn màn hình;
+- **Thanh phím xúc giác tùy biến (ExtraKeys)**: bàn phím phụ thiết kế riêng cho thiết bị di động, cung cấp `Ctrl`, `Alt`, `Tab`, `Esc`, phím mũi tên và bánh xe lịch sử lệnh có rung phản hồi, gõ Vim / Nano trên điện thoại vẫn mượt.
 
-![配图 06：工程代码行级 Diff 比对与 APK 构建交付](https://your-image-url/workspace-diff-build.png)
-> 💡 *【建议配图 06】：工作区界面截屏，展示红绿相间的清晰 Diff 对比图，或者构建完成直接点击安装 APK 的交付卡片。*
-
----
-
-### 6. 内置浏览器、CDP 断点与 Worker 级 Hook
-天玄内置了供大模型与开发者使用的独立 Browser 模块：
-- **In-process Browser MCP 服务**：大模型可以直接打开网页、截取 DOM 树、截屏分析页面视觉渲染；
-- **深度逆向与调试**：支持脚本注入式 Hook、CDP 断点断流、Worker 级别的 Fetch 流量拦截，配合可视化的网络请求时间线，网页抓取与动态逆向尽在掌握。
-
-![配图 07：内置浏览器调试面板与网络请求时间线](https://your-image-url/browser-devtools.png)
-> 💡 *【建议配图 07】：内置浏览器开启状态下的截图，展示网络请求瀑布流或脚本 Hook 拦截面板。*
+![Hình minh họa 05: terminal PTY gốc và thanh phím xúc giác](https://your-image-url/pty-terminal.png)
+> 💡 *【Gợi ý hình 05】: ảnh chụp terminal toàn màn hình, thể hiện neofetch/htop có màu và thanh phím ảo ExtraKeys riêng ở dưới.*
 
 ---
 
-### 7. 无线 ADB 秒级免切屏诊断
-Android 开发者专属的提效神器：
-- **通知栏免切屏配对**：以前配对无线 ADB，切屏去查配对码再切回来端口经常失效。天玄支持在**系统通知栏直接输入配对码**，秒级完成本机或局域网无线配对；
-- **mDNS 自动发现**：局域网调试端口自动嗅探；
-- **全栈日志流**：PRoot 系统日志与 Android 系统 `logcat` 日志混合实时过滤，系统 Intent 一键诊断。
+### 5. Không gian làm việc di động và biên dịch ngay trên máy thật
+- **Nhập đa dạng**: hỗ trợ sao chép kho GitHub một chạm (có phần trăm tiến độ tải theo luồng thời gian thực), giải nén ZIP cục bộ an toàn (kiểm tra chặn vượt đường dẫn Zip-Slip nghiêm ngặt tích hợp sẵn);
+- **Xem mã chuyên nghiệp**: cây tệp tô cú pháp và so sánh thay đổi cấp dòng chuyên nghiệp;
+- **Dựng APK trực tiếp trong sandbox**: bạn thậm chí có thể cấu hình JDK, Android SDK hoặc Flutter trong sandbox, gõ `./gradlew assembleDebug` ngay trên điện thoại, APK dựng ra có thể gọi thẳng trình cài đặt hệ thống để cài lên máy!
 
-![配图 08：通知栏免切屏无线 ADB 配对与诊断](https://your-image-url/wireless-adb.png)
-> 💡 *【建议配图 08】：截取下拉通知栏直接输入无线 ADB 配对码，或者 ADB 日志工作台界面的清晰截图。*
-
----
-
-### 8. 桌面全局悬浮小窗（智枢随行）
-不仅局限在 App 内部！天玄支持**系统级前台悬浮窗**。当你正在浏览器查资料、在 GitHub 手机端看 Issue、或者在玩其他 App 时，随时贴边呼出智枢小窗，一边看屏幕一边让 AI 帮你跑脚本查数据，实现真·跨应用多任务并发。
-
-![配图 09：桌面全局悬浮小窗跨应用协同](https://your-image-url/floating-window.png)
-> 💡 *【建议配图 09】：手机桌面或其他应用界面上，悬浮着天玄“智枢小窗”进行问答与指令交互的场景。*
+![Hình minh họa 06: so sánh thay đổi cấp dòng và bàn giao bản dựng APK](https://your-image-url/workspace-diff-build.png)
+> 💡 *【Gợi ý hình 06】: ảnh chụp giao diện không gian làm việc, thể hiện bản so sánh thay đổi rõ ràng đỏ-xanh, hoặc thẻ bàn giao cho phép bấm cài APK ngay sau khi dựng xong.*
 
 ---
 
-## 📐 04. 架构设计与工程之美
+### 6. Trình duyệt tích hợp, điểm dừng CDP và cơ chế móc cấp Worker
+CTHarness tích hợp module trình duyệt độc lập cho mô hình lớn và nhà phát triển:
+- **Dịch vụ Browser MCP trong tiến trình**: mô hình lớn có thể mở trực tiếp trang web, lấy cây DOM, chụp màn hình để phân tích thị giác;
+- **Dịch ngược và gỡ lỗi sâu**: hỗ trợ cơ chế móc bằng cách chèn tập lệnh, điểm dừng CDP chặn luồng, chặn lưu lượng Fetch cấp Worker, kết hợp dòng thời gian yêu cầu mạng trực quan, thu thập dữ liệu web và dịch ngược động nằm trong tầm tay.
 
-天玄不仅仅功能极客，在 Android 工程实现上也严格遵循 Clean Architecture 与工业级模块化规范：
+![Hình minh họa 07: bảng gỡ lỗi trình duyệt tích hợp và dòng thời gian yêu cầu mạng](https://your-image-url/browser-devtools.png)
+> 💡 *【Gợi ý hình 07】: ảnh chụp khi trình duyệt tích hợp đang mở, thể hiện biểu đồ thác nước yêu cầu mạng hoặc bảng chặn tập lệnh móc.*
+
+---
+
+### 8. Cửa sổ nổi toàn màn hình (Tri-Shu theo bạn)
+Không chỉ giới hạn trong ứng dụng! CTHarness hỗ trợ **cửa sổ nổi tiền cảnh cấp hệ thống**. Khi bạn đang tra cứu trên trình duyệt, xem vấn đề trên GitHub di động hay dùng ứng dụng khác, chỉ cần vuốt mép để gọi cửa sổ nhỏ Tri-Shu, vừa xem màn hình vừa nhờ AI chạy tập lệnh truy dữ liệu, đa nhiệm thật sự xuyên ứng dụng.
+
+![Hình minh họa 09: cửa sổ nổi toàn màn hình tương tác xuyên ứng dụng](https://your-image-url/floating-window.png)
+> 💡 *【Gợi ý hình 09】: trên màn hình chính hoặc giao diện ứng dụng khác, cửa sổ nhỏ Tri-Shu của CTHarness nổi lên để hỏi đáp và nhận lệnh.*
+
+---
+
+## 📐 04. Thiết kế kiến trúc và vẻ đẹp kỹ thuật
+
+CTHarness không chỉ có những tính năng ấn tượng, mà trong triển khai kỹ thuật Android cũng tuân thủ nghiêm ngặt kiến trúc sạch và chuẩn module hóa công nghiệp:
 
 ```text
 TianXuan/
-├── app/                  # 宿主壳工程：JNI C/C++ 桥接、Koin 装配、前台保活 Service、悬浮窗服务
+├── app/                  # Khung ứng dụng phía chủ: cầu nối JNI C/C++, lắp ráp Koin, Service tiền cảnh giữ tiến trình, dịch vụ cửa sổ nổi
 ├── core/
-│   ├── model/           # 纯 Kotlin 数据模型 (Pure Kotlin，严禁任何平台与框架依赖)
-│   ├── database/        # Room 数据库：会话树、消息因果链、Checkpoints 快照、执行审计
-│   ├── datastore/       # Jetpack DataStore：用户设置、挂载点配置
-│   └── network/         # OkHttp 客户端、响应式 SSE 流式解析器
-├── runtime/              # Linux 沙箱核心：PRoot 挂载、进程生命周期托管、PTY 会话、工作区构建
-│   └── browser/         # 内置浏览器：WebView 实例池、CDP 拦截器、In-process Browser MCP
-├── harness/              # 智能体引擎：Agent 循环、工具调度分派、子智能体协作、会话派生
-├── tools/                # 生态中心：插件 Registry、Recipe 安装事务、依赖解析
-└── feature/              # Jetpack Compose 业务特性层 (M3 Expressive 设计规范)
-    ├── chat/            # 智枢对话与 Diff / TaskPlan 渲染
-    ├── terminal/        # 原生终端与触觉按键条
-    ├── workspace/       # 工程浏览、Diff 对比与 APK 交付
-    └── settings/        # 模型配置、无线 ADB 诊断工作台
+│   ├── model/           # Mô hình dữ liệu Kotlin thuần (nghiêm cấm mọi phụ thuộc nền tảng và bộ khung)
+│   ├── database/        # Cơ sở dữ liệu Room: cây phiên, chuỗi nhân-quả thông điệp, bản chụp điểm kiểm tra, kiểm toán thực thi
+│   ├── datastore/       # Jetpack DataStore: cài đặt người dùng, cấu hình điểm gắn kết
+│   └── network/         # Máy khách OkHttp, bộ phân tích luồng SSE phản ứng
+├── runtime/              # Lõi sandbox Linux: gắn kết PRoot, quản lý vòng đời tiến trình, phiên PTY, dựng không gian làm việc
+│   └── browser/         # Trình duyệt tích hợp: nhóm phiên bản WebView, bộ chặn CDP, Browser MCP trong tiến trình
+├── harness/              # Bộ máy Agent: vòng lặp Agent, điều phối công cụ, phối hợp Agent con, phái sinh phiên
+├── tools/                # Trung tâm hệ sinh thái: Registry plugin, giao dịch công thức cài đặt, phân giải phụ thuộc
+└── feature/              # Tầng tính năng nghiệp vụ Jetpack Compose (quy chuẩn thiết kế M3 Expressive)
+    ├── chat/            # Hội thoại Tri-Shu và kết xuất bản so sánh thay đổi / TaskPlan
+    ├── terminal/        # Terminal gốc và thanh phím xúc giác
+    ├── workspace/       # Duyệt dự án, so sánh thay đổi và bàn giao APK
+    └── settings/        # Cấu hình mô hình, bảng chẩn đoán ADB không dây
 ```
 
-- **纯正现代技术栈**：基于 `Kotlin 2.4` + `Jetpack Compose` 构建，界面完全采用 **Material 3 Expressive**（玄统 / 澄明主题）设计规范；
-- **前台保活与稳定性**：Foreground Service (FGS) 搭配 CPU 唤醒锁与 Wi-Fi 锁，即便退到后台或息屏，大型编译构建长任务也绝不掉线中断；
-- **严苛架构红线**：禁止平台侵入底层 Model，严格的 UI/ViewModel 单向数据流，保证数万行代码的可扩展性与测试覆盖。
+- **Nền tảng công nghệ hiện đại thuần túy**: xây dựng với `Kotlin 2.4` + `Jetpack Compose`, giao diện dùng hoàn toàn chuẩn thiết kế **Material 3 Expressive** (chủ đề Huyền Thống / Trừng Minh);
+- **Giữ tiến trình tiền cảnh và ổn định**: dịch vụ tiền cảnh (FGS) kết hợp khóa đánh thức CPU và khóa Wi-Fi, dù lui vào nền hay tắt màn hình, tác vụ dựng dài vẫn không bị ngắt;
+- **Ranh giới kiến trúc nghiêm ngặt**: cấm nền tảng xâm nhập tầng mô hình, tuân thủ chặt chẽ luồng dữ liệu giao diện/ViewModel một chiều, đảm bảo khả năng mở rộng và độ phủ kiểm thử của hàng chục nghìn dòng mã.
 
 ---
 
-## 💡 05. 那些只有天玄能搞定的“极客场景”
+## 💡 05. Những "tình huống ấn tượng" chỉ CTHarness làm được
 
-1. **地铁通勤途中，突发生产环境 Bug？**  
-   不用掏电脑，在手机上打开天玄，让智枢从 GitHub Clone 报错仓库，AI 自动定位并改写代码，弹出行级 Diff 确认无误，沙箱内执行测试通过，直接 Git Push 提交热修复 PR。
-2. **长途差旅的高铁/飞机上，断网没信号？**  
-   在沙箱内通过 `llama.cpp` 跑本地端侧模型，依然可以自主写 Python、Bash 脚本、处理离线文件与数据。
-3. **日常移动端逆向与自动化？**  
-   内置无线 ADB 监控当前应用，拉起内置浏览器跑脚本 Hook 抓取目标动态数据，直接输出结构化 CSV 报表。
-
----
-
-## 🚀 06. 掌中天玄，七星为枢
-
-天玄现已全面开源。我们相信：**限制从未真正消失；但自由可以来自——身处限制之中，仍有能力去构筑、去验证属于自己的世界。**
-
-不管你是：
-- 想一探 **端侧 AI 智能体与移动 OS 深度结合** 的极客探索者；
-- 苦于移动端开发能力受限、想寻找 **掌上移动工作站** 的程序员；
-- 还是想深入学习 **Jetpack Compose + JNI C/C++ + Linux PRoot** 工业级架构的 Android 开发者。
-
-天玄都为你准备了一份热气腾腾、扎扎实实的代码库！
-
-- ⭐️ **GitHub 源码直达**：[https://github.com/wkbin/tianxuan](https://github.com/wkbin/tianxuan)
-- 📥 **最新 Release APK**：[https://github.com/wkbin/tianxuan/releases](https://github.com/wkbin/tianxuan/releases)
+1. **Đang đi tàu điện ngầm, hệ thống vận hành bất ngờ gặp lỗi?**  
+   Không cần lấy máy tính xách tay, mở CTHarness trên điện thoại, bảo Tri-Shu sao chép kho báo lỗi từ GitHub, AI tự định vị và sửa mã, hiện bản so sánh thay đổi cấp dòng để bạn xác nhận, chạy kiểm thử trong sandbox thành công, rồi đẩy bản sửa khẩn cấp lên Git để tạo yêu cầu hợp nhất.
+2. **Đi tàu cao tốc / máy bay đường dài, mất mạng?**  
+   Trong sandbox chạy mô hình cục bộ trên thiết bị qua `llama.cpp`, vẫn tự viết được Python, Bash, xử lý tệp và dữ liệu ngoại tuyến.
+3. **Dịch ngược và tự động hóa thiết bị di động hằng ngày?**  
+   Dùng ADB không dây tích hợp theo dõi ứng dụng hiện tại, mở trình duyệt trong máy chạy tập lệnh móc lấy dữ liệu động của đối tượng, xuất thẳng báo cáo CSV có cấu trúc.
 
 ---
 
-### 💬 互动时刻：
-> 你觉得未来移动设备有可能承担我们 30% 甚至 50% 的轻度编程与运维工作吗？你在手机上折腾过最硬核的操作是什么？欢迎在评论区一起交流探讨！如果天玄对你有启发，别忘了去 GitHub 点个 ⭐️ **Star** 支持一下！
+## 🚀 06. CTHarness trong lòng bàn tay, bảy sao làm trục
+
+CTHarness đã mã nguồn mở toàn diện. Chúng tôi tin: **giới hạn chưa từng thật sự biến mất; nhưng tự do có thể đến từ việc — dù đang ở trong giới hạn, vẫn có năng lực dựng lên và kiểm chứng thế giới của riêng mình.**
+
+Dù bạn là:
+- người thích khám phá "AI trên thiết bị kết hợp sâu với hệ điều hành di động";
+- lập trình viên than phiền năng lực phát triển trên thiết bị di động bị giới hạn, tìm kiếm **một trạm làm việc di động trong lòng bàn tay**;
+- hay nhà phát triển Android muốn học sâu kiến trúc công nghiệp **Jetpack Compose + JNI C/C++ + Linux PRoot**.
+
+CTHarness đã chuẩn bị cho bạn một kho mã nóng hổi, đầy đặn!
+
+- ⭐️ **Đi thẳng tới mã nguồn GitHub**: [https://github.com/wkbin/tianxuan](https://github.com/wkbin/tianxuan)
+- 📥 **APK phát hành mới nhất**: [https://github.com/wkbin/tianxuan/releases](https://github.com/wkbin/tianxuan/releases)
+
+---
+
+### 💬 Giờ tương tác:
+> Bạn nghĩ trong tương lai thiết bị di động có thể đảm nhận 30% thậm chí 50% công việc lập trình và vận hành nhẹ không? Bạn từng thử làm việc kỹ thuật "khó nhằn" nhất nào trên điện thoại? Mời cùng trao đổi trong phần bình luận! Nếu CTHarness truyền cảm hứng cho bạn, đừng quên ghé GitHub bấm ⭐️ **Star** ủng hộ nhé!

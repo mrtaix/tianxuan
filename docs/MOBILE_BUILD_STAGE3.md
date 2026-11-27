@@ -1,10 +1,10 @@
-# 移动端构建第三阶段：统一自检与命令兜底
+# Giai đoạn 3 của bản dựng di động: tự kiểm tra thống nhất và phương án dự phòng bằng lệnh
 
-## 目标
+## Mục tiêu
 
-第三阶段把 Android/Flutter 构建入口统一到同一套环境策略。无论用户从工作区构建按钮、Agent，还是 PRoot 控制台开始构建，都应先确认当前工具链可用，并优先使用天玄安装的 ARM64 资源。
+Giai đoạn 3 thống nhất các điểm vào quy trình dựng Android/Flutter theo cùng một chiến lược môi trường. Dù người dùng bắt đầu dựng từ nút dựng trong không gian làm việc, từ Agent, hay từ bảng điều khiển PRoot, hệ thống đều phải xác nhận trước rằng bộ công cụ hiện tại khả dụng và ưu tiên dùng tài nguyên ARM64 do CTHarness cài đặt.
 
-## 标准入口
+## Điểm vào chuẩn
 
 ```sh
 tianxuan-build doctor /workspace/project
@@ -14,26 +14,26 @@ tianxuan-build analyze /workspace/project
 tianxuan-build android /workspace/project assembleDebug --offline
 ```
 
-`doctor` 至少检查：
+`doctor` ít nhất kiểm tra:
 
-- `/bin/sh` 与当前 RootFS 架构；
-- JDK 17 与 `JAVA_HOME`；
-- Gradle 或项目 Gradle Wrapper；
-- Android SDK、Platform、Build-Tools 与 ARM64 AAPT2；
-- Flutter/Dart（Flutter 项目）；
-- 项目声明的 wrapper、AGP、compileSdk 和 NDK 版本是否超出本地能力；
-- QEMU 开关和隔离 x86_64 兼容环境是否完整。
+- `/bin/sh` và kiến trúc của RootFS hiện tại;
+- JDK 17 và `JAVA_HOME`;
+- Gradle hoặc Gradle Wrapper của dự án;
+- Android SDK, gói nền tảng, Build-Tools và AAPT2 ARM64;
+- Flutter/Dart (đối với dự án Flutter);
+- xem các phiên bản Gradle Wrapper, AGP, `compileSdk` và NDK mà dự án khai báo có vượt quá khả năng của máy hay không;
+- công tắc QEMU và môi trường tương thích x86_64 cô lập đã đầy đủ hay chưa.
 
-第四阶段新增 `analyze`、离线构建和 APK ABI 产物闸门，详见 [`MOBILE_BUILD_STAGE4.md`](MOBILE_BUILD_STAGE4.md)。
+Giai đoạn 4 bổ sung `analyze`, chế độ dựng ngoại tuyến và bước kiểm tra ABI của APK đầu ra, xem chi tiết tại [`MOBILE_BUILD_STAGE4.md`](MOBILE_BUILD_STAGE4.md).
 
-## 决策规则
+## Quy tắc quyết định
 
-1. 默认只使用 ARM64 工具链。
-2. 项目版本不匹配时先输出差异，不静默下载另一套 SDK/JDK/NDK。
-3. 需要调整项目时，由 Agent 的“移动端构建环境守卫”Skill 做最小版本对齐。
-4. 只有遇到明确的 x86_64 ELF 主机工具错误时，才允许使用 `--qemu` 进入隔离 QEMU 会话。
-5. QEMU 不改变 APK ABI；最终产物仍应只包含 ARM64。
+1. Mặc định chỉ dùng bộ công cụ ARM64.
+2. Khi phiên bản dự án không khớp, trước tiên hãy in ra phần khác biệt, không lặng lẽ tải xuống một bộ SDK/JDK/NDK khác.
+3. Khi cần điều chỉnh dự án, kỹ năng "mobile build environment guard" của Agent sẽ thực hiện căn chỉnh phiên bản tối thiểu.
+4. Chỉ khi gặp lỗi rõ ràng về công cụ ELF x86_64 trên máy chủ thì mới cho phép dùng `--qemu` để vào phiên QEMU cô lập.
+5. QEMU không làm thay đổi ABI của APK; sản phẩm cuối cùng vẫn chỉ chứa ARM64.
 
-## 控制台说明
+## Lưu ý về bảng điều khiển
 
-普通 Shell 不可能在用户输入任意绝对路径命令时做到百分之百拦截。因此第三阶段通过 `/opt/tianxuan/bin` 包装器、统一 `tianxuan-build` 命令和 Agent Skill 覆盖常规 `gradle`、`gradlew`、`flutter` 构建路径。用户显式绕开包装器执行 SDK 内部绝对路径时，视为高级手动操作。
+Một trình bao thông thường không thể chặn hoàn toàn 100% khi người dùng nhập lệnh với một đường dẫn tuyệt đối bất kỳ. Vì vậy, giai đoạn 3 dùng lớp bọc tại `/opt/tianxuan/bin`, lệnh `tianxuan-build` thống nhất và kỹ năng của Agent để bao phủ các điểm vào dựng thông thường `gradle`, `gradlew`, `flutter`. Trường hợp người dùng cố ý bỏ qua lớp bọc và thực thi trực tiếp một đường dẫn tuyệt đối bên trong SDK được xem là thao tác thủ công nâng cao.

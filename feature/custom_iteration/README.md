@@ -1,62 +1,62 @@
-# 天玄（TianXuan）自定义迭代与 TianXuanDev 构建模块 (`feature:custom_iteration`)
+# Mô-đun tự phát triển tùy chỉnh CTHarness và dựng TianXuanDev (`feature:custom_iteration`)
 
-本模块为 **天玄 · TianXuan** 量身打造的标准、无降级自迭代系统。让用户在手机上使用天玄的自主 AI Agent 进行天玄自身的二次开发、测试、云端 CI 构建，并向开源社区贡献代码。
+Mô-đun này là hệ thống tự phát triển tiêu chuẩn, không hạ cấp chức năng, được thiết kế riêng cho **CTHarness**. Người dùng có thể dùng AI Agent tự chủ của CTHarness ngay trên điện thoại để phát triển mở rộng chính ứng dụng, kiểm thử, dựng bằng CI trên đám mây và đóng góp mã cho cộng đồng nguồn mở.
 
 ---
 
-## 一、模块架构与核心组件
+## I. Kiến trúc mô-đun và các thành phần cốt lõi
 
 ```
 tianxuan-custom-iteration-module/
-├── build.gradle.kts                        # Gradle 多模块依赖配置（对齐天玄规范）
-├── README.md                               # 完整模块架构与接入文档
+├── build.gradle.kts                        # Cấu hình phụ thuộc Gradle đa mô-đun (theo chuẩn CTHarness)
+├── README.md                               # Tài liệu đầy đủ về kiến trúc và tích hợp mô-đun
 ├── templates/
 │   └── workflows/
-│       └── tianxuandev-build.yml              # GitHub Actions 自动化云端构建 CI 模板
+│       └── tianxuandev-build.yml              # Mẫu CI dựng tự động trên đám mây bằng GitHub Actions
 └── src/
     ├── main/
     │   ├── assets/
     │   │   └── skills/
     │   │       └── tianxuan-custom-iteration/
-    │   │           └── SKILL.md            # Agent 专有开发与 PR 规范 Skill
+    │   │           └── SKILL.md            # Skill quy định phát triển và PR riêng cho Agent
     │   └── java/top/wkbin/tianxuan/
     │       ├── iteration/engine/
-    │       │   ├── CustomIterationBootstrap.kt   # 自举引擎（工作区初始化/引导 Prompt 生成）
-    │       │   └── TianXuanDevBuildCoordinator.kt   # CI 调度与 APK 下载校验协调器
+    │       │   ├── CustomIterationBootstrap.kt   # Bộ máy khởi tạo (khởi tạo không gian làm việc / tạo prompt hướng dẫn)
+    │       │   └── TianXuanDevBuildCoordinator.kt   # Bộ điều phối CI, tải và xác minh APK
     │       └── ui/iteration/
-    │           ├── CustomIterationScreen.kt      # Jetpack Compose UI 界面
-    │           └── CustomIterationViewModel.kt   # Koin 状态管理 ViewModel
+    │           ├── CustomIterationScreen.kt      # Giao diện UI Jetpack Compose
+    │           └── CustomIterationViewModel.kt   # ViewModel quản lý trạng thái bằng Koin
 ```
 
 ---
 
-## 二、核心特性与设计规范（零降级）
+## II. Tính năng cốt lõi và quy chuẩn thiết kế (không hạ cấp chức năng)
 
-1. **工作区物理隔离**：
-   * 自动在 Linux 沙盒家目录创建隔离目录 `~/custom_tianxuan`，开发行为完全不破坏运行中的宿主系统。
-2. **专属 Agent Skill 约束 (`SKILL.md`)**：
-   * 指导 AI Agent 严格遵守天玄的多模块 Kotlin DSL 规范、Material3 Compose 规范、协程设计及凭证安全规则。
-3. **GitHub Actions 云端 CI 构建 (`tianxuandev-build.yml`)**：
-   * 免去手机端部署 Android SDK/NDK 的庞大体积开销；
-   * 云端 Runner（`ubuntu-24.04` + JDK 17）自动编译，并通过 `gh run watch` / `gh run download` 将产物回传手机。
-4. **双包共存（Dual-Flavor）**：
-   * 编译产物包名自动重命名为 `top.wkbin.tianxuan.dev`，应用名显示为 `TianXuanDev`；
-   * 测试版与手机中的正式版天玄共存运行、互不覆盖。
-5. **开源 PR 交付闭环**：
-   * 本地真机体验通过后，Agent 协助生成标准格式 PR 提交到 `TensorHub-ORG/TianXuan:main`。
+1. **Cách ly vật lý không gian làm việc**:
+   * Tự động tạo thư mục cách ly `~/custom_tianxuan` trong thư mục cá nhân của hộp cát Linux; hoạt động phát triển không làm hỏng hệ thống chủ đang chạy.
+2. **Ràng buộc bằng Agent Skill riêng (`SKILL.md`)**:
+   * Hướng dẫn AI Agent tuân thủ nghiêm ngặt các quy chuẩn Kotlin DSL đa mô-đun, Material3 Compose, thiết kế coroutine và bảo mật thông tin xác thực của CTHarness.
+3. **Dựng bằng CI GitHub Actions trên đám mây (`tianxuandev-build.yml`)**:
+   * Tránh chi phí dung lượng lớn khi triển khai Android SDK/NDK trên điện thoại;
+   * Runner đám mây (`ubuntu-24.04` + JDK 17) tự động biên dịch, sau đó dùng `gh run watch` / `gh run download` để đưa sản phẩm về điện thoại.
+4. **Hai gói cùng tồn tại (Dual-Flavor)**:
+   * Tên gói của sản phẩm biên dịch tự động đổi thành `top.wkbin.tianxuan.dev`, tên ứng dụng hiển thị là `TianXuanDev`;
+   * Bản thử nghiệm và bản CTHarness chính thức trên điện thoại chạy song song, không ghi đè nhau.
+5. **Quy trình khép kín để đóng góp PR nguồn mở**:
+   * Sau khi trải nghiệm trên thiết bị thật đạt yêu cầu, Agent hỗ trợ tạo PR theo định dạng chuẩn và gửi tới `TensorHub-ORG/TianXuan:main`.
 
 ---
 
-## 三、快速接入指南（集成到天玄主工程）
+## III. Hướng dẫn tích hợp nhanh (vào dự án chính CTHarness)
 
-### 1. 注册 Gradle 子模块
-在 `settings.gradle.kts` 中添加：
+### 1. Đăng ký mô-đun con Gradle
+Thêm vào `settings.gradle.kts`:
 ```kotlin
 include(":feature:custom_iteration")
 ```
 
-### 2. 添加导航路由
-在 `TianXuanNavHost.kt` 中添加路由项：
+### 2. Thêm tuyến điều hướng
+Thêm mục định tuyến trong `TianXuanNavHost.kt`:
 ```kotlin
 composable("custom_iteration") {
     CustomIterationScreen(
@@ -68,5 +68,5 @@ composable("custom_iteration") {
 }
 ```
 
-### 3. 在设置或开发者中心添加入口
-在 `SettingsScreen.kt` 或 `DeveloperScreen.kt` 中添加跳转入口按钮即可！
+### 3. Thêm lối vào trong phần cài đặt hoặc trung tâm nhà phát triển
+Chỉ cần thêm nút điều hướng trong `SettingsScreen.kt` hoặc `DeveloperScreen.kt`!

@@ -1,81 +1,81 @@
-# Astronomy：北斗七门与二十八宿全图
+# Astronomy: Toàn đồ bảy cổng Bắc Đẩu và Nhị thập bát Tú
 
-天玄以北斗为纲、二十八宿为目。此块给出完整对照，供你按宿检索构件与指标。
+CTHarness lấy Bắc Đẩu làm khung, Nhị thập bát Tú làm các mục. Khối này cung cấp bảng đối chiếu đầy đủ để tra cứu thành phần và chỉ số theo từng tú.
 
-## 北斗七门（顶层能力）
+## Bảy cổng Bắc Đẩu (năng lực cấp cao nhất)
 
-| 序 | 星 | 拜耳 | 别称 | 魁/杓 | 门 | 标识 | 取义 |
+| STT | Sao | Định danh Bayer | Tên khác | Khôi/Thược | Cổng | Định danh | Ý nghĩa |
 |---|---|---|---|---|---|---|---|
-| 1 | 天枢 | α Dubhe | 贪狼 | 魁 | 智枢 | `agent` | 众机之枢，星纪由此推排 |
-| 2 | 天璇 | β Merak | 巨门 | 魁 | 智坊 | `workspace` | 攻玉成器，造作之所 |
-| 3 | 天玑 | γ Phecda | 禄存 | 魁 | 终端 | `terminal` | 直面天机，亲执枢要 |
-| 4 | 天权 | δ Megrez | 文曲 | 魁 | 工作流 | `workflow` | 权衡缓急，分派调度 |
-| 5 | 玉衡 | ε Alioth | 廉贞 | 杓 | 版本 | `git` | 平准得失，铢两悉称 |
-| 6 | 开阳 | ζ Mizar | 武曲 | 杓 | 浏览器 | `browser` | 开牖见天，纳四境之光 |
-| 7 | 摇光 | η Alkaid | 破军 | 杓 | 设置 | `settings` | 摇动枢机，光被全域 |
+| 1 | Thiên Khu | α Dubhe | Tham Lang | Khôi | Trí Khu | `agent` | Đầu mối của mọi cơ chế, nơi khởi tính trật tự các sao |
+| 2 | Thiên Tuyền | β Merak | Cự Môn | Khôi | Trí Phường | `workspace` | Nơi mài ngọc thành vật dụng, tạo tác nên sản phẩm |
+| 3 | Thiên Cơ | γ Phecda | Lộc Tồn | Khôi | Thiết bị đầu cuối | `terminal` | Trực tiếp tiếp cận cơ chế, tự tay nắm giữ đầu mối |
+| 4 | Thiên Quyền | δ Megrez | Văn Khúc | Khôi | Luồng công việc | `workflow` | Cân nhắc mức độ cấp bách, phân công và điều phối |
+| 5 | Ngọc Hành | ε Alioth | Liêm Trinh | Thược | Phiên bản | `git` | Cân bằng được mất, định lượng chính xác từng phần |
+| 6 | Khai Dương | ζ Mizar | Vũ Khúc | Thược | Trình duyệt | `browser` | Mở cửa nhìn trời, đón ánh sáng từ bốn phương |
+| 7 | Dao Quang | η Alkaid | Phá Quân | Thược | Cài đặt | `settings` | Vận hành bộ máy, lan tỏa ánh sáng khắp hệ thống |
 
-魁主承，杓主施。玉衡（ε Alioth）为北斗最亮之星。
+Khôi chủ về tiếp nhận, Thược chủ về triển khai. Ngọc Hành (ε Alioth) là sao sáng nhất của Bắc Đẩu.
 
-## 东方青龙七宿（智能体引擎层）
+## Bảy tú Thanh Long phương Đông (tầng động cơ agent)
 
-| 宿 | 七曜·禽 | 距度 | 构件 | 指标 | 取义 |
+| Tú | Thất diệu · Linh vật | Độ rộng | Thành phần | Chỉ số | Ý nghĩa |
 |---|---|---|---|---|---|
-| 角木蛟 | 木·蛟 | 12 | `HarnessLoop` | Agent 轮次 | 星纪之元，众宿由此起算 |
-| 亢金龙 | 金·龙 | 9 | `ProviderClient` | 协议请求数 | 吞吐之颈，承上接下 |
-| 氐土貉 | 土·貉 | 15 | `AgentContext` | 上下文令牌数 | 万物皆至，是为根柢 |
-| 房日兔 | 日·兔 | 5 | `ToolExecutor` | 工具调用数 | 天驷负载，消化施行 |
-| 心月狐 | 月·狐 | 5 | `ApprovalPolicyEngine` | 审批决策数 | 明断之心，察而后许 |
-| 尾火虎 | 火·虎 | 18 | `SubagentOrchestrator` | 子智能体并发 | 尾扫八荒，并力并举 |
-| 箕水豹 | 水·豹 | 11¼ | `CompactionManager` | 压缩次数 | 簸扬筛汰，留精去冗 |
+| Giác Mộc Giao | Mộc · Giao | 12 | `HarnessLoop` | Số lượt agent | Điểm khởi đầu của trật tự sao, mốc tính cho mọi tú |
+| Cang Kim Long | Kim · Long | 9 | `ProviderClient` | Số yêu cầu giao thức | Yết hầu của luồng vào ra, nối tầng trên với tầng dưới |
+| Đê Thổ Hạc | Thổ · Hạc | 15 | `AgentContext` | Số token ngữ cảnh | Nơi vạn vật quy tụ, làm gốc rễ nền tảng |
+| Phòng Nhật Thố | Nhật · Thố | 5 | `ToolExecutor` | Số lần gọi công cụ | Cỗ xe trời mang tải, tiếp nhận và thực thi |
+| Tâm Nguyệt Hồ | Nguyệt · Hồ | 5 | `ApprovalPolicyEngine` | Số quyết định phê duyệt | Phán đoán sáng suốt, xem xét rồi mới cho phép |
+| Vĩ Hỏa Hổ | Hỏa · Hổ | 18 | `SubagentOrchestrator` | Số agent con chạy đồng thời | Đuôi quét tám phương, hợp sức cùng hành động |
+| Cơ Thủy Báo | Thủy · Báo | 11¼ | `CompactionManager` | Số lần nén | Sàng lọc và gạn bỏ, giữ tinh túy bỏ dư thừa |
 
-## 北方玄武七宿（运行时底层）
+## Bảy tú Huyền Vũ phương Bắc (tầng nền tảng thời gian chạy)
 
-| 宿 | 七曜·禽 | 距度 | 构件 | 指标 | 取义 |
+| Tú | Thất diệu · Linh vật | Độ rộng | Thành phần | Chỉ số | Ý nghĩa |
 |---|---|---|---|---|---|
-| 斗木獬 | 木·獬 | 26 | `ProcessRegistry` | 进程数 | 掌管生死，度量众命 |
-| 牛金牛 | 金·牛 | 8 | `PRoot` | 沙箱启动耗时 | 负重致远，承载山河 |
-| 女土蝠 | 土·蝠 | 12 | `WorkspaceFileService` | 文件操作数 | 经纬织理，成章成幅 |
-| 虚日鼠 | 日·鼠 | 10 | `StorageManager` | 存储回收量 | 虚而能受，肃清冗积 |
-| 危月燕 | 月·燕 | 17 | `PrivilegeManager` | 特权调用数 | 居高临危，戒慎守护 |
-| 室火猪 | 火·猪 | 16 | `RootFS` | 容器装配耗时 | 营室筑基，以御外侵 |
-| 壁水貐 | 水·貐 | 9 | `CheckpointStore` | 检查点数 | 壁藏图籍，可复可还 |
+| Đẩu Mộc Giải | Mộc · Giải | 26 | `ProcessRegistry` | Số tiến trình | Quản lý vòng đời, đo lường mọi sinh mệnh |
+| Ngưu Kim Ngưu | Kim · Ngưu | 8 | `PRoot` | Thời gian khởi động sandbox | Mang nặng đi xa, gánh vác cả núi sông |
+| Nữ Thổ Bức | Thổ · Bức | 12 | `WorkspaceFileService` | Số thao tác tệp | Đan dọc dệt ngang, kết thành tấm có trật tự |
+| Hư Nhật Thử | Nhật · Thử | 10 | `StorageManager` | Dung lượng lưu trữ thu hồi | Để trống để dung nạp, dọn sạch phần tích tụ dư thừa |
+| Nguy Nguyệt Yến | Nguyệt · Yến | 17 | `PrivilegeManager` | Số lần gọi đặc quyền | Ở nơi cao hiểm, thận trọng bảo vệ |
+| Thất Hỏa Trư | Hỏa · Trư | 16 | `RootFS` | Thời gian lắp ráp container | Dựng nhà xây móng, chống xâm nhập từ bên ngoài |
+| Bích Thủy Du | Thủy · Du | 9 | `CheckpointStore` | Số điểm kiểm tra | Lưu giữ thư tịch trong tường, có thể khôi phục và quay lại |
 
-## 西方白虎七宿（工具与集成层）
+## Bảy tú Bạch Hổ phương Tây (tầng công cụ và tích hợp)
 
-| 宿 | 七曜·禽 | 距度 | 构件 | 指标 | 取义 |
+| Tú | Thất diệu · Linh vật | Độ rộng | Thành phần | Chỉ số | Ý nghĩa |
 |---|---|---|---|---|---|
-| 奎木狼 | 木·狼 | 16 | `ToolRegistry` | 工具注册数 | 武库藏兵，出纳有禁 |
-| 娄金狗 | 金·狗 | 12 | `McpManager` | MCP 连接数 | 聚众牧养，统御外邦 |
-| 胃土雉 | 土·雉 | 14 | `InstallTransactionManager` | 安装事务数 | 仓廪受纳，出入有度 |
-| 昴日鸡 | 日·鸡 | 11 | `WebViewTabPool` | 页面加载数 | 明照四境，各安其位 |
-| 毕月乌 | 月·乌 | 16 | `CdpFetchInterceptor` | 网络拦截数 | 张网捕风，无有漏脱 |
-| 觜火猴 | 火·猴 | 2 | `GenericRecipeInstaller` | 脚本执行数 | 细巧机变，见微知著 |
-| 参水猿 | 水·猿 | 9 | `SandboxBoundary` | 越权拦截数 | 镇守边界，权衡可否 |
+| Khuê Mộc Lang | Mộc · Lang | 16 | `ToolRegistry` | Số công cụ đã đăng ký | Kho vũ khí cất giữ binh khí, kiểm soát xuất nhập |
+| Lâu Kim Cẩu | Kim · Cẩu | 12 | `McpManager` | Số kết nối MCP | Quy tụ và nuôi dưỡng, điều phối các hệ thống bên ngoài |
+| Vị Thổ Trĩ | Thổ · Trĩ | 14 | `InstallTransactionManager` | Số giao dịch cài đặt | Kho lương tiếp nhận, xuất nhập có chừng mực |
+| Mão Nhật Kê | Nhật · Kê | 11 | `WebViewTabPool` | Số lần tải trang | Soi sáng bốn phương, mỗi bên ở đúng vị trí |
+| Tất Nguyệt Ô | Nguyệt · Ô | 16 | `CdpFetchInterceptor` | Số lần chặn bắt mạng | Giăng lưới bắt gió, không để lọt mất |
+| Chủy Hỏa Hầu | Hỏa · Hầu | 2 | `GenericRecipeInstaller` | Số lần thực thi script | Khéo léo linh hoạt, từ điều nhỏ nhận ra điều lớn |
+| Sâm Thủy Viên | Thủy · Viên | 9 | `SandboxBoundary` | Số lần chặn vượt quyền | Trấn giữ ranh giới, cân nhắc cho phép hay từ chối |
 
-觜宿仅 2 度，为二十八宿中最小；井宿 33 度，为最大。
+Tú Chủy chỉ rộng 2 độ, nhỏ nhất trong Nhị thập bát Tú; tú Tỉnh rộng 33 độ, lớn nhất.
 
-## 南方朱雀七宿（表现与体验层）
+## Bảy tú Chu Tước phương Nam (tầng hiển thị và trải nghiệm)
 
-| 宿 | 七曜·禽 | 距度 | 构件 | 指标 | 取义 |
+| Tú | Thất diệu · Linh vật | Độ rộng | Thành phần | Chỉ số | Ý nghĩa |
 |---|---|---|---|---|---|
-| 井木犴 | 木·犴 | 33 | `Theme` | 主题切换数 | 泉源所出，润泽全体 |
-| 鬼金羊 | 金·羊 | 4 | `RuntimeComponents` | 组件复用率 | 积聚器用，以备百工 |
-| 柳土獐 | 土·獐 | 15 | `MarkdownText` | 渲染帧耗时 | 出口成章，吐露文辞 |
-| 星日马 | 日·马 | 7 | `Navigation3` | 路由跳转数 | 引领方向，指引来处 |
-| 张月鹿 | 月·鹿 | 18 | `SettingsStore` | 偏好读写数 | 陈列百味，各取所需 |
-| 翼火蛇 | 火·蛇 | 18 | `WorkflowEditor` | 画布节点数 | 展翼铺陈，图绘全局 |
-| 轸水蚓 | 水·蚓 | 17 | `PtySession` | 会话存活数 | 载具以行，通达无碍 |
+| Tỉnh Mộc Ngạn | Mộc · Ngạn | 33 | `Theme` | Số lần đổi giao diện | Nơi nguồn nước tuôn ra, tưới mát toàn thể |
+| Quỷ Kim Dương | Kim · Dương | 4 | `RuntimeComponents` | Tỷ lệ tái sử dụng thành phần | Tích lũy vật dụng, sẵn sàng phục vụ mọi nghề |
+| Liễu Thổ Chương | Thổ · Chương | 15 | `MarkdownText` | Thời gian kết xuất mỗi khung hình | Mở lời thành văn, diễn đạt ngôn từ |
+| Tinh Nhật Mã | Nhật · Mã | 7 | `Navigation3` | Số lần chuyển tuyến | Dẫn đường định hướng, chỉ lối về nơi xuất phát |
+| Trương Nguyệt Lộc | Nguyệt · Lộc | 18 | `SettingsStore` | Số lần đọc ghi tùy chọn | Bày đủ hương vị, mỗi người chọn thứ mình cần |
+| Dực Hỏa Xà | Hỏa · Xà | 18 | `WorkflowEditor` | Số nút trên vùng vẽ | Dang cánh trải rộng, vẽ nên toàn cảnh |
+| Chẩn Thủy Dẫn | Thủy · Dẫn | 17 | `PtySession` | Số phiên còn hoạt động | Phương tiện vận hành, lưu thông không trở ngại |
 
-## 三垣（记忆三层）
+## Tam Viên (ba tầng bộ nhớ)
 
-| 垣 | 层 | scope / kind | 生命周期 |
+| Viên | Tầng | scope / kind | Vòng đời |
 |---|---|---|---|
-| 紫微垣 | 核心记忆 | `global` + `preference`/`rule` | 永久驻留，每轮必读 |
-| 太微垣 | 工作记忆 | `project`/`session` + `fact`/`project_info` | 会话结束可归档 |
-| 天市垣 | 检索记忆 | 归档与外置语料 | 按需进出，用毕即退 |
+| Tử Vi Viên | Bộ nhớ cốt lõi | `global` + `preference`/`rule` | Lưu trú vĩnh viễn, bắt buộc đọc mỗi lượt |
+| Thái Vi Viên | Bộ nhớ làm việc | `project`/`session` + `fact`/`project_info` | Có thể lưu trữ khi phiên kết thúc |
+| Thiên Thị Viên | Bộ nhớ truy xuất | Tư liệu lưu trữ và kho ngữ liệu bên ngoài | Nạp theo nhu cầu, dùng xong thì giải phóng |
 
-## 用法
+## Cách sử dụng
 
-- 提到构件时带上宿名，便于在诊断面板（星图）中定位指标。
-- 讨论运行环境问题时优先看**玄武七宿**；讨论工具与外境看**白虎七宿**。
-- 距度合计 365¼ 度（东方 75¼ + 北方 98 + 西方 80 + 南方 112 = 365¼；东方含箕宿所带四分之一）。
+- Khi nhắc đến thành phần, kèm theo tên tú để dễ định vị chỉ số trong bảng chẩn đoán (bản đồ sao).
+- Khi thảo luận về môi trường chạy, ưu tiên xem **bảy tú Huyền Vũ**; khi thảo luận về công cụ và môi trường bên ngoài, xem **bảy tú Bạch Hổ**.
+- Tổng độ rộng là 365¼ độ (phương Đông 75¼ + phương Bắc 98 + phương Tây 80 + phương Nam 112 = 365¼; phương Đông gồm phần tư độ của tú Cơ).

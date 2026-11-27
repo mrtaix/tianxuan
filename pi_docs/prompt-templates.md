@@ -1,22 +1,22 @@
-> pi can create prompt templates. Ask it to build one for your workflow.
+> pi có thể tạo prompt template. Hãy yêu cầu nó xây dựng một template cho quy trình làm việc của bạn.
 
 # Prompt Templates
 
-Prompt templates are Markdown snippets that expand into full prompts. Type `/name` in the editor to invoke a template, where `name` is the filename without `.md`.
+Prompt template là các đoạn Markdown được mở rộng thành prompt đầy đủ. Gõ `/name` trong editor để gọi một template, trong đó `name` là tên tệp không có phần mở rộng `.md`.
 
-## Locations
+## Vị trí (Locations)
 
-Pi loads prompt templates from:
+Pi tải prompt template từ:
 
-- Global: `~/.pi/agent/prompts/*.md`
-- Project: `.pi/prompts/*.md` (only after the project is trusted)
-- Packages: `prompts/` directories or `pi.prompts` entries in `package.json`
-- Settings: `prompts` array with files or directories
-- CLI: `--prompt-template <path>` (repeatable)
+- Toàn cục: `~/.pi/agent/prompts/*.md`
+- Dự án: `.pi/prompts/*.md` (chỉ sau khi dự án được tin cậy)
+- Package: các thư mục `prompts/` hoặc các mục `pi.prompts` trong `package.json`
+- Settings: mảng `prompts` với các tệp hoặc thư mục
+- CLI: `--prompt-template <path>` (có thể lặp lại)
 
-Disable discovery with `--no-prompt-templates`.
+Vô hiệu hóa việc khám phá bằng `--no-prompt-templates`.
 
-## Format
+## Định dạng (Format)
 
 ```markdown
 ---
@@ -28,13 +28,13 @@ Review the staged changes (`git diff --cached`). Focus on:
 - Error handling gaps
 ```
 
-- The filename becomes the command name. `review.md` becomes `/review`.
-- `description` is optional. If missing, the first non-empty line is used.
-- `argument-hint` is optional. When set, the hint is displayed before the description in the autocomplete dropdown.
+- Tên tệp trở thành tên lệnh. `review.md` trở thành `/review`.
+- `description` là tùy chọn. Nếu thiếu, dòng không trống đầu tiên sẽ được dùng.
+- `argument-hint` là tùy chọn. Khi được thiết lập, gợi ý sẽ hiển thị trước description trong danh sách autocomplete.
 
-### Argument Hints
+### Gợi ý đối số (Argument Hints)
 
-Use `argument-hint` in frontmatter to show expected arguments in autocomplete. Use `<angle brackets>` for required arguments and `[square brackets]` for optional ones:
+Dùng `argument-hint` trong frontmatter để hiển thị các đối số dự kiến trong autocomplete. Dùng `<angle brackets>` cho đối số bắt buộc và `[square brackets]` cho đối số tùy chọn:
 
 ```markdown
 ---
@@ -43,7 +43,7 @@ argument-hint: "<PR-URL>"
 ---
 ```
 
-This renders in the autocomplete dropdown as:
+Điều này hiển thị trong danh sách autocomplete như sau:
 
 ```
 → pr   <PR-URL>       — Review PRs from URLs with structured issue and code analysis
@@ -52,9 +52,9 @@ This renders in the autocomplete dropdown as:
   cl   — Audit changelog entries before release
 ```
 
-## Usage
+## Cách dùng (Usage)
 
-Type `/` followed by the template name in the editor. Autocomplete shows available templates with descriptions.
+Gõ `/` theo sau là tên template trong editor. Autocomplete hiển thị các template có sẵn kèm description.
 
 ```
 /review                           # Expands review.md
@@ -62,18 +62,18 @@ Type `/` followed by the template name in the editor. Autocomplete shows availab
 /component Button "click handler" # Multiple arguments
 ```
 
-## Arguments
+## Đối số (Arguments)
 
-Templates support positional arguments, defaults, and simple slicing:
+Template hỗ trợ đối số vị trí, giá trị mặc định và cắt đơn giản:
 
-- `$1`, `$2`, ... positional args
-- `$@` or `$ARGUMENTS` for all args joined
-- `${1:-default}` uses arg 1 when present/non-empty, otherwise `default`
-- `${@:-default}` or `${ARGUMENTS:-default}` uses all arguments when present/non-empty, otherwise `default`
-- `${@:N}` for args from the Nth position (1-indexed)
-- `${@:N:L}` for `L` args starting at N
+- `$1`, `$2`, ... đối số vị trí
+- `$@` hoặc `$ARGUMENTS` cho tất cả đối số được nối lại
+- `${1:-default}` dùng đối số 1 khi có/không rỗng, nếu không dùng `default`
+- `${@:-default}` hoặc `${ARGUMENTS:-default}` dùng tất cả đối số khi có/không rỗng, nếu không dùng `default`
+- `${@:N}` cho các đối số từ vị trí thứ N (đánh số từ 1)
+- `${@:N:L}` cho `L` đối số bắt đầu từ N
 
-Example:
+Ví dụ:
 
 ```markdown
 ---
@@ -82,15 +82,15 @@ description: Create a component
 Create a React component named $1 with features: $@
 ```
 
-Default values are useful for optional arguments:
+Giá trị mặc định hữu ích cho các đối số tùy chọn:
 
 ```markdown
 Summarize the current state in ${1:-7} bullet points.
 ```
 
-Usage: `/component Button "onClick handler" "disabled support"`
+Cách dùng: `/component Button "onClick handler" "disabled support"`
 
-## Loading Rules
+## Quy tắc tải (Loading Rules)
 
-- Template discovery in `prompts/` is non-recursive.
-- If you want templates in subdirectories, add them explicitly via `prompts` settings or a package manifest.
+- Việc khám phá template trong `prompts/` không đệ quy.
+- Nếu bạn muốn template nằm trong thư mục con, hãy thêm chúng một cách rõ ràng qua settings `prompts` hoặc một package manifest.

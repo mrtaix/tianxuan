@@ -1,12 +1,12 @@
-## Shower 客户端库（`showerclient` 模块）
+## Thư viện máy khách Shower (mô-đun `showerclient`)
 
-一个最小化的 Shower 客户端库，只保留 **如何接入和使用** 的说明。
+Thư viện máy khách Shower tối giản, chỉ trình bày **cách tích hợp và sử dụng**.
 
 ---
 
-## 1. 添加依赖
+## 1. Thêm phụ thuộc
 
-在宿主 App 模块的 `build.gradle.kts` 中：
+Trong `build.gradle.kts` của mô-đun ứng dụng chủ:
 
 ```kotlin
 dependencies {
@@ -16,9 +16,9 @@ dependencies {
 
 ---
 
-## 2. 提供 `ShellRunner` 实现
+## 2. Cung cấp phần triển khai `ShellRunner`
 
-`showerclient` 不直接执行 shell 命令，只通过一个接口向外要能力：
+`showerclient` không trực tiếp thực thi lệnh shell mà yêu cầu bên ngoài cung cấp khả năng này qua một giao diện:
 
 ```kotlin
 fun interface ShellRunner {
@@ -26,13 +26,13 @@ fun interface ShellRunner {
 }
 ```
 
-在 App 模块中实现它，并在应用启动时注入：
+Triển khai giao diện trong mô-đun ứng dụng và đưa vào khi ứng dụng khởi động:
 
 ```kotlin
 class OperitShowerShellRunner : ShellRunner {
     override suspend fun run(command: String, identity: ShellIdentity): ShellCommandResult {
-        // 在这里调用你自己的 shell 执行器
-        // 并把结果转换成 ShellCommandResult 返回
+        // Gọi trình thực thi shell của bạn tại đây
+        // rồi chuyển đổi và trả về kết quả dưới dạng ShellCommandResult
     }
 }
 
@@ -45,30 +45,30 @@ class YourApplication : Application() {
 }
 ```
 
-`ShellIdentity` 用于区分执行身份，例如 `DEFAULT` / `SHELL` / `ROOT`，按你的项目需要映射即可。
+`ShellIdentity` dùng để phân biệt danh tính thực thi, chẳng hạn `DEFAULT` / `SHELL` / `ROOT`; hãy ánh xạ theo nhu cầu của dự án.
 
 ---
 
-## 3. Shower Server JAR（已内置）
+## 3. Shower Server JAR (đã tích hợp sẵn)
 
-本库已经在自身模块内置了 `shower-server.jar`：
+Thư viện đã tích hợp `shower-server.jar` ngay trong mô-đun:
 
-- 宿主 App **不需要** 再手动打包或拷贝任何 JAR 文件；
-- 运行时库会自动从自身 `assets` 中读取，并先复制到 `/sdcard/Download/TianXuan/shower-server.jar`
-  （需存储权限），再拷贝到**探测得到的可写工作目录**（依次尝试
-  `ShowerEnvironment.workDirCandidates`，默认 `/data/local/tmp` → `/data/data/com.android.shell/files`）。
+- Ứng dụng chủ **không cần** đóng gói hay sao chép thêm tệp JAR nào theo cách thủ công;
+- Khi chạy, thư viện tự đọc tệp từ `assets` của mình, sao chép trước vào `/sdcard/Download/TianXuan/shower-server.jar`
+  (cần quyền lưu trữ), rồi chép vào **thư mục làm việc có quyền ghi được phát hiện** (lần lượt thử
+  `ShowerEnvironment.workDirCandidates`, mặc định là `/data/local/tmp` → `/data/data/com.android.shell/files`).
 
 ---
 
-## 4. 处理 Binder 交接广播
+## 4. Xử lý broadcast bàn giao Binder
 
-Shower server 启动后，会通过广播把 `IShowerService` 的 `IBinder` 发送给客户端。宿主 App 需要在广播接收器中把它交给本库：
+Sau khi khởi động, Shower server gửi Binder của `IShowerService` dưới dạng `IBinder` tới máy khách qua broadcast. Ứng dụng chủ cần chuyển Binder cho thư viện trong bộ nhận broadcast:
 
-广播协议（与主项目保持一致）：
+Giao thức broadcast (đồng bộ với dự án chính):
 
- - **Action**：`com.ai.assistance.operit.action.SHOWER_BINDER_READY`
- - **Extra key**：`binder_container`
- - **Extra 类型**：`com.ai.assistance.shower.ShowerBinderContainer`（`Parcelable`，内部包含 `IBinder`）
+ - **Action**: `com.ai.assistance.operit.action.SHOWER_BINDER_READY`
+ - **Extra key**: `binder_container`
+ - **Kiểu Extra**: `com.ai.assistance.shower.ShowerBinderContainer` (`Parcelable`, chứa `IBinder`)
 
 ```kotlin
 class ShowerBinderReceiver : BroadcastReceiver() {
@@ -89,7 +89,7 @@ class ShowerBinderReceiver : BroadcastReceiver() {
 }
 ```
 
-在 `AndroidManifest.xml` 注册 Receiver（**需要 `exported=true`**，因为广播发送端运行在独立的 shower-server 进程里）：
+Đăng ký Receiver trong `AndroidManifest.xml` (**cần `exported=true`**, vì bên gửi broadcast chạy trong tiến trình shower-server riêng):
 
 ```xml
 <receiver
@@ -101,25 +101,25 @@ class ShowerBinderReceiver : BroadcastReceiver() {
 </receiver>
 ```
 
-说明：
+Giải thích:
 
- - `ShowerServerManager` 启动命令会附带宿主包名参数：`CLASSPATH=<workDir>/shower-server.jar app_process / com.ai.assistance.shower.Main <hostPackage> &`；
-   `<workDir>` 为运行时探测到的可写目录（见上节）。
- - shower-server 读取该参数后，会通过 `IActivityManager.broadcastIntent(...)` 发送 `SHOWER_BINDER_READY`，并用 `Intent.setPackage(<hostPackage>)` 只投递给目标宿主包。
- - 因此宿主 App 侧的关键是：**Manifest 里声明 intent-filter 的 action 必须匹配**，并在 `onReceive()` 里把 `ShowerBinderContainer` 交给 `ShowerBinderRegistry.setService()`。
+ - Lệnh khởi động của `ShowerServerManager` kèm tham số tên gói ứng dụng chủ: `CLASSPATH=<workDir>/shower-server.jar app_process / com.ai.assistance.shower.Main <hostPackage> &`;
+   `<workDir>` là thư mục có quyền ghi được phát hiện khi chạy (xem phần trên).
+ - Sau khi đọc tham số này, shower-server gửi `SHOWER_BINDER_READY` qua `IActivityManager.broadcastIntent(...)` và dùng `Intent.setPackage(<hostPackage>)` để chỉ gửi tới gói ứng dụng chủ đích.
+ - Vì vậy, phía ứng dụng chủ cần bảo đảm **action của intent-filter khai báo trong Manifest phải khớp**, đồng thời chuyển `ShowerBinderContainer` cho `ShowerBinderRegistry.setService()` trong `onReceive()`.
 
 ---
 
-## 5. 启动 Shower server 并建立虚拟显示
+## 5. Khởi động Shower server và tạo màn hình ảo
 
-在需要使用 Shower 的地方（例如某个 Agent 或 Service）：
+Tại nơi cần dùng Shower (chẳng hạn trong một Agent hoặc Service):
 
 ```kotlin
-// 1）确保 server 已启动并且成功收到 Binder
+// 1) Bảo đảm server đã khởi động và đã nhận Binder thành công
 val ok = ShowerServerManager.ensureServerStarted(context)
 if (!ok) return
 
-// 2）创建 / 更新虚拟显示
+// 2) Tạo / cập nhật màn hình ảo
 val displayOk = ShowerController.ensureDisplay(
     context = context,
     width = 1080,
@@ -130,7 +130,7 @@ val displayOk = ShowerController.ensureDisplay(
 if (!displayOk) return
 ```
 
-之后可以通过 `ShowerController` 发送输入事件：
+Sau đó có thể gửi sự kiện đầu vào qua `ShowerController`:
 
 ```kotlin
 ShowerController.touchDown(x, y)
@@ -139,7 +139,7 @@ ShowerController.touchUp(x, y)
 ShowerController.key(KeyEvent.KEYCODE_BACK)
 ```
 
-截图：
+Chụp ảnh màn hình:
 
 ```kotlin
 val pngBytes: ByteArray? = ShowerController.requestScreenshot()
@@ -147,42 +147,42 @@ val pngBytes: ByteArray? = ShowerController.requestScreenshot()
 
 ---
 
-## 6. 使用内置视频组件（可选）
+## 6. Sử dụng thành phần video tích hợp sẵn (tùy chọn)
 
-如果你希望直接复用内置的视频解码和渲染，可以使用：
+Nếu muốn dùng lại trực tiếp khả năng giải mã và kết xuất video tích hợp sẵn, bạn có thể sử dụng:
 
 - `com.ai.assistance.showerclient.ShowerVideoRenderer`
 - `com.ai.assistance.showerclient.ui.ShowerSurfaceView`
 
-示例：在某个浮层中渲染 Shower 虚拟屏：
+Ví dụ: kết xuất màn hình ảo Shower trong một lớp phủ:
 
 ```kotlin
-// SurfaceView（也可以继承 ui.ShowerSurfaceView 做一层包装）
+// SurfaceView (cũng có thể kế thừa ui.ShowerSurfaceView để tạo lớp bọc)
 class ShowerSurfaceView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : com.ai.assistance.showerclient.ui.ShowerSurfaceView(context, attrs)
 ```
 
-`ui.ShowerSurfaceView` 内部已经帮你：
+`ui.ShowerSurfaceView` đã xử lý sẵn các việc sau:
 
-- 等待 `ShowerController.getVideoSize()` 就绪；
-- 在 `surfaceCreated` 时调用 `ShowerVideoRenderer.attach(surface, w, h)`；
-- 把 `ShowerController` 的二进制帧回调绑定到 `ShowerVideoRenderer.onFrame`；
-- 在 `surfaceDestroyed` 时清理 handler 并 `detach()`。
+- Chờ `ShowerController.getVideoSize()` sẵn sàng;
+- Gọi `ShowerVideoRenderer.attach(surface, w, h)` khi `surfaceCreated`;
+- Gắn hàm gọi lại nhận khung hình nhị phân của `ShowerController` với `ShowerVideoRenderer.onFrame`;
+- Khi `surfaceDestroyed`, dọn dẹp handler và gọi `detach()`.
 
-如果你需要自定义解码/渲染（录屏、推流等），可以不使用这些组件，而是自己实现：
+Nếu cần tùy chỉnh giải mã/kết xuất (ghi màn hình, phát luồng, v.v.), bạn có thể bỏ qua các thành phần này và tự triển khai:
 
 ```kotlin
 ShowerController.setBinaryHandler { frame: ByteArray ->
-    // 自己解码并渲染
+    // Tự giải mã và kết xuất
 }
 ```
 
 ---
 
-## 7. 最小心智模型
+## 7. Mô hình sử dụng tối giản
 
-- 你提供：`ShellRunner`、广播接收器；
-- 本库提供：`ShowerServerManager` + `ShowerController` + 可选的 `ShowerVideoRenderer` / `ui.ShowerSurfaceView`；
-- 常见调用顺序：**注入 ShellRunner → 启动 server → 收 Binder → ensureDisplay → 发送输入 / 渲染视频**。
+- Bạn cung cấp: `ShellRunner`, bộ nhận broadcast;
+- Thư viện cung cấp: `ShowerServerManager` + `ShowerController` + `ShowerVideoRenderer` / `ui.ShowerSurfaceView` tùy chọn;
+- Trình tự gọi thông thường: **đưa ShellRunner vào → khởi động server → nhận Binder → ensureDisplay → gửi đầu vào / kết xuất video**.

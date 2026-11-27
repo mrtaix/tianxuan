@@ -1,288 +1,288 @@
-# 天玄 · TianXuan v0.36.0 发布记录
+# CTHarness · Ghi chú phát hành v0.36.0
 
-> **发布时间**：2026-10-15  
-> **版本号**：v0.36.0（`appVersionName = 0.36.0`，`appVersionCode = 48`）  
-> **支持范围**：Android 10+ · arm64-v8a（无 Root / PRoot 沙箱）  
-> **性质**：全部 DSH 增强真实接入运行链路 — 从死代码到生效
+> **Ngày phát hành**: 2026-10-15  
+> **Phiên bản**: v0.36.0 (`appVersionName = 0.36.0`, `appVersionCode = 48`)  
+> **Phạm vi hỗ trợ**: Android 10+ · arm64-v8a (không cần Root / môi trường PRoot cô lập)  
+> **Tính chất**: Toàn bộ cải tiến DSH đã được kết nối vào luồng chạy thực tế — từ mã không được gọi đến mã có hiệu lực
 
 ---
 
-## 🎉 版本亮点
+## 🎉 Điểm nhấn phiên bản
 
-v0.36.0 是本项目的关键转折点：此前 v0.30–v0.35 定义的 19 项 DSH 对齐增强中，大部分只是"类型已定义、编译已通过"，但从未被实例化或调用（死代码）。本版本将全部增强真实接入运行链路，每一项都在实际执行路径中生效。
+v0.36.0 là điểm ngoặt then chốt của dự án: trước đây, trong 19 cải tiến căn chỉnh DSH được định nghĩa từ v0.30 đến v0.35, phần lớn chỉ dừng lại ở mức "đã định nghĩa kiểu, đã biên dịch thành công" nhưng không bao giờ được khởi tạo hay gọi tới. Phiên bản này kết nối toàn bộ cải tiến vào luồng chạy thực tế, mỗi hạng mục đều phát huy tác dụng trên đường thực thi thật.
 
-### 接线总览（全部真实生效）
+### Tổng quan kết nối (tất cả đều có hiệu lực thực tế)
 
-| 增强项 | 接入点 |
+| Cải tiến | Điểm kết nối |
 |--------|--------|
-| RepeatToolReminder | ToolExecutor.execute() 前置检查，防模型死循环 |
-| ToolTimeoutPolicy | ToolExecutor.execute() withTimeout 强制，豁免 BASE/PROCESS/ASK_USER |
-| SpillPolicy | ToolExecutor 返回前 token 预算截断 |
-| DelegationDepthGuard | SubagentOrchestrator.executeSubagents() 递归深度强制（MAX_DELEGATION_DEPTH=5） |
-| SessionRepair | RecoveryManager.recoverSession() 崩溃恢复标记 |
-| ApprovalAuditWriter | ApprovalPolicyEngine.createRequest() 审批审计事件 |
-| PtcDispatchLogger | ToolExecutor.executeBatch() 子调度日志 |
-| SkillRegistry | ToolExecutor.LOAD_SKILL 提供者注册表查找 |
-| SkillFilesystemProvider | SkillRegistry.registerProvider() 文件系统技能发现 |
-| SessionProjectionRegistry | HarnessLoop.executeSessionRun() Completed 驱动 |
-| SessionStatsProjection | SessionProjectionRegistry 注册 |
-| SessionTurnOutlineProjection | SessionProjectionRegistry 注册 |
-| PlanModeProjection | SessionProjectionRegistry 注册 |
-| PtyReadinessTracker | NativePtySession 数据读取路径 + readinessState()/resetReadiness() API |
-| TerminalSanitizer | NativePtySession 数据读取路径 |
-| TurnEndReason | TurnRunner.toTurnEndReason() 扩展 |
-| SurfaceOp | CompactionManager.compact() payload |
-| ToolPairingBalance | CompactionManager.compact() 切口平衡 |
-| JobRegistry | Koin 单例注册 |
+| RepeatToolReminder | Kiểm tra trước trong ToolExecutor.execute(), ngăn mô hình rơi vào vòng lặp vô hạn |
+| ToolTimeoutPolicy | Áp dụng withTimeout bắt buộc trong ToolExecutor.execute(), miễn trừ BASE/PROCESS/ASK_USER |
+| SpillPolicy | Giới hạn ngân sách token trước khi ToolExecutor trả về |
+| DelegationDepthGuard | Áp dụng giới hạn độ sâu đệ quy trong SubagentOrchestrator.executeSubagents() (MAX_DELEGATION_DEPTH=5) |
+| SessionRepair | Đánh dấu khôi phục sau sự cố trong RecoveryManager.recoverSession() |
+| ApprovalAuditWriter | Sự kiện kiểm toán phê duyệt trong ApprovalPolicyEngine.createRequest() |
+| PtcDispatchLogger | Nhật ký điều phối lời gọi con trong ToolExecutor.executeBatch() |
+| SkillRegistry | Tra cứu sổ đăng ký nhà cung cấp cho ToolExecutor.LOAD_SKILL |
+| SkillFilesystemProvider | Phát hiện kỹ năng từ hệ thống tệp qua SkillRegistry.registerProvider() |
+| SessionProjectionRegistry | Điều khiển bởi trạng thái Completed trong HarnessLoop.executeSessionRun() |
+| SessionStatsProjection | Đăng ký vào SessionProjectionRegistry |
+| SessionTurnOutlineProjection | Đăng ký vào SessionProjectionRegistry |
+| PlanModeProjection | Đăng ký vào SessionProjectionRegistry |
+| PtyReadinessTracker | Đường đọc dữ liệu NativePtySession và API readinessState()/resetReadiness() |
+| TerminalSanitizer | Đường đọc dữ liệu NativePtySession |
+| TurnEndReason | Mở rộng TurnRunner.toTurnEndReason() |
+| SurfaceOp | Dữ liệu đầu vào của CompactionManager.compact() |
+| ToolPairingBalance | Cân bằng điểm cắt trong CompactionManager.compact() |
+| JobRegistry | Đăng ký một thể hiện dùng chung trong Koin |
 
-### Koin 装配
-全部新增组件注册为单例：RepeatToolReminder / SpillPolicy / JobRegistry /
-SessionProjectionRegistry / SkillRegistry / ApprovalAuditWriter / PtcDispatchLogger。
+### Lắp ráp Koin
+Tất cả thành phần mới đều được đăng ký dưới dạng một thể hiện dùng chung: RepeatToolReminder / SpillPolicy / JobRegistry /
+SessionProjectionRegistry / SkillRegistry / ApprovalAuditWriter / PtcDispatchLogger.
 
-### 关键修复
-- RecoveryManager 构造器新增 messageStore: SessionTreeStore（SessionRepair 依赖）
-- ToolTimeoutPolicy.shouldEnforce() 豁免自带超时工具，避免双重超时冲突
-- execute() 审批逻辑保留原样，awaitingApproval / approvalDeferred 字段不丢失
-
----
-
-## ⬆️ 升级说明
-
-- 覆盖安装即可，无需清空数据；
-- 从 v0.34.0 起 DB schema 已升级到 57（会话谱系字段），自动迁移。
+### Sửa lỗi quan trọng
+- Hàm khởi tạo của RecoveryManager nhận thêm `messageStore: SessionTreeStore` (để SessionRepair sử dụng)
+- `ToolTimeoutPolicy.shouldEnforce()` miễn trừ các công cụ đã tự có thời gian chờ, tránh xung đột giới hạn kép
+- Giữ nguyên logic phê duyệt trong `execute()`, không làm mất các trường `awaitingApproval` / `approvalDeferred`
 
 ---
 
-# 天玄 · TianXuan v0.35.0 发布记录
+## ⬆️ Hướng dẫn nâng cấp
 
-> **发布时间**：2026-10-15  
-> **版本号**：v0.35.0（`appVersionName = 0.35.0`，`appVersionCode = 47`）  
-> **支持范围**：Android 10+ · arm64-v8a（无 Root / PRoot 沙箱）  
-> **性质**：DeepSeek Harness 全核心机制对齐 — 33 项增强
+- Chỉ cần cài đè lên bản cũ, không cần xóa dữ liệu;
+- Từ v0.34.0, lược đồ cơ sở dữ liệu đã nâng lên 57 (các trường về quan hệ nguồn gốc phiên), dữ liệu sẽ tự động được chuyển đổi.
 
 ---
 
-## 🎉 版本亮点
+# CTHarness · Ghi chú phát hành v0.35.0
 
-v0.35.0 完成了 DeepSeek Harness (DSH) 全核心架构机制的对齐增强，从 v0.22.0 到 v0.35.0 共发布 14 个版本，累计 33 项 DSH 对齐增强，涵盖会话事件日志、压缩安全、投影系统、PTY readiness、技能注册表、PTC 运行时、守卫策略、作业注册表、审批审计等全部核心机制。
-
-### DSH 对齐增强总览（33 项）
-
-#### 会话事件日志与谱系（v0.31–v0.32）
-- TurnEndReason 七态归因（Completed/Aborted/Blocked/Error/MaxTokens/Interrupted/Forked）
-- SurfaceOp append/replace（压缩在 surface 上的原子操作）
-- Session lineage trace（DB schema 57：parentSessionId/isSeeded/origin/delegationDepth）
-- Session Repair（崩溃恢复合成 TurnEndReason.Interrupted）
-
-#### 压缩安全（v0.34）
-- ToolPairingBalance：压缩切口平衡检测，防止切口落在 tool_call/result 之间
-- CompactionManager surfaceOp + turnEndReason 接线
-- 摘要收敛校验：LLM 摘要不得比被折叠段更长
-
-#### 会话投影系统（v0.34）
-- SessionProjectionRegistry：状态驱动纯折叠注册表
-- SessionStatsProjection：全日志统计（轮次/步数/工具调用/token 估算）
-- SessionTurnOutlineProjection：轮次大纲折叠（prompt/response 预览）
-- PlanModeProjection：计划模式状态投影
-
-#### PTY readiness 协议（v0.33）
-- TerminalSanitizer：流式 CSI/OSC 转义净化器
-- BoundedTextBuffer：有界输出缓冲（字节+行数双上限）
-- PtyReadinessTracker：三级证据链就绪判定
-- PromptMarker：OSC 133;D 标记 + bash 环境变量模板
-
-#### 技能系统（v0.30, v0.33, v0.34）
-- 技能 catalog 摘要缓存
-- SkillProvider 接口 + SkillRegistry 分层注册表
-- SkillFilesystemProvider：AgentSkillRepository 包装为 SkillProvider
-- renderSkillContent：<skill_content> 模型可见标准化格式
-
-#### PTC 运行时（v0.33, v0.34）
-- PtcRuntime 接口 + PtcRunResult/PtcRunFailure 类型系统
-- PtcDispatcher：并发子调用调度（PARALLEL/EXCLUSIVE + 有序提交）
-- JsonPtcRuntime：JSON 工具调用序列程序格式实现
-- PtcDispatchLogger：子调度日志写入会话事件流
-
-#### 守卫策略（v0.35）
-- RepeatToolReminder：连续相同工具+参数调用检测，阈值 [3,5,8] 注入提醒
-- ToolTimeoutPolicy：每工具超时强制表（31 个工具全覆盖），TOOL_TIMEOUT 错误码
-
-#### 作业与审批（v0.35）
-- JobRegistry：后台作业生命周期管理（注册/结算/终止/查询）
-- ApprovalAuditEvent：approval/asked + approval/decided 结构化审计事件
-
-#### 其他增强（v0.22–v0.29）
-- Retention sealed 类型、文件版本守卫、warn-then-block 重复检测
-- 子代理任务持久化冷恢复、CommandResult timedOut/aborted 互斥
-- Cron/Weekly 调度、MCP 子进程环境清洗、输出双段保留
-- 文件效果三级沙箱、batch 工具、MCP 图片 content block 处理
-- chroot（ROOT 模式）、品牌清理、LeakCanary 修复
+> **Ngày phát hành**: 2026-10-15  
+> **Phiên bản**: v0.35.0 (`appVersionName = 0.35.0`, `appVersionCode = 47`)  
+> **Phạm vi hỗ trợ**: Android 10+ · arm64-v8a (không cần Root / môi trường PRoot cô lập)  
+> **Tính chất**: Căn chỉnh toàn bộ cơ chế lõi của DeepSeek Harness — 33 cải tiến
 
 ---
 
-## ⬆️ 升级说明
+## 🎉 Điểm nhấn phiên bản
 
-- 覆盖安装即可，无需清空数据；
-- DB schema 从 56 升级到 57（新增会话谱系字段），自动迁移。
+v0.35.0 hoàn tất việc căn chỉnh toàn bộ cơ chế kiến trúc lõi của DeepSeek Harness (DSH). Từ v0.22.0 đến v0.35.0 đã phát hành tổng cộng 14 phiên bản, tích lũy 33 cải tiến căn chỉnh DSH, bao phủ toàn bộ cơ chế cốt lõi: nhật ký sự kiện phiên, an toàn nén, hệ thống tổng hợp trạng thái, trạng thái sẵn sàng PTY, sổ đăng ký kỹ năng, môi trường chạy PTC, chính sách bảo vệ, sổ đăng ký tác vụ, kiểm toán phê duyệt, v.v.
 
----
+### Tổng quan 33 cải tiến căn chỉnh DSH
 
-# 天玄 · TianXuan v0.19.1 发布记录
+#### Nhật ký sự kiện và quan hệ nguồn gốc phiên (v0.31–v0.32)
+- TurnEndReason với bảy trạng thái nguyên nhân (Completed/Aborted/Blocked/Error/MaxTokens/Interrupted/Forked)
+- SurfaceOp với thao tác nối thêm/thay thế (thao tác nguyên tử trên bề mặt hiển thị khi nén)
+- Truy vết quan hệ nguồn gốc phiên (lược đồ cơ sở dữ liệu 57: parentSessionId/isSeeded/origin/delegationDepth)
+- Sửa chữa phiên (tổng hợp TurnEndReason.Interrupted khi khôi phục sau sự cố)
 
-> **发布时间**：2026-09-28  
-> **版本号**：v0.19.1（`appVersionName = 0.19.1`，`appVersionCode = 28`）  
-> **支持范围**：Android 10+ · arm64-v8a（无 Root / PRoot 沙箱）  
-> **性质**：Hotfix · 紧急修复 v0.19.0 升级后终端/会话启动闪退
+#### An toàn nén (v0.34)
+- ToolPairingBalance: kiểm tra cân bằng điểm cắt nén, tránh điểm cắt rơi vào giữa cặp lời gọi công cụ/kết quả
+- Kết nối surfaceOp + turnEndReason vào CompactionManager
+- Kiểm tra tính hội tụ của tóm tắt: tóm tắt của LLM không được dài hơn đoạn bị gộp
 
----
+#### Hệ thống tổng hợp trạng thái phiên (v0.34)
+- SessionProjectionRegistry: sổ đăng ký các bộ tổng hợp thuần theo trạng thái
+- SessionStatsProjection: thống kê toàn nhật ký (số lượt/số bước/lời gọi công cụ/ước lượng token)
+- SessionTurnOutlineProjection: tổng hợp dàn ý theo lượt (xem trước lời nhắc/phản hồi)
+- PlanModeProjection: tổng hợp trạng thái chế độ lập kế hoạch
 
-## 🐛 问题修复
+#### Giao thức xác định trạng thái sẵn sàng PTY (v0.33)
+- TerminalSanitizer: bộ lọc mã thoát CSI/OSC theo luồng
+- BoundedTextBuffer: bộ đệm đầu ra có giới hạn (giới hạn kép về byte và số dòng)
+- PtyReadinessTracker: xác định trạng thái sẵn sàng dựa trên chuỗi bằng chứng ba cấp
+- PromptMarker: dấu đánh dấu OSC 133;D và mẫu biến môi trường bash
 
-### 存储挂载越界路径导致会话启动必闪退
+#### Hệ thống kỹ năng (v0.30, v0.33, v0.34)
+- Bộ nhớ đệm tóm tắt danh mục kỹ năng
+- Giao diện SkillProvider và sổ đăng ký phân tầng SkillRegistry
+- SkillFilesystemProvider: bọc AgentSkillRepository thành SkillProvider
+- renderSkillContent: định dạng chuẩn `<skill_content>` để mô hình nhìn thấy
 
-- **现象**：部分用户升级 v0.19.0 后，启动终端 / 智枢 / 构建任务即闪退，崩溃日志为 `IllegalArgumentException: 容器挂载仅允许位于 /mnt 或 /sdcard 内`；
-- **触发条件**：曾在「设置 → 存储挂载与共享」添加过**容器路径不在 `/mnt` 或 `/sdcard` 内**的自定义挂载点（历史版本保存时校验不完整，脏数据已入库），此后每次会话启动都会复现，重装应用也无法恢复；
-- **修复内容**：
-  - **运行时自动过滤**：会话启动时自动忽略非法挂载绑定并记录告警日志，不再导致崩溃——存量脏数据用户升级后即可正常使用；
-  - **保存前置校验**：新增挂载点时立即校验容器路径（必须位于 `/mnt` 或 `/sdcard` 内）与宿主路径（必须位于共享存储内），越界路径直接拒绝入库，杜绝再次产生脏数据；
-  - **无效绑定可视化**：设置页列表中的存量非法绑定会标红提示「无效挂载」及具体原因，引导删除重建；
-  - **校验规则收敛**：挂载路径安全规则统一收敛至 `StorageMountBinding` 模型层，由 PRoot 命令构建、运行时过滤、设置页校验三处共用，防止规则漂移；PRoot 侧防挂载逃逸的最终防线保持不变。
+#### Môi trường chạy PTC (v0.33, v0.34)
+- Giao diện PtcRuntime và hệ thống kiểu PtcRunResult/PtcRunFailure
+- PtcDispatcher: điều phối các lời gọi con đồng thời (PARALLEL/EXCLUSIVE và ghi nhận có thứ tự)
+- JsonPtcRuntime: triển khai định dạng chương trình gồm chuỗi lời gọi công cụ dạng JSON
+- PtcDispatchLogger: ghi nhật ký điều phối lời gọi con vào luồng sự kiện phiên
 
----
+#### Chính sách bảo vệ (v0.35)
+- RepeatToolReminder: phát hiện gọi liên tiếp cùng công cụ với cùng tham số, chèn nhắc nhở ở ngưỡng [3,5,8]
+- ToolTimeoutPolicy: bảng áp dụng thời gian chờ cho từng công cụ (bao phủ cả 31 công cụ), mã lỗi TOOL_TIMEOUT
 
-## ⬆️ 升级说明
+#### Tác vụ và phê duyệt (v0.35)
+- JobRegistry: quản lý vòng đời tác vụ nền (đăng ký/hoàn tất/kết thúc/truy vấn)
+- ApprovalAuditEvent: sự kiện kiểm toán có cấu trúc approval/asked + approval/decided
 
-- 覆盖安装即可，**无需清空数据**、无需重装；
-- 存在无效挂载点的用户升级后，可在「存储挂载与共享」页看到标红的无效条目，删除后重新添加合规路径即可恢复映射。
-
----
-
-## 💡 临时解法（停留在 v0.19.0 的用户）
-
-在升级前，可通过以下方式临时恢复使用：进入 **设置 → 存储挂载与共享 → 自定义映射绑定**，删除不需要或路径可疑的条目（尤其是容器路径不是 `/mnt/...` 或 `/sdcard/...` 开头的），删除后新建终端即可正常启动。
-
----
-
-# 天玄 · TianXuan v0.17.0 发布记录
-
-> **发布时间**：2026-09-21  
-> **版本号**：v0.17.0（`appVersionName = 0.17.0`）  
-> **支持范围**：Android 10+ · arm64-v8a（无 Root / PRoot 沙箱）
-
----
-
-## 🎉 版本亮点
-
-v0.17.0 集成了端侧离线翻译、Material You 壁纸色彩动态感知、深度吸收 RikkaHub 与 Pi 智能体架构精华，并全面下沉 Markdown 渲染引擎至通用组件层：
-
-- **Google ML Kit 端侧离线翻译**——无网络依赖、无需配置 API Key，模型离线下载进度可见，端侧高速翻译；
-- **Material You 壁纸动态取色与实时刷新**——支持遵循系统壁纸的动态配色系统，与澄明 (Liquid Glass) 双主题随心切换；
-- **Agent Harness 架构进化**——吸收容错编辑、Prompt Caching、视觉直通、Split-Turn 与机械摘要文件足迹，修复高并发下 OOM 隐患；
-- **全应用 Markdown 富文本预览**——版本更新弹窗与“关于”更新日志全面支持富文本排版预览，体验升级。
+#### Cải tiến khác (v0.22–v0.29)
+- Kiểu niêm phong Retention, bảo vệ phiên bản tệp, phát hiện trùng lặp theo cơ chế cảnh báo rồi chặn
+- Lưu trữ nhiệm vụ Agent con và khôi phục từ dữ liệu lưu, CommandResult có timedOut/aborted loại trừ nhau
+- Lập lịch Cron/hằng tuần, làm sạch môi trường tiến trình con MCP, giữ lại đầu ra thành hai đoạn
+- Môi trường cô lập tác động lên tệp ba cấp, công cụ batch, xử lý khối nội dung ảnh MCP
+- chroot (chế độ ROOT), dọn dẹp thương hiệu, sửa LeakCanary
 
 ---
 
-# 天玄 · TianXuan v0.10.0 发布记录
+## ⬆️ Hướng dẫn nâng cấp
 
-> **发布时间**：2026-09-03
-> **版本号**：v0.10.0（`appVersionName = 0.10.0`，`appVersionCode = 16`）
-> **支持范围**：Android 10+ · arm64-v8a（无 Root / PRoot 沙箱）
-
----
-
-## 🎉 版本亮点
-
-v0.10.0 是本轮迭代中最具「可观测、可恢复」意义的一个版本：
-
-- **浏览器获得 Hook 引擎与 CDP 级调试能力**——可注入式拦截、断点、Worker 级 Fetch 拦截，并配套网络时间线面板，浏览器行为第一次可以被精确观察与调试；
-- **对话正式支持「回退」**——基于 SessionFork 会话树派生的 Rewind/Checkpoint 机制，配每轮文件快照与磁盘持久化，重大操作前随时可撤回；
-- **Agent 记忆升级为语义模型**——冲突去重、revision、pinned、新鲜度语义，配合 Room 数据库迁移（43→44）；
-- **Skill 导入体验全面增强**——目录递归发现、任意位置导入、ZIP 批量导入、自动去重。
+- Chỉ cần cài đè lên bản cũ, không cần xóa dữ liệu;
+- Cơ sở dữ liệu nâng lược đồ từ 56 lên 57 (thêm các trường về quan hệ nguồn gốc phiên), dữ liệu sẽ tự động được chuyển đổi.
 
 ---
 
-## ✨ 新功能
+# CTHarness · Ghi chú phát hành v0.19.1
 
-### 浏览器：注入式 Hook 引擎与 CDP 调试
-
-- **注入式 Hook 引擎**：内置浏览器支持脚本注入式 Hook，可对页面行为进行拦截与改造；
-- **CDP 断点 / Worker 级拦截**：通过 CDP 协议提供断点能力，并支持 Worker 级 Fetch 拦截，可观察页面网络请求全过程；
-- **网络时间线面板**：在浏览器面板中实时查看网络请求时间线；
-- **CDP 暂停横幅**：调试暂停时显示明确横幅提示，避免误以为页面卡死；
-- **浏览器 MCP 动态端口**：Harness 侧浏览器 MCP 服务改为动态端口分配，避免端口冲突，并收敛 provider schema。
-
-### Agent Harness：对话回退与 Checkpoint 快照
-
-- **对话回退实装（Rewind）**：基于 **SessionFork 会话树派生**实现对话回退，可在不丢失上下文的前提下回到历史轮次；
-- **「撤回到此轮」UI 入口**：聊天界面新增回退入口，一键撤回至指定轮次；
-- **Checkpoints 每轮文件快照安全网**：每轮对话前对工作区文件做快照，为回退提供文件级安全网；
-- **Checkpoint 快照磁盘持久化**：快照落盘，重启应用后仍可回退。
-
-### Agent Harness：记忆语义模型（数据库 43→44）
-
-- **记忆冲突去重 / revision / pinned / 新鲜度语义模型**：记忆条目支持冲突消解、版本（revision）、置顶（pinned）与新鲜度（recency）语义，Agent 的记忆更加可控、可维护；
-- 对应 Room 数据库从 v43 迁移至 v44（详见下文「数据库迁移」）。
-
-### Agent Harness：子智能体调度与预算控制
-
-- **write_paths 写租约波式调度**：子智能体的文件写路径以「写租约」方式波式调度，避免多智能体并发写冲突；
-- **父级 facts pack**：子智能体向父级回传结构化 facts 打包，汇总信息更规整；
-- **汇总注入预算控制与超限分页落盘**：子智能体汇总注入增加预算控制，超限内容自动分页落盘，避免长文本丢失或撑爆上下文。
-
-### Skill 导入与管理
-
-- **Skill 目录递归发现**：设置页自动发现嵌套目录中的 Skill；
-- **任意位置自选目录导入**：支持从任意目录手动选择导入 Skill；
-- **Skill ZIP 批量导入**：支持 ZIP 包形式批量导入；
-- **目录自动发现批量导入**：自动扫描 `attachments/skills` 与工作区 `skills` 目录，按 resourcePath 去重批量导入。
-
-### 工作区（Workspace）
-
-- **GitHub 导入实时进度**：GitHub 导入弹窗实时展示 `git clone` 进度与百分比，长任务不再「干等」。
+> **Ngày phát hành**: 2026-09-28  
+> **Phiên bản**: v0.19.1 (`appVersionName = 0.19.1`, `appVersionCode = 28`)  
+> **Phạm vi hỗ trợ**: Android 10+ · arm64-v8a (không cần Root / môi trường PRoot cô lập)  
+> **Tính chất**: Bản vá khẩn cấp · Sửa lỗi thiết bị đầu cuối/phiên bị dừng đột ngột khi khởi động sau khi nâng lên v0.19.0
 
 ---
 
-## 🐛 问题修复
+## 🐛 Sửa lỗi
 
-- **终端**：修复进入终端时 `scrollToItem(-1)` 导致的闪退；
-- **Harness**：修复异常历史导致 DeepSeek 返回 400 `tool_calls` 序列错误；
-- **Harness**：修复 DeepSeek 思考模式下工具调用轮未回传 `reasoning_content` 的问题；
-- **Harness**：修复子智能体超时后工具调用计数归零的问题；
-- **聊天**：图片下载增加反爬规避，并修复本地图片渲染问题；
-- **浏览器**：tab id 前缀归一，修复 URL 含反引号导致的解析清洗异常；
-- **设置**：候选模型过多时限制高度内部滚动，避免撑爆弹窗底部黑屏；
-- **运行环境**：在线 Android 套件补齐 JDK 规范路径软链接，修复智坊签名环境误报缺失；
-- **构建预检**：CMake/Ninja 按 `has_native` 门控，并按实际缺失项报错，避免误报；
-- **CI**：Release 流水线签名配置改写入 `keystore.properties`，放开 CI 签名限制。
+### Đường dẫn gắn kết vượt giới hạn lưu trữ khiến phiên luôn bị dừng đột ngột khi khởi động
 
----
-
-## ♻️ 体验优化与重构
-
-- **图标体系**：全量替换系统图标为 **Lucide 单色 SVG**，移除 `material-icons-extended` 依赖，应用体积与视觉统一性双收益；
-- **代码清理**：移除死代码与未用依赖，Harness 侧去 BOM 与 `Duration.milliseconds` 迁移清理。
+- **Hiện tượng**: Sau khi nâng lên v0.19.0, một số người dùng gặp sự cố ngay khi mở thiết bị đầu cuối / trung tâm điều khiển / tác vụ dựng, nhật ký sự cố là `IllegalArgumentException: 容器挂载仅允许位于 /mnt 或 /sdcard 内`;
+- **Điều kiện kích hoạt**: Trước đó người dùng từng thêm điểm gắn kết tùy chỉnh trong «Cài đặt → Gắn kết lưu trữ và chia sẻ» mà **đường dẫn vùng chứa không nằm trong `/mnt` hay `/sdcard`** (phiên bản cũ kiểm tra chưa đầy đủ khi lưu nên dữ liệu không hợp lệ đã vào cơ sở dữ liệu). Từ đó mỗi lần khởi động phiên đều lặp lại lỗi, cài lại ứng dụng cũng không khôi phục được;
+- **Nội dung sửa**:
+  - **Tự lọc lúc chạy**: Khi khởi động phiên, tự động bỏ qua các liên kết gắn kết không hợp lệ và ghi nhật ký cảnh báo, không còn gây sự cố — người dùng có dữ liệu không hợp lệ từ trước chỉ cần nâng cấp là dùng bình thường;
+  - **Kiểm tra trước khi lưu**: Khi thêm điểm gắn kết mới, kiểm tra ngay đường dẫn vùng chứa (phải nằm trong `/mnt` hoặc `/sdcard`) và đường dẫn máy chủ (phải nằm trong bộ nhớ chia sẻ). Đường dẫn vượt giới hạn bị từ chối lưu ngay, chấm dứt việc tạo dữ liệu không hợp lệ;
+  - **Hiển thị liên kết không hợp lệ**: Các liên kết cũ không hợp lệ trong danh sách trang Cài đặt sẽ được tô đỏ kèm nhãn «gắn kết không hợp lệ» và lý do cụ thể, hướng dẫn người dùng xóa rồi tạo lại;
+  - **Thống nhất quy tắc kiểm tra**: Quy tắc an toàn đường dẫn gắn kết được gom về lớp mô hình `StorageMountBinding`, dùng chung cho ba nơi: dựng lệnh PRoot, lọc lúc chạy và kiểm tra trang Cài đặt, tránh sai lệch quy tắc; lớp phòng thủ cuối cùng chống thoát phạm vi gắn kết phía PRoot vẫn giữ nguyên.
 
 ---
 
-## 📝 文档
+## ⬆️ Hướng dẫn nâng cấp
 
-- 导航文档同步 Hook 引擎与 CDP 调试能力（见 `docs/AI_NAVIGATION.md`、`docs/BROWSER_DESIGN.md`）。
-
----
-
-## ⚠️ 数据库迁移说明
-
-本版本将 Room 数据库从 **v43 迁移至 v44**，迁移内容为记忆语义模型相关字段（含 `expiresAt` 默认值修正为 `DEFAULT NULL` / 小写 `null`）。
-
-- 升级安装后数据库将自动迁移，**无需手动操作**；
-- 迁移不可降级回退，如因故需要回退到旧版本，请先备份工作区与对话数据。
+- Chỉ cần cài đè lên bản cũ, **không cần xóa dữ liệu**, không cần cài lại;
+- Người dùng có điểm gắn kết không hợp lệ sau khi nâng cấp sẽ thấy mục bị tô đỏ trong trang «Gắn kết lưu trữ và chia sẻ». Xóa rồi thêm lại đường dẫn hợp lệ là ánh xạ hoạt động bình thường.
 
 ---
 
-## 🔖 提交范围
+## 💡 Giải pháp tạm thời (cho người dùng vẫn ở v0.19.0)
 
-自上一发布（v0.9.0）以来共 **30 个提交**（含发布提交），覆盖 `harness` / `browser` / `chat` / `settings` / `workspace` / `terminal` / `runtime` / `database` / `ci` / `components` 等模块。
+Trước khi nâng cấp, bạn có thể tạm khôi phục sử dụng như sau: vào **Cài đặt → Gắn kết lưu trữ và chia sẻ → Ràng buộc ánh xạ tùy chỉnh**, xóa các mục không cần thiết hoặc có đường dẫn đáng ngờ (đặc biệt là mục có đường dẫn vùng chứa không bắt đầu bằng `/mnt/...` hay `/sdcard/...`). Sau khi xóa, tạo thiết bị đầu cuối mới là khởi động bình thường.
 
 ---
 
-*掌中天玄，七星为枢。愿每一次意图，都能落成可检查的结果。*
+# CTHarness · Ghi chú phát hành v0.17.0
+
+> **Ngày phát hành**: 2026-09-21  
+> **Phiên bản**: v0.17.0 (`appVersionName = 0.17.0`)  
+> **Phạm vi hỗ trợ**: Android 10+ · arm64-v8a (không cần Root / môi trường PRoot cô lập)
+
+---
+
+## 🎉 Điểm nhấn phiên bản
+
+v0.17.0 tích hợp dịch thuật ngoại tuyến trên thiết bị, nhận diện động màu hình nền Material You, tiếp thu sâu các điểm mạnh trong kiến trúc Agent của RikkaHub và Pi, đồng thời đưa toàn bộ bộ máy kết xuất Markdown xuống tầng thành phần dùng chung:
+
+- **Google ML Kit dịch ngoại tuyến trên thiết bị** — không phụ thuộc mạng, không cần cấu hình khóa API, hiển thị tiến độ tải mô hình ngoại tuyến, dịch nhanh ngay trên máy;
+- **Lấy màu hình nền Material You động và làm mới theo thời gian thực** — hỗ trợ hệ thống phối màu theo hình nền, chuyển tự do giữa giao diện Trong Sáng (Liquid Glass) và giao diện còn lại;
+- **Tiến hóa kiến trúc Agent Harness** — tiếp thu cơ chế chỉnh sửa chịu lỗi, lưu đệm lời nhắc, truyền trực tiếp dữ liệu thị giác, tách lượt và dấu vết tệp tóm tắt theo quy tắc cố định, đồng thời sửa rủi ro hết bộ nhớ khi chạy đồng thời cao;
+- **Xem trước Markdown với định dạng phong phú trên toàn ứng dụng** — hộp thoại cập nhật phiên bản và nhật ký cập nhật trong mục «Giới thiệu» đều hỗ trợ xem trước với bố cục phong phú, nâng cấp trải nghiệm.
+
+---
+
+# CTHarness · Ghi chú phát hành v0.10.0
+
+> **Ngày phát hành**: 2026-09-03
+> **Phiên bản**: v0.10.0 (`appVersionName = 0.10.0`, `appVersionCode = 16`)
+> **Phạm vi hỗ trợ**: Android 10+ · arm64-v8a (không cần Root / môi trường PRoot cô lập)
+
+---
+
+## 🎉 Điểm nhấn phiên bản
+
+v0.10.0 là phiên bản có ý nghĩa nhất trong đợt cải tiến này về khả năng «quan sát được, khôi phục được»:
+
+- **Trình duyệt có bộ máy can thiệp và khả năng gỡ lỗi cấp CDP** — có thể chặn bằng mã lệnh được chèn, đặt điểm dừng, chặn Fetch ở cấp Worker, kèm bảng diễn tiến mạng. Hành vi của trình duyệt lần đầu tiên có thể được quan sát và gỡ lỗi chính xác;
+- **Hội thoại chính thức hỗ trợ «quay lại»** — cơ chế quay lại/điểm khôi phục dựa trên cây phiên SessionFork, kèm bản chụp tệp mỗi lượt và lưu đĩa; có thể quay về thời điểm trước khi thực hiện thao tác quan trọng;
+- **Bộ nhớ Agent nâng cấp thành mô hình ngữ nghĩa** — loại bỏ trùng lặp xung đột, phiên bản sửa đổi, trạng thái ghim, ngữ nghĩa độ mới, đi kèm chuyển đổi dữ liệu Room (43→44);
+- **Trải nghiệm nhập kỹ năng được tăng cường toàn diện** — phát hiện đệ quy thư mục, nhập từ bất kỳ vị trí nào, nhập hàng loạt ZIP, tự động loại bỏ trùng lặp.
+
+---
+
+## ✨ Tính năng mới
+
+### Trình duyệt: bộ máy can thiệp bằng mã chèn và gỡ lỗi CDP
+
+- **Bộ máy can thiệp bằng mã chèn**: Trình duyệt tích hợp sẵn hỗ trợ can thiệp bằng cách chèn mã lệnh, có thể chặn và thay đổi hành vi trang;
+- **Điểm dừng CDP / chặn cấp Worker**: Cung cấp khả năng đặt điểm dừng qua giao thức CDP, đồng thời hỗ trợ chặn Fetch ở cấp Worker, cho phép quan sát toàn bộ quá trình gửi yêu cầu mạng của trang;
+- **Bảng diễn tiến mạng**: Xem diễn tiến yêu cầu mạng theo thời gian thực trong bảng điều khiển trình duyệt;
+- **Biểu ngữ tạm dừng CDP**: Hiện biểu ngữ nhắc rõ khi trình gỡ lỗi tạm dừng, tránh nhầm là trang bị treo;
+- **Cổng MCP trình duyệt động**: Dịch vụ MCP trình duyệt phía Harness đổi sang cấp phát cổng động, tránh xung đột cổng và thống nhất lược đồ nhà cung cấp.
+
+### Agent Harness: quay lại hội thoại và bản chụp điểm khôi phục
+
+- **Quay lại hội thoại đã được hiện thực**: Dựa trên **cây phiên SessionFork** để quay lại các lượt trước mà không mất ngữ cảnh;
+- **Điểm vào giao diện «Thu lại về lượt này»**: Giao diện hội thoại thêm nút quay lại, một chạm để thu về lượt chỉ định;
+- **Bản chụp tệp tại điểm khôi phục mỗi lượt làm lưới an toàn**: Trước mỗi lượt hội thoại, chụp lại các tệp trong không gian làm việc, tạo lưới an toàn cấp tệp cho việc quay lại;
+- **Bản chụp điểm khôi phục lưu đĩa**: Bản chụp được ghi ra đĩa, sau khi khởi động lại ứng dụng vẫn có thể quay lại.
+
+### Agent Harness: mô hình ngữ nghĩa bộ nhớ (DB 43→44)
+
+- **Mô hình ngữ nghĩa cho xung đột bộ nhớ / phiên bản sửa đổi / trạng thái ghim / độ mới**: Mục nhớ hỗ trợ giải quyết xung đột, quản lý phiên bản sửa đổi, ghim và độ mới, giúp bộ nhớ của Agent dễ kiểm soát và bảo trì hơn;
+- Cơ sở dữ liệu Room tương ứng chuyển đổi từ v43 sang v44 (xem chi tiết ở phần «Chuyển đổi cơ sở dữ liệu» bên dưới).
+
+### Agent Harness: điều phối Agent con và kiểm soát ngân sách
+
+- **Điều phối theo đợt dựa trên quyền ghi được cấp cho write_paths**: Đường dẫn ghi tệp của Agent con được điều phối theo quyền ghi được cấp từng đợt, tránh xung đột ghi đồng thời giữa nhiều Agent;
+- **Gói dữ kiện gửi về Agent cha**: Agent con gửi về cho Agent cha các gói dữ kiện có cấu trúc, thông tin tổng hợp gọn gàng hơn;
+- **Kiểm soát ngân sách khi chèn tóm tắt và phân trang phần tràn ra đĩa**: Việc chèn tóm tắt từ Agent con có thêm kiểm soát ngân sách, nội dung vượt giới hạn tự động phân trang ghi ra đĩa, tránh mất văn bản dài hoặc làm tràn ngữ cảnh.
+
+### Nhập và quản lý kỹ năng
+
+- **Phát hiện kỹ năng đệ quy theo thư mục**: Trang Cài đặt tự động phát hiện kỹ năng nằm trong thư mục lồng nhau;
+- **Nhập từ thư mục tùy ý**: Hỗ trợ chọn thủ công bất kỳ thư mục nào để nhập kỹ năng;
+- **Nhập hàng loạt kỹ năng qua ZIP**: Hỗ trợ nhập hàng loạt dưới dạng gói ZIP;
+- **Tự phát hiện thư mục và nhập hàng loạt**: Tự quét `attachments/skills` và thư mục `skills` trong không gian làm việc, loại bỏ trùng theo resourcePath rồi nhập hàng loạt.
+
+### Không gian làm việc
+
+- **Tiến độ nhập GitHub theo thời gian thực**: Hộp thoại nhập GitHub hiển thị tiến độ và phần trăm của `git clone` theo thời gian thực, tác vụ dài không còn phải «chờ thụ động».
+
+---
+
+## 🐛 Sửa lỗi
+
+- **Thiết bị đầu cuối**: Sửa lỗi dừng đột ngột khi mở thiết bị đầu cuối do `scrollToItem(-1)`;
+- **Harness**: Sửa lỗi lịch sử bất thường khiến DeepSeek trả về 400 vì chuỗi `tool_calls` sai;
+- **Harness**: Sửa lỗi không gửi lại `reasoning_content` ở lượt gọi công cụ trong chế độ suy nghĩ của DeepSeek;
+- **Harness**: Sửa lỗi bộ đếm lời gọi công cụ về 0 sau khi Agent con hết thời gian chờ;
+- **Hội thoại**: Thêm biện pháp tránh bộ thu thập tự động khi tải ảnh, đồng thời sửa lỗi kết xuất ảnh cục bộ;
+- **Trình duyệt**: Chuẩn hóa tiền tố mã thẻ, sửa lỗi phân tích/dọn dẹp bất thường khi URL chứa dấu huyền ngược;
+- **Cài đặt**: Giới hạn chiều cao và cho cuộn bên trong khi quá nhiều mô hình ứng viên, tránh đẩy hộp thoại vượt quá đáy gây màn hình đen;
+- **Môi trường chạy**: Bộ Android trực tuyến bổ sung liên kết tượng trưng đường dẫn chuẩn cho JDK, sửa lỗi báo thiếu giả trong môi trường ký tại xưởng thông minh;
+- **Trước khi dựng**: CMake/Ninja được kiểm soát theo `has_native` và báo lỗi theo đúng mục thiếu thực tế, tránh báo giả;
+- **CI**: Quy trình phát hành đổi cấu hình ký sang ghi vào `keystore.properties`, gỡ giới hạn ký trên CI.
+
+---
+
+## ♻️ Tối ưu trải nghiệm và tái cấu trúc
+
+- **Hệ thống biểu tượng**: Thay toàn bộ biểu tượng hệ thống bằng **SVG đơn sắc Lucide**, bỏ thư viện phụ thuộc `material-icons-extended`, vừa giảm kích thước ứng dụng vừa đồng nhất thị giác;
+- **Dọn mã**: Loại bỏ mã không được gọi đến và thư viện phụ thuộc không dùng, phía Harness dọn BOM và chuyển sang `Duration.milliseconds`.
+
+---
+
+## 📝 Tài liệu
+
+- Tài liệu điều hướng cập nhật bộ máy can thiệp và khả năng gỡ lỗi CDP (xem `docs/AI_NAVIGATION.md`, `docs/BROWSER_DESIGN.md`).
+
+---
+
+## ⚠️ Chuyển đổi cơ sở dữ liệu
+
+Phiên bản này chuyển đổi cơ sở dữ liệu Room từ **v43 sang v44**, nội dung là các trường liên quan đến mô hình ngữ nghĩa bộ nhớ (trong đó có sửa giá trị mặc định của `expiresAt` thành `DEFAULT NULL` / `null` viết thường).
+
+- Sau khi nâng cấp và cài đặt, cơ sở dữ liệu sẽ tự động chuyển đổi, **không cần thao tác thủ công**;
+- Không thể hạ cấp lại sau khi chuyển đổi. Nếu vì lý do nào đó cần quay về phiên bản cũ, hãy sao lưu không gian làm việc và dữ liệu hội thoại trước.
+
+---
+
+## 🔖 Phạm vi bản ghi thay đổi
+
+Kể từ bản phát hành trước (v0.9.0) có tổng cộng **30 bản ghi thay đổi** (bao gồm bản ghi phát hành), bao phủ các mô-đun `harness` / `browser` / `chat` / `settings` / `workspace` / `terminal` / `runtime` / `database` / `ci` / `components`.
+
+---
+
+*CTHarness trong lòng bàn tay, Thất Tinh làm trục. Nguyện cho mỗi ý định đều kết thành kết quả có thể kiểm chứng.*

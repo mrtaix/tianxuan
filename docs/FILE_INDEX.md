@@ -1,95 +1,95 @@
-# 📚 天玄 (TianXuan) — 关键文件索引速查 (File Index)
+# 📚 CTHarness — Chỉ mục tệp quan trọng
 
-> 用于 AI 编码助手快速定位某个功能/类。详细架构细节见 [`ARCHITECTURE.md`](ARCHITECTURE.md)。
+> Giúp trợ lý lập trình AI định vị nhanh một tính năng/lớp. Chi tiết kiến trúc xem [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ---
 
-## 🤖 Agent Harness（核心调度）
+## 🤖 Agent Harness (điều phối cốt lõi)
 
-| 模块 | 关键文件 | 职责 |
+| Mô-đun | Tệp quan trọng | Trách nhiệm |
 | --- | --- | --- |
-| `harness/HarnessLoop.kt` | 主循环，多会话并发 | Agent 主循环 |
-| `harness/HarnessProviderRunner.kt` | 模型能力选择、流式请求与重试、助手回复结算 | 模型回合 |
-| `harness/HarnessToolRoundRunner.kt` | 工具参数校验、单轮限额、执行与审批暂停 | 工具回合 |
-| `harness/HarnessWorkspaceRecommendations.kt` | 工作区路径边界、MCP 推荐扫描与前台投影 | MCP 推荐 |
-| `harness/ToolExecutor.kt` | `read / write / edit / base / process / host / download / build_script / subagent` 等内置工具分派 |
-| `harness/ApprovalPolicyEngine.kt` | 工具调用的审批策略（normal / high / critical 三档） |
-| `harness/ToolRoundDispatcher.kt` | 单回合多工具并发调度（mutation 互斥 / read-only 4 并发） |
-| `harness/SubagentOrchestrator.kt` | 子智能体 Lane 编排 |
-| `harness/mcp/*` | MCP 协议：`McpManager` / `McpHttpTransport` / `McpJsonRpc` |
-| `harness/browser/BrowserMcpBootstrap.kt` | 内置 Browser MCP Server 启动 + 注册引擎 |
-| `harness/mcp/server/*` | in-process MCP Server：`McpServerRuntime` / Auth / Tool+Resource Dispatcher |
-| `harness/HarnessMessage.kt` | `HarnessTool` 枚举 + `ToolResult` (含 `imageAttachments`) |
+| `harness/HarnessLoop.kt` | Vòng lặp chính, đa phiên đồng thời | Vòng lặp Agent chính |
+| `harness/HarnessProviderRunner.kt` | Chọn năng lực mô hình, gửi yêu cầu phản hồi theo luồng và thử lại, hoàn tất xử lý phản hồi của trợ lý | Lượt mô hình |
+| `harness/HarnessToolRoundRunner.kt` | Kiểm tra tham số công cụ, giới hạn mỗi lượt, thực thi và tạm dừng phê duyệt | Lượt công cụ |
+| `harness/HarnessWorkspaceRecommendations.kt` | Ranh giới đường dẫn không gian làm việc, quét đề xuất MCP và đưa lên giao diện tiền cảnh | Đề xuất MCP |
+| `harness/ToolExecutor.kt` | Phân phối các công cụ tích hợp `read / write / edit / base / process / host / download / build_script / subagent` | Thực thi công cụ |
+| `harness/ApprovalPolicyEngine.kt` | Chính sách phê duyệt lời gọi công cụ (ba cấp `normal` / `high` / `critical`) | Phê duyệt |
+| `harness/ToolRoundDispatcher.kt` | Điều phối nhiều công cụ đồng thời trong một lượt (thao tác thay đổi dữ liệu loại trừ lẫn nhau / tối đa 4 thao tác chỉ đọc đồng thời) | Song song công cụ |
+| `harness/SubagentOrchestrator.kt` | Điều phối luồng thực thi riêng của Agent con | Phái Agent con |
+| `harness/mcp/*` | Giao thức MCP: `McpManager` / `McpHttpTransport` / `McpJsonRpc` | Giao tiếp MCP |
+| `harness/browser/BrowserMcpBootstrap.kt` | Khởi động máy chủ MCP trình duyệt tích hợp và đăng ký vào bộ máy thực thi | MCP trình duyệt |
+| `harness/mcp/server/*` | Máy chủ MCP trong tiến trình: `McpServerRuntime` / xác thực / điều phối công cụ và tài nguyên | MCP nội bộ |
+| `harness/HarnessMessage.kt` | Kiểu liệt kê `HarnessTool` và `ToolResult` (gồm `imageAttachments`) | Mô hình tin nhắn |
 
-## 🌐 内置浏览器（Browser）
+## 🌐 Trình duyệt tích hợp
 
-| 模块 | 关键文件 | 职责 |
+| Mô-đun | Tệp quan trọng | Trách nhiệm |
 | --- | --- | --- |
-| `core/browser/...` | `BrowserFamily / Risk / Capability / SelectionPolicy / Preferences / FileOps` | Pure Kotlin 模型 + 策略 |
-| `runtime/browser/BrowserRegistry.kt` | 浏览器注册中心 interface | 多家族管理 |
-| `runtime/browser/BrowserRegistryImpl.kt` | 单一 in-app WebView 实现 | 注册 / 启动 / 选 family |
-| `runtime/browser/BrowserEngine.kt` | 引擎操作 interface（24 个动作）| 抽象所有浏览器动作 |
-| `runtime/browser/AndroidInAppBrowserEngine.kt` | in-app WebView 引擎实现 | 全部动作落地 |
-| `runtime/browser/engine/WebViewTabPool.kt` | 多 tab 复用池 | 主线程 + StateFlow |
-| `runtime/browser/snapshot/SnapshotBuilder.kt` | DOM 扫描脚本 + ref 注入 | PageSnapshot 生成 |
-| `runtime/browser/screenshot/ScreenshotRecorder.kt` | `view.draw` 软渲截图落 PNG | ToolImageRef |
-| `runtime/browser/network/NetworkInterceptor.kt` | `shouldInterceptRequest` 拦截 | CapturedRequest |
-| `runtime/browser/storage/StorageController.kt` | Cookie + local/session 操作 | WebView eval |
-| `runtime/browser/secret/SecretRedactingInterceptor.kt` | 接入现有 `SecretRedactor` | 工具产物脱敏 |
-| `runtime/browser/hook/HookRuleStore.kt` | Hook 规则存储（线程安全） | 规则 CRUD + payload 生成 |
-| `runtime/browser/hook/HookInstaller.kt` | `TianxuanBridge` + document-start 注入 | 页面侧 runtime 安装 |
-| `runtime/browser/hook/HookEventPipeline.kt` | 桥事件 → 事件总线 | hook 命中/网络捕获合并 |
-| `runtime/browser/hook/NetworkBodyStore.kt` | 请求/响应体 LRU 缓存 | 字节预算内 body 存取 |
-| `runtime/browser/hook/hook_runtime.js`（assets） | 页面侧 fetch/XHR/fn/prop 拦截 | 网络改写 + 函数 hook |
-| `runtime/browser/cdp/CdpTransport.kt` | LocalSocket → DevTools socket 传输 | `webview_devtools_remote_<pid>` |
-| `runtime/browser/cdp/CdpSession.kt` | WS 帧编解码 + 命令关联/事件分发 | CDP JSON-RPC 会话 |
-| `runtime/browser/cdp/CdpManager.kt` | attach 生命周期 + socket 引用计数 | `setWebContentsDebuggingEnabled` |
-| `runtime/browser/cdp/CdpTabConnection.kt` | 单 tab 连接（Debugger + Fetch + Worker 子会话） | 断点/拦截路由 |
-| `runtime/browser/cdp/CdpDebugController.kt` | 真断点/暂停/单步/作用域/求值 | JS 调试状态机 |
-| `runtime/browser/cdp/CdpFetchInterceptor.kt` | `Fetch.requestPaused` 引擎级拦截 | Worker/子资源网络改写 |
-| `runtime/browser/tools/BrowserMcpTools.kt` | `mcp__browser__*` 工具分派 + 风险等级 | 50+ tools（hook_*/debug_* 门禁） |
-| `runtime/browser/tools/BrowserMcpResources.kt` | `browser://*` resources | 6 resources |
-| `feature/browser/BrowserScreen.kt` | 内置浏览器 Compose 主屏 | UI 入口 |
-| `feature/browser/BrowserViewModel.kt` | 持有 Registry + EventBus + Snapshot State | 状态 |
-| `feature/browser/BrowserActionCard.kt` | 给 Chat 复用的产物卡（缩略图） | 跨模块复用 |
-| `feature/browser/BrowserNavRoute.kt` | BrowserRoute 常量与跳转助手 | 路由入口 |
-| `docs/BROWSER_DESIGN.md` | 内置浏览器设计文档 | 决策 + ADR |
+| `core/browser/...` | `BrowserFamily / Risk / Capability / SelectionPolicy / Preferences / FileOps` | Mô hình thuần Kotlin và chính sách |
+| `runtime/browser/BrowserRegistry.kt` | Giao diện trung tâm đăng ký trình duyệt | Quản lý nhiều họ trình duyệt |
+| `runtime/browser/BrowserRegistryImpl.kt` | Triển khai WebView đơn trong ứng dụng | Đăng ký / khởi động / chọn họ trình duyệt |
+| `runtime/browser/BrowserEngine.kt` | Giao diện thao tác bộ máy trình duyệt (24 hành động) | Trừu tượng hóa mọi hành động trình duyệt |
+| `runtime/browser/AndroidInAppBrowserEngine.kt` | Triển khai bộ máy WebView trong ứng dụng | Hiện thực hóa toàn bộ hành động |
+| `runtime/browser/engine/WebViewTabPool.kt` | Nhóm tái sử dụng nhiều thẻ | Luồng chính và StateFlow |
+| `runtime/browser/snapshot/SnapshotBuilder.kt` | Mã lệnh quét DOM và chèn tham chiếu | Sinh PageSnapshot |
+| `runtime/browser/screenshot/ScreenshotRecorder.kt` | `view.draw` kết xuất bằng phần mềm thành PNG | ToolImageRef |
+| `runtime/browser/network/NetworkInterceptor.kt` | Chặn `shouldInterceptRequest` | CapturedRequest |
+| `runtime/browser/storage/StorageController.kt` | Thao tác cookie và bộ lưu trữ cục bộ/theo phiên | Đánh giá mã qua WebView |
+| `runtime/browser/secret/SecretRedactingInterceptor.kt` | Kết nối `SecretRedactor` hiện có | Che dữ liệu nhạy cảm trong sản phẩm đầu ra của công cụ |
+| `runtime/browser/hook/HookRuleStore.kt` | Lưu quy tắc can thiệp (an toàn luồng) | Tạo/đọc/cập nhật/xóa quy tắc và sinh dữ liệu gửi đi |
+| `runtime/browser/hook/HookInstaller.kt` | `TianxuanBridge` và chèn mã ngay khi tài liệu bắt đầu tải | Cài môi trường chạy phía trang |
+| `runtime/browser/hook/HookEventPipeline.kt` | Sự kiện cầu nối → kênh sự kiện | Gộp lần kích hoạt can thiệp và dữ liệu mạng thu được |
+| `runtime/browser/hook/NetworkBodyStore.kt` | Bộ nhớ đệm LRU cho nội dung yêu cầu/phản hồi | Truy xuất nội dung trong ngân sách byte |
+| `runtime/browser/hook/hook_runtime.js` (tài nguyên đóng gói) | Chặn `fetch`/XHR/hàm/thuộc tính phía trang | Viết lại mạng và can thiệp hàm |
+| `runtime/browser/cdp/CdpTransport.kt` | LocalSocket → ổ cắm DevTools | `webview_devtools_remote_<pid>` |
+| `runtime/browser/cdp/CdpSession.kt` | Mã hóa/giải mã khung WebSocket và liên kết lệnh/phân phối sự kiện | Phiên CDP JSON-RPC |
+| `runtime/browser/cdp/CdpManager.kt` | Vòng đời gắn kết và đếm tham chiếu ổ cắm | `setWebContentsDebuggingEnabled` |
+| `runtime/browser/cdp/CdpTabConnection.kt` | Kết nối một thẻ (trình gỡ lỗi, Fetch và phiên con Worker) | Định tuyến điểm dừng/chặn |
+| `runtime/browser/cdp/CdpDebugController.kt` | Điểm dừng thật / tạm dừng / chạy từng bước / phạm vi / đánh giá mã | Máy trạng thái gỡ lỗi JavaScript |
+| `runtime/browser/cdp/CdpFetchInterceptor.kt` | Chặn `Fetch.requestPaused` ở cấp bộ máy trình duyệt | Viết lại mạng cho Worker/tài nguyên con |
+| `runtime/browser/tools/BrowserMcpTools.kt` | Phân phối công cụ `mcp__browser__*` và cấp độ rủi ro | Hơn 50 công cụ (kiểm soát quyền với `hook_*`/`debug_*`) |
+| `runtime/browser/tools/BrowserMcpResources.kt` | Tài nguyên `browser://*` | 6 tài nguyên |
+| `feature/browser/BrowserScreen.kt` | Màn hình Compose chính của trình duyệt tích hợp | Điểm vào giao diện |
+| `feature/browser/BrowserViewModel.kt` | Giữ sổ đăng ký, kênh sự kiện và trạng thái ảnh chụp | Trạng thái |
+| `feature/browser/BrowserActionCard.kt` | Thẻ sản phẩm đầu ra tái sử dụng cho hội thoại (ảnh thu nhỏ) | Tái sử dụng giữa các mô-đun |
+| `feature/browser/BrowserNavRoute.kt` | Hằng BrowserRoute và hàm hỗ trợ chuyển trang | Điểm vào tuyến điều hướng |
+| `docs/BROWSER_DESIGN.md` | Tài liệu thiết kế trình duyệt tích hợp | Quyết định và bản ghi quyết định kiến trúc |
 
-## 🖥️ Linux 运行时（PRoot）
+## 🖥️ Môi trường chạy Linux (PRoot)
 
-| 模块 | 关键文件 | 职责 |
+| Mô-đun | Tệp quan trọng | Trách nhiệm |
 | --- | --- | --- |
-| `runtime/.../LinuxRuntime.kt` | PRoot 启动入口 / `base` 命令面板 | 命令执行边界 |
-| `runtime/.../ProcessRegistry.kt` | `process` 命令的 PID / 日志环形缓冲 | 后台进程托管 |
-| `runtime/.../ProotCommandBuilder.kt` | `-b` 挂载点规范化 + Shell 注入防护 | 安全 |
-| `runtime/.../WorkspaceFileService.kt` | 工作区读/写/搜/hash/zip/share | 与 file.* 工具对齐 |
-| `runtime/.../shell/VT100.kt` | 终端 VT100 状态机 | 终端渲染 |
+| `runtime/.../LinuxRuntime.kt` | Điểm khởi động PRoot / bảng lệnh `base` | Ranh giới thực thi lệnh |
+| `runtime/.../ProcessRegistry.kt` | PID / bộ đệm nhật ký dạng vòng của lệnh `process` | Quản lý tiến trình nền |
+| `runtime/.../ProotCommandBuilder.kt` | Chuẩn hóa điểm gắn kết `-b` và phòng chống chèn lệnh trình bao | Bảo mật |
+| `runtime/.../WorkspaceFileService.kt` | Đọc/ghi/tìm/băm/nén ZIP/chia sẻ không gian làm việc | Khớp với nhóm công cụ `file.*` |
+| `runtime/.../shell/VT100.kt` | Máy trạng thái VT100 của thiết bị đầu cuối | Kết xuất thiết bị đầu cuối |
 
-## 📱 内置无线 ADB 与 Logcat
+## 📱 ADB không dây và Logcat tích hợp
 
-| 模块 | 关键文件 | 职责 |
+| Mô-đun | Tệp quan trọng | Trách nhiệm |
 | --- | --- | --- |
-| `runtime/.../bridge/adb/EmbeddedAdbManager.kt` | Kadb 客户端 + mDNS 发现 + 持久密钥 | 自动发现 `_adb-tls-pairing` / `_adb-tls-connect`、一次配对、自动重连、Logcat 抓取 |
-| `runtime/.../bridge/HostBridge.kt` | 沙箱 HTTP 桥接 (127.0.0.1:7980) | 提供 `/api/logcat`、`/api/shell`（内置无线 ADB 回退）与静默 APK 安装 |
-| `app/src/main/assets/bin/logcat-grabber` | 沙箱内置 CLI 日志工具 | `logcat-grabber` / `logcat-tail` / `logcat-export` 脚本资产 |
-| `feature/developer/.../AdbLogcatScreen.kt` | 独立无线 ADB 与日志工作台 | 系统保活与诊断一级直达：配对码输入、mDNS 探测、多维 Logcat 过滤与复制 |
-| `feature/developer/.../DeveloperScreen.kt` | 开发者控制台 | 包含底层健康监控、无线 ADB 状态卡片、工具源更新等 |
-| `harness/ToolExecutor.kt` | `host.logcat` 分派 | 优先使用无线 ADB，失败后回退 Shizuku/Root |
+| `runtime/.../bridge/adb/EmbeddedAdbManager.kt` | Máy khách Kadb, khám phá mDNS và khóa bền vững | Tự phát hiện `_adb-tls-pairing` / `_adb-tls-connect`, ghép đôi một lần, tự kết nối lại, thu thập Logcat |
+| `runtime/.../bridge/HostBridge.kt` | Cầu nối HTTP cho môi trường cô lập (127.0.0.1:7980) | Cung cấp `/api/logcat`, `/api/shell` (dự phòng bằng ADB không dây tích hợp) và cài APK im lặng |
+| `app/src/main/assets/bin/logcat-grabber` | Công cụ dòng lệnh thu thập nhật ký tích hợp trong môi trường cô lập | Mã lệnh đóng gói `logcat-grabber` / `logcat-tail` / `logcat-export` |
+| `feature/developer/.../AdbLogcatScreen.kt` | Bàn làm việc ADB không dây và nhật ký độc lập | Truy cập trực tiếp để giữ tiến trình và chẩn đoán hệ thống: nhập mã ghép đôi, dò mDNS, lọc và sao chép Logcat đa chiều |
+| `feature/developer/.../DeveloperScreen.kt` | Bảng điều khiển nhà phát triển | Gồm giám sát sức khỏe tầng dưới, thẻ trạng thái ADB không dây, cập nhật nguồn công cụ… |
+| `harness/ToolExecutor.kt` | Phân phối `host.logcat` | Ưu tiên ADB không dây, nếu thất bại thì chuyển sang Shizuku/Root |
 
-## 🌿 Git 分支管理（feature:git）
+## 🌿 Quản lý nhánh Git (feature:git)
 
-| 模块 | 关键文件 | 职责 |
+| Mô-đun | Tệp quan trọng | Trách nhiệm |
 | --- | --- | --- |
-| `feature/git/.../GitManager.kt` | JGit 封装（MGit 同款技术栈） | 分支列表/切换/新建/删除、提交树泳道算法、push/pull 进度、友好错误映射 |
-| `feature/git/.../GitCredentialsStore.kt` | 按 host 的 HTTPS 凭据存储 | Token 经 SecretManager（AndroidKeyStore AES/GCM）加密后落 JSON |
-| `feature/git/.../GitViewModel.kt` | GitScreen 状态机 | 项目绑定 / 操作互斥 / 进度上抛 |
-| `feature/git/.../GitScreen.kt` | 分支管理页（分支+提交记录双页签） | 入口：智枢顶部工具条「仓库」 |
-| `feature/git/.../GitCommitGraph.kt` | Canvas 泳道提交图 | 穿线/合并/分叉斜线 + 多色节点 |
-| `feature/chat/.../ChatWorkbenchPanels.kt` | 顶部工具条「仓库」入口 | `onOpenRepository` 可选回调模式 |
-| `feature/navigation/.../TianXuanNavHost.kt` | `GitRepositoryDestination(projectName)` | 路由注册 |
+| `feature/git/.../GitManager.kt` | Bọc JGit (cùng nền tảng thư viện với MGit) | Liệt kê/chuyển/tạo/xóa nhánh, thuật toán làn cho cây bản ghi thay đổi, tiến độ đẩy/kéo, ánh xạ lỗi dễ hiểu |
+| `feature/git/.../GitCredentialsStore.kt` | Lưu thông tin xác thực HTTPS theo máy chủ | Mã truy cập được SecretManager (AndroidKeyStore AES/GCM) mã hóa rồi ghi JSON |
+| `feature/git/.../GitViewModel.kt` | Máy trạng thái GitScreen | Gắn dự án / loại trừ thao tác / cập nhật tiến độ |
+| `feature/git/.../GitScreen.kt` | Trang quản lý nhánh (hai thẻ: nhánh và lịch sử bản ghi thay đổi) | Điểm vào: mục "Kho" trên thanh công cụ trên cùng của CTHarness |
+| `feature/git/.../GitCommitGraph.kt` | Đồ thị bản ghi thay đổi dạng làn vẽ bằng Canvas | Đường chéo hợp nhất/tách nhánh và nút đa sắc |
+| `feature/chat/.../ChatWorkbenchPanels.kt` | Điểm vào "Kho" trên thanh công cụ trên cùng | Mẫu hàm gọi lại `onOpenRepository` tùy chọn |
+| `feature/navigation/.../TianXuanNavHost.kt` | `GitRepositoryDestination(projectName)` | Đăng ký tuyến điều hướng |
 
-> JGit 在宿主侧直接打开工作区仓库（`RepositoryBuilder` + 空的 system/user 配置规避 Android 路径问题），不依赖沙箱内 git 安装。
+> JGit mở trực tiếp kho mã trong không gian làm việc ở phía máy chủ (`RepositoryBuilder` và cấu hình hệ thống/người dùng rỗng để tránh vấn đề đường dẫn Android), không phụ thuộc vào Git cài trong môi trường cô lập.
 
-## 🤝 Web Reverse MCP 参考
+## 🤝 Tham chiếu Web Reverse MCP
 
-项目内置浏览器/MCP 设计借鉴自 `mnjh666/WebReverse-MCP`（模块切分 / 工具动词集 / 风险矩阵），不复用其代码。
+Thiết kế trình duyệt/MCP tích hợp của dự án tham khảo `mnjh666/WebReverse-MCP` (cách chia mô-đun, tập động từ công cụ và ma trận rủi ro), không dùng lại mã nguồn của họ.

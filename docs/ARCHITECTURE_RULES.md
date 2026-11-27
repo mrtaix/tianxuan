@@ -1,77 +1,76 @@
-# 🛡️ 天玄 (TianXuan) — 架构铁律与 AI 编码避坑指南 (Architecture & UX/UI Rules)
+# 🛡️ CTHarness — Nguyên tắc kiến trúc cốt lõi và hướng dẫn tránh bẫy khi AI viết mã (Architecture & UX/UI Rules)
 
 ---
 
-## 1. 纯粹模型层隔离 (Model Layer Purity)
+## 1. Tách biệt lớp model thuần túy (Model Layer Purity)
 
-- `:core:model` **严禁** 引入 `android.*`、`androidx.*` 或 Compose 依赖，必须保持 Pure Kotlin。
-- `architectureCheck` 已接入 `app:preBuild` 验证阶段，会主动阻止模型层平台化、非法 feature 横向依赖和业务层直连 DAO。
-- **治理策略即代码**：上述门禁的全部规则登记在根目录 [`architecture-policy.json`](../architecture-policy.json)（模块依赖白名单 `requires`、依赖环检查、`importBans` import 黑名单、`maxFileLines` 文件尺寸棘轮）。该文件是唯一事实源——**新增模块或调整模块依赖时必须同步登记**，否则门禁失败。
-- 存量超限文件（>400 行）登记在 `.architecture-baseline.json` 棘轮基线：行数**只许缩减不许上涨**；新文件必须合规。缩减代码后运行 `architectureBaselineSync` 下调基线。
-
----
-
-## 2. 持久化与偏好边界 (Persistence & Preference Boundaries)
-
-- 业务层（feature / runtime / harness）**只能依赖** `core/database/PersistenceRepositories.kt` 暴露的 Repository 接口，严禁直接注入或操作 Room DAO。
-- 偏好设置按领域统一通过 `core/datastore/PreferenceFacades.kt` 提供的领域分面接口读取或写入，严禁随意引入私人键值。
+- `:core:model` **nghiêm cấm** đưa vào các phụ thuộc `android.*`, `androidx.*` hoặc Compose, phải giữ nguyên Pure Kotlin.
+- `architectureCheck` đã được nối vào giai đoạn kiểm chứng `app:preBuild`, chủ động chặn việc platform hóa tầng model, phụ thuộc ngang bất hợp pháp giữa các feature và kết nối trực tiếp từ tầng nghiệp vụ tới DAO.
+- **Chính sách quản trị là mã nguồn (governance-as-code)**: toàn bộ quy tắc của các cổng kiểm tra trên được đăng ký trong [`architecture-policy.json`](../architecture-policy.json) ở thư mục gốc (danh sách trắng phụ thuộc module `requires`, kiểm tra chu trình phụ thuộc, danh sách đen import `importBans`, ratchet kích thước tệp `maxFileLines`). Tệp này là nguồn sự thật duy nhất — **phải đăng ký đồng bộ khi thêm module mới hoặc điều chỉnh quan hệ phụ thuộc**, nếu không cổng kiểm tra sẽ thất bại.
+- Các tệp vượt giới hạn từ trước (>400 dòng) được đăng ký trong baseline ratchet `.architecture-baseline.json`: số dòng **chỉ được giảm, không được tăng**; tệp mới phải tuân thủ quy định. Sau khi rút gọn mã, chạy `architectureBaselineSync` để hạ baseline.
 
 ---
 
-## 3. 🎨 M3 Expressive 与 UX/UI 设计系统与前端架构铁律
+## 2. Ranh giới giữa lưu trữ bền vững và cài đặt ưu tiên (Persistence & Preference Boundaries)
 
-1. **统一设计系统组件（严禁 raw Material 组件散落）**：
-   - 容器必须使用 `top.wkbin.tianxuan.ui.components.RuntimeCard`（支持 `containerColor`, `borderColor`, `contentPadding`, `onClick`），**严禁**使用原生 `androidx.compose.material3.Card` 或自定义 `Modifier.border/background` 拼接容器，确保在**Material You（标准 M3）**与**液态玻璃**双主题下毛玻璃、折射与微边框自适应生效。
-   - 按钮统一使用 `RuntimeButton`, `RuntimeFilledTonalButton`, `RuntimeOutlinedButton`, `RuntimeTextButton`, `RuntimeIconButton`。
-   - 弹窗统一使用 `top.wkbin.tianxuan.ui.components.RuntimeAlertDialog`。
-   - 开关与进度指示使用 `RuntimeSwitch`, `RuntimeLinearProgressIndicator`, `RuntimeCircularProgressIndicator`。
-2. **弹窗与表单软键盘安全（IME 防遮挡）**：
-   - 所有包含 `OutlinedTextField` 或列表的 Dialog `text` 内容区域，**严禁**设置死锁的固定高宽或外层硬编码 `offset`，**必须**包裹 `modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())`，确保在移动端软键盘弹起时表单可顺畅滑动，操作按钮始终可见可达。
-3. **顶部与底部导航栏规范**：
-   - 顶部导航统一使用 `RuntimeTopBar`（支持 `title`, `statusText`, `onBack`）。
-   - 底部导航统一使用基于 M3 原生 NavigationBar 的 `RuntimeBottomBar`。
-4. **响应式与小屏防截断/防折行**：
-   - 消息气泡（如 `UserBubble`）必须采用响应式宽度（`Modifier.widthIn(max = 560.dp)`），避免在平板/折叠屏/大屏上被限制过窄。
-   - 单行文本、路径或标签（如文件路径、短语标题、状态标签）必须显式声明 `maxLines = 1, overflow = TextOverflow.Ellipsis`，严禁长字符串将同行的操作按钮挤出屏幕。
-   - 横向多按钮行（如操作栏、卡片底部动作）必须配置适当紧凑的 `contentPadding` 与 `labelSmall` 单行字号，杜绝 360dp 窄屏宽度下文字断行造成按钮高度参差不齐。
-5. **层级与多层材质防冲突**：
-   - 在 `RuntimeCard` 内嵌的日志区、终端代码块或次级子项中，应使用 `Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest/Highest)`，避免多层嵌套 Card 导致液态玻璃与阴影层级计算异常。
+- Tầng nghiệp vụ (feature / runtime / harness) **chỉ được phụ thuộc** vào interface Repository do `core/database/PersistenceRepositories.kt` cung cấp, nghiêm cấm inject trực tiếp hoặc thao tác Room DAO.
+- Các cài đặt ưu tiên được đọc/ghi thống nhất qua interface mặt tiền theo từng lĩnh vực do `core/datastore/PreferenceFacades.kt` cung cấp, nghiêm cấm tùy tiện thêm các cặp khóa-giá trị riêng lẻ.
 
 ---
 
-## 4. 安全与网络策略 (Security & Network Policy)
+## 3. 🎨 M3 Expressive và hệ thống thiết kế UX/UI cùng các nguyên tắc cốt lõi của frontend
 
-- 本地模型（`LOCAL` 分组）允许 `http://127.0.0.1:*` 或 `http://localhost:*`，且 `apiKeyOptional = true`。
-- 外部模型（`OFFICIAL` / `CHINA` / `AGGREGATOR`）强制要求 HTTPS。
-
----
-
-## 5. PRoot 挂载与命令执行安全 (PRoot Sandbox Security)
-
-- 挂载路径必须经过 `ProotCommandBuilder` 正规化处理，避免 Shell 注入与危险的系统根目录穿越。
-- `base` 只用于有界前台命令；默认 10 分钟，可由用户配置为 1–60 分钟，也可用 `timeout_seconds` 对单次调用覆盖 1–3600 秒。
-- 不要在 `base` 中用 `nohup` / `setsid` / `&` 模拟守护进程。长任务必须调用 `process(action="start", ...)`，后续用 `status` / `logs` / `list` / `stop` 管理。
-- `process` 的外部 ID 会加 `agent-process:` 命名空间，禁止与工具中心服务进程混用。
-
----
-
-## 6. 移动端 Gradle 资源策略 (Mobile Sandbox Toolchain Strategy)
-
-- 沙箱 Android/Flutter 构建固定 `--no-daemon --max-workers=2`，全局配置保持 `org.gradle.daemon=false`、`org.gradle.parallel=false`、`org.gradle.workers.max=2`。
-- NDK 只允许由 init policy 的 `android.ndkPath` 注入。构建脚本可清理旧 `local.properties` 的 `ndk.dir`，不得同时重新写入 `ndk.dir` 或在项目中再声明 `ndkPath`，否则 AGP 会报双 locator 冲突。
+1. **Thành phần thiết kế thống nhất (nghiêm cấm rải rác Material Component thô)**:
+   - Container phải dùng `top.wkbin.tianxuan.ui.components.RuntimeCard` (hỗ trợ `containerColor`, `borderColor`, `contentPadding`, `onClick`), **nghiêm cấm** dùng `androidx.compose.material3.Card` gốc hoặc tự ghép container bằng `Modifier.border/background`, nhằm đảm bảo hiệu ứng mờ kính, khúc xạ và viền mỏng tự thích ứng dưới cả hai theme **Material You (M3 chuẩn)** và **liquid glass**.
+   - Nút bấm dùng thống nhất `RuntimeButton`, `RuntimeFilledTonalButton`, `RuntimeOutlinedButton`, `RuntimeTextButton`, `RuntimeIconButton`.
+   - Hộp thoại dùng thống nhất `top.wkbin.tianxuan.ui.components.RuntimeAlertDialog`.
+   - Công tắc và chỉ báo tiến độ dùng `RuntimeSwitch`, `RuntimeLinearProgressIndicator`, `RuntimeCircularProgressIndicator`.
+2. **An toàn bàn phím mềm cho hộp thoại và biểu mẫu (IME chắn màn hình)**:
+   - Toàn bộ nội dung `text` của Dialog chứa `OutlinedTextField` hoặc danh sách, **nghiêm cấm** thiết lập chiều cao/rộng cố định khóa cứng hoặc `offset` mã cứng ở lớp ngoài, **phải** bọc `modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())`, đảm bảo khi bàn phím mềm bật lên trên thiết bị di động biểu mẫu vẫn cuộn mượt và nút thao tác luôn hiển thị, có thể chạm tới.
+3. **Quy phạm thanh điều hướng trên và dưới**:
+   - Thanh điều hướng trên dùng thống nhất `RuntimeTopBar` (hỗ trợ `title`, `statusText`, `onBack`).
+   - Thanh điều hướng dưới dùng thống nhất `RuntimeBottomBar` dựa trên NavigationBar gốc của M3.
+4. **Responsive, chống cắt và chống gập dòng trên màn hình nhỏ**:
+   - Bong bóng tin nhắn (như `UserBubble`) phải dùng chiều rộng responsive (`Modifier.widthIn(max = 560.dp)`), tránh bị giới hạn quá hẹp trên máy tính bảng, thiết bị gập hoặc màn hình lớn.
+   - Văn bản một dòng, đường dẫn hoặc nhãn (đường dẫn tệp, tiêu đề ngắn, nhãn trạng thái) phải khai báo rõ `maxLines = 1, overflow = TextOverflow.Ellipsis`, nghiêm cấm để chuỗi dài đẩy nút thao tác cùng dòng ra khỏi màn hình.
+   - Hàng nhiều nút bấm ngang (thanh thao tác, hành động cuối thẻ) phải cấu hình `contentPadding` đủ compact và cỡ chữ một dòng `labelSmall`, triệt tiêu tình trạng đứt dòng trên màn hình hẹp 360dp khiến chiều cao các nút không đồng đều.
+5. **Tránh xung đột giữa các tầng và nhiều lớp vật liệu**:
+   - Trong khu vực log, khối mã terminal hoặc mục con cấp hai lồng trong `RuntimeCard`, nên dùng `Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest/Highest)`, tránh lồng nhiều Card gây tính toán sai lớp kính lỏng và đổ bóng.
 
 ---
 
-## 7. 工作区与插件安全 (Workspace & Plugins Safety)
+## 4. Chính sách bảo mật và mạng (Security & Network Policy)
 
-- ZIP 导入必须使用 `WorkspaceManager.importProjectArchive()`，禁止直接解压不受信路径；Git HTTP(S) 与 SSH URL 必须按用户选择的 transport 分别校验。
-- 导入类型写入 `.tianxuan-project.properties`，不能只靠文件扩展名或目录内容重新猜测用户选择。
-- 同一插件 ID + version 已存在时返回“已导入”，不得递归覆盖现有 payload；安装框架应先保证 `$toolDir/bin` 存在。
+- Mô hình cục bộ (nhóm `LOCAL`) được phép dùng `http://127.0.0.1:*` hoặc `http://localhost:*`, và `apiKeyOptional = true`.
+- Mô hình bên ngoài (`OFFICIAL` / `CHINA` / `AGGREGATOR`) bắt buộc dùng HTTPS.
 
 ---
 
-## 8. 无线 ADB 与 PRoot 守护进程约束 (Wireless ADB & PRoot Daemon Strategy)
+## 5. Mount PRoot và an toàn thực thi lệnh (PRoot Sandbox Security)
 
-- **PRoot ADB 进程隔离**：PRoot 沙箱内无持久 init/systemd 守护进程，后台 `adb fork-server` 无法跨独立命令存活，每次调用后都会销毁。命令行 ADB 操作需在单条执行中完成 `connect + 操作`（沙箱 `/opt/tianxuan/bin/adb` 封装脚本已内置自动 connect），或优先通过 `HostBridge` (`logcat-grabber` / `tianxuan-host logcat`) 经由宿主常驻 Kadb 连接。
-- **日志抓取免特权**：抓取日志（logcat）通过内置无线 ADB 协议与 HostBridge 桥接，**完全不依赖 Shizuku 或 Root 权限**。AI Agent 在遇到抓取日志/排查崩溃任务时，应直接使用 `host(action="logcat", ...)` 或 `logcat-grabber <包名> [-P 端口]`，严禁要求用户先开启 Shizuku/Root 或做多余权限排查。
+- Đường dẫn mount phải được chuẩn hóa qua `ProotCommandBuilder`, tránh injection Shell và đi xuyên thư mục gốc hệ thống nguy hiểm.
+- `base` chỉ dùng cho lệnh foreground có giới hạn; mặc định 10 phút, người dùng có thể cấu hình 1–60 phút, và có thể ghi đè 1–3600 giây cho từng lần gọi bằng `timeout_seconds`.
+- Đừng dùng `nohup` / `setsid` / `&` trong `base` để giả lập daemon. Tác vụ dài phải gọi `process(action="start", ...)`, sau đó quản lý bằng `status` / `logs` / `list` / `stop`.
+- ID bên ngoài của `process` được thêm namespace `agent-process:`, nghiêm cấm trộn với tiến trình dịch vụ của trung tâm công cụ.
 
+---
+
+## 6. Chiến lược tài nguyên Gradle cho mobile (Mobile Sandbox Toolchain Strategy)
+
+- Build Android/Flutter trong sandbox cố định `--no-daemon --max-workers=2`, cấu hình toàn cục giữ `org.gradle.daemon=false`, `org.gradle.parallel=false`, `org.gradle.workers.max=2`.
+- NDK chỉ được phép inject qua `android.ndkPath` của init policy. Script build được phép dọn `ndk.dir` cũ trong `local.properties`, nhưng không được đồng thời ghi lại `ndk.dir` hay khai báo `ndkPath` lần nữa trong dự án, nếu không AGP sẽ báo xung đột hai locator.
+
+---
+
+## 7. An toàn workspace và plugin (Workspace & Plugins Safety)
+
+- Nhập ZIP phải dùng `WorkspaceManager.importProjectArchive()`, nghiêm cấm giải nén trực tiếp đường dẫn không đáng tin; URL Git HTTP(S) và SSH phải được xác thực riêng theo transport do người dùng chọn.
+- Loại nhập được ghi vào `.tianxuan-project.properties`, không được chỉ dựa vào phần mở rộng tệp hay nội dung thư mục để đoán lại lựa chọn của người dùng.
+- Khi đã tồn tại cùng ID plugin + version thì trả về "đã nhập", không được đệ quy ghi đè payload hiện có; framework cài đặt phải đảm bảo `$toolDir/bin` tồn tại trước.
+
+---
+
+## 8. Ràng buộc ADB không dây và daemon PRoot (Wireless ADB & PRoot Daemon Strategy)
+
+- **Cách ly tiến trình ADB của PRoot**: bên trong sandbox PRoot không có daemon init/systemd bền vững, `adb fork-server` chạy nền không thể sống qua các lệnh độc lập, sẽ bị hủy sau mỗi lần gọi. Thao tác ADB dòng lệnh phải hoàn tất `connect + thao tác` trong một lần thực thi (script bao bọc `/opt/tianxuan/bin/adb` đã tích hợp tự connect), hoặc ưu tiên qua `HostBridge` (`logcat-grabber` / `tianxuan-host logcat`) dùng kết nối Kadb thường trú của máy chủ Android.
+- **Thu log không cần đặc quyền**: việc bắt logcat được thực hiện qua giao thức ADB không dây tích hợp và cầu nối HostBridge, **hoàn toàn không phụ thuộc vào Shizuku hay quyền Root**. Khi agent AI gặp tác vụ bắt log/điều tra crash, phải dùng trực tiếp `host(action="logcat", ...)` hoặc `logcat-grabber <tên gói> [-P cổng]`, nghiêm cấm yêu cầu người dùng bật Shizuku/Root trước hoặc làm thêm các bước kiểm tra quyền thừa.

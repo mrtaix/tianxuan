@@ -285,6 +285,44 @@ class HarnessCompactionAndQueueIntegrationTest {
     }
 
     @Test
+    fun `next run prompts enqueued during active operation survive its completion`() = runBlocking {
+        val sessionId = "s-active-queue"
+        val opId = "tool-operation"
+        val activeLane = repository.ensureLane(sessionId, "main").copy(currentOperationId = opId)
+        repository.beginOperation(
+            activeLane,
+            top.wkbin.tianxuan.core.database.HarnessOperationEntity(
+                id = opId, sessionId = sessionId, laneName = "main", kind = "run",
+                status = "running", phase = "tool", startedAt = 0L, updatedAt = 0L,
+                startLeafId = null, stateJson = "{}",
+            ),
+        )
+        queues.enqueue(sessionId, PromptQueue.NEXT_RUN, PendingMessage("B", createdAt = 1L))
+        queues.enqueue(sessionId, PromptQueue.NEXT_RUN, PendingMessage("C", createdAt = 2L))
+        queues.enqueue(sessionId, PromptQueue.STEER, PendingMessage("steer", createdAt = 3L))
+        queues.enqueue(sessionId, PromptQueue.FOLLOW_UP, PendingMessage("follow", createdAt = 4L))
+
+        assertTrue(repository.listQueue(sessionId, "main", "next_run").all { it.operationId == null })
+        assertEquals(opId, repository.listQueue(sessionId, "main", "steer").single().operationId)
+        assertEquals(opId, repository.listQueue(sessionId, "main", "follow_up").single().operationId)
+        repository.finishOperation(
+            top.wkbin.tianxuan.core.database.HarnessLaneResultEntity(
+                sessionId, "main", opId, "completed", null, null, 5L,
+            ),
+            activeLane.copy(currentOperationId = null),
+        )
+
+        // Đọc lại từ DB như khi drain sau tool: B/C còn nguyên, đúng thứ tự, chỉ consume một lần.
+        val revived = PromptQueueManager(repository, Json, store)
+        assertEquals(listOf("B", "C"), revived.list(sessionId, PromptQueue.NEXT_RUN).map { it.second.text })
+        assertEquals(listOf("B"), revived.consume(sessionId, PromptQueue.NEXT_RUN, limit = 1).map { it.text })
+        assertEquals(listOf("C"), revived.consume(sessionId, PromptQueue.NEXT_RUN, limit = 1).map { it.text })
+        assertTrue(revived.consume(sessionId, PromptQueue.NEXT_RUN).isEmpty())
+        assertTrue(revived.list(sessionId, PromptQueue.STEER).isEmpty())
+        assertTrue(revived.list(sessionId, PromptQueue.FOLLOW_UP).isEmpty())
+    }
+
+    @Test
     fun `concurrent enqueues keep deterministic order`() = runBlocking {
         val sessionId = "s-race"
         (1..20).map { index ->

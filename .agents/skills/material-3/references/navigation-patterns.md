@@ -1,18 +1,18 @@
-# MD3 Navigation Patterns
+# Mẫu điều hướng MD3
 
-Guide for choosing and implementing Material Design 3 navigation components.
+Hướng dẫn lựa chọn và triển khai component điều hướng của Material Design 3.
 
-## Jetpack Compose (primary)
+## Jetpack Compose (chính)
 
-Use **`androidx.compose.material3`**: `NavigationBar`, `NavigationRail`, `NavigationDrawerItem`, `ModalNavigationDrawer`, `DismissibleNavigationDrawer`, `PermanentNavigationDrawer`, `NavigationBarItem`, `NavigationRailItem`, top app bars (`TopAppBar`, `CenterAlignedTopAppBar`, `LargeTopAppBar`, expressive variants per BOM), and **`Scaffold`** (`bottomBar`, `floatingActionButton`, `snackbarHost`).
+Dùng **`androidx.compose.material3`**: `NavigationBar`, `NavigationRail`, `NavigationDrawerItem`, `ModalNavigationDrawer`, `DismissibleNavigationDrawer`, `PermanentNavigationDrawer`, `NavigationBarItem`, `NavigationRailItem`, top app bar (`TopAppBar`, `CenterAlignedTopAppBar`, `LargeTopAppBar`, biến thể expressive theo BOM), và **`Scaffold`** (`bottomBar`, `floatingActionButton`, `snackbarHost`).
 
-Wire destinations with **Navigation Compose** (`NavHost`, `composable`, `rememberNavController`). For **adaptive** UIs, use **`calculateWindowSizeClass`**, **`androidx.compose.material3.adaptive`**, or **`currentWindowAdaptiveInfo`** / **`NavigableListDetailPaneScaffold`** (names and packages depend on your BOM — check [Android Developers](https://developer.android.com/jetpack/androidx/releases/compose-material3)).
+Kết nối các đích đến với **Navigation Compose** (`NavHost`, `composable`, `rememberNavController`). Với UI **adaptive**, dùng **`calculateWindowSizeClass`**, **`androidx.compose.material3.adaptive`**, hoặc **`currentWindowAdaptiveInfo`** / **`NavigableListDetailPaneScaffold`** (tên và package tùy BOM của bạn — kiểm tra [Android Developers](https://developer.android.com/jetpack/androidx/releases/compose-material3)).
 
-Material's [I/O 2026 update](https://m3.material.io/blog/whats-new-at-io26) adds expressive/adaptive emphasis:
+[Bản cập nhật I/O 2026](https://m3.material.io/blog/whats-new-at-io26) của Material nhấn mạnh expressive/adaptive:
 
-- Prefer expressive/adaptive scaffolds for mobile, desktop, foldables, watches, and XR rather than scaling one phone navigation model upward.
-- Expressive search and search app bars have refreshed visual style, motion, and more flexible trailing icon behavior. Use current Compose Material3 APIs where available; use web/CSS approximations only when targeting web.
-- Keep navigation spacing on the 8dp spacing system so rail/drawer/app-bar gaps can adapt by device class and density.
+- Ưu tiên scaffold expressive/adaptive cho mobile, desktop, thiết bị gập, đồng hồ và XR thay vì phóng to một mô hình điều hướng phone duy nhất.
+- Search và search app bar expressive có phong cách thị giác, chuyển động làm mới và hành vi icon cuối linh hoạt hơn. Dùng API Compose Material3 hiện tại khi có; chỉ dùng xấp xỉ web/CSS khi nhắm tới web.
+- Giữ khoảng cách điều hướng trên hệ thống 8dp để khoảng cách rail/drawer/app-bar có thể thích ứng theo loại thiết bị và mật độ.
 
 ```kotlin
 // Conceptual — adapt routes and selection to your app
@@ -38,13 +38,13 @@ Scaffold(
 }
 ```
 
-**Web (limited):** The HTML/`@material/web` sections below remain useful for token-backed sites; [Material Web is maintenance-only](https://m3.material.io/develop/web).
+**Web (hạn chế):** Các phần HTML/`@material/web` bên dưới vẫn hữu ích cho site dựa trên token; [Material Web chỉ ở chế độ maintenance](https://m3.material.io/develop/web).
 
 ---
 
-## Navigation Component Selection
+## Lựa chọn component điều hướng
 
-### Decision Tree
+### Cây quyết định
 
 ```
 How many primary destinations?
@@ -61,28 +61,28 @@ How many primary destinations?
     └── Navigation Drawer with sections
 ```
 
-### Quick Reference
+### Tham chiếu nhanh
 
-| Component | Destinations | Screen Size | Persistence | Position |
+| Component | Số đích đến | Kích thước màn hình | Tính liên tục | Vị trí |
 |-----------|-------------|-------------|-------------|----------|
-| Navigation Bar | 3–5 | Compact | Persistent | Bottom |
-| Navigation Rail | 3–7 | Medium | Persistent | Side (start) |
-| Navigation Drawer | Unlimited | Expanded+ | Standard or Modal | Side (start) |
-| Tabs | 2+ related views | Any | Persistent | Top (below app bar) |
-| Bottom App Bar | — (contextual actions) | Compact | Persistent | Bottom |
+| Navigation Bar | 3–5 | Compact | Liên tục | Dưới cùng |
+| Navigation Rail | 3–7 | Medium | Liên tục | Bên (đầu) |
+| Navigation Drawer | Không giới hạn | Expanded+ | Standard hoặc Modal | Bên (đầu) |
+| Tabs | 2+ view liên quan | Mọi kích thước | Liên tục | Trên (dưới app bar) |
+| Bottom App Bar | — (hành động ngữ cảnh) | Compact | Liên tục | Dưới cùng |
 
 ## Navigation Bar
 
-**Use when**: 3–5 primary destinations on compact (mobile) screens.
-**Position**: Bottom of screen, always visible.
+**Dùng khi**: 3–5 đích đến chính trên màn hình compact (mobile).
+**Vị trí**: Đáy màn hình, luôn hiển thị.
 
-### Anatomy
-- Fixed at bottom, full width
-- 3–5 navigation items with icon + label
-- Active item shows filled icon + indicator pill
-- Height: 80dp
+### Cấu trúc
+- Cố định ở đáy, full width
+- 3–5 mục điều hướng với icon + nhãn
+- Mục active hiện icon filled + thanh indicator dạng pill
+- Chiều cao: 80dp
 
-### Implementation
+### Triển khai
 
 ```html
 <md-navigation-bar active-index="0">
@@ -105,7 +105,7 @@ How many primary destinations?
 </md-navigation-bar>
 ```
 
-### Styling
+### Tạo kiểu
 
 ```css
 md-navigation-bar {
@@ -113,25 +113,25 @@ md-navigation-bar {
 }
 ```
 
-### Guidelines
-- Always show labels (don't use icon-only)
-- Use filled icons for active state, outlined for inactive
-- Don't use for fewer than 3 or more than 5 destinations
-- Hide on scroll down in content-heavy screens (optional)
-- Elevation level 2 (3dp)
+### Nguyên tắc
+- Luôn hiện nhãn (đừng dùng chỉ icon)
+- Dùng icon filled cho trạng thái active, outlined cho inactive
+- Không dùng cho ít hơn 3 hoặc nhiều hơn 5 đích đến
+- Ẩn khi cuộn xuống trên màn hình nhiều nội dung (tùy chọn)
+- Elevation cấp 2 (3dp)
 
 ## Navigation Rail
 
-**Use when**: 3–7 primary destinations on medium screens (tablets).
-**Position**: Start edge (left in LTR), always visible.
+**Dùng khi**: 3–7 đích đến chính trên màn hình trung bình (tablet).
+**Vị trí**: Cạnh đầu (trái trong LTR), luôn hiển thị.
 
-### Anatomy
-- Width: 80dp
-- Optional FAB at top
-- Navigation items vertically stacked
-- Active item shows indicator pill
+### Cấu trúc
+- Chiều rộng: 80dp
+- FAB tùy chọn ở trên cùng
+- Mục điều hướng xếp dọc
+- Mục active hiện thanh indicator dạng pill
 
-### Implementation
+### Triển khai
 
 ```html
 <nav class="md3-nav-rail" aria-label="Main navigation">
@@ -198,6 +198,7 @@ md-navigation-bar {
   width: 56px;
   height: 32px;
   display: flex;
+
   align-items: center;
   justify-content: center;
   border-radius: var(--md-sys-shape-corner-full);
@@ -213,20 +214,20 @@ md-navigation-bar {
 }
 ```
 
-### Guidelines
-- Align items to top (below optional FAB)
-- Show labels always (optional to hide, but recommended to show)
-- FAB at top is optional but common
-- Elevation level 0
+### Nguyên tắc
+- Căn mục lên trên (beneath optional FAB)
+- Luôn hiện nhãn (có thể ẩn, nhưng nên hiện)
+- FAB ở trên cùng là tùy chọn nhưng thường gặp
+- Elevation cấp 0
 
 ## Navigation Drawer
 
-**Use when**: Many destinations, expanded screens, or deep hierarchies.
-**Position**: Start edge, standard (persistent) or modal (overlay).
+**Dùng khi**: Nhiều đích đến, màn hình mở rộng, hoặc phân cấp sâu.
+**Vị trí**: Cạnh đầu, standard (liên tục) hoặc modal (lớp phủ).
 
-### Standard Drawer (Persistent)
+### Standard Drawer (liên tục)
 
-Always visible alongside content. Width: 360dp.
+Luôn hiển thị cùng nội dung. Chiều rộng: 360dp.
 
 ```html
 <div class="md3-layout">
@@ -255,9 +256,9 @@ Always visible alongside content. Width: 360dp.
 </div>
 ```
 
-### Modal Drawer (Overlay)
+### Modal Drawer (lớp phủ)
 
-Overlays content with a scrim. Used on smaller screens or when content space is limited.
+Phủ lên nội dung kèm scrim. Dùng trên màn hình nhỏ hơn hoặc khi không gian nội dung hạn chế.
 
 ```html
 <md-navigation-drawer type="modal" id="nav-drawer">
@@ -273,29 +274,29 @@ Overlays content with a scrim. Used on smaller screens or when content space is 
 </script>
 ```
 
-### Guidelines
-- Standard drawer uses `surface-container` background
-- Modal drawer has elevation level 1 and scrim overlay
-- Group destinations with dividers and section headers
-- Active item uses `secondary-container` background
-- Shape: `large` on end corners (right edge in LTR)
+### Nguyên tắc
+- Standard drawer dùng nền `surface-container`
+- Modal drawer có elevation cấp 1 và lớp scrim
+- Nhóm đích đến bằng divider và tiêu đề phần
+- Mục active dùng nền `secondary-container`
+- Shape: `large` ở góc cuối (cạnh phải trong LTR)
 
 ## Top App Bar
 
-**Use when**: Every screen needs a title and optional actions.
+**Dùng khi**: Mọi màn hình cần tiêu đề và hành động tùy chọn.
 
-**I/O 2026 note:** Search app bars are part of the current expressive search guidance. In Compose, check your Material3 BOM for expressive app bar and search APIs before hand-rolling. For web, combine a token-backed top app bar with a custom search field/view because Material Web does not expose full expressive search parity.
+**Ghi chú I/O 2026:** Search app bar là một phần của hướng dẫn search expressive hiện tại. Trong Compose, kiểm tra BOM Material3 của bạn để xem có API app bar và search expressive không trước khi tự xây. Với web, kết hợp top app bar dựa trên token với trường/view tìm kiếm tùy chỉnh vì Material Web không cung cấp parity search expressive đầy đủ.
 
-### Variants
+### Biến thể
 
-| Variant | Title | Height | Scroll Behavior |
+| Biến thể | Tiêu đề | Chiều cao | Hành vi cuộn |
 |---------|-------|--------|----------------|
-| Center-aligned | Center | 64dp | Elevates to level 2 on scroll |
-| Small | Start-aligned | 64dp | Elevates to level 2 on scroll |
-| Medium | Bottom, start-aligned | 112dp | Collapses to 64dp on scroll |
-| Large | Bottom, start-aligned | 152dp | Collapses to 64dp on scroll |
+| Center-aligned | Giữa | 64dp | Nâng lên cấp 2 khi cuộn |
+| Small | Căn đầu | 64dp | Nâng lên cấp 2 khi cuộn |
+| Medium | Dưới, căn đầu | 112dp | Thu về 64dp khi cuộn |
+| Large | Dưới, căn đầu | 152dp | Thu về 64dp khi cuộn |
 
-### Implementation
+### Triển khai
 
 ```html
 <!-- Small app bar -->
@@ -348,7 +349,7 @@ Overlays content with a scrim. Used on smaller screens or when content space is 
 }
 ```
 
-### Scroll Behavior
+### Hành vi cuộn
 
 ```javascript
 // Elevate app bar on scroll
@@ -360,12 +361,12 @@ window.addEventListener('scroll', () => {
 
 ## Tabs
 
-**Use when**: Switching between related content at the same hierarchy level.
+**Dùng khi**: Chuyển đổi giữa nội dung liên quan cùng cấp phân cấp.
 
 ### Primary vs Secondary
 
-- **Primary tabs**: Top-level content switching (Flights / Hotels / Explore)
-- **Secondary tabs**: Sub-sections within primary content
+- **Primary tab**: Chuyển nội dung cấp cao nhất (Flights / Hotels / Explore)
+- **Secondary tab**: Phần phụ trong nội dung primary
 
 ```html
 <!-- Primary tabs -->
@@ -386,7 +387,7 @@ window.addEventListener('scroll', () => {
 </md-tabs>
 ```
 
-### Tab + Panel Connection
+### Kết nối Tab + Panel
 
 ```html
 <md-tabs id="my-tabs">
@@ -398,6 +399,7 @@ window.addEventListener('scroll', () => {
   Panel 1 content
 </div>
 <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+
   Panel 2 content
 </div>
 
@@ -413,9 +415,9 @@ window.addEventListener('scroll', () => {
 </script>
 ```
 
-## Responsive Navigation Pattern
+## Mẫu điều hướng đáp ứng (Responsive)
 
-The key MD3 pattern: navigation component transforms across breakpoints.
+Mẫu MD3 then chốt: component điều hướng biến đổi qua các breakpoint.
 
 ### Mobile → Tablet → Desktop
 
@@ -425,7 +427,7 @@ Medium (600–839dp): Navigation Rail (side)
 Expanded (840dp+):  Navigation Drawer (side, standard)
 ```
 
-### CSS Implementation
+### Triển khai CSS
 
 ```css
 /* Hide all nav variants by default */
@@ -452,7 +454,7 @@ Expanded (840dp+):  Navigation Drawer (side, standard)
 }
 ```
 
-### Complete Responsive Shell
+### Shell đáp ứng hoàn chỉnh
 
 ```html
 <div class="md3-app">
@@ -544,3 +546,5 @@ Expanded (840dp+):  Navigation Drawer (side, standard)
   .md3-menu-btn { display: none; }
 }
 ```
+
+

@@ -1,36 +1,36 @@
-# 天玄（TianXuan）— 路线图
+# CTHarness — Lộ trình phát triển
 
-> 一句话：把 **Debian** 当 Runtime，把 **OpenClaw/Hermes/Codex** 当受管理的工具，把 **Android** 当产品层，再由一个内置 **Agent**（类 pi）用自然语言驱动一切。
+> Một câu tóm tắt: dùng **Debian** làm môi trường chạy, dùng **OpenClaw/Hermes/Codex** làm các công cụ được quản lý, dùng **Android** làm tầng sản phẩm, và để một **Agent** tích hợp sẵn (dạng pi) điều khiển mọi thứ bằng ngôn ngữ tự nhiên.
 
-## 架构（多模块）
+## Kiến trúc (đa mô-đun)
 
 ```
-:app                装配层：Application / MainActivity / DI / 前台服务 / res
-:feature:nav        导航（汇总各屏）
+:app                tầng lắp ráp: Application / MainActivity / DI / dịch vụ tiền cảnh / res
+:feature:nav        điều hướng (tổng hợp các màn hình)
 :feature:{home,chat,terminal,workspace,settings,developer,components,theme}
-:harness            Agent：HarnessLoop / ProviderClient(流式) / ToolExecutor(read/write/edit/base)
-:tools              ToolManager / 安装器（core/tools + runtime/tools）
+:harness            Agent: HarnessLoop / ProviderClient(streaming) / ToolExecutor(read/write/edit/base)
+:tools              ToolManager / trình cài đặt (core/tools + runtime/tools)
 :runtime            PRoot / PTY / rootfs / shell
 :core:{common,model,database,datastore,network,security}
 ```
 
-## 已完成
+## Đã hoàn thành
 
-- **Linux 沙箱**：Debian 13 真机初始化、PRoot、真机 `cat /etc/os-release` 通过
-- **终端**：JNI forkpty（Termux 同款）、多会话（Room 持久化元数据）、会话列表/重命名、快捷键行
-- **Agent**：四工具循环、LLM 流式输出、模型管理（Room）、会话⇄工作区关联
-- **工具系统**：ToolCenter 安装/验证/更新/卸载/回滚、共享依赖引用计数、注册表（Ed25519 签名）
-- **工程质量**：多模块拆分、单元测试、Room 迁移链 5→11
+- **Môi trường Linux cô lập**: khởi tạo Debian 13 trên thiết bị thật, PRoot, đã chạy `cat /etc/os-release` trên thiết bị thật thành công
+- **Thiết bị đầu cuối**: JNI forkpty (cùng cách Termux dùng), đa phiên (siêu dữ liệu được lưu bằng Room), danh sách phiên/đổi tên, thanh phím tắt
+- **Agent**: vòng lặp bốn công cụ, phản hồi LLM theo luồng, quản lý mô hình (Room), liên kết phiên ⇄ không gian làm việc
+- **Hệ thống công cụ**: ToolCenter cài đặt/xác minh/cập nhật/gỡ cài đặt/khôi phục phiên bản cũ, đếm tham chiếu cho phụ thuộc dùng chung, sổ đăng ký (ký Ed25519)
+- **Chất lượng kỹ thuật**: tách đa mô-đun, kiểm thử đơn vị, chuỗi di chuyển dữ liệu Room 5→11
 
-## 接下来（按优先级）
+## Tiếp theo (theo thứ tự ưu tiên)
 
-1. **真机验收**（设备连上后）：装最新 APK → 跑通 Codex / OpenClaw / Hermes 任一完整 安装→启动→健康检查
-2. **终端打磨**：触摸滚动查看历史、IME 中文输入直通
-3. **稳定性**：进程被杀后会话/安装任务恢复；长驻 Agent（前台服务通知）
-4. **合规**：THIRD_PARTY 复核、商店分发策略（动态下载可执行代码影响）
+1. **Nghiệm thu trên thiết bị thật** (khi đã kết nối thiết bị): cài APK mới nhất → chạy thông suốt quy trình hoàn chỉnh cài đặt → khởi động → kiểm tra sức khỏe với bất kỳ một trong Codex / OpenClaw / Hermes
+2. **Hoàn thiện thiết bị đầu cuối**: chạm để cuộn xem lịch sử, nhập trực tiếp tiếng Trung qua IME
+3. **Ổn định**: khôi phục phiên/tác vụ cài đặt sau khi tiến trình bị kết thúc; Agent chạy dài hạn (thông báo dịch vụ tiền cảnh)
+4. **Tuân thủ**: rà soát THIRD_PARTY, chiến lược phân phối trên cửa hàng (tác động của việc tải mã thực thi động)
 
-## 当前限制
+## Giới hạn hiện tại
 
-- 终端输入层挡住 LazyColumn 触摸滚动；中文输入法组合未完全直通
-- 远程 Registry 未预置签名地址，默认用 APK 内置清单
-- API Key 走加密存储；日志/存储全链脱敏
+- Lớp nhập liệu của thiết bị đầu cuối chặn thao tác chạm cuộn trên LazyColumn; tổ hợp nhập tiếng Trung chưa được truyền qua hoàn toàn
+- Sổ đăng ký từ xa chưa được cấu hình sẵn địa chỉ đã ký, mặc định dùng bản kê tích hợp trong APK
+- Khóa API được lưu trong bộ nhớ mã hóa; toàn bộ chuỗi nhật ký/lưu trữ đều được che dữ liệu nhạy cảm

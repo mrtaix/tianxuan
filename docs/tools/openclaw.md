@@ -1,13 +1,13 @@
-# OpenClaw 兼容性记录
+# Ghi chú về khả năng tương thích của OpenClaw
 
-- 适配器：`OpenClawToolInstaller`
-- 安装方式：OpenClaw 官方 Linux 安装脚本，使用 npm 方式、`--no-prompt --no-onboard`，并将 npm prefix 指向 `/opt/tianxuan/tools/openclaw`
-- 安装前提：Manifest 声明 Node.js `>=22.22.3`、curl、CA 证书和 Git；Adapter 会在安装前通过 DependencyManager 获取这些依赖
-- 验证：`openclaw --version` 与 `openclaw doctor`
-- 本地服务：绑定 `127.0.0.1:18789`，由 `LocalServiceLauncher` 等待端口就绪后交给 WebView
-- 数据策略：程序安装在 `/opt/tianxuan/tools/openclaw`，`OPENCLAW_HOME` 与 `XDG_CONFIG_HOME` 指向 `/opt/tianxuan/data/openclaw`；默认卸载保留该数据目录，用户勾选删除数据时才移除。
-- 最后核对：2026-08-17
+- Adapter: `OpenClawToolInstaller`
+- Cách cài đặt: dùng script cài đặt Linux chính thức của OpenClaw, theo phương thức npm với `--no-prompt --no-onboard`, và trỏ npm prefix tới `/opt/tianxuan/tools/openclaw`
+- Điều kiện tiên quyết khi cài đặt: Manifest khai báo Node.js `>=22.22.3`, curl, CA certificate và Git; Adapter sẽ lấy các phụ thuộc này qua DependencyManager trước khi cài đặt
+- Xác minh: `openclaw --version` và `openclaw doctor`
+- Dịch vụ cục bộ: gắn `127.0.0.1:18789`, `LocalServiceLauncher` sẽ chờ cổng sẵn sàng rồi mới bàn giao cho WebView
+- Chính sách dữ liệu: chương trình được cài tại `/opt/tianxuan/tools/openclaw`, `OPENCLAW_HOME` và `XDG_CONFIG_HOME` trỏ tới `/opt/tianxuan/data/openclaw`; mặc định gỡ cài đặt giữ lại thư mục dữ liệu này, chỉ xóa khi người dùng chọn xóa dữ liệu.
+- Lần đối chiếu cuối: 2026-08-17
 
-来源：[OpenClaw 官方安装文档](https://docs.openclaw.ai/install)
+Nguồn: [Tài liệu cài đặt chính thức của OpenClaw](https://docs.openclaw.ai/install)
 
-正式发布前仍需在目标 Android ARM64 设备上验证 Node 版本、Gateway 页面和官方许可；如果 Debian 仓库不能提供满足约束的 Node，需切换到经过 SHA-256 校验的官方 ARM64 Runtime。
+Trước khi phát hành chính thức, vẫn cần xác minh trên thiết bị Android ARM64 mục tiêu về phiên bản Node, trang Gateway và giấy phép chính thức; nếu kho Debian không cung cấp phiên bản Node thỏa mãn ràng buộc, cần chuyển sang Runtime ARM64 chính thức đã được kiểm tra SHA-256.

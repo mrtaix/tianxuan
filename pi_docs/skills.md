@@ -1,12 +1,12 @@
-> pi can create skills. Ask it to build one for your use case.
+> pi có thể tạo skill. Hãy yêu cầu nó xây dựng một skill cho trường hợp sử dụng của bạn.
 
-# Skills
+# Skill
 
-Skills are self-contained capability packages that the agent loads on-demand. A skill provides specialized workflows, setup instructions, helper scripts, and reference documentation for specific tasks.
+Skill là các gói năng lực độc lập được agent tải theo yêu cầu. Một skill cung cấp quy trình chuyên biệt, hướng dẫn thiết lập, script hỗ trợ và tài liệu tham khảo cho các tác vụ cụ thể.
 
-Pi implements the [Agent Skills standard](https://agentskills.io/specification), warning about most violations but remaining lenient. Pi allows skill names to differ from their parent directory even though the standard disallows it; that rule is suboptimal for shared skill directories used across multiple agent harnesses.
+Pi triển khai [Agent Skills standard](https://agentskills.io/specification), cảnh báo về hầu hết các vi phạm nhưng vẫn linh hoạt. Pi cho phép tên skill khác với thư mục cha dù chuẩn không cho phép điều đó; quy tắc đó là chưa tối ưu đối với các thư mục skill dùng chung across nhiều agent harness.
 
-## Table of Contents
+## Mục lục (Table of Contents)
 
 - [Locations](#locations)
 - [How Skills Work](#how-skills-work)
@@ -17,33 +17,33 @@ Pi implements the [Agent Skills standard](https://agentskills.io/specification),
 - [Example](#example)
 - [Skill Repositories](#skill-repositories)
 
-## Locations
+## Vị trí (Locations)
 
-> **Security:** Skills can instruct the model to perform any action and may include executable code the model invokes. Review skill content before use.
+> **Bảo mật:** Skill có thể chỉ thị model thực hiện bất kỳ hành động nào và có thể chứa mã thực thi mà model gọi. Hãy xem lại nội dung skill trước khi dùng.
 
-Pi loads skills from:
+Pi tải skill từ:
 
-- Global:
+- Toàn cục:
   - `~/.pi/agent/skills/`
   - `~/.agents/skills/`
-- Project (only after the project is trusted):
+- Dự án (chỉ sau khi dự án được tin cậy):
   - `.pi/skills/`
-  - `.agents/skills/` in `cwd` and ancestor directories (up to git repo root, or filesystem root when not in a repo)
-- Packages: `skills/` directories or `pi.skills` entries in `package.json`
-- Settings: `skills` array with files or directories
-- CLI: `--skill <path>` (repeatable, additive even with `--no-skills`)
+  - `.agents/skills/` trong `cwd` và các thư mục cha (đến gốc repo git, hoặc gốc filesystem khi không nằm trong repo)
+- Package: các thư mục `skills/` hoặc các mục `pi.skills` trong `package.json`
+- Settings: mảng `skills` với các tệp hoặc thư mục
+- CLI: `--skill <path>` (có thể lặp lại, mang tính cộng dồn ngay cả với `--no-skills`)
 
-Discovery rules:
-- In `~/.pi/agent/skills/` and `.pi/skills/`, direct root `.md` files are discovered as individual skills when they have valid skill frontmatter with a non-empty `description`
-- In all skill locations, directories containing `SKILL.md` are discovered recursively
-- In `~/.agents/skills/` and project `.agents/skills/`, root `.md` files are ignored, but nested `.md` files in grouping folders are discovered when they declare skill frontmatter
-- Root Markdown files other than `SKILL.md` that do not look like skills are ignored silently
+Quy tắc khám phá:
+- Trong `~/.pi/agent/skills/` và `.pi/skills/`, các tệp `.md` ngay tại gốc được khám phá như skill riêng lẻ khi chúng có frontmatter skill hợp lệ với `description` không rỗng
+- Trong tất cả vị trí skill, các thư mục chứa `SKILL.md` được khám phá đệ quy
+- Trong `~/.agents/skills/` và project `.agents/skills/`, các tệp `.md` ở gốc bị bỏ qua, nhưng các tệp `.md` lồng trong thư mục nhóm được khám phá khi chúng khai báo frontmatter skill
+- Các tệp Markdown gốc khác ngoài `SKILL.md` mà không trông như skill sẽ bị bỏ qua im lặng
 
-Disable discovery with `--no-skills` (explicit `--skill` paths still load).
+Vô hiệu hóa việc khám phá bằng `--no-skills` (các đường dẫn `--skill` rõ ràng vẫn được tải).
 
-### Using Skills from Other Harnesses
+### Dùng skill từ harness khác
 
-To use skills from Claude Code or OpenAI Codex, add their directories to settings:
+Để dùng skill từ Claude Code hoặc OpenAI Codex, hãy thêm thư mục của chúng vào settings:
 
 ```json
 {
@@ -54,7 +54,7 @@ To use skills from Claude Code or OpenAI Codex, add their directories to setting
 }
 ```
 
-For project-level Claude Code skills, add to `.pi/settings.json`:
+Đối với skill Claude Code ở cấp dự án, hãy thêm vào `.pi/settings.json`:
 
 ```json
 {
@@ -62,27 +62,27 @@ For project-level Claude Code skills, add to `.pi/settings.json`:
 }
 ```
 
-## How Skills Work
+## Cách hoạt động của Skill
 
-1. At startup, pi scans skill locations and extracts names and descriptions
-2. The system prompt includes available skills in XML format per the [specification](https://agentskills.io/integrate-skills)
-3. When a task matches, the agent uses `read`, or `bash` when `read` is unavailable, to load the full SKILL.md (models don't always do this; use prompting or `/skill:name` to force it)
-4. The agent follows the instructions, using relative paths to reference scripts and assets
+1. Lúc khởi động, pi quét các vị trí skill và trích xuất tên cùng description
+2. System prompt bao gồm các skill có sẵn ở định dạng XML theo [specification](https://agentskills.io/integrate-skills)
+3. Khi tác vụ khớp, agent dùng `read`, hoặc `bash` khi `read` không khả dụng, để tải toàn bộ SKILL.md (model không phải lúc nào cũng làm vậy; hãy dùng prompt hoặc `/skill:name` để ép thực hiện)
+4. Agent làm theo hướng dẫn, dùng đường dẫn tương đối để tham chiếu script và tài nguyên
 
-This is progressive disclosure: only descriptions are always in context, full instructions load on-demand.
+Đây là progressive disclosure: chỉ description luôn nằm trong context, hướng dẫn đầy đủ được tải theo yêu cầu.
 
-## Skill Commands
+## Lệnh Skill (Skill Commands)
 
-Skills register as `/skill:name` commands:
+Skill đăng ký thành lệnh `/skill:name`:
 
 ```bash
 /skill:brave-search           # Load and execute the skill
 /skill:pdf-tools extract      # Load skill with arguments
 ```
 
-Arguments after the command are appended to the skill content as `User: <args>`.
+Đối số sau lệnh được nối vào nội dung skill dưới dạng `User: <args>`.
 
-Toggle skill commands via `/settings` in interactive mode or in `settings.json`:
+Bật/tắt lệnh skill qua `/settings` trong chế độ tương tác hoặc trong `settings.json`:
 
 ```json
 {
@@ -90,9 +90,9 @@ Toggle skill commands via `/settings` in interactive mode or in `settings.json`:
 }
 ```
 
-## Skill Structure
+## Cấu trúc Skill (Skill Structure)
 
-A skill is a directory with a `SKILL.md` file. Everything else is freeform.
+Một skill là thư mục chứa tệp `SKILL.md`. Mọi thứ khác đều tùy ý.
 
 ```
 my-skill/
@@ -105,7 +105,7 @@ my-skill/
     └── template.json
 ```
 
-### SKILL.md Format
+### Định dạng SKILL.md
 
 ````markdown
 ---
@@ -129,7 +129,7 @@ cd /path/to/skill && npm install
 ```
 ````
 
-Use relative paths from the skill directory:
+Dùng đường dẫn tương đối từ thư mục skill:
 
 ```markdown
 See [the reference guide](references/REFERENCE.md) for details.
@@ -137,7 +137,7 @@ See [the reference guide](references/REFERENCE.md) for details.
 
 ## Frontmatter
 
-Per the [Agent Skills specification](https://agentskills.io/specification#frontmatter-required):
+Theo [Agent Skills specification](https://agentskills.io/specification#frontmatter-required):
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -149,46 +149,46 @@ Per the [Agent Skills specification](https://agentskills.io/specification#frontm
 | `allowed-tools` | No | Space-delimited list of pre-approved tools (experimental). |
 | `disable-model-invocation` | No | When `true`, skill is hidden from system prompt. Users must use `/skill:name`. |
 
-### Name Rules
+### Quy tắc đặt tên (Name Rules)
 
-- 1-64 characters
-- Lowercase letters, numbers, hyphens only
-- No leading/trailing hyphens
-- No consecutive hyphens
-Pi does not require the name to match the parent directory. The Agent Skills standard does, but that requirement is suboptimal for shared skill directories used by multiple tools.
+- 1-64 ký tự
+- Chỉ chữ cái thường, số và dấu gạch ngang
+- Không có dấu gạch ngang ở đầu/cuối
+- Không có dấu gạch ngang liên tiếp
+Pi không yêu cầu tên phải khớp với thư mục cha. Chuẩn Agent Skills thì có, nhưng yêu cầu đó là chưa tối ưu cho các thư mục skill dùng chung bởi nhiều tool.
 
-Valid: `pdf-processing`, `data-analysis`, `code-review`
-Invalid: `PDF-Processing`, `-pdf`, `pdf--processing`
+Hợp lệ: `pdf-processing`, `data-analysis`, `code-review`
+Không hợp lệ: `PDF-Processing`, `-pdf`, `pdf--processing`
 
-### Description Best Practices
+### Thực hành tốt nhất cho description
 
-The description determines when the agent loads the skill. Be specific.
+Description quyết định thời điểm agent tải skill. Hãy cụ thể.
 
-Good:
+Tốt:
 ```yaml
 description: Extracts text and tables from PDF files, fills PDF forms, and merges multiple PDFs. Use when working with PDF documents.
 ```
 
-Poor:
+Kém:
 ```yaml
 description: Helps with PDFs.
 ```
 
-## Validation
+## Kiểm tra hợp lệ (Validation)
 
-Pi validates skills against the Agent Skills standard. Most issues produce warnings but still load the skill:
+Pi kiểm tra skill theo chuẩn Agent Skills. Hầu hết vấn đề tạo cảnh báo nhưng vẫn tải skill:
 
-- Name exceeds 64 characters or contains invalid characters
-- Name starts/ends with hyphen or has consecutive hyphens
-- Description exceeds 1024 characters
+- Tên vượt quá 64 ký tự hoặc chứa ký tự không hợp lệ
+- Tên bắt/kết thúc bằng dấu gạch ngang hoặc có dấu gạch ngang liên tiếp
+- Description vượt quá 1024 ký tự
 
-Unknown frontmatter fields are ignored.
+Các trường frontmatter không xác định được bỏ qua.
 
-Declared skills with missing descriptions are not loaded. Malformed `SKILL.md` files and `SKILL.md` files without a description produce warnings and are not loaded. Other Markdown files without valid skill frontmatter are ignored.
+Skill đã khai báo nhưng thiếu description sẽ không được tải. Tệp `SKILL.md` sai định dạng và tệp `SKILL.md` không có description tạo cảnh báo và không được tải. Các tệp Markdown khác không có frontmatter skill hợp lệ được bỏ qua.
 
-Name collisions (same name from different locations) warn and keep the first skill found.
+Trùng tên (cùng tên từ các vị trí khác nhau) tạo cảnh báo và giữ skill tìm thấy đầu tiên.
 
-## Example
+## Ví dụ (Example)
 
 ```
 brave-search/
@@ -226,7 +226,7 @@ cd /path/to/brave-search && npm install
 ```
 ````
 
-## Skill Repositories
+## Kho skill (Skill Repositories)
 
 - [Anthropic Skills](https://github.com/anthropics/skills) - Document processing (docx, pdf, pptx, xlsx), web development
 - [Pi Skills](https://github.com/badlogic/pi-skills) - Web search, browser automation, Google APIs, transcription

@@ -1,29 +1,29 @@
-# MD3 Layout and Responsive Design
+# Layout và Thiết kế đáp ứng trong MD3
 
-Reference for Material Design 3's layout system: breakpoints, canonical layouts, and responsive implementation.
+Tài liệu tham khảo về hệ thống layout của Material Design 3: breakpoint, canonical layout và triển khai đáp ứng.
 
-## Jetpack Compose and Android
+## Jetpack Compose và Android
 
-The **breakpoint table** below is a **design** reference. In **Jetpack Compose**, prefer **`calculateWindowSizeClass`** (`androidx.compose.material3:material3-window-size-class`) and/or **`androidx.compose.material3.adaptive`** APIs (e.g. `currentWindowAdaptiveInfo`, list-detail scaffolds) instead of hand-rolling raw `BoxWithConstraints` width checks everywhere.
+**Bảng breakpoint** bên dưới là tài liệu tham khảo về **thiết kế**. Trong **Jetpack Compose**, hãy ưu tiên **`calculateWindowSizeClass`** (`androidx.compose.material3:material3-window-size-class`) và/hoặc API **`androidx.compose.material3.adaptive`** (vd. `currentWindowAdaptiveInfo`, scaffold list-detail) thay vì tự viết kiểm tra chiều rộng `BoxWithConstraints` thô ở khắp nơi.
 
-**Edge-to-edge:** Use **`enableEdgeToEdge()`** on your `Activity` (AndroidX) when you draw behind the system bars. Apply **`WindowInsets`** (`Modifier.statusBarsPadding()`, `navigationBarsPadding()`, **`imePadding()`**, `displayCutoutPadding()`, etc.) and **`Scaffold`** `contentWindowInsets` so content and **IME** behave correctly.
+**Edge-to-edge:** Dùng **`enableEdgeToEdge()`** trên `Activity` (AndroidX) khi bạn vẽ phía sau thanh hệ thống. Áp dụng **`WindowInsets`** (`Modifier.statusBarsPadding()`, `navigationBarsPadding()`, **`imePadding()`**, `displayCutoutPadding()`, v.v.) và `contentWindowInsets` của **`Scaffold`** để nội dung và **IME** hoạt động đúng.
 
-**Foldables:** Use **`WindowInfoTracker`**, **`FoldingFeature`**, or Jetpack WindowManager APIs — see the foldable section below; verify APIs against your dependency versions.
+**Thiết bị gập:** Dùng **`WindowInfoTracker`**, **`FoldingFeature`**, hoặc API Jetpack WindowManager — xem phần foldable bên dưới; kiểm tra API theo phiên bản dependency của bạn.
 
 ---
 
-## Google I/O 2026: Expressive Layout
+## Google I/O 2026: Layout Expressive
 
-Material's [I/O 2026 update](https://m3.material.io/blog/whats-new-at-io26) introduced broader expressive/adaptive layout guidance:
+[Bản cập nhật I/O 2026](https://m3.material.io/blog/whats-new-at-io26) của Material giới thiệu hướng dẫn layout expressive/adaptive rộng hơn:
 
-- **Expressive layout scaffold**: Design screens to adapt across mobile, desktop, foldables, watches, XR, and other spatial form factors. In Compose, prefer Material3 adaptive scaffolds and window size classes over hard-coded phone/tablet branches.
-- **8dp spacing system**: Treat spacing as tokens. Use an 8dp scale for margins, padding, gaps, and component spacing so density and device-class changes can be applied consistently.
-- **Watch guidance**: Use physics-based motion, arc text styles, and edge-hugging containers. Avoid shrinking phone layouts onto a round or compact wearable screen.
-- **XR guidance**: Use spatial panels and depth-based elevation. Avoid treating XR as only a larger desktop canvas; account for depth, comfort, and panel placement.
+- **Expressive layout scaffold**: Thiết kế màn hình để thích ứng trên mobile, desktop, thiết bị gập, đồng hồ, XR và các dạng hình không gian khác. Trong Compose, ưu tiên adaptive scaffold và window size class của Material3 thay vì nhánh phone/tablet hard-code.
+- **Hệ thống khoảng cách 8dp**: Coi khoảng cách như token. Dùng thang 8dp cho margin, padding, gap và khoảng cách component để thay đổi mật độ và loại thiết bị được áp dụng nhất quán.
+- **Hướng dẫn đồng hồ**: Dùng chuyển động dựa trên vật lý, kiểu văn bản cong và container sát cạnh. Tránh thu nhỏ layout phone lên màn hình đeo hình tròn hoặc compact.
+- **Hướng dẫn XR**: Dùng panel không gian và elevation theo chiều sâu. Đừng coi XR chỉ là canvas desktop lớn hơn; hãy tính đến chiều sâu, sự thoải mái và vị trí panel.
 
-### Spacing Token Pattern
+### Mẫu Spacing Token
 
-Define spacing once, then map it to context:
+Định nghĩa khoảng cách một lần, rồi ánh xạ theo ngữ cảnh:
 
 ```kotlin
 object MdSpacing {
@@ -36,32 +36,32 @@ object MdSpacing {
 }
 ```
 
-Use spacing tokens for:
-- Screen margins
-- Pane gaps
-- List item spacing
-- Card internal padding
-- Component groups and toolbars
+Dùng spacing token cho:
+- Margin màn hình
+- Khoảng cách giữa pane
+- Khoảng cách mục list
+- Padding nội bộ card
+- Nhóm component và toolbar
 
-Do not scatter raw `Dp` literals throughout reusable UI. Keep one-off values local only when they are truly component-specific.
+Đừng rải literal `Dp` thô khắp UI dùng lại. Chỉ giữ giá trị một-off ở phạm vi local khi thực sự đặc thù component.
 
 ---
 
-## Window Size Classes
+## Window Size Class
 
-MD3 defines 5 breakpoint classes:
+MD3 định nghĩa 5 lớp breakpoint:
 
-| Class | Width Range | Typical Devices | Columns |
+| Lớp | Phạm vi chiều rộng | Thiết bị điển hình | Cột |
 |-------|-----------|----------------|---------|
 | Compact | < 600dp | Phone portrait | 4 |
-| Medium | 600–839dp | Tablet portrait, foldable | 8 |
-| Expanded | 840–1199dp | Tablet landscape, small desktop | 12 |
+| Medium | 600–839dp | Tablet portrait, thiết bị gập | 8 |
+| Expanded | 840–1199dp | Tablet landscape, desktop nhỏ | 12 |
 | Large | 1200–1599dp | Desktop | 12 |
-| Extra-large | 1600dp+ | Ultra-wide, large desktop | 12 |
+| Extra-large | 1600dp+ | Ultra-wide, desktop lớn | 12 |
 
-### CSS Media Queries (web)
+### CSS Media Query (web)
 
-Use these for **CSS layouts**. **Compose** apps should use window size classes / adaptive APIs rather than duplicating this logic only in CSS.
+Dùng những cái này cho **layout CSS**. Ứng dụng **Compose** nên dùng window size class / API adaptive thay vì chỉ nhân đôi logic này trong CSS.
 
 ```css
 /* Compact (default — mobile-first) */
@@ -80,23 +80,23 @@ Use these for **CSS layouts**. **Compose** apps should use window size classes /
 @media (min-width: 1600px) { }
 ```
 
-### dp to px Conversion
-On the web, 1dp ≈ 1px at standard density. The breakpoint values translate directly to CSS pixels.
+### Chuyển đổi dp sang px
+Trên web, 1dp ≈ 1px ở mật độ chuẩn. Giá trị breakpoint chuyển trực tiếp sang CSS pixel.
 
-## Layout Anatomy
+## Cấu trúc Layout
 
-### Key Terms
+### Thuật ngữ chính
 
-- **Window**: The visible area of the app
-- **Pane**: A layout container within the window. A pane is fixed, flexible, floating, or semi-permanent
-- **Column**: A vertical content block within a pane
-- **Margin**: Space between screen edge and content
-- **Gutter**: Space between columns
-- **Spacer**: Space between panes (in multi-pane layouts)
+- **Window**: Khu vực hiển thị của ứng dụng
+- **Pane**: Container layout bên trong window. Pane có thể cố định, linh hoạt, nổi hoặc bán vĩnh viễn
+- **Column**: Khối nội dung dọc bên trong pane
+- **Margin**: Khoảng cách giữa cạnh màn hình và nội dung
+- **Gutter**: Khoảng cách giữa các cột
+- **Spacer**: Khoảng cách giữa các pane (trong layout đa pane)
 
-### Margin and Gutter Values
+### Giá trị Margin và Gutter
 
-| Window Size | Margins | Gutters |
+| Kích thước Window | Margin | Gutter |
 |-------------|---------|---------|
 | Compact | 16dp | 8dp |
 | Medium | 24dp | 16dp |
@@ -104,13 +104,13 @@ On the web, 1dp ≈ 1px at standard density. The breakpoint values translate dir
 | Large | 24dp | 24dp |
 | Extra-large | 24dp | 24dp |
 
-## Canonical Layouts
+## Canonical Layout
 
-MD3 defines 3 canonical layouts as starting points. Always begin from one of these rather than from a raw grid.
+MD3 định nghĩa 3 canonical layout làm điểm khởi đầu. Luôn bắt đầu từ một trong số đó thay vì từ grid thô.
 
 ### Feed Layout
 
-**Use when**: Displaying a large collection of browsable items (social feed, news, product grid).
+**Dùng khi**: Hiển thị tập hợp lớn các mục có thể duyệt (feed mạng xã hội, tin tức, lưới sản phẩm).
 
 ```
 Compact:    Single column of cards
@@ -163,7 +163,7 @@ Large:      4-column grid + optional side panel
 
 ### List-Detail Layout
 
-**Use when**: Browsing a list of items where each has detailed content (email, file browser, contacts).
+**Dùng khi**: Duyệt danh sách mục trong đó mỗi mục có nội dung chi tiết (email, trình duyệt tệp, danh bạ).
 
 ```
 Compact:    List view OR detail view (navigate between them)
@@ -238,9 +238,9 @@ Expanded:   Side-by-side with wider detail pane
 }
 ```
 
-### Drag Handle for Resizable Panes
+### Tay cầm kéo để đổi kích thước Pane
 
-In list-detail and supporting pane layouts, users can resize panes with a drag handle:
+Trong layout list-detail và supporting pane, người dùng có thể đổi kích thước pane bằng tay cầm kéo:
 
 ```html
 <div class="md3-list-detail">
@@ -272,7 +272,7 @@ In list-detail and supporting pane layouts, users can resize panes with a drag h
 
 ### Supporting Pane Layout
 
-**Use when**: Primary content needs supplementary information (document + properties panel, video + comments).
+**Dùng khi**: Nội dung chính cần thông tin bổ trợ (tài liệu + bảng thuộc tính, video + bình luận).
 
 ```
 Compact:    Stacked — primary on top, supporting below (or bottom sheet)
@@ -311,9 +311,9 @@ Expanded:   Same but with more space
 }
 ```
 
-## CSS Container Queries
+## CSS Container Query
 
-For component-level responsive behavior (independent of viewport), use container queries:
+Với hành vi đáp ứng ở cấp component (độc lập với viewport), dùng container query:
 
 ```css
 /* Define a container */
@@ -336,22 +336,22 @@ For component-level responsive behavior (independent of viewport), use container
 }
 ```
 
-## Adaptive Component Behavior
+## Hành vi Component thích ứng
 
-Components transform across breakpoints:
+Component biến đổi qua các breakpoint:
 
-| Component | Compact | Medium (incl. foldable unfolded) | Expanded+ / Large screen |
+| Component | Compact | Medium (gồm thiết bị gập mở) | Expanded+ / màn hình lớn |
 |-----------|---------|--------|-----------|
-| Navigation | Bottom bar | Side rail | Side drawer |
-| App bar | Small (64dp) | Small (64dp) | Small or Medium (112dp) |
-| Dialog | Full-screen | Centered dialog | Centered dialog (max 560dp wide) |
-| Bottom sheet | Full height | Partial height | Side sheet |
-| Search | Full-screen search view | Persistent search bar | Persistent search bar |
-| Cards | Full-width single column | Multi-column grid | Multi-column grid (max 4 cols) |
-| Content panes | Single pane | Optional second pane | Two or three panes |
-| Input method | Touch only | Touch + stylus | Touch + mouse/trackpad + keyboard |
+| Điều hướng | Bottom bar | Side rail | Side drawer |
+| App bar | Small (64dp) | Small (64dp) | Small hoặc Medium (112dp) |
+| Dialog | Toàn màn hình | Dialog căn giữa | Dialog căn giữa (tối đa 560dp) |
+| Bottom sheet | Chiều cao đầy | Chiều cao một phần | Side sheet |
+| Search | Search view toàn màn hình | Search bar liên tục | Search bar liên tục |
+| Card | Một cột full-width | Lưới nhiều cột | Lưới nhiều cột (tối đa 4 cột) |
+| Pane nội dung | Một pane | Pane thứ hai tùy chọn | Hai hoặc ba pane |
+| Phương thức nhập | Chỉ cảm ứng | Cảm ứng + bút | Cảm ứng + chuột/trackpad + bàn phím |
 
-## Complete App Layout Example
+## Ví dụ Layout ứng dụng hoàn chỉnh
 
 ```html
 <div class="md3-app-layout">
@@ -421,24 +421,24 @@ Components transform across breakpoints:
 }
 ```
 
-## Foldables and Large Screens
+## Thiết bị gập và màn hình lớn
 
-MD3 provides specific guidance for foldable devices, tablets, and large-screen form factors. These are first-class targets in Material Design 3 — not afterthoughts.
+MD3 cung cấp hướng dẫn cụ thể cho thiết bị gập, tablet và dạng hình màn hình lớn. Đây là mục tiêu hạng nhất trong Material Design 3 — không phải thứ thêm vào sau.
 
-### Foldable Postures
+### Tư thế thiết bị gập
 
-Foldable devices introduce postures that don't exist on traditional phones:
+Thiết bị gập mang đến các tư thế không tồn tại trên phone truyền thống:
 
-| Posture | Description | Layout behavior |
+| Tư thế | Mô tả | Hành vi layout |
 |---------|-------------|----------------|
-| **Flat (unfolded)** | Device fully open, single large screen | Treat as Medium or Expanded window class based on width |
-| **Half-opened (tabletop)** | Folded ~90° horizontally, bottom half on table | Split content at the hinge — video/image on top half, controls/info on bottom half |
-| **Half-opened (book)** | Folded ~90° vertically, held like a book | Split content at the hinge — list on one side, detail on the other |
-| **Folded** | Device closed, outer/cover screen | Treat as Compact — show essential content only |
+| **Flat (unfolded)** | Thiết bị mở hoàn toàn, một màn hình lớn duy nhất | Coi là lớp window Medium hoặc Expanded tùy chiều rộng |
+| **Half-opened (tabletop)** | Gập ~90° theo chiều ngang, nửa dưới đặt trên bàn | Chia nội dung tại đường gập — video/hình ảnh nửa trên, điều khiển/thông tin nửa dưới |
+| **Half-opened (book)** | Gập ~90° theo chiều dọc, cầm như sách | Chia nội dung tại đường gập — list một bên, detail bên kia |
+| **Folded** | Thiết bị đóng, màn hình ngoài/cover | Coi là Compact — chỉ hiện nội dung thiết yếu |
 
-### Hinge-Aware Layouts
+### Layout nhận biết đường gập (Hinge-Aware)
 
-The fold/hinge is a physical divider. Never place interactive content or critical information across the hinge area.
+Đường gập/hinge là một ranh giới vật lý. Không bao giờ đặt nội dung tương tác hoặc thông tin quan trọng qua khu vực đường gập.
 
 **Web — CSS Viewport Segments API:**
 
@@ -473,7 +473,7 @@ The fold/hinge is a physical divider. Never place interactive content or critica
 }
 ```
 
-**Flutter — `MediaQuery` and display features:**
+**Flutter — `MediaQuery` và display feature:**
 
 ```dart
 Widget build(BuildContext context) {
@@ -500,7 +500,7 @@ Widget build(BuildContext context) {
 }
 ```
 
-**Jetpack Compose — `WindowInfoTracker` and `FoldingFeature`:**
+**Jetpack Compose — `WindowInfoTracker` và `FoldingFeature`:**
 
 ```kotlin
 @Composable
@@ -531,27 +531,27 @@ fun AdaptiveLayout() {
 }
 ```
 
-### Tabletop Posture Pattern
+### Mẫu tư thế Tabletop
 
-When the device is in tabletop posture (horizontal fold, bottom half resting on a surface), the content naturally divides into two halves:
+Khi thiết bị ở tư thế tabletop (gập ngang, nửa dưới tựa trên bề mặt), nội dung tự nhiên chia thành hai nửa:
 
 ```
 ┌─────────────────────┐
-│                     │  ← Top half: visual content
+│                     │  ← Nửa trên: nội dung trực quan
 │   Video / Image /   │     (camera viewfinder, video player,
 │   Primary content   │      image gallery, map)
 │                     │
 ├─ ─ ─ hinge ─ ─ ─ ─ ┤
-│                     │  ← Bottom half: controls & info
+│                     │  ← Nửa dưới: điều khiển & thông tin
 │  Controls / Text /  │     (playback controls, chat input,
 │  Supporting info    │      product details, toolbar)
 │                     │
 └─────────────────────┘
 ```
 
-### Book Posture Pattern
+### Mẫu tư thế Book
 
-When the device is in book posture (vertical fold, held like a book), it naturally maps to list-detail:
+Khi thiết bị ở tư thế book (gập dọc, cầm như sách), nó ánh xạ tự nhiên sang list-detail:
 
 ```
 ┌──────────┬──────────┐
@@ -564,14 +564,14 @@ When the device is in book posture (vertical fold, held like a book), it natural
          hinge
 ```
 
-### Large Screen Layout Guidance
+### Hướng dẫn layout màn hình lớn
 
-For tablets, Chromebooks, desktop, and large foldables (Expanded, Large, Extra-large):
+Với tablet, Chromebook, desktop và thiết bị gập lớn (Expanded, Large, Extra-large):
 
-**Content width constraints:**
-- Don't stretch content to fill ultra-wide screens — reading lines longer than ~80 characters become hard to scan
-- Constrain body content to a max width (typically 840–1040dp) and center it
-- Use the extra space for multi-pane layouts, not wider single columns
+**Ràng buộc chiều rộng nội dung:**
+- Đừng kéo nội dung căng đầy màn hình siêu rộng — dòng đọc dài hơn ~80 ký tự trở nên khó theo dõi
+- Giới hạn nội dung thân ở chiều rộng tối đa (thường 840–1040dp) và căn giữa
+- Dùng không gian thừa cho layout đa pane, không phải cột đơn rộng hơn
 
 ```css
 /* Constrain content on large screens */
@@ -583,21 +583,21 @@ For tablets, Chromebooks, desktop, and large foldables (Expanded, Large, Extra-l
 }
 ```
 
-**Multi-pane strategies by window class:**
+**Chiến lược đa pane theo lớp window:**
 
-| Window class | Columns | Recommended layout |
+| Lớp window | Cột | Layout khuyến nghị |
 |-------------|---------|-------------------|
-| Compact (<600dp) | 4 | Single pane. Full-screen navigation between views. |
-| Medium (600–839dp) | 8 | Optional second pane. List-detail with narrow list. Rail navigation. |
-| Expanded (840–1199dp) | 12 | Two panes standard. List-detail or supporting pane. Drawer navigation. |
-| Large (1200–1599dp) | 12 | Two or three panes. Feed with side panel. Persistent supporting pane. |
-| Extra-large (1600dp+) | 12 | Three panes or constrained two-pane with generous margins. |
+| Compact (<600dp) | 4 | Một pane. Điều hướng toàn màn hình giữa các view. |
+| Medium (600–839dp) | 8 | Pane thứ hai tùy chọn. List-detail với list hẹp. Điều hướng rail. |
+| Expanded (840–1199dp) | 12 | Hai pane là chuẩn. List-detail hoặc supporting pane. Điều hướng drawer. |
+| Large (1200–1599dp) | 12 | Hai hoặc ba pane. Feed kèm panel bên. Supporting pane liên tục. |
+| Extra-large (1600dp+) | 12 | Ba pane hoặc hai pane bị ràng buộc với margin rộng rãi. |
 
-**Input and interaction differences:**
-- Large screens often have mouse/trackpad input — hover states and right-click menus matter
-- Touch targets remain 48dp minimum but can be supplemented with hover tooltips
-- Keyboard shortcuts become expected on desktop-class devices
-- Drag-and-drop is more natural on large screens
+**Khác biệt về nhập và tương tác:**
+- Màn hình lớn thường có chuột/trackpad — trạng thái hover và menu chuột phải quan trọng
+- Vùng chạm vẫn tối thiểu 48dp nhưng có thể bổ sung tooltip khi hover
+- Phím tắt bàn phím trở thành kỳ vọng trên thiết bị hạng desktop
+- Kéo-thả tự nhiên hơn trên màn hình lớn
 
 ```css
 /* Add hover states for pointer devices */
@@ -626,7 +626,7 @@ For tablets, Chromebooks, desktop, and large foldables (Expanded, Large, Extra-l
 }
 ```
 
-**Flutter — adaptive input:**
+**Flutter — nhập thích ứng:**
 
 ```dart
 Widget build(BuildContext context) {
@@ -676,58 +676,60 @@ Widget build(BuildContext context) {
 }
 ```
 
-### Foldable-Aware Canonical Layouts
+### Canonical Layout nhận biết thiết bị gập
 
-The three canonical layouts adapt naturally to foldables:
+Ba canonical layout thích ứng tự nhiên với thiết bị gập:
 
-| Layout | Foldable behavior |
+| Layout | Hành vi trên thiết bị gập |
 |--------|------------------|
-| **Feed** | Unfolded: multi-column grid fills both halves. Tabletop: grid on top, selected item preview on bottom. |
-| **List-detail** | Book posture: list on left half, detail on right half — a perfect natural fit. Tabletop: list on top, detail on bottom. |
-| **Supporting pane** | Book posture: primary on left, supporting on right. Tabletop: primary on top, supporting controls on bottom. |
+| **Feed** | Mở: lưới nhiều cột lấp đầy cả hai nửa. Tabletop: lưới trên, xem trước mục đã chọn ở dưới. |
+| **List-detail** | Tư thế book: list nửa trái, detail nửa phải — khớp hoàn hảo tự nhiên. Tabletop: list trên, detail dưới. |
+| **Supporting pane** | Tư thế book: primary bên trái, supporting bên phải. Tabletop: primary trên, điều khiển supporting dưới. |
 
-### Testing Large Screens and Foldables
+### Kiểm tra màn hình lớn và thiết bị gập
 
 **Web:**
-- Use Chrome DevTools responsive mode to test at 600, 840, 1200, and 1600px breakpoints
-- Test with pointer: coarse (touch) and pointer: fine (mouse) media queries
-- Verify content doesn't stretch beyond readable line lengths at 1600px+
+- Dùng chế độ responsive của Chrome DevTools để kiểm tra ở breakpoint 600, 840, 1200 và 1600px
+- Kiểm tra với media query pointer: coarse (cảm ứng) và pointer: fine (chuột)
+- Xác minh nội dung không căng vượt quá độ dài dòng dễ đọc ở 1600px+
 
 **Flutter:**
-- Use `DevicePreview` package to simulate foldables and tablets
-- Test with `MediaQuery` overrides for `displayFeatures`
-- Run on Android emulators: Pixel Fold, 7.6" foldable, 10" tablet, Chromebook
+- Dùng gói `DevicePreview` để mô phỏng thiết bị gập và tablet
+- Kiểm tra với override `MediaQuery` cho `displayFeatures`
+- Chạy trên emulator Android: Pixel Fold, foldable 7.6", tablet 10", Chromebook
 
 **Compose:**
-- Use Android Studio foldable emulators (Pixel Fold, 7.6" Foldable)
-- Test posture changes: flat → half-opened → folded
-- Use `WindowInfoTracker` to verify fold-aware layout switching
+- Dùng emulator thiết bị gập của Android Studio (Pixel Fold, 7.6" Foldable)
+- Kiểm tra thay đổi tư thế: flat → half-opened → folded
+- Dùng `WindowInfoTracker` để xác minh chuyển đổi layout nhận biết gập
 
-### Audit Checklist for Foldable/Large Screen Support
+### Danh sách kiểm tra khi audit hỗ trợ thiết bị gập/màn hình lớn
 
-When auditing, check these specific items:
+Khi kiểm tra, hãy xem các mục cụ thể sau:
 
-- [ ] App uses `MediaQuery.sizeOf(context).width` or equivalent to determine window size class
-- [ ] Layout switches from single-pane to multi-pane at 600dp
-- [ ] Navigation transforms: bottom bar → rail → drawer across breakpoints
-- [ ] Content has max-width constraint on large screens (not stretching to fill)
-- [ ] No critical content or interactive elements placed across a fold/hinge
-- [ ] Foldable postures handled (if targeting foldable devices): tabletop and book modes
-- [ ] Hover states exist for pointer devices (`@media (hover: hover)`)
-- [ ] Touch targets remain 48dp minimum even on large screens
-- [ ] Dialogs are centered (not full-screen) on medium+ screens
-- [ ] Bottom sheets convert to side sheets on expanded+ screens
+- [ ] Ứng dụng dùng `MediaQuery.sizeOf(context).width` hoặc tương đương để xác định lớp window size
+- [ ] Layout chuyển từ một pane sang đa pane ở 600dp
+- [ ] Điều hướng biến đổi: bottom bar → rail → drawer qua các breakpoint
+- [ ] Nội dung có ràng buộc max-width trên màn hình lớn (không căng đầy)
+- [ ] Không có nội dung quan trọng hoặc phần tử tương tác đặt qua đường gập/hinge
+- [ ] Xử lý tư thế thiết bị gập (nếu nhắm tới thiết bị gập): chế độ tabletop và book
+- [ ] Có trạng thái hover cho thiết bị con trỏ (`@media (hover: hover)`)
+- [ ] Vùng chạm vẫn tối thiểu 48dp ngay cả trên màn hình lớn
+- [ ] Dialog được căn giữa (không toàn màn hình) trên màn hình medium+
+- [ ] Bottom sheet chuyển thành side sheet trên màn hình expanded+
 
-## Spacing System
+## Hệ thống khoảng cách
 
-MD3 uses a 4dp base grid for spacing:
+MD3 dùng grid cơ sở 4dp cho khoảng cách:
 
-| Use | Values |
+| Cách dùng | Giá trị |
 |-----|--------|
-| Component internal padding | 4, 8, 12, 16, 24dp |
-| Between components | 8, 12, 16, 24dp |
-| Section spacing | 24, 32, 48dp |
-| Layout margins | 16dp (compact), 24dp (medium+) |
-| Grid gutters | 8dp (compact), 16dp (medium), 24dp (large+) |
+| Padding nội bộ component | 4, 8, 12, 16, 24dp |
+| Giữa các component | 8, 12, 16, 24dp |
+| Khoảng cách phần | 24, 32, 48dp |
+| Margin layout | 16dp (compact), 24dp (medium+) |
+| Gutter grid | 8dp (compact), 16dp (medium), 24dp (large+) |
 
-Always use multiples of 4dp for consistent spatial rhythm.
+Luôn dùng bội của 4dp để có nhịp không gian nhất quán.
+
+

@@ -1,15 +1,15 @@
-# Hermes Agent 兼容性记录
+# Ghi chú về khả năng tương thích của Hermes Agent
 
-- 适配器：`HermesToolInstaller`
-- 官方平台状态：Linux/WSL2 支持 x86_64 与 aarch64；Android Termux 为 aarch64 Tier 2
-- 安装方式：Hermes 官方 `install.sh`，使用 `--skip-setup --skip-browser --non-interactive`，代码目录固定为 `/opt/tianxuan/tools/hermes-agent`，数据目录为 `/opt/tianxuan/data/hermes-agent`
-- 安装前提：Manifest 声明 Python `>=3.11`、curl、CA 证书和 Git；安装脚本会继续处理 uv 等其余依赖
-- 验证：`hermes --version`
-- 本地 Dashboard：绑定 `0.0.0.0:9119`（支持局域网访问），由 `ToolManager.startGateway` 等待端口就绪后才标记「运行中」，避免假启动状态
-- 访问 Token：`startService` 启动时注入 `HERMES_DASHBOARD_TOKEN` / `TIANXUAN_GATEWAY_TOKEN` 环境变量（与 OpenClaw 对齐）；重新生成 Token 后，运行中的实例会自动重启以应用新 Token
-- 数据策略：默认卸载只移除 `/opt/tianxuan/tools/hermes-agent` 和命令入口，保留 `/opt/tianxuan/data/hermes-agent`；用户勾选删除数据时额外移除该目录。
-- 最后核对：2026-08-21
+- Adapter: `HermesToolInstaller`
+- Trạng thái nền tảng chính thức: Linux/WSL2 hỗ trợ x86_64 và aarch64; Android Termux là Tier 2 cho aarch64
+- Cách cài đặt: dùng `install.sh` chính thức của Hermes với `--skip-setup --skip-browser --non-interactive`, thư mục mã nguồn cố định tại `/opt/tianxuan/tools/hermes-agent`, thư mục dữ liệu tại `/opt/tianxuan/data/hermes-agent`
+- Điều kiện tiên quyết khi cài đặt: Manifest khai báo Python `>=3.11`, curl, CA certificate và Git; script cài đặt sẽ tự xử lý uv cùng các phụ thuộc còn lại
+- Xác minh: `hermes --version`
+- Dashboard cục bộ: gắn `0.0.0.0:9119` (hỗ trợ truy cập trong LAN), `ToolManager.startGateway` sẽ chờ cổng sẵn sàng mới đánh dấu là "đang chạy", tránh trạng thái khởi động giả
+- Token truy cập: khi `startService` khởi động sẽ inject các biến môi trường `HERMES_DASHBOARD_TOKEN` / `TIANXUAN_GATEWAY_TOKEN` (đồng nhất với OpenClaw); sau khi tạo lại Token, thực thể đang chạy sẽ tự khởi động lại để áp dụng Token mới
+- Chính sách dữ liệu: mặc định gỡ cài đặt chỉ xóa `/opt/tianxuan/tools/hermes-agent` và lối vào lệnh, giữ lại `/opt/tianxuan/data/hermes-agent`; nếu người dùng chọn xóa dữ liệu thì xóa thêm thư mục này.
+- Lần đối chiếu cuối: 2026-08-21
 
-来源：[Hermes 官方平台支持](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/getting-started/platform-support.md)、[官方安装脚本](https://github.com/NousResearch/hermes-agent/blob/main/scripts/install.sh)
+Nguồn: [Hỗ trợ nền tảng chính thức của Hermes](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/getting-started/platform-support.md)、, [Script cài đặt chính thức](https://github.com/NousResearch/hermes-agent/blob/main/scripts/install.sh)
 
-正式发布前仍需在目标 Android ARM64 设备上确认 `.[termux]` 相关限制、Dashboard Web extra 和上游许可。
+Trước khi phát hành chính thức, vẫn cần xác nhận trên thiết bị Android ARM64 mục tiêu về các giới hạn liên quan đến `.[termux]`, Web extra của Dashboard và giấy phép upstream.

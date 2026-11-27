@@ -1,57 +1,57 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="vi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f7f8">
-  <meta name="description" content="天玄项目模板制作教程：template.json、动态字段、1:1 模板预览图、随身构造脚本、ZIP 导入与分享规范。">
-  <title>项目模板制作教程 · 天玄 TianXuan</title>
+  <meta name="description" content="Hướng dẫn tạo mẫu dự án cho CTHarness: template.json, trường động, ảnh xem trước tỷ lệ 1:1, script khởi tạo cùng quy cách nhập và chia sẻ ZIP.">
+  <title>Hướng dẫn tạo mẫu dự án · CTHarness</title>
   <link rel="icon" href="assets/tianxuan-logo.png">
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
 </head>
 <body class="docs-page">
-  <a class="skip-link" href="#main">跳到主要内容</a>
+  <a class="skip-link" href="#main">Chuyển đến nội dung chính</a>
   <header class="site-header docs-header" data-header>
-    <a class="brand" href="index.html" aria-label="返回天玄首页"><span class="brand-mark"><img src="assets/tianxuan-logo.png" alt=""></span><span class="brand-name">天玄</span><span class="brand-roman">TIANXUAN</span></a>
-    <button class="menu-toggle" type="button" aria-label="打开导航" aria-expanded="false" data-menu-toggle><span></span><span></span></button>
-    <nav class="site-nav" aria-label="主导航" data-nav><a href="index.html#vision">理念</a><a href="index.html#themes">界面</a><a href="plugins.html">插件教程</a><a href="templates.html" aria-current="page">模板教程</a><a class="nav-github" href="https://github.com/wkbin/tianxuan" target="_blank" rel="noreferrer">GitHub ↗</a></nav>
+    <a class="brand" href="index.html" aria-label="Về trang chủ CTHarness"><span class="brand-mark"><img src="assets/tianxuan-logo.png" alt=""></span><span class="brand-name">CTHarness</span><span class="brand-roman">CTHARNESS</span></a>
+    <button class="menu-toggle" type="button" aria-label="Mở điều hướng" aria-expanded="false" data-menu-toggle><span></span><span></span></button>
+    <nav class="site-nav" aria-label="Điều hướng chính" data-nav><a href="index.html#vision">Tầm nhìn</a><a href="index.html#themes">Giao diện</a><a href="plugins.html">Hướng dẫn tiện ích</a><a href="templates.html" aria-current="page">Hướng dẫn mẫu dự án</a><a class="nav-github" href="https://github.com/wkbin/tianxuan" target="_blank" rel="noreferrer">GitHub ↗</a></nav>
   </header>
 
   <main id="main" class="docs-main">
     <section class="docs-hero reveal">
-      <div class="section-index">TIANXUAN PROJECT TEMPLATE GUIDE / SCHEMA 1</div>
-      <h1>把一套工程，<br>变成可分享的起点。</h1>
-      <p>一个 ZIP 就能携带工程骨架、动态字段、统一方形预览图，以及需要用户明确授权的构造脚本。这里记录的是当前模板导入器、表单渲染器和物化引擎的真实约束。</p>
+      <div class="section-index">HƯỚNG DẪN MẪU DỰ ÁN CTHARNESS / LƯỢC ĐỒ 1</div>
+      <h1>Biến một dự án<br>thành điểm khởi đầu có thể chia sẻ.</h1>
+      <p>Chỉ một tệp ZIP đã có thể chứa bộ khung dự án, trường động, ảnh xem trước vuông thống nhất và script khởi tạo cần người dùng cho phép rõ ràng. Tài liệu này mô tả chính xác các giới hạn hiện tại của bộ nhập mẫu, bộ dựng biểu mẫu và cơ chế tạo dự án.</p>
     </section>
 
     <div class="docs-layout">
-      <aside class="docs-toc"><b>目录</b><a href="#workflow">工作流程</a><a href="#format">目录结构</a><a href="#manifest">清单字段</a><a href="#variables">动态字段</a><a href="#files">文件与路径</a><a href="#preview">预览图</a><a href="#hooks">构造脚本</a><a href="#validation">结果校验</a><a href="#package">打包导入</a><a href="#example">完整示例</a><a href="#checklist">发布检查</a></aside>
+      <aside class="docs-toc"><b>Mục lục</b><a href="#workflow">Quy trình</a><a href="#format">Cấu trúc thư mục</a><a href="#manifest">Các trường kê khai</a><a href="#variables">Trường động</a><a href="#files">Tệp và đường dẫn</a><a href="#preview">Ảnh xem trước</a><a href="#hooks">Script khởi tạo</a><a href="#validation">Xác minh kết quả</a><a href="#package">Đóng gói và nhập</a><a href="#example">Ví dụ hoàn chỉnh</a><a href="#checklist">Kiểm tra phát hành</a></aside>
       <article class="docs-content">
         <section id="workflow" class="reveal">
-          <h2>01 / 从工程到模板</h2>
-          <ol><li>建立模板目录并放入工程骨架。</li><li>在 <code>template.json</code> 中声明类型、分类、预览图和变量。</li><li>把需要替换的值写成 <code>{{variableName}}</code>。</li><li>可选：在 <code>template-hooks/</code> 携带前置或后置脚本。</li><li>将目录压缩为 ZIP，在“智坊 → 模板管理”导入。</li><li>验证后直接导出 ZIP，与其他用户分享。</li></ol>
-          <p class="callout">最快的开始方式是在模板管理页导出一个内置模板。修改 <code>template.json</code> 的 <code>id</code>，并移除系统保留的 <code>builtin.</code> 前缀后再导入。</p>
+          <h2>01 / Từ dự án thành mẫu</h2>
+          <ol><li>Tạo thư mục mẫu và đặt bộ khung dự án vào đó.</li><li>Dùng <code>template.json</code> để khai báo loại, danh mục, ảnh xem trước và biến.</li><li>Viết các giá trị cần thay thế dưới dạng <code>{{variableName}}</code>.</li><li>Không bắt buộc: dùng thư mục <code>template-hooks/</code> để chứa script chạy trước hoặc sau.</li><li>Nén thư mục thành ZIP rồi nhập tại “Không gian làm việc → Quản lý mẫu”.</li><li>Sau khi xác minh, xuất ZIP để chia sẻ với người khác.</li></ol>
+          <p class="callout">Cách bắt đầu nhanh nhất là xuất một mẫu tích hợp từ trang Quản lý mẫu. Hãy sửa <code>template.json</code>, đổi <code>id</code> và xóa tiền tố dành riêng của hệ thống <code>builtin.</code> trước khi nhập lại.</p>
         </section>
 
         <section id="format" class="reveal">
-          <h2>02 / 模板包目录结构</h2>
-          <p>模板使用普通 ZIP。ZIP 根目录可以直接放置清单，也可以只包含一个模板文件夹。</p>
+          <h2>02 / Cấu trúc thư mục gói mẫu</h2>
+          <p>Mẫu dùng ZIP thông thường. Thư mục gốc ZIP có thể chứa trực tiếp tệp kê khai hoặc chỉ chứa một thư mục mẫu.</p>
           <pre><code>my-android-template/
 ├── template.json
-├── preview.png                   # 可选，固定 270×270
-├── template-hooks/             # 可选
+├── preview.png                   # Tùy chọn, kích thước cố định 270×270
+├── template-hooks/             # Tùy chọn
 │   ├── before-create.sh
 │   └── after-create.sh
 └── app/
     ├── build.gradle.kts
     └── src/main/java/TIANXUAN_PACKAGE_PATH/
         └── MainActivity.kt.template</code></pre>
-          <ul><li>最多 5000 个 ZIP 条目。</li><li>单文件最大 16 MiB。</li><li>总解压体积最大 128 MiB。</li><li>绝对路径、Windows 盘符和包含 <code>..</code> 的越界路径会被拒绝。</li></ul>
+          <ul><li>Tối đa 5.000 mục trong ZIP.</li><li>Mỗi tệp tối đa 16 MiB.</li><li>Tổng dung lượng sau giải nén tối đa 128 MiB.</li><li>Đường dẫn tuyệt đối, ký hiệu ổ đĩa Windows và đường dẫn vượt giới hạn chứa <code>..</code> sẽ bị từ chối.</li></ul>
         </section>
 
         <section id="manifest" class="reveal">
-          <h2>03 / 编写 template.json</h2>
+          <h2>03 / Soạn template.json</h2>
           <pre><code>{
   "schemaVersion": 1,
   "id": "example.android-basic",
@@ -67,12 +67,12 @@
   "previewImage": "preview.png",
   "variables": []
 }</code></pre>
-          <table><thead><tr><th>字段</th><th>当前约束</th></tr></thead><tbody><tr><td><code>schemaVersion</code></td><td>当前固定为 <code>1</code>。</td></tr><tr><td><code>id</code></td><td>小写字母和数字，可用点、下划线、短横线分隔；<code>builtin.</code> 为保留前缀。</td></tr><tr><td><code>projectType</code></td><td><code>ANDROID</code>、<code>FLUTTER</code> 或 <code>GENERAL</code>。</td></tr><tr><td><code>category</code></td><td>模板选择页的分组；<code>sortOrder</code> 越小越靠前。</td></tr><tr><td><code>previewImage</code></td><td>可选的单张 1:1、270×270 预览图。</td></tr><tr><td><code>variables</code></td><td>声明动态表单和所有模板变量。</td></tr><tr><td><code>hooks</code></td><td>可选的前置、后置构造脚本。</td></tr><tr><td><code>validation</code></td><td>模板自带的生成结果校验规则。</td></tr></tbody></table>
-          <p>清单采用严格解析，未知字段不会被忽略。机器可读的 JSON Schema 可从项目仓库直接获取。</p>
+          <table><thead><tr><th>Trường</th><th>Giới hạn hiện tại</th></tr></thead><tbody><tr><td><code>schemaVersion</code></td><td>Hiện cố định là <code>1</code>.</td></tr><tr><td><code>id</code></td><td>Chữ thường và chữ số; có thể phân tách bằng dấu chấm, gạch dưới hoặc gạch ngang; <code>builtin.</code> là tiền tố dành riêng.</td></tr><tr><td><code>projectType</code></td><td><code>ANDROID</code>, <code>FLUTTER</code> hoặc <code>GENERAL</code>.</td></tr><tr><td><code>category</code></td><td>Nhóm trên trang chọn mẫu; <code>sortOrder</code> có giá trị càng nhỏ thì vị trí càng cao.</td></tr><tr><td><code>previewImage</code></td><td>Một ảnh xem trước tùy chọn, tỷ lệ 1:1, kích thước 270×270.</td></tr><tr><td><code>variables</code></td><td>Khai báo biểu mẫu động và tất cả biến của mẫu.</td></tr><tr><td><code>hooks</code></td><td>Script khởi tạo trước/sau tùy chọn.</td></tr><tr><td><code>validation</code></td><td>Quy tắc xác minh kết quả tạo dự án đi kèm mẫu.</td></tr></tbody></table>
+          <p>Tệp kê khai được phân tích nghiêm ngặt; các trường không nhận diện sẽ không bị bỏ qua. Có thể lấy JSON Schema máy đọc được trực tiếp từ kho dự án.</p>
         </section>
 
         <section id="variables" class="reveal">
-          <h2>04 / 让清单渲染动态 UI</h2>
+          <h2>04 / Dùng tệp kê khai để dựng giao diện động</h2>
           <pre><code>"variables": [
   {
     "name": "packageName",
@@ -94,39 +94,39 @@
     ]
   }
 ]</code></pre>
-          <p><code>prompt: true</code> 会在创建工程的最后一步自动渲染控件。支持 <code>TEXT</code>、<code>MULTILINE</code>、<code>NUMBER</code>、<code>BOOLEAN</code>、<code>SELECT</code> 和 <code>SECRET</code>。</p>
-          <ul><li>变量名必须匹配 <code>^[A-Za-z][A-Za-z0-9_]*$</code>，且不能重复。</li><li>隐藏必填变量必须提供默认值，系统派生变量除外。</li><li><code>SELECT</code> 必须有不重复的选项；可选字段允许留空。</li><li>项目名称与创建路径由智坊统一填写，不应伪装成动态字段。</li></ul>
-          <p>系统提供 <code>projectName</code>、<code>appName</code>、<code>projectPath</code>；如果模板把 <code>appName</code> 设为动态字段，则优先使用用户输入。只有模板声明 <code>packageName</code> 或 <code>packagePath</code> 时，才会启用 Java 包名规则。</p>
-          <p>模板可将 <code>projectName</code> 声明为 <code>prompt: false</code> 的固定变量，并用 <code>validationRegex</code> 约束统一项目名称输入框。校验失败时智坊显示该变量的 <code>description</code> 并禁止创建，不会静默改写用户输入。</p>
+          <p><code>prompt: true</code> sẽ tự động dựng các điều khiển ở bước cuối khi tạo dự án. Hỗ trợ <code>TEXT</code>, <code>MULTILINE</code>, <code>NUMBER</code>, <code>BOOLEAN</code>, <code>SELECT</code> và <code>SECRET</code>.</p>
+          <ul><li>Tên biến phải khớp với mẫu <code>^[A-Za-z][A-Za-z0-9_]*$</code> và không được trùng lặp.</li><li>Biến bắt buộc nhưng bị ẩn phải có giá trị mặc định, ngoại trừ biến do hệ thống tạo.</li><li><code>SELECT</code> phải có các lựa chọn không trùng nhau; trường tùy chọn có thể để trống.</li><li>Tên dự án và đường dẫn tạo do không gian làm việc quản lý thống nhất, không nên khai báo giả thành trường động.</li></ul>
+          <p>Hệ thống cung cấp <code>projectName</code>, <code>appName</code>, <code>projectPath</code>; nếu mẫu khai báo <code>appName</code> là trường động thì ưu tiên dữ liệu người dùng nhập. Chỉ khi mẫu khai báo <code>packageName</code> hoặc <code>packagePath</code> thì quy tắc tên gói Java mới được áp dụng.</p>
+          <p>Mẫu có thể khai báo <code>projectName</code> là biến cố định với <code>prompt: false</code> và dùng <code>validationRegex</code> để ràng buộc ô nhập tên dự án dùng chung. Nếu xác minh thất bại, không gian làm việc hiển thị <code>description</code> và chặn việc tạo dự án, không âm thầm sửa dữ liệu người dùng nhập.</p>
         </section>
 
         <section id="files" class="reveal">
-          <h2>05 / 替换文件内容和路径</h2>
-          <p>文本内容与相对路径都能使用变量：</p>
+          <h2>05 / Thay thế nội dung và đường dẫn tệp</h2>
+          <p>Có thể dùng biến trong cả nội dung văn bản lẫn đường dẫn tương đối:</p>
           <pre><code>modules/{{moduleName}}/config.json.template
 
 {
   "name": "{{projectName}}",
   "mode": "{{buildMode}}"
 }</code></pre>
-          <p>生成时会替换变量并移除末尾的 <code>.template</code>。任意需要替换的文本都建议使用该后缀；Java、Kotlin、Dart、JSON、YAML、TOML、Shell、Python、JavaScript、C/C++ 等常见文本格式也会自动识别。</p>
-          <p>包目录使用 <code>TIANXUAN_PACKAGE_PATH</code>，创建时会替换为包名对应的目录层级。不要使用以下划线开头的占位目录，否则可能被 Android AAPT 忽略。变量生成的路径会再次规范化，越界路径会被拒绝。若文件中残留未声明的 <code>{{unknownVariable}}</code>，创建会直接失败。</p>
+          <p>Khi tạo dự án, các biến được thay thế và phần đuôi sau được loại bỏ: <code>.template</code>. Nên dùng phần đuôi này cho mọi tệp văn bản cần thay thế; các định dạng phổ biến như Java, Kotlin, Dart, JSON, YAML, TOML, Shell, Python, JavaScript và C/C++ cũng được nhận diện tự động.</p>
+          <p>Thư mục gói dùng <code>TIANXUAN_PACKAGE_PATH</code>; khi tạo dự án, nó được thay bằng cấu trúc thư mục tương ứng với tên gói. Không dùng thư mục giữ chỗ bắt đầu bằng dấu gạch dưới vì Android AAPT có thể bỏ qua. Đường dẫn tạo từ biến sẽ được chuẩn hóa lại và đường dẫn vượt giới hạn bị từ chối. Nếu tệp còn sót biến chưa khai báo <code>{{unknownVariable}}</code> thì thao tác tạo sẽ thất bại ngay.</p>
         </section>
 
         <section id="preview" class="reveal">
-          <h2>06 / 统一方形预览图</h2>
-          <p>模板只声明一张预览图，不再区分手机、平板或横竖屏。比例固定为 <strong>1:1</strong>，尺寸必须为 <strong>270×270 px</strong>；支持 PNG、JPEG、WebP 和 GIF，单图不超过 4 MiB。</p>
-          <p class="callout">把 Logo、标题和关键内容留在中央安全区，并避开四周约 8%，保证不同尺寸的模板卡片都能清晰展示。</p>
+          <h2>06 / Ảnh xem trước vuông thống nhất</h2>
+          <p>Mẫu chỉ khai báo một ảnh xem trước, không phân biệt điện thoại, máy tính bảng, hướng dọc hay ngang. Tỷ lệ cố định là <strong>1:1</strong> và kích thước bắt buộc là <strong>270×270 px</strong>; hỗ trợ PNG, JPEG, WebP và GIF; mỗi ảnh không quá 4 MiB.</p>
+          <p class="callout">Đặt logo, tiêu đề và nội dung quan trọng trong vùng an toàn ở giữa; chừa khoảng 8% quanh mép để thẻ mẫu hiển thị rõ ở mọi kích thước.</p>
         </section>
 
         <section id="hooks" class="reveal">
-          <h2>07 / 携带可审查的构造脚本</h2>
+          <h2>07 / Đóng gói script khởi tạo có thể rà soát</h2>
           <pre><code>"hooks": {
   "beforeCreate": "template-hooks/before-create.sh",
   "afterCreate": "template-hooks/after-create.sh"
 }</code></pre>
-          <p>脚本不会在导入、查看或导出时执行。创建工程时，天玄会显示脚本内容，只有用户明确勾选授权后才执行。</p>
-          <ul><li>脚本必须位于 <code>template-hooks/</code>，单个最大 1 MiB。</li><li>在 Linux 沙箱的新工程目录中运行，单阶段最长 60 秒。</li><li><code>beforeCreate</code> 在复制模板文件前执行，<code>afterCreate</code> 在物化后执行。</li><li>工程路径为 <code>TIANXUAN_PROJECT_DIR</code>。</li><li>变量以 <code>TIANXUAN_VAR_&lt;大写变量名&gt;</code> 传入。</li><li>非零退出会终止创建，并把错误输出返回界面。</li></ul>
+          <p>Script không chạy khi nhập, xem hoặc xuất mẫu. Khi tạo dự án, CTHarness hiển thị nội dung script và chỉ thực thi sau khi người dùng chủ động đánh dấu đồng ý.</p>
+          <ul><li>Script phải nằm trong <code>template-hooks/</code>; mỗi script tối đa 1 MiB.</li><li>Chạy trong thư mục dự án mới thuộc sandbox Linux; mỗi giai đoạn tối đa 60 giây.</li><li><code>beforeCreate</code> chạy trước khi sao chép tệp mẫu; <code>afterCreate</code> chạy sau khi tạo dự án.</li><li>Đường dẫn dự án là <code>TIANXUAN_PROJECT_DIR</code>.</li><li>Các biến được truyền dưới dạng <code>TIANXUAN_VAR_&lt;TEN_BIEN_VIET_HOA&gt;</code>.</li><li>Mã thoát khác 0 sẽ dừng quá trình tạo và hiển thị thông báo lỗi.</li></ul>
           <pre><code>#!/bin/sh
 set -eu
 mkdir -p generated
@@ -134,7 +134,7 @@ printf '%s\n' "$TIANXUAN_VAR_PROJECTNAME" &gt; generated/project-name.txt</code>
         </section>
 
         <section id="validation" class="reveal">
-          <h2>08 / 模板自带结果校验</h2>
+          <h2>08 / Xác minh kết quả tích hợp trong mẫu</h2>
           <pre><code>"validation": {
   "requiredFiles": ["app/src/main/java/TIANXUAN_PACKAGE_PATH/MainHook.kt"],
   "forbiddenFiles": ["app/src/main/java/TIANXUAN_PACKAGE_PATH/LegacyHook.kt"],
@@ -145,12 +145,12 @@ printf '%s\n' "$TIANXUAN_VAR_PROJECTNAME" &gt; generated/project-name.txt</code>
     }
   ]
 }</code></pre>
-          <p><code>requiredFiles</code> 声明必需文件，<code>forbiddenFiles</code> 声明禁止产物，<code>contentRules</code> 支持 <code>equals</code>、<code>contains</code> 和 <code>excludes</code>。路径与内容均可使用模板变量。</p>
-          <p class="callout">校验在 <code>afterCreate</code> 完成后执行，规则属于模板本身，与内置 ID 无关；模板改名、导出和重新导入后行为保持一致。</p>
+          <p><code>requiredFiles</code> khai báo các tệp bắt buộc; <code>forbiddenFiles</code> khai báo các đầu ra bị cấm; <code>contentRules</code> hỗ trợ <code>equals</code>, <code>contains</code> và <code>excludes</code>. Đường dẫn và nội dung đều có thể dùng biến của mẫu.</p>
+          <p class="callout">Việc xác minh diễn ra sau khi <code>afterCreate</code> hoàn tất. Quy tắc thuộc về chính mẫu, không phụ thuộc ID tích hợp; hành vi vẫn nhất quán sau khi đổi tên, xuất và nhập lại mẫu.</p>
         </section>
 
         <section id="package" class="reveal">
-          <h2>09 / 打包、导入与分享</h2>
+          <h2>09 / Đóng gói, nhập và chia sẻ</h2>
           <h3>Windows PowerShell</h3>
           <pre><code>Compress-Archive `
   -Path .\my-android-template\* `
@@ -158,13 +158,13 @@ printf '%s\n' "$TIANXUAN_VAR_PROJECTNAME" &gt; generated/project-name.txt</code>
           <h3>Linux / macOS</h3>
           <pre><code>cd my-android-template
 zip -r ../my-android-template.zip .</code></pre>
-          <p>在 Android 应用中打开“智坊 → 更多 → 模板管理 → 导入 ZIP”。导入成功后，模板会自动进入对应项目类型和分类；不需要修改应用代码或注册表。</p>
-          <p>模板管理页还可以导出模板。用户模板可删除，内置模板受到保护。</p>
+          <p>Trong ứng dụng Android, mở “Không gian làm việc → Thêm → Quản lý mẫu → Nhập ZIP”. Sau khi nhập thành công, mẫu tự động xuất hiện trong loại dự án và danh mục tương ứng; không cần sửa mã ứng dụng hay danh mục đăng ký mẫu.</p>
+          <p>Trang Quản lý mẫu cũng cho phép xuất mẫu. Có thể xóa mẫu của người dùng; mẫu tích hợp được bảo vệ.</p>
         </section>
 
         <section id="example" class="reveal">
-          <h2>10 / 一个完整的无包名模板</h2>
-          <p><code>GENERAL</code> 模板不依赖 Android 包名：</p>
+          <h2>10 / Mẫu hoàn chỉnh không cần tên gói</h2>
+          <p><code>GENERAL</code> không phụ thuộc tên gói Android:</p>
           <pre><code>{
   "schemaVersion": 1,
   "id": "example.shell-project",
@@ -182,20 +182,20 @@ zip -r ../my-android-template.zip .</code></pre>
     }
   ]
 }</code></pre>
-          <p>在 <code>README.md.template</code> 中写入 <code># {{projectName}}\n{{greeting}}</code> 即可。工程名称与路径仍由所有模板共用的创建页面提供。</p>
+          <p>Chỉ cần thêm vào <code>README.md.template</code> nội dung <code># {{projectName}}\n{{greeting}}</code>. Tên và đường dẫn dự án vẫn được cung cấp bởi trang tạo dùng chung cho mọi mẫu.</p>
         </section>
 
         <section id="checklist" class="reveal">
-          <h2>11 / 发布前检查</h2>
-          <ul><li>清单可通过 v1 JSON Schema，且没有未知字段。</li><li>ID 未使用 <code>builtin.</code>，变量名与分类 ID 合法且不重复。</li><li>项目名称和路径没有被声明成动态字段。</li><li>所有文本占位符均已声明，路径变量不会产生越界。</li><li>单张预览图符合 1:1、270×270、格式和体积限制。</li><li>脚本位于指定目录，不包含密钥，并能在 60 秒内结束。</li><li>在全新目录中完成导入、表单填写、创建、导出和重新导入。</li><li>GENERAL 模板已确认不会被错误要求填写 Java 包名。</li></ul>
+          <h2>11 / Kiểm tra trước khi phát hành</h2>
+          <ul><li>Tệp kê khai hợp lệ theo JSON Schema v1 và không có trường lạ.</li><li>ID không dùng tiền tố <code>builtin.</code>; tên biến và ID danh mục hợp lệ, không trùng nhau.</li><li>Tên và đường dẫn dự án không bị khai báo thành trường động.</li><li>Tất cả biến giữ chỗ trong văn bản đều đã khai báo; biến đường dẫn không tạo đường dẫn vượt giới hạn.</li><li>Ảnh xem trước duy nhất đáp ứng tỷ lệ 1:1, kích thước 270×270, định dạng và giới hạn dung lượng.</li><li>Script nằm đúng thư mục, không chứa khóa bí mật và hoàn tất trong vòng 60 giây.</li><li>Thực hiện thành công việc nhập, điền biểu mẫu, tạo dự án, xuất và nhập lại trong thư mục mới.</li><li>Xác nhận mẫu GENERAL không yêu cầu nhập tên gói Java một cách nhầm lẫn.</li></ul>
           <div class="hero-actions">
-            <a class="button button-primary" href="https://github.com/wkbin/tianxuan/blob/main/docs/PROJECT_TEMPLATE_SPEC.md" target="_blank" rel="noreferrer">阅读完整规范 <span>↗</span></a>
-            <a class="button button-quiet" href="https://github.com/wkbin/tianxuan/blob/main/docs/project-template.schema.json" target="_blank" rel="noreferrer">查看 JSON Schema <span>↗</span></a>
+            <a class="button button-primary" href="https://github.com/wkbin/tianxuan/blob/main/docs/PROJECT_TEMPLATE_SPEC.md" target="_blank" rel="noreferrer">Đọc toàn bộ quy cách <span>↗</span></a>
+            <a class="button button-quiet" href="https://github.com/wkbin/tianxuan/blob/main/docs/project-template.schema.json" target="_blank" rel="noreferrer">Xem JSON Schema <span>↗</span></a>
           </div>
         </section>
       </article>
     </div>
   </main>
-  <footer><div class="footer-brand"><strong>天玄</strong><span>TIANXUAN / LINUX AI RUNTIME</span></div><p>于天玄中立极，于方寸间创世。</p><div class="footer-links"><a href="index.html">首页</a><a href="plugins.html">插件教程</a><a href="https://github.com/wkbin/tianxuan">GitHub</a></div><small>© <span data-year></span> TianXuan Project. Open source on GitHub.</small></footer>
+  <footer><div class="footer-brand"><strong>CTHarness</strong><span>CTHARNESS / MÔI TRƯỜNG CHẠY AI TRÊN LINUX</span></div><p>Kiến tạo từ CTHarness, mở ra thế giới trong lòng bàn tay.</p><div class="footer-links"><a href="index.html">Trang chủ</a><a href="plugins.html">Hướng dẫn tiện ích</a><a href="https://github.com/wkbin/tianxuan">GitHub</a></div><small>© <span data-year></span> Dự án CTHarness. Mã nguồn mở trên GitHub.</small></footer>
 </body>
 </html>

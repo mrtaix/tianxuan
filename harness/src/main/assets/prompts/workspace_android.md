@@ -1,7 +1,7 @@
-### Android 工程操作规约
-- 当前工程类型：Android；根目录标记：{{MARKER_TEXT}}。
-- 修改代码或构建配置时，先用 read 查看 `settings.gradle(.kts)`、`app/build.gradle(.kts)`、`app/src/main/AndroidManifest.xml` 和入口源码；局部修改优先用 edit，需要新文件才用 write。
-- 首选构建入口：`/opt/tianxuan/scripts/build_android.sh "{{WORKSPACE_PATH}}" assembleDebug`；也可在工程根目录执行 `./gradlew assembleDebug`。不要调用已移除的 android CLI。
-- 若标准入口因项目使用更旧或更新的 Gradle/AGP/Kotlin 依赖而不兼容，先读取 wrapper、版本目录与构建日志分析依赖要求；随后先调用 `build_script(action=list)` 检查库中是否已有适配的现有脚本。若有匹配脚本则直接调用 `build_script(action=bind, id=...)` 挂载复用；若无适配脚本，再调用 `build_script(action=create, project_type=android, ...)` 创建有明确适用版本说明的 POSIX shell 脚本并挂载。脚本的 `$1` 是项目目录，`$2` 是 Gradle task；不得写死当前项目路径。
-- 需要安装到手机时，先确认 APK 真实存在并完成构建，再复制到 `/sdcard/Download/`，然后执行 `tianxuan-host install-apk /sdcard/Download/<项目名>.apk` 调起宿主安装器；若已配对 ADB，可直接 `adb install -r <apk>`。排查崩溃或调试运行日志时，直接调用 `host(action="logcat", package="<包名>")` 或执行 `logcat-grabber <包名>`，无需 Shizuku/Root。
-- 构建失败必须读取完整 Gradle/AAPT2 错误并编辑对应脚本或工程文件修复，不能只汇报“编译失败”。
+### Quy tắc thao tác với dự án Android
+- Loại dự án hiện tại: Android; dấu nhận diện thư mục gốc: {{MARKER_TEXT}}.
+- Khi sửa mã nguồn hoặc cấu hình build, trước tiên dùng read để xem `settings.gradle(.kts)`, `app/build.gradle(.kts)`, `app/src/main/AndroidManifest.xml` và mã nguồn tại điểm vào; ưu tiên edit cho thay đổi cục bộ, chỉ dùng write khi cần tạo file mới.
+- Ưu tiên lệnh build: `/opt/tianxuan/scripts/build_android.sh "{{WORKSPACE_PATH}}" assembleDebug`; cũng có thể chạy `./gradlew assembleDebug` tại thư mục gốc của dự án. Không gọi CLI android đã bị loại bỏ.
+- Nếu lệnh build tiêu chuẩn không tương thích do dự án dùng phiên bản phụ thuộc Gradle/AGP/Kotlin cũ hơn hoặc mới hơn, trước tiên đọc wrapper, danh mục phiên bản và log build để phân tích yêu cầu phụ thuộc; sau đó gọi `build_script(action=list)` để kiểm tra kho script đã có script phù hợp hay chưa. Nếu có, gọi trực tiếp `build_script(action=bind, id=...)` để gắn và tái sử dụng; nếu chưa có, gọi `build_script(action=create, project_type=android, ...)` để tạo script POSIX shell có mô tả rõ các phiên bản áp dụng rồi gắn vào dự án. Tham số `$1` của script là thư mục dự án, `$2` là Gradle task; không được ghi cứng đường dẫn dự án hiện tại.
+- Khi cần cài lên điện thoại, trước tiên xác nhận APK thực sự tồn tại và quá trình build đã hoàn tất, rồi sao chép vào `/sdcard/Download/`; sau đó chạy `tianxuan-host install-apk /sdcard/Download/<ten-du-an>.apk` để mở trình cài đặt của ứng dụng chủ. Nếu đã ghép nối ADB, có thể dùng trực tiếp `adb install -r <apk>`. Khi điều tra sự cố ứng dụng bị văng hoặc xem log chạy để gỡ lỗi, gọi trực tiếp `host(action="logcat", package="<ten-goi>")` hoặc chạy `logcat-grabber <ten-goi>`, không cần Shizuku/Root.
+- Khi build thất bại, phải đọc đầy đủ lỗi Gradle/AAPT2 và chỉnh sửa script hoặc file dự án tương ứng để khắc phục, không được chỉ báo “biên dịch thất bại”.

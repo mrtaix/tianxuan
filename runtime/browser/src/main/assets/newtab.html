@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="vi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>新标签页</title>
+<title>Thẻ mới</title>
 <style>
   :root {
     color-scheme: light dark;
@@ -56,7 +56,7 @@
     position: relative;
     -webkit-tap-highlight-color: transparent;
   }
-  /* 内容高于视口（分屏内嵌短 WebView）时可整体滚动；margin:auto 保证矮视口居中、高视口也居中 */
+  /* Cho phép cuộn toàn trang khi nội dung cao hơn khung nhìn (WebView thấp nhúng trong chế độ chia màn hình); margin:auto căn giữa ở cả khung nhìn thấp và cao. */
   .wrap {
     position: relative;
     width: 100%;
@@ -68,7 +68,7 @@
     gap: 28px;
     animation: rise .5s ease-out both;
   }
-  /* 背景微光：浅色为清晨雾面，深色为深空星云 */
+  /* Ánh sáng nền dịu: sương sớm ở giao diện sáng, tinh vân vũ trụ ở giao diện tối. */
   body::before, body::after {
     content: "";
     position: fixed;
@@ -94,7 +94,7 @@
     .wrap { animation: none; }
   }
 
-  /* ===== Logo：北斗七星 ===== */
+  /* ===== Logo: chòm sao Bắc Đẩu ===== */
   .logo { width: 96px; height: 96px; display: block; }
 
   .brand { text-align: center; }
@@ -124,7 +124,7 @@
     letter-spacing: 0.18em;
   }
 
-  /* ===== 搜索 ===== */
+  /* ===== Tìm kiếm ===== */
   .search {
     width: 100%;
     background: var(--card);
@@ -186,7 +186,7 @@
     border-color: var(--accent);
   }
 
-  /* ===== 快捷入口 ===== */
+  /* ===== Liên kết nhanh ===== */
   .links {
     width: 100%;
     display: grid;
@@ -235,7 +235,7 @@
     letter-spacing: 0.08em;
   }
 
-  /* 矮视口（分屏内嵌短 WebView）压缩纵向占位，避免内容溢出过多；需位于 .logo 主规则之后 */
+  /* Giảm khoảng chiếm chỗ theo chiều dọc ở khung nhìn thấp (WebView thấp nhúng trong chế độ chia màn hình) để hạn chế tràn nội dung; phải đặt sau quy tắc chính của .logo. */
   @media (max-height: 720px) {
     body { padding: 16px; }
     .wrap { gap: 16px; }
@@ -246,7 +246,7 @@
 <body>
 <div class="wrap">
 
-  <!-- 北斗七星 Logo：三色弧线向中心汇聚 -->
+  <!-- Logo chòm sao Bắc Đẩu: các cung ba màu hội tụ về tâm. -->
   <svg class="logo" viewBox="0 0 96 96" fill="none" aria-hidden="true">
     <circle cx="48" cy="48" r="44" stroke="var(--logo-a)" stroke-opacity=".22" stroke-width="2"/>
     <path d="M48 12 A36 36 0 0 1 84 48" stroke="var(--logo-a)" stroke-width="4.5" stroke-linecap="round"/>
@@ -258,20 +258,20 @@
   </svg>
 
   <div class="brand">
-    <h1>天玄<span class="latin">TIANXUAN</span></h1>
-    <div class="slogan">掌中天玄 · 七星为枢</div>
-    <div class="motto">于天玄中立极，于方寸间创世</div>
+    <h1>CTHarness<span class="latin">CTHarness</span></h1>
+    <div class="slogan">CTHarness trong tay · Bảy sao làm trục</div>
+    <div class="motto">Định vị trong CTHarness, sáng tạo thế giới trong lòng bàn tay</div>
   </div>
 
   <div class="search" role="search">
     <div class="search-row">
-      <input id="q" type="search" enterkeyhint="go" placeholder="搜索或输入网址" autocomplete="off">
-      <button id="go" type="button">搜索</button>
+      <input id="q" type="search" enterkeyhint="go" placeholder="Tìm kiếm hoặc nhập địa chỉ web" autocomplete="off">
+      <button id="go" type="button">Tìm kiếm</button>
     </div>
     <div class="engines" id="engines"></div>
   </div>
 
-  <nav class="links" aria-label="快捷入口">
+  <nav class="links" aria-label="Liên kết nhanh">
     <a href="https://github.com/wkbin/tianxuan">
       <span class="glyph">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="color:var(--fg)">
@@ -286,7 +286,7 @@
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
         </svg>
       </span>
-      <span class="label">发布版</span>
+      <span class="label">Bản phát hành</span>
     </a>
     <a href="https://juejin.cn/">
       <span class="glyph">
@@ -294,7 +294,7 @@
           <path d="M12 2 4.5 7.4 12 12.8l7.5-5.4L12 2Zm-9 9.9L10.5 21v-6.1L3 9.9v4Zm18 0v4l-7.5 5v-6.1L21 9.9Z" transform="translate(0 .5)"/>
         </svg>
       </span>
-      <span class="label">掘金</span>
+      <span class="label">Juejin</span>
     </a>
     <a href="https://www.bing.com/">
       <span class="glyph">
@@ -302,7 +302,7 @@
           <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
         </svg>
       </span>
-      <span class="label">必应</span>
+      <span class="label">Bing</span>
     </a>
     <a href="https://www.baidu.com/">
       <span class="glyph">
@@ -310,7 +310,7 @@
           <path d="M5.5 3.5h6a5.5 5.5 0 0 1 0 11h-6a5.5 5.5 0 0 1 0-11Z"/><path d="M12.5 14.5h6a5.5 5.5 0 0 0 0-11"/>
         </svg>
       </span>
-      <span class="label">百度</span>
+      <span class="label">Baidu</span>
     </a>
     <a href="https://react.dev/">
       <span class="glyph">
@@ -339,14 +339,14 @@
     </a>
   </nav>
 
-  <div class="foot">天玄 · TianXuan — Android 无 Root Linux Runtime 与智能体引擎</div>
+  <div class="foot">CTHarness · CTHarness — Linux Runtime không cần Root trên Android và bộ máy agent</div>
 </div>
 
 <script>
 (function () {
   var ENGINES = [
-    { name: "必应", url: "https://www.bing.com/search?q=" },
-    { name: "百度", url: "https://www.baidu.com/s?wd=" },
+    { name: "Bing", url: "https://www.bing.com/search?q=" },
+    { name: "Baidu", url: "https://www.baidu.com/s?wd=" },
     { name: "Google", url: "https://www.google.com/search?q=" }
   ];
   var current = 0;
@@ -371,7 +371,7 @@
   function navigate() {
     var raw = input.value.trim();
     if (!raw) return;
-    // 带 scheme 的按网址跳，否则按当前引擎搜索
+    // Nếu có scheme thì mở như địa chỉ web; nếu không, tìm bằng công cụ hiện tại.
     var target = /^https?:\/\//i.test(raw) ? raw : ENGINES[current].url + encodeURIComponent(raw);
     location.href = target;
   }

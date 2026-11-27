@@ -1,11 +1,11 @@
-# ops · 部署速查
+# ops · Tra cứu nhanh về triển khai
 
-本目录是**基础设施的源码**。线上都跑在腾讯云 `124.222.37.253` 上，
-这里存的是可复现的源文件，完整说明见 `README.md`。
+Thư mục này chứa **mã nguồn của hạ tầng**. Toàn bộ hệ thống đang chạy trên Tencent Cloud `124.222.37.253`;
+các tệp nguồn lưu tại đây cho phép tái tạo việc triển khai. Xem hướng dẫn đầy đủ trong `README.md`.
 
-## 文件与线上路径的对应
+## Ánh xạ tệp với đường dẫn trên máy chủ
 
-| 本目录文件 | 线上路径 |
+| Tệp trong thư mục này | Đường dẫn trên máy chủ |
 |---|---|
 | `tianxuan_dist.py` | `/usr/local/share/tianxuan/tianxuan_dist.py` |
 | `apkmanifest.py` | `/usr/local/share/tianxuan/apkmanifest.py` |
@@ -16,10 +16,10 @@
 | `tianxuan-dist.service` | `/etc/systemd/system/tianxuan-dist.service` |
 | `tianxuan-fetch.service` | `/etc/systemd/system/tianxuan-fetch.service` |
 
-## 一键部署
+## Triển khai bằng một lệnh
 
 ```bash
-SSHK=~/.ssh/tianxuan   # 或 ssh -i /root/tuzhe_key
+SSHK=~/.ssh/tianxuan   # Hoặc ssh -i /root/tuzhe_key
 D=124.222.37.253
 
 for f in tianxuan_dist.py apkmanifest.py apkmanifest_test.py gen_manifest_test.py; do
@@ -36,62 +36,62 @@ ssh -i "$SSHK" root@$D '
   mv -f /usr/local/bin/gen-manifest.sh /usr/local/bin/gen-tianxuan-manifest.sh
   chmod +x /usr/local/bin/{gen-tianxuan-manifest,sync-tianxuan-plugins,tianxuan-fetch}.sh
   cd /usr/local/share/tianxuan
-  python3 apkmanifest_test.py     # 先自测：清单解析器
-  python3 gen_manifest_test.py    # 再自测：latest 选取与排序
+  python3 apkmanifest_test.py     # Tự kiểm thử trước: trình phân tích manifest
+  python3 gen_manifest_test.py    # Tự kiểm thử tiếp: chọn bản latest và sắp xếp
   systemctl daemon-reload
-  /usr/local/bin/sync-tianxuan-plugins                     # 补软链
-  /usr/local/bin/gen-tianxuan-manifest                     # 刷新清单
+  /usr/local/bin/sync-tianxuan-plugins                     # Bổ sung liên kết mềm
+  /usr/local/bin/gen-tianxuan-manifest                     # Làm mới manifest
   systemctl restart tianxuan-dist
 '
 ```
 
-`gen_manifest_test.py` 必须在部署机上与 `gen-manifest.sh` 同目录：
-它用相对路径找脚本，并从同目录取 `apkmanifest.py`。
+`gen_manifest_test.py` phải nằm cùng thư mục với `gen-manifest.sh` trên máy triển khai:
+bài kiểm thử tìm script theo đường dẫn tương đối và lấy `apkmanifest.py` từ cùng thư mục.
 
-## 首次部署（空机器）
+## Triển khai lần đầu (máy trống)
 
 ```bash
 mkdir -p /opt/tianxuan-offline /opt/tianxuan-dist /usr/local/share/tianxuan
 
-# 直链清单不入库（含 QQ 闪传的 rkey 会话凭证，14 天过期）。
-# 按README.md「取链过程」重新取链后，在服务器上生成 TSV：
-#   列必须是：字节数 <TAB> 文件名 <TAB> 直链
+# Không đưa danh sách liên kết tải trực tiếp vào kho mã (chứa thông tin xác thực phiên rkey của QQ Flash Transfer, hết hạn sau 14 ngày).
+# Sau khi lấy lại liên kết theo «Quy trình lấy liên kết» trong README.md, tạo TSV trên máy chủ:
+#   Các cột bắt buộc là: số byte <TAB> tên tệp <TAB> liên kết tải trực tiếp
 python3 -c "import json;[print(f\"{p['size']}\t{p['name']}\t{p['url']}\") \
   for p in json.load(open('/root/offline-manifest.json'))]" \
   > /tmp/tianxuan-manifest.tsv
 
-/usr/local/bin/tianxuan-fetch.sh                # 断点续传，可反复重跑
+/usr/local/bin/tianxuan-fetch.sh                # Tiếp tục tải dở, có thể chạy lại nhiều lần
 systemctl enable --now tianxuan-fetch.service
 
-# nginx（唯一对既有配置的改动：只新增一个 location）
-# 见 README.md「nginx 改动」小节，改前先 nginx -t，改错会 502
+# nginx (thay đổi duy nhất đối với cấu hình hiện có: chỉ thêm một location)
+# Xem mục «Thay đổi nginx» trong README.md; chạy nginx -t trước khi sửa, sửa sai sẽ gây lỗi 502
 systemctl enable --now tianxuan-dist.service
 ```
 
-## 上线前必查
+## Những mục bắt buộc kiểm tra trước khi đưa vào vận hành
 
 ```bash
-# 1. 既有服务不能受影响
+# 1. Không được ảnh hưởng đến dịch vụ hiện có
 for s in fusion-gateway logview st-rotator st-auth nginx; do
   systemctl is-active "$s" || echo "!!! $s 异常"
 done
-curl -s -o /dev/null -w 'v1/models=%{http_code}\n' http://127.0.0.1/v1/models  # 应为 401
+curl -s -o /dev/null -w 'v1/models=%{http_code}\n' http://127.0.0.1/v1/models  # Kết quả phải là 401
 
-# 2. 解析器自测
-python3 /usr/local/share/tianxuan/apkmanifest_test.py     # 应 7/7
+# 2. Tự kiểm thử trình phân tích
+python3 /usr/local/share/tianxuan/apkmanifest_test.py     # Kết quả phải là 7/7
 
-# 3. 公网四端点
+# 3. Bốn điểm cuối công khai
 curl -s https://124.222.37.253/tx-update/healthz
 curl -s https://124.222.37.253/tx-update/latest | head -c 200
 curl -s -o /dev/null -w '%{http_code}\n' -r 0-1023 \
-  https://124.222.37.253/tx-update/apk/0.20.0          # 应 206
+  https://124.222.37.253/tx-update/apk/0.20.0          # Kết quả phải là 206
 curl -s https://124.222.37.253/tx-update/plugins | head -c 120
 ```
 
-## 备份位置
+## Vị trí sao lưu
 
-- `/root/tianxuan-backup/` —— 旧 APK、旧 manifest、旧脚本
-- `/root/nginx-backups/` —— nginx 配置
+- `/root/tianxuan-backup/` — APK cũ, manifest cũ, script cũ
+- `/root/nginx-backups/` — Cấu hình nginx
 
-**nginx 备份绝对不能放 `/etc/nginx/sites-enabled/`**，会被 nginx 当配置扫到，
-报 `duplicate default server for 0.0.0.0:80`。
+**Tuyệt đối không đặt bản sao lưu nginx trong `/etc/nginx/sites-enabled/`** vì nginx sẽ quét chúng như tệp cấu hình
+và báo `duplicate default server for 0.0.0.0:80`.

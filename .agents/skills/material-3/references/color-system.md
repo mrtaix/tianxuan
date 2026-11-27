@@ -1,89 +1,89 @@
-# MD3 Color System
+# Hệ thống màu MD3
 
-Complete reference for Material Design 3's color system: roles, tonal palettes, dynamic color, and scheme generation.
+Tài liệu tham khảo đầy đủ về hệ thống màu của Material Design 3: vai trò, bảng tonal, dynamic color và tạo scheme.
 
-## Color Roles
+## Vai trò màu
 
-MD3 defines 29+ color roles organized into groups. **Jetpack Compose:** map to `MaterialTheme.colorScheme` (e.g. `primary`, `onPrimary`). **Web:** each role exists as a CSS custom property `--md-sys-color-{role-name}`.
+MD3 định nghĩa 29+ vai trò màu, được tổ chức thành các nhóm. **Jetpack Compose:** ánh xạ tới `MaterialTheme.colorScheme` (vd. `primary`, `onPrimary`). **Web:** mỗi vai trò tồn tại dưới dạng CSS custom property `--md-sys-color-{role-name}`.
 
-### Accent Colors
+### Màu nhấn (Accent Colors)
 
-Three accent groups (primary, secondary, tertiary) each have 4 roles:
+Ba nhóm màu nhấn (primary, secondary, tertiary), mỗi nhóm có 4 vai trò:
 
-| Role | CSS Token | Purpose |
+| Vai trò | CSS Token | Mục đích |
 |------|-----------|---------|
-| Primary | `--md-sys-color-primary` | High-emphasis fills, text, icons against surface |
-| On Primary | `--md-sys-color-on-primary` | Text and icons on primary |
-| Primary Container | `--md-sys-color-primary-container` | Standout fill for key components (FAB, etc.) |
-| On Primary Container | `--md-sys-color-on-primary-container` | Text and icons on primary-container |
-| Secondary | `--md-sys-color-secondary` | Less prominent fills, text, icons |
-| On Secondary | `--md-sys-color-on-secondary` | Text and icons on secondary |
-| Secondary Container | `--md-sys-color-secondary-container` | Recessive components (tonal buttons) |
-| On Secondary Container | `--md-sys-color-on-secondary-container` | Text and icons on secondary-container |
-| Tertiary | `--md-sys-color-tertiary` | Complementary fills, text, icons |
-| On Tertiary | `--md-sys-color-on-tertiary` | Text and icons on tertiary |
-| Tertiary Container | `--md-sys-color-tertiary-container` | Complementary container fill |
-| On Tertiary Container | `--md-sys-color-on-tertiary-container` | Text and icons on tertiary-container |
+| Primary | `--md-sys-color-primary` | Vùng tô nhấn mạnh cao, văn bản, icon trên surface |
+| On Primary | `--md-sys-color-on-primary` | Văn bản và icon trên primary |
+| Primary Container | `--md-sys-color-primary-container` | Vùng tô nổi bật cho component quan trọng (FAB, v.v.) |
+| On Primary Container | `--md-sys-color-on-primary-container` | Văn bản và icon trên primary-container |
+| Secondary | `--md-sys-color-secondary` | Vùng tô, văn bản, icon ít nổi bật hơn |
+| On Secondary | `--md-sys-color-on-secondary` | Văn bản và icon trên secondary |
+| Secondary Container | `--md-sys-color-secondary-container` | Component lùi lại (tonal button) |
+| On Secondary Container | `--md-sys-color-on-secondary-container` | Văn bản và icon trên secondary-container |
+| Tertiary | `--md-sys-color-tertiary` | Vùng tô, văn bản, icon bổ trợ |
+| On Tertiary | `--md-sys-color-on-tertiary` | Văn bản và icon trên tertiary |
+| Tertiary Container | `--md-sys-color-tertiary-container` | Vùng tô container bổ trợ |
+| On Tertiary Container | `--md-sys-color-on-tertiary-container` | Văn bản và icon trên tertiary-container |
 
-**Usage guidance:**
-- **Primary**: Most prominent components — FABs, high-emphasis buttons, active states
-- **Secondary**: Less prominent components — filter chips, tonal buttons, selection states
-- **Tertiary**: Contrasting accents that balance primary/secondary — input fields, badges
+**Hướng dẫn sử dụng:**
+- **Primary**: Component nổi bật nhất — FAB, button nhấn mạnh cao, trạng thái active
+- **Secondary**: Component ít nổi bật hơn — filter chip, tonal button, trạng thái selection
+- **Tertiary**: Điểm nhấn tương phản cân bằng primary/secondary — input field, badge
 
-### Error Colors
+### Màu lỗi (Error Colors)
 
-Static colors that don't change with dynamic color schemes:
+Màu tĩnh, không thay đổi theo dynamic color scheme:
 
-| Role | CSS Token | Purpose |
+| Vai trò | CSS Token | Mục đích |
 |------|-----------|---------|
-| Error | `--md-sys-color-error` | Attention-grabbing color for urgent elements |
-| On Error | `--md-sys-color-on-error` | Text and icons on error |
-| Error Container | `--md-sys-color-error-container` | Error container fill |
-| On Error Container | `--md-sys-color-on-error-container` | Text and icons on error-container |
+| Error | `--md-sys-color-error` | Màu thu hút sự chú ý cho phần tử khẩn cấp |
+| On Error | `--md-sys-color-on-error` | Văn bản và icon trên error |
+| Error Container | `--md-sys-color-error-container` | Vùng tô container lỗi |
+| On Error Container | `--md-sys-color-on-error-container` | Văn bản và icon trên error-container |
 
-### Surface Colors
+### Màu bề mặt (Surface Colors)
 
-| Role | CSS Token | Purpose |
+| Vai trò | CSS Token | Mục đích |
 |------|-----------|---------|
-| Surface | `--md-sys-color-surface` | Default background color |
-| On Surface | `--md-sys-color-on-surface` | Text and icons on any surface |
-| On Surface Variant | `--md-sys-color-on-surface-variant` | Lower-emphasis text/icons on surface |
-| Surface Container Lowest | `--md-sys-color-surface-container-lowest` | Lowest-emphasis container |
-| Surface Container Low | `--md-sys-color-surface-container-low` | Low-emphasis container |
-| Surface Container | `--md-sys-color-surface-container` | Default container (navigation areas) |
-| Surface Container High | `--md-sys-color-surface-container-high` | High-emphasis container |
-| Surface Container Highest | `--md-sys-color-surface-container-highest` | Highest-emphasis container |
-| Surface Dim | `--md-sys-color-surface-dim` | Dimmest surface in both themes |
-| Surface Bright | `--md-sys-color-surface-bright` | Brightest surface in both themes |
+| Surface | `--md-sys-color-surface` | Màu nền mặc định |
+| On Surface | `--md-sys-color-on-surface` | Văn bản và icon trên mọi surface |
+| On Surface Variant | `--md-sys-color-on-surface-variant` | Văn bản/icon nhấn mạnh thấp hơn trên surface |
+| Surface Container Lowest | `--md-sys-color-surface-container-lowest` | Container nhấn mạnh thấp nhất |
+| Surface Container Low | `--md-sys-color-surface-container-low` | Container nhấn mạnh thấp |
+| Surface Container | `--md-sys-color-surface-container` | Container mặc định (khu vực điều hướng) |
+| Surface Container High | `--md-sys-color-surface-container-high` | Container nhấn mạnh cao |
+| Surface Container Highest | `--md-sys-color-surface-container-highest` | Container nhấn mạnh cao nhất |
+| Surface Dim | `--md-sys-color-surface-dim` | Surface tối nhất trong cả hai theme |
+| Surface Bright | `--md-sys-color-surface-bright` | Surface sáng nhất trong cả hai theme |
 
-**Surface container hierarchy**: Use `surface` for background, `surface-container` for navigation. The 5 container levels create visual hierarchy and nesting depth, especially useful for expanded layouts with multiple panes.
+**Phân cấp surface container**: Dùng `surface` làm nền, `surface-container` cho điều hướng. 5 cấp container tạo phân cấp thị giác và độ sâu xếp chồng, đặc biệt hữu ích cho layout mở rộng với nhiều pane.
 
-**Surface dim/bright**: Unlike regular surface (which flips from light to dark), dim and bright maintain their relative brightness in both themes. Use bright for areas that should always be the lightest, dim for areas that should always be the dimmest.
+**Surface dim/bright**: Khác với surface thường (chuyển từ sáng sang tối), dim và bright giữ nguyên độ sáng tương đối trong cả hai theme. Dùng bright cho khu vực luôn phải sáng nhất, dim cho khu vực luôn phải tối nhất.
 
-### Inverse Colors
+### Màu đảo (Inverse Colors)
 
-For elements that contrast against the surrounding UI (e.g., snackbars):
+Dành cho phần tử tương phản với UI xung quanh (vd. snackbar):
 
-| Role | CSS Token | Purpose |
+| Vai trò | CSS Token | Mục đích |
 |------|-----------|---------|
-| Inverse Surface | `--md-sys-color-inverse-surface` | Background for contrasting elements |
-| Inverse On Surface | `--md-sys-color-inverse-on-surface` | Text on inverse-surface |
-| Inverse Primary | `--md-sys-color-inverse-primary` | Actionable text on inverse-surface |
+| Inverse Surface | `--md-sys-color-inverse-surface` | Nền cho phần tử tương phản |
+| Inverse On Surface | `--md-sys-color-inverse-on-surface` | Văn bản trên inverse-surface |
+| Inverse Primary | `--md-sys-color-inverse-primary` | Văn bản có thể thao tác trên inverse-surface |
 
-### Outline Colors
+### Màu viền (Outline Colors)
 
-| Role | CSS Token | Purpose |
+| Vai trò | CSS Token | Mục đích |
 |------|-----------|---------|
-| Outline | `--md-sys-color-outline` | Important boundaries (text field borders, 3:1 contrast) |
-| Outline Variant | `--md-sys-color-outline-variant` | Decorative elements (dividers, card borders) |
+| Outline | `--md-sys-color-outline` | Đường viền quan trọng (viền text field, tương phản 3:1) |
+| Outline Variant | `--md-sys-color-outline-variant` | Phần tử trang trí (divider, viền card) |
 
-**Important**: Don't use `outline` for dividers — use `outline-variant`. Don't use `outline-variant` for interactive boundaries that need 3:1 contrast — use `outline`.
+**Quan trọng**: Đừng dùng `outline` cho divider — hãy dùng `outline-variant`. Đừng dùng `outline-variant` cho đường viền tương tác cần tương phản 3:1 — hãy dùng `outline`.
 
-### Fixed Accent Colors (Add-on)
+### Màu nhấn cố định (Fixed Accent Colors — Add-on)
 
-These maintain the same color in both light and dark themes (unlike regular container colors which change tone):
+Những màu này giữ nguyên trong cả theme sáng và tối (khác với màu container thường thay đổi tone):
 
-| Role | CSS Token |
+| Vai trò | CSS Token |
 |------|-----------|
 | Primary Fixed | `--md-sys-color-primary-fixed` |
 | Primary Fixed Dim | `--md-sys-color-primary-fixed-dim` |
@@ -98,22 +98,22 @@ These maintain the same color in both light and dark themes (unlike regular cont
 | On Tertiary Fixed | `--md-sys-color-on-tertiary-fixed` |
 | On Tertiary Fixed Variant | `--md-sys-color-on-tertiary-fixed-variant` |
 
-**Caution**: Fixed colors don't adapt to theme, so they may cause contrast issues. Use regular accent roles for elements where contrast is critical.
+**Thận trọng**: Màu cố định không thích ứng với theme nên có thể gây vấn đề tương phản. Hãy dùng vai trò màu nhấn thường cho phần tử mà tương phản là yếu tố quan trọng.
 
-## Tonal Palette System
+## Hệ thống bảng tonal
 
-MD3 generates colors from a **seed color** through the tonal palette system:
+MD3 tạo màu từ một **màu gốc (seed color)** thông qua hệ thống bảng tonal:
 
-### How It Works
+### Cách hoạt động
 
-1. A **seed color** (hex value) is chosen
-2. The seed generates **5 tonal palettes**: Primary, Secondary, Tertiary, Neutral, Neutral-Variant
-3. Each palette uses tonal stops along **0–100** (commonly 16 key stops: 0, 10, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 95, 98, 99, 100)
-4. Color roles are mapped to specific tonal values depending on light or dark scheme
+1. Chọn một **màu gốc** (giá trị hex)
+2. Màu gốc tạo ra **5 bảng tonal**: Primary, Secondary, Tertiary, Neutral, Neutral-Variant
+3. Mỗi bảng dùng các điểm tonal dọc theo **0–100** (thường 16 điểm chính: 0, 10, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 95, 98, 99, 100)
+4. Vai trò màu được ánh xạ tới giá trị tonal cụ thể tùy scheme sáng hay tối
 
-### Tonal Value Mapping (Light Scheme)
+### Ánh xạ giá trị tonal (Scheme sáng)
 
-| Role | Tonal Palette | Tone |
+| Vai trò | Bảng tonal | Tone |
 |------|--------------|------|
 | Primary | Primary | 40 |
 | On Primary | Primary | 100 |
@@ -129,9 +129,9 @@ MD3 generates colors from a **seed color** through the tonal palette system:
 | Outline | Neutral-Variant | 50 |
 | Outline Variant | Neutral-Variant | 80 |
 
-### Tonal Value Mapping (Dark Scheme)
+### Ánh xạ giá trị tonal (Scheme tối)
 
-| Role | Tonal Palette | Tone |
+| Vai trò | Bảng tonal | Tone |
 |------|--------------|------|
 | Primary | Primary | 80 |
 | On Primary | Primary | 20 |
@@ -147,11 +147,11 @@ MD3 generates colors from a **seed color** through the tonal palette system:
 | Outline | Neutral-Variant | 60 |
 | Outline Variant | Neutral-Variant | 30 |
 
-## Color Pairing Rules
+## Quy tắc ghép cặp màu
 
-Colors must only be used in their intended pairs to ensure accessible contrast:
+Màu chỉ được dùng theo đúng cặp đã định để đảm bảo tương phản truy cập được:
 
-| Container/Fill | Text/Icon Color |
+| Container/Fill | Màu văn bản/Icon |
 |---------------|----------------|
 | `primary` | `on-primary` |
 | `primary-container` | `on-primary-container` |
@@ -161,23 +161,23 @@ Colors must only be used in their intended pairs to ensure accessible contrast:
 | `tertiary-container` | `on-tertiary-container` |
 | `error` | `on-error` |
 | `error-container` | `on-error-container` |
-| `surface` | `on-surface` or `on-surface-variant` |
-| `surface-container-*` | `on-surface` or `on-surface-variant` |
-| `inverse-surface` | `inverse-on-surface` or `inverse-primary` |
+| `surface` | `on-surface` hoặc `on-surface-variant` |
+| `surface-container-*` | `on-surface` hoặc `on-surface-variant` |
+| `inverse-surface` | `inverse-on-surface` hoặc `inverse-primary` |
 
-**Never pair colors outside their intended pairs** — this breaks contrast guarantees, especially under dynamic color and high contrast modes.
+**Không bao giờ ghép màu ngoài cặp đã định** — điều này phá vỡ đảm bảo tương phản, đặc biệt trong dynamic color và chế độ tương phản cao.
 
 ## Dynamic Color
 
-Dynamic color creates personalized color schemes from external sources:
+Dynamic color tạo scheme màu cá nhân hóa từ nguồn bên ngoài:
 
-### User-Generated (Wallpaper)
-The OS extracts a seed color from the user's wallpaper and generates a scheme. **Android:** `dynamicLightColorScheme` / `dynamicDarkColorScheme` on **Android 12+ (API 31+)**. **Web:** there is **no** browser wallpaper dynamic-color API equivalent; you can derive a seed from **content** (e.g. images) with libraries, but that is app-specific, not system wallpaper theming.
+### Do người dùng tạo (Wallpaper)
+Hệ điều hành trích xuất màu gốc từ hình nền của người dùng và tạo scheme. **Android:** `dynamicLightColorScheme` / `dynamicDarkColorScheme` trên **Android 12+ (API 31+)**. **Web:** **không có** API dynamic-color tương đương từ wallpaper của trình duyệt; bạn có thể suy ra màu gốc từ **nội dung** (vd. hình ảnh) bằng thư viện, nhưng đó là giải pháp riêng của ứng dụng, không phải theming wallpaper của hệ thống.
 
-### Content-Based
-A seed color is extracted from in-app content (album art, book cover, etc.) to create a contextual scheme.
+### Dựa trên nội dung (Content-Based)
+Màu gốc được trích xuất từ nội dung trong ứng dụng (ảnh album, bìa sách, v.v.) để tạo scheme theo ngữ cảnh.
 
-### Generating a Scheme with JavaScript
+### Tạo Scheme bằng JavaScript
 
 ```javascript
 import {
@@ -193,11 +193,12 @@ const theme = themeFromSourceColor(argbFromHex('#6750A4'));
 applyTheme(theme, { target: document.body, dark: false });
 ```
 
-### Manual CSS Generation from Seed
+### Tạo CSS thủ công từ màu gốc
 
 ```javascript
 import {
   argbFromHex,
+
   hexFromArgb,
   SchemeContent,
   Hct,
@@ -250,9 +251,9 @@ function applyScheme(seedHex, isDark = false) {
 }
 ```
 
-## Color Harmonization
+## Hòa hợp màu (Color Harmonization)
 
-When integrating custom brand colors that don't come from the seed, use harmonization to blend them into the tonal system:
+Khi tích hợp màu thương hiệu tùy biến không đến từ màu gốc, hãy dùng hòa hợp để pha trộn chúng vào hệ thống tonal:
 
 ```javascript
 import { Blend } from '@material/material-color-utilities';
@@ -261,27 +262,27 @@ import { Blend } from '@material/material-color-utilities';
 const harmonized = Blend.harmonize(customColorArgb, primaryColorArgb);
 ```
 
-This shifts the custom color's hue slightly toward the scheme's primary, making it feel cohesive without losing its identity.
+Thao tác này dịch nhẹ sắc thái của màu tùy biến về phía màu primary của scheme, giúp nó hòa hợp mà không mất bản sắc.
 
-## User-Controlled Contrast (May 2025)
+## Tương phản do người dùng kiểm soát (tháng 5/2025)
 
-MD3 now supports 3 contrast levels:
-- **Standard** (0.0): Default contrast
-- **Medium** (0.5): Increased tonal distance between roles
-- **High** (1.0): Maximum tonal distance for vision accessibility
+MD3 hiện hỗ trợ 3 mức tương phản:
+- **Standard** (0.0): Tương phản mặc định
+- **Medium** (0.5): Tăng khoảng cách tonal giữa các vai trò
+- **High** (1.0): Khoảng cách tonal tối đa để hỗ trợ thị giác
 
 ```javascript
 // Generate high contrast scheme
 const scheme = new SchemeContent(hct, isDark, 1.0); // 1.0 = high contrast
 ```
 
-The contrast parameter adjusts the tonal distance between paired roles, increasing legibility without changing the overall color feel.
+Tham số tương phản điều chỉnh khoảng cách tonal giữa các vai trò ghép cặp, tăng khả năng đọc mà không làm thay đổi cảm nhận màu tổng thể.
 
-## Baseline Color Scheme (Default Values)
+## Scheme màu cơ sở (giá trị mặc định)
 
-The static baseline scheme for products not using dynamic color:
+Scheme cơ sở tĩnh dành cho sản phẩm không dùng dynamic color:
 
-### Light Theme
+### Theme sáng
 ```css
 :root {
   --md-sys-color-primary: #6750A4;
@@ -318,7 +319,7 @@ The static baseline scheme for products not using dynamic color:
 }
 ```
 
-### Dark Theme
+### Theme tối
 ```css
 @media (prefers-color-scheme: dark) {
   :root {
@@ -356,3 +357,4 @@ The static baseline scheme for products not using dynamic color:
   }
 }
 ```
+

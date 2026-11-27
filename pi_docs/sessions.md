@@ -1,10 +1,10 @@
-# Sessions
+# Session
 
-Pi saves conversations as sessions so you can continue work, branch from earlier turns, and revisit previous paths.
+Pi lưu các cuộc hội thoại thành session để bạn có thể tiếp tục công việc, rẽ nhánh từ các lượt trước và xem lại các đường dẫn đã đi qua.
 
-## Session Storage
+## Lưu trữ Session (Session Storage)
 
-Sessions auto-save to `~/.pi/agent/sessions/`, organized by working directory. Each session is a JSONL file with a tree structure.
+Session tự động lưu vào `~/.pi/agent/sessions/`, được tổ chức theo thư mục làm việc. Mỗi session là một tệp JSONL với cấu trúc dạng cây.
 
 ```bash
 pi -c                  # Continue most recent session
@@ -15,11 +15,11 @@ pi --session <path|id> # Use a specific session file or partial session ID
 pi --fork <path|id>    # Fork a session file or partial session ID into a new session
 ```
 
-Use `/session` in interactive mode to see the current session file, session ID, message count, tokens, and cost.
+Dùng `/session` trong chế độ tương tác để xem tệp session hiện tại, session ID, số tin nhắn, token và chi phí.
 
-For the JSONL file format and SessionManager API, see [Session Format](session-format.md).
+Để biết định dạng tệp JSONL và SessionManager API, xem [Session Format](session-format.md).
 
-## Session Commands
+## Lệnh Session (Session Commands)
 
 | Command | Description |
 |---------|-------------|
@@ -34,45 +34,45 @@ For the JSONL file format and SessionManager API, see [Session Format](session-f
 | `/export [file]` | Export session to HTML |
 | `/share` | Upload as private GitHub gist with shareable HTML link |
 
-## Resuming and Deleting Sessions
+## Tiếp tục và Xóa Session
 
-`/resume` opens an interactive session picker for the current project. `pi -r` opens the same picker at startup.
+`/resume` mở bộ chọn session tương tác cho dự án hiện tại. `pi -r` mở cùng bộ chọn này lúc khởi động.
 
-In the picker you can:
+Trong bộ chọn bạn có thể:
 
-- search by typing
-- toggle path display with Ctrl+P
-- toggle sort mode with Ctrl+S
-- filter to named sessions with Ctrl+N
-- rename with Ctrl+R
-- delete with Ctrl+D, then confirm
+- tìm kiếm bằng cách gõ
+- chuyển đổi hiển thị đường dẫn bằng Ctrl+P
+- chuyển đổi chế độ sắp xếp bằng Ctrl+S
+- lọc chỉ các session có tên bằng Ctrl+N
+- đổi tên bằng Ctrl+R
+- xóa bằng Ctrl+D, rồi xác nhận
 
-When available, pi uses the `trash` CLI for deletion instead of permanently removing files.
+Khi có sẵn, pi dùng CLI `trash` để xóa thay vì xóa vĩnh viễn các tệp.
 
-## Naming Sessions
+## Đặt tên Session
 
-Use `/name <name>` to set a human-readable session name:
+Dùng `/name <name>` để đặt tên session dễ đọc cho con người:
 
 ```text
 /name Refactor auth module
 ```
 
-Set the name at startup with `--name` or `-n`:
+Đặt tên lúc khởi động với `--name` hoặc `-n`:
 
 ```bash
 pi --name "Refactor auth module"
 pi --name "CI audit" -p "Review this build failure"
 ```
 
-Named sessions are easier to find in `/resume` and `pi -r`.
+Session có tên dễ tìm hơn trong `/resume` và `pi -r`.
 
-## Branching with `/tree`
+## Rẽ nhánh với `/tree`
 
-Sessions are stored as trees. Every entry has an `id` and `parentId`, and the current position is the active leaf. `/tree` lets you jump to any previous point and continue from there without creating a new file.
+Session được lưu dưới dạng cây. Mỗi entry có `id` và `parentId`, và vị trí hiện tại là leaf đang hoạt động. `/tree` cho phép bạn nhảy tới bất kỳ điểm trước đó và tiếp tục từ đó mà không tạo tệp mới.
 
 <p align="center"><img src="images/tree-view.png" alt="Tree View" width="600"></p>
 
-Example shape:
+Ví dụ về hình dạng:
 
 ```text
 ├─ user: "Hello, can you help..."
@@ -84,7 +84,7 @@ Example shape:
 │        └─ assistant: "For approach B..."
 ```
 
-### Tree Controls
+### Điều khiển cây (Tree Controls)
 
 | Key | Action |
 |-----|--------|
@@ -97,25 +97,25 @@ Example shape:
 | Escape/Ctrl+C | Cancel |
 | Ctrl+O | Cycle filter mode |
 
-Filter modes are: default, no-tools, user-only, labeled-only, and all. Configure the default with `treeFilterMode` in [Settings](settings.md).
+Các chế độ lọc là: default, no-tools, user-only, labeled-only và all. Cấu hình giá trị mặc định với `treeFilterMode` trong [Settings](settings.md).
 
-### Selection Behavior
+### Hành vi chọn (Selection Behavior)
 
-Selecting a user or custom message:
+Chọn một tin nhắn user hoặc custom:
 
-1. Moves the leaf to the selected message's parent.
-2. Places the selected message text in the editor.
-3. Lets you edit and resubmit, creating a new branch.
+1. Di chuyển leaf tới phần tử cha của tin nhắn đã chọn.
+2. Đặt nội dung tin nhắn đã chọn vào editor.
+3. Cho phép bạn sửa và gửi lại, tạo một nhánh mới.
 
-Selecting an assistant, tool, compaction, or other non-user entry:
+Chọn một entry assistant, tool, compaction hoặc entry phi-user khác:
 
-1. Moves the leaf to that entry.
-2. Leaves the editor empty.
-3. Lets you continue from that point.
+1. Di chuyển leaf tới entry đó.
+2. Để editor trống.
+3. Cho phép bạn tiếp tục từ điểm đó.
 
-Selecting the root user message resets the leaf to an empty conversation and places the original prompt in the editor.
+Chọn tin nhắn user gốc sẽ đặt lại leaf về một cuộc hội thoại trống và đặt prompt ban đầu vào editor.
 
-## `/tree`, `/fork`, and `/clone`
+## `/tree`, `/fork`, và `/clone`
 
 | Feature | `/tree` | `/fork` | `/clone` |
 |---------|---------|---------|----------|
@@ -124,22 +124,22 @@ Selecting the root user message resets the leaf to an empty conversation and pla
 | Typical use | Explore alternatives in place | Start a new session from an earlier prompt | Duplicate current work before continuing |
 | Summary | Optional branch summary | None | None |
 
-Use `/tree` when you want to keep alternatives together. Use `/fork` or `/clone` when you want a separate session file.
+Dùng `/tree` khi bạn muốn giữ các phương án thay thế cùng nhau. Dùng `/fork` hoặc `/clone` khi bạn muốn một tệp session riêng biệt.
 
-## Branch Summaries
+## Branch Summary
 
-When `/tree` switches away from one branch to another, pi can summarize the abandoned branch and attach that summary at the new position. This preserves important context from the path you left without replaying the whole branch.
+Khi `/tree` chuyển từ một nhánh này sang nhánh khác, pi có thể tóm tắt nhánh bị bỏ lại và đính kèm bản tóm tắt đó tại vị trí mới. Điều này bảo toàn ngữ cảnh quan trọng từ đường dẫn bạn đã rời đi mà không cần phát lại toàn bộ nhánh.
 
-When prompted, choose one of:
+Khi được nhắc, hãy chọn một trong các phương án:
 
-1. no summary
-2. summarize with the default prompt
-3. summarize with custom focus instructions
+1. không tóm tắt
+2. tóm tắt với prompt mặc định
+3. tóm tắt với hướng dẫn tập trung tùy chỉnh
 
-See [Compaction](compaction.md) for branch summarization internals and extension hooks.
+Xem [Compaction](compaction.md) để biết chi tiết branch summarization và các hook extension.
 
-## Session Format
+## Định dạng Session (Session Format)
 
-Session files are JSONL and contain message entries, model changes, thinking-level changes, labels, compactions, branch summaries, and extension entries.
+Tệp session là JSONL và chứa các entry tin nhắn, thay đổi model, thay đổi thinking-level, nhãn, compaction, branch summary và entry extension.
 
-For parsers, extensions, SDK usage, and the full SessionManager API, see [Session Format](session-format.md).
+Để biết parser, extension, cách dùng SDK và SessionManager API đầy đủ, xem [Session Format](session-format.md).

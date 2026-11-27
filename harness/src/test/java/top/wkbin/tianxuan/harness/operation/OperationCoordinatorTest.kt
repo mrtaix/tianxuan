@@ -130,6 +130,26 @@ class OperationCoordinatorTest {
     }
 
     @Test
+    fun `accept queued run preserves sibling next run prompts while reclaiming`() = runBlocking {
+        val staleId = coordinator.acceptRun("s-reclaim-queue", userMessage("old"))
+        coordinator.suspendOperation(staleId, "Gián đoạn tiến trình")
+        for ((index, id) in listOf("q1", "q2").withIndex()) {
+            repository.enqueue(
+                HarnessQueueItemEntity(
+                    id, "s-reclaim-queue", "main", staleId, "next_run", index.toLong(), "{}",
+                ),
+            )
+        }
+
+        val newId = coordinator.acceptQueuedRun("s-reclaim-queue", "q1", userMessage("B"))
+        val pending = repository.queue("s-reclaim-queue", "main", "next_run")
+        assertEquals(listOf("q2"), pending.map { it.id })
+        assertNull(pending.single().operationId)
+        assertNull(repository.operations[staleId])
+        assertEquals(newId, repository.lanes["s-reclaim-queue" to "main"]!!.currentOperationId)
+    }
+
+    @Test
     fun `usage entity maps chat usage onto ledger row`() {
         val entity = coordinator.usageEntity(
             sessionId = "s5",
@@ -302,6 +322,12 @@ class OperationCoordinatorTest {
         }
 
         override suspend fun finishOperation(result: HarnessLaneResultEntity, lane: HarnessLaneEntity) {
+            for (index in queueItems.indices) {
+                val item = queueItems[index]
+                if (item.operationId == result.operationId && item.queueType == "next_run") {
+                    queueItems[index] = item.copy(operationId = null)
+                }
+            }
             queueItems.removeAll { it.operationId == result.operationId }
             operations.remove(result.operationId)
             results[result.sessionId to result.laneName] = result

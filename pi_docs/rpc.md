@@ -1,129 +1,129 @@
-# RPC Mode
+# Chế độ RPC
 
-RPC mode enables headless operation of the coding agent via a JSON protocol over stdin/stdout. This is useful for embedding the agent in other applications, IDEs, or custom UIs.
+Chế độ RPC cho phép vận hành coding agent ở chế độ không giao diện (headless) thông qua một giao thức JSON trên stdin/stdout. Điều này hữu ích khi nhúng agent vào các ứng dụng khác, IDE, hoặc các UI tùy chỉnh.
 
-**Note for Node.js/TypeScript users**: If you're building a Node.js application, consider using `AgentSession` directly from `@earendil-works/pi-coding-agent` instead of spawning a subprocess. See [`src/core/agent-session.ts`](../src/core/agent-session.ts) for the API. For a subprocess-based TypeScript client, see [`src/modes/rpc/rpc-client.ts`](../src/modes/rpc/rpc-client.ts).
+**Lưu ý cho người dùng Node.js/TypeScript**: Nếu bạn đang xây dựng một ứng dụng Node.js, hãy cân nhắc dùng trực tiếp `AgentSession` từ `@earendil-works/pi-coding-agent` thay vì khởi chạy một tiến trình con (subprocess). Xem [`src/core/agent-session.ts`](../src/core/agent-session.ts) để biết API. Đối với client TypeScript dựa trên subprocess, xem [`src/modes/rpc/rpc-client.ts`](../src/modes/rpc/rpc-client.ts).
 
-## Starting RPC Mode
+## Khởi động chế độ RPC
 
 ```bash
 pi --mode rpc [options]
 ```
 
-Common options:
-- `--provider <name>`: Set the LLM provider (anthropic, openai, google, etc.)
-- `--model <pattern>`: Model pattern or ID (supports `provider/id` and optional `:<thinking>`)
-- `--name <name>` / `-n <name>`: Set the session display name at startup
-- `--no-session`: Disable session persistence
-- `--session-dir <path>`: Custom session storage directory
+Các tùy chọn thường dùng:
+- `--provider <name>`: Đặt nhà cung cấp LLM (anthropic, openai, google, v.v.)
+- `--model <pattern>`: Mẫu hoặc ID của model (hỗ trợ `provider/id` và `:<thinking>` tùy chọn)
+- `--name <name>` / `-n <name>`: Đặt tên hiển thị của session lúc khởi động
+- `--no-session`: Tắt lưu trữ session
+- `--session-dir <path>`: Thư mục lưu trữ session tùy chỉnh
 
-## Protocol Overview
+## Tổng quan giao thức
 
-- **Commands**: JSON objects sent to stdin, one per line
-- **Responses**: JSON objects with `type: "response"` indicating command success/failure
-- **Events**: Agent events streamed to stdout as JSON lines
+- **Commands**: Các đối tượng JSON gửi tới stdin, mỗi đối tượng trên một dòng
+- **Responses**: Các đối tượng JSON với `type: "response"` cho biết command thành công hay thất bại
+- **Events**: Các sự kiện của agent được phát liên tục ra stdout dưới dạng các dòng JSON
 
-All commands support an optional `id` field for request/response correlation. If provided, the corresponding response will include the same `id`. `bash_execution_update` events also include the `id` of their originating `bash` command.
+Tất cả command đều hỗ trợ trường `id` tùy chọn để đối chiếu giữa yêu cầu và phản hồi. Nếu có, response tương ứng sẽ chứa cùng `id` đó. Các sự kiện `bash_execution_update` cũng chứa `id` của command `bash` đã phát sinh ra chúng.
 
-### Framing
+### Đóng khung dữ liệu (Framing)
 
-RPC mode uses strict JSONL semantics with LF (`\n`) as the only record delimiter.
+Chế độ RPC dùng ngữ nghĩa JSONL nghiêm ngặt, với LF (`\n`) là dấu phân tách bản ghi duy nhất.
 
-This matters for clients:
-- Split records on `\n` only
-- Accept optional `\r\n` input by stripping a trailing `\r`
-- Do not use generic line readers that treat Unicode separators as newlines
+Điều này quan trọng đối với client:
+- Chỉ tách bản ghi tại `\n`
+- Chấp nhận đầu vào `\r\n` tùy chọn bằng cách bỏ `\r` ở cuối
+- Không dùng các trình đọc dòng thông thường coi các ký tự phân tách Unicode là xuống dòng
 
-In particular, Node `readline` is not protocol-compliant for RPC mode because it also splits on `U+2028` and `U+2029`, which are valid inside JSON strings.
+Cụ thể, `readline` của Node không tuân thủ giao thức ở chế độ RPC vì nó cũng tách tại `U+2028` và `U+2029`, vốn là các ký tự hợp lệ bên trong chuỗi JSON.
 
 ## Commands
 
-### Prompting
+### Nhắc lệnh (Prompting)
 
 #### prompt
 
-Send a user prompt to the agent. The command response is emitted after the prompt is accepted, queued, or handled. Events continue streaming asynchronously after acceptance.
+Gửi một prompt của người dùng tới agent. Response của command được phát sau khi prompt được chấp nhận, đưa vào hàng đợi, hoặc xử lý ngay. Các event tiếp tục được phát bất đồng bộ sau khi đã chấp nhận.
 
 ```json
 {"id": "req-1", "type": "prompt", "message": "Hello, world!"}
 ```
 
-With images:
+Kèm hình ảnh:
 ```json
 {"type": "prompt", "message": "What's in this image?", "images": [{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}]}
 ```
 
-**During streaming**: If the agent is already streaming, you must specify `streamingBehavior` to queue the message:
+**Trong lúc phát streaming**: Nếu agent đang streaming, bạn phải chỉ định `streamingBehavior` để đưa tin nhắn vào hàng đợi:
 
 ```json
 {"type": "prompt", "message": "New instruction", "streamingBehavior": "steer"}
 ```
 
-- `"steer"`: Queue the message while the agent is running. It is delivered after the current assistant turn finishes executing its tool calls, before the next LLM call.
-- `"followUp"`: Wait until the agent finishes. Message is delivered only when agent stops.
+- `"steer"`: Đưa tin nhắn vào hàng đợi trong khi agent đang chạy. Tin nhắn được gửi sau khi lượt assistant hiện tại kết thúc thực thi các tool call, trước lần gọi LLM tiếp theo.
+- `"followUp"`: Chờ đến khi agent kết thúc. Tin nhắn chỉ được gửi khi agent dừng lại.
 
-If the agent is streaming and no `streamingBehavior` is specified, the command returns an error.
+Nếu agent đang streaming và không chỉ định `streamingBehavior`, command sẽ trả về lỗi.
 
-**Extension commands**: If the message is an extension command (e.g., `/mycommand`), it executes immediately even during streaming. Extension commands manage their own LLM interaction via `pi.sendMessage()`.
+**Extension commands**: Nếu tin nhắn là một extension command (ví dụ `/mycommand`), nó được thực thi ngay lập tức ngay cả trong lúc streaming. Các extension command tự quản lý tương tác LLM của riêng chúng qua `pi.sendMessage()`.
 
-**Input expansion**: Skill commands (`/skill:name`) and prompt templates (`/template`) are expanded before sending/queueing.
+**Mở rộng đầu vào**: Các skill command (`/skill:name`) và prompt template (`/template`) được mở rộng trước khi gửi/đưa vào hàng đợi.
 
 Response:
 ```json
 {"id": "req-1", "type": "response", "command": "prompt", "success": true}
 ```
 
-`success: true` means the prompt was accepted, queued, or handled immediately. `success: false` means the prompt was rejected before acceptance. Failures after acceptance are reported through the normal event and message stream, not as a second `response` for the same request id.
+`success: true` nghĩa là prompt đã được chấp nhận, đưa vào hàng đợi, hoặc xử lý ngay. `success: false` nghĩa là prompt bị từ chối trước khi được chấp nhận. Các lỗi sau khi chấp nhận được báo qua luồng event và message thông thường, không phải bằng một `response` thứ hai cho cùng một request id.
 
-The `images` field is optional. Each image uses `ImageContent` format: `{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}`.
+Trường `images` là tùy chọn. Mỗi hình ảnh dùng định dạng `ImageContent`: `{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}`.
 
 #### steer
 
-Queue a steering message while the agent is running. It is delivered after the current assistant turn finishes executing its tool calls, before the next LLM call. Skill commands and prompt templates are expanded. Extension commands are not allowed (use `prompt` instead).
+Đưa một steering message vào hàng đợi trong khi agent đang chạy. Tin nhắn được gửi sau khi lượt assistant hiện tại kết thúc thực thi các tool call, trước lần gọi LLM tiếp theo. Các skill command và prompt template được mở rộng. Không cho phép extension command (hãy dùng `prompt` thay thế).
 
 ```json
 {"type": "steer", "message": "Stop and do this instead"}
 ```
 
-With images:
+Kèm hình ảnh:
 ```json
 {"type": "steer", "message": "Look at this instead", "images": [{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}]}
 ```
 
-The `images` field is optional. Each image uses `ImageContent` format (same as `prompt`).
+Trường `images` là tùy chọn. Mỗi hình ảnh dùng định dạng `ImageContent` (giống như `prompt`).
 
 Response:
 ```json
 {"type": "response", "command": "steer", "success": true}
 ```
 
-See [set_steering_mode](#set_steering_mode) for controlling how steering messages are processed.
+Xem [set_steering_mode](#set_steering_mode) để kiểm soát cách xử lý các steering message.
 
 #### follow_up
 
-Queue a follow-up message to be processed after the agent finishes. Delivered only when agent has no more tool calls or steering messages. Skill commands and prompt templates are expanded. Extension commands are not allowed (use `prompt` instead).
+Đưa một follow-up message vào hàng đợi để xử lý sau khi agent kết thúc. Chỉ gửi khi agent không còn tool call hay steering message nào nữa. Các skill command và prompt template được mở rộng. Không cho phép extension command (hãy dùng `prompt` thay thế).
 
 ```json
 {"type": "follow_up", "message": "After you're done, also do this"}
 ```
 
-With images:
+Kèm hình ảnh:
 ```json
 {"type": "follow_up", "message": "Also check this image", "images": [{"type": "image", "data": "base64-encoded-data", "mimeType": "image/png"}]}
 ```
 
-The `images` field is optional. Each image uses `ImageContent` format (same as `prompt`).
+Trường `images` là tùy chọn. Mỗi hình ảnh dùng định dạng `ImageContent` (giống như `prompt`).
 
 Response:
 ```json
 {"type": "response", "command": "follow_up", "success": true}
 ```
 
-See [set_follow_up_mode](#set_follow_up_mode) for controlling how follow-up messages are processed.
+Xem [set_follow_up_mode](#set_follow_up_mode) để kiểm soát cách xử lý các follow-up message.
 
 #### abort
 
-Abort the current operation and wait for the session to become idle before responding.
+Hủy thao tác hiện tại và chờ session về trạng thái rỗi (idle) trước khi phản hồi.
 
 ```json
 {"type": "abort"}
@@ -136,7 +136,7 @@ Response:
 
 #### clear_queue
 
-Remove queued steering and follow-up messages and return their text.
+Xóa các steering và follow-up message đang ở hàng đợi và trả về nội dung văn bản của chúng.
 
 ```json
 {"type": "clear_queue"}
@@ -155,17 +155,17 @@ Response:
 }
 ```
 
-To implement interactive Esc behavior, send `clear_queue` before `abort`, then restore the returned text in the client editor. `abort` continues queued messages when they remain in the session.
+Để triển khai hành vi Esc tương tác, hãy gửi `clear_queue` trước `abort`, rồi khôi phục văn bản đã trả về trong trình soạn thảo của client. `abort` sẽ tiếp tục các tin nhắn trong hàng đợi nếu chúng vẫn còn trong session.
 
 #### new_session
 
-Start a fresh session. Can be cancelled by a `session_before_switch` extension event handler.
+Bắt đầu một session hoàn toàn mới. Có thể bị hủy bởi một extension event handler `session_before_switch`.
 
 ```json
 {"type": "new_session"}
 ```
 
-With optional parent session tracking:
+Kèm theo dõi session cha tùy chọn:
 ```json
 {"type": "new_session", "parentSession": "/path/to/parent-session.jsonl"}
 ```
@@ -175,16 +175,16 @@ Response:
 {"type": "response", "command": "new_session", "success": true, "data": {"cancelled": false}}
 ```
 
-If an extension cancelled:
+Nếu một extension hủy bỏ:
 ```json
 {"type": "response", "command": "new_session", "success": true, "data": {"cancelled": true}}
 ```
 
-### State
+### Trạng thái (State)
 
 #### get_state
 
-Get current session state.
+Lấy trạng thái session hiện tại.
 
 ```json
 {"type": "get_state"}
@@ -213,11 +213,11 @@ Response:
 }
 ```
 
-The `model` field is a full [Model](#model) object or `null`. The `sessionName` field is the display name set via `set_session_name`, or omitted if not set.
+Trường `model` là một đối tượng [Model](#model) đầy đủ hoặc `null`. Trường `sessionName` là tên hiển thị được đặt qua `set_session_name`, hoặc bị bỏ qua nếu chưa đặt.
 
 #### get_messages
 
-Get all messages in the conversation.
+Lấy tất cả tin nhắn trong cuộc hội thoại.
 
 ```json
 {"type": "get_messages"}
@@ -233,19 +233,19 @@ Response:
 }
 ```
 
-Messages are `AgentMessage` objects (see [Message Types](#message-types)).
+Các tin nhắn là đối tượng `AgentMessage` (xem [Message Types](#message-types)).
 
 ### Model
 
 #### set_model
 
-Switch to a specific model.
+Chuyển sang một model cụ thể.
 
 ```json
 {"type": "set_model", "provider": "anthropic", "modelId": "claude-sonnet-4-20250514"}
 ```
 
-Response contains the full [Model](#model) object:
+Response chứa đối tượng [Model](#model) đầy đủ:
 ```json
 {
   "type": "response",
@@ -257,7 +257,7 @@ Response contains the full [Model](#model) object:
 
 #### cycle_model
 
-Cycle to the next available model. Returns `null` data if only one model available.
+Chuyển sang model tiếp theo có sẵn. Trả về `null` trong `data` nếu chỉ có một model.
 
 ```json
 {"type": "cycle_model"}
@@ -277,17 +277,17 @@ Response:
 }
 ```
 
-The `model` field is a full [Model](#model) object.
+Trường `model` là một đối tượng [Model](#model) đầy đủ.
 
 #### get_available_models
 
-List all configured models.
+Liệt kê tất cả model đã được cấu hình.
 
 ```json
 {"type": "get_available_models"}
 ```
 
-Response contains an array of full [Model](#model) objects:
+Response chứa một mảng gồm các đối tượng [Model](#model) đầy đủ:
 ```json
 {
   "type": "response",
@@ -299,19 +299,19 @@ Response contains an array of full [Model](#model) objects:
 }
 ```
 
-### Thinking
+### Tư duy (Thinking)
 
 #### set_thinking_level
 
-Set the reasoning/thinking level for models that support it.
+Đặt mức độ suy luận/tư duy cho các model hỗ trợ tính năng này.
 
 ```json
 {"type": "set_thinking_level", "level": "high"}
 ```
 
-Levels: `"off"`, `"minimal"`, `"low"`, `"medium"`, `"high"`, `"xhigh"`, `"max"`
+Các mức: `"off"`, `"minimal"`, `"low"`, `"medium"`, `"high"`, `"xhigh"`, `"max"`
 
-`"xhigh"` and `"max"` are exposed only when supported by the selected model. Some models, including GPT-5.6, expose both.
+`"xhigh"` và `"max"` chỉ được cung cấp khi model được chọn hỗ trợ. Một số model, bao gồm GPT-5.6, cung cấp cả hai mức.
 
 Response:
 ```json
@@ -320,7 +320,7 @@ Response:
 
 #### cycle_thinking_level
 
-Cycle through available thinking levels. Returns `null` data if model doesn't support thinking.
+Chuyển tuần tự qua các mức tư duy có sẵn. Trả về `null` trong `data` nếu model không hỗ trợ tư duy.
 
 ```json
 {"type": "cycle_thinking_level"}
@@ -338,7 +338,7 @@ Response:
 
 #### get_available_thinking_levels
 
-List the thinking levels supported by the current model. Returns `["off"]` for a model without reasoning support.
+Liệt kê các mức tư duy mà model hiện tại hỗ trợ. Trả về `["off"]` cho model không hỗ trợ suy luận.
 
 ```json
 {"type": "get_available_thinking_levels"}
@@ -356,19 +356,19 @@ Response:
 }
 ```
 
-### Queue Modes
+### Chế độ hàng đợi (Queue Modes)
 
 #### set_steering_mode
 
-Control how steering messages (from `steer`) are delivered.
+Kiểm soát cách các steering message (từ `steer`) được gửi đi.
 
 ```json
 {"type": "set_steering_mode", "mode": "one-at-a-time"}
 ```
 
-Modes:
-- `"all"`: Deliver all steering messages after the current assistant turn finishes executing its tool calls
-- `"one-at-a-time"`: Deliver one steering message per completed assistant turn (default)
+Các chế độ:
+- `"all"`: Gửi tất cả steering message sau khi lượt assistant hiện tại kết thúc thực thi các tool call
+- `"one-at-a-time"`: Gửi một steering message cho mỗi lượt assistant hoàn tất (mặc định)
 
 Response:
 ```json
@@ -377,32 +377,32 @@ Response:
 
 #### set_follow_up_mode
 
-Control how follow-up messages (from `follow_up`) are delivered.
+Kiểm soát cách các follow-up message (từ `follow_up`) được gửi đi.
 
 ```json
 {"type": "set_follow_up_mode", "mode": "one-at-a-time"}
 ```
 
-Modes:
-- `"all"`: Deliver all follow-up messages when agent finishes
-- `"one-at-a-time"`: Deliver one follow-up message per agent completion (default)
+Các chế độ:
+- `"all"`: Gửi tất cả follow-up message khi agent kết thúc
+- `"one-at-a-time"`: Gửi một follow-up message cho mỗi lần agent hoàn tất (mặc định)
 
 Response:
 ```json
 {"type": "response", "command": "set_follow_up_mode", "success": true}
 ```
 
-### Compaction
+### Nén context (Compaction)
 
 #### compact
 
-Manually compact conversation context to reduce token usage.
+Nén context của cuộc hội thoại theo cách thủ công để giảm lượng token sử dụng.
 
 ```json
 {"type": "compact"}
 ```
 
-With custom instructions:
+Kèm chỉ dẫn tùy chỉnh:
 ```json
 {"type": "compact", "customInstructions": "Focus on code changes"}
 ```
@@ -431,11 +431,11 @@ Response:
 }
 ```
 
-`estimatedTokensAfter` is a heuristic estimate over the rebuilt message context immediately after compaction, not a provider-exact token count. `usage` reports the LLM call or calls that generated the summary and may be omitted by custom compaction handlers.
+`estimatedTokensAfter` là ước tính heuristic trên context message được xây dựng lại ngay sau khi nén, không phải số token chính xác từ nhà cung cấp. `usage` báo cáo lần (hoặc các lần) gọi LLM đã tạo ra bản tóm tắt và có thể bị bỏ qua bởi các handler nén tùy chỉnh.
 
 #### set_auto_compaction
 
-Enable or disable automatic compaction when context is nearly full.
+Bật hoặc tắt tính năng nén tự động khi context gần đầy.
 
 ```json
 {"type": "set_auto_compaction", "enabled": true}
@@ -446,11 +446,11 @@ Response:
 {"type": "response", "command": "set_auto_compaction", "success": true}
 ```
 
-### Retry
+### Thử lại (Retry)
 
 #### set_auto_retry
 
-Enable or disable automatic retry on transient errors (overloaded, rate limit, 5xx).
+Bật hoặc tắt tính năng tự động thử lại khi gặp lỗi tạm thời (quá tải, giới hạn tốc độ, lỗi 5xx).
 
 ```json
 {"type": "set_auto_retry", "enabled": true}
@@ -463,7 +463,7 @@ Response:
 
 #### abort_retry
 
-Abort an in-progress retry (cancel the delay and stop retrying).
+Hủy một lần thử lại đang diễn ra (hủy khoảng chờ và dừng thử lại).
 
 ```json
 {"type": "abort_retry"}
@@ -478,13 +478,13 @@ Response:
 
 #### bash
 
-Execute a shell command and add output to conversation context. Output streams as `bash_execution_update` events while the command runs; the response contains the final result.
+Thực thi một lệnh shell và thêm đầu ra vào context của cuộc hội thoại. Đầu ra được phát dưới dạng các event `bash_execution_update` trong lệnh đang chạy; response chứa kết quả cuối cùng.
 
 ```json
 {"id": "req-1", "type": "bash", "command": "ls -la"}
 ```
 
-Include an `id` to associate streamed `bash_execution_update` events with this command.
+Hãy kèm `id` để liên kết các event `bash_execution_update` được phát liên tục với command này.
 
 Response:
 ```json
@@ -502,7 +502,7 @@ Response:
 }
 ```
 
-If output was truncated, includes `fullOutputPath`:
+Nếu đầu ra bị cắt bớt, response sẽ chứa `fullOutputPath`:
 ```json
 {
   "type": "response",
@@ -518,11 +518,11 @@ If output was truncated, includes `fullOutputPath`:
 }
 ```
 
-**How bash results reach the LLM:**
+**Cách kết quả bash đến với LLM:**
 
-The `bash` command executes immediately and returns a `BashResult`. Internally, a `BashExecutionMessage` is created and stored in the agent's message state.
+Command `bash` được thực thi ngay lập tức và trả về một `BashResult`. Bên trong, một `BashExecutionMessage` được tạo và lưu vào trạng thái message của agent.
 
-When the next `prompt` command is sent, all messages (including `BashExecutionMessage`) are transformed before being sent to the LLM. The `BashExecutionMessage` is converted to a `UserMessage` with this format:
+Khi command `prompt` tiếp theo được gửi, tất cả message (bao gồm `BashExecutionMessage`) được chuyển đổi trước khi gửi tới LLM. `BashExecutionMessage` được chuyển thành một `UserMessage` với định dạng sau:
 
 ````
 Ran `ls -la`
@@ -532,13 +532,13 @@ drwxr-xr-x ...
 ```
 ````
 
-This means:
-1. Bash output is included in the LLM context on the **next prompt**, not immediately
-2. Multiple bash commands can be executed before a prompt; all outputs will be included
+Điều này có nghĩa là:
+1. Đầu ra bash được đưa vào context của LLM ở **lần prompt tiếp theo**, không phải ngay lập tức
+2. Có thể thực thi nhiều command bash trước một prompt; tất cả đầu ra sẽ được đưa vào
 
 #### abort_bash
 
-Abort a running bash command.
+Hủy một command bash đang chạy.
 
 ```json
 {"type": "abort_bash"}
@@ -553,7 +553,7 @@ Response:
 
 #### get_session_stats
 
-Get token usage, cost statistics, and current context window usage.
+Lấy số liệu sử dụng token, thống kê chi phí và mức sử dụng context window hiện tại.
 
 ```json
 {"type": "get_session_stats"}
@@ -590,19 +590,19 @@ Response:
 }
 ```
 
-`tokens` and `cost` include assistant messages, usage reported by tools, and compaction/branch-summary generation across the full session. `contextUsage` contains the actual current context-window estimate used for compaction and footer display.
+`tokens` và `cost` bao gồm các message của assistant, mức sử dụng do tool báo cáo, và việc tạo bản tóm tắt nén/tóm tắt nhánh trong toàn bộ session. `contextUsage` chứa ước tính context-window thực tế hiện tại được dùng cho việc nén và hiển thị footer.
 
-`contextUsage` is omitted when no model or context window is available. `contextUsage.tokens` and `contextUsage.percent` are `null` immediately after compaction until a fresh post-compaction assistant response provides valid usage data.
+`contextUsage` bị bỏ qua khi không có model hoặc context window nào. `contextUsage.tokens` và `contextUsage.percent` là `null` ngay sau khi nén cho đến khi một phản hồi assistant mới sau khi nén cung cấp dữ liệu sử dụng hợp lệ.
 
 #### export_html
 
-Export session to an HTML file.
+Xuất session ra một tệp HTML.
 
 ```json
 {"type": "export_html"}
 ```
 
-With custom path:
+Kèm đường dẫn tùy chỉnh:
 ```json
 {"type": "export_html", "outputPath": "/tmp/session.html"}
 ```
@@ -619,7 +619,7 @@ Response:
 
 #### switch_session
 
-Load a different session file. Can be cancelled by a `session_before_switch` extension event handler.
+Tải một tệp session khác. Có thể bị hủy bởi một extension event handler `session_before_switch`.
 
 ```json
 {"type": "switch_session", "sessionPath": "/path/to/session.jsonl"}
@@ -630,14 +630,14 @@ Response:
 {"type": "response", "command": "switch_session", "success": true, "data": {"cancelled": false}}
 ```
 
-If an extension cancelled the switch:
+Nếu một extension hủy bỏ việc chuyển session:
 ```json
 {"type": "response", "command": "switch_session", "success": true, "data": {"cancelled": true}}
 ```
 
 #### fork
 
-Create a new fork from a previous user message on the active branch. Can be cancelled by a `session_before_fork` extension event handler. Returns the text of the message being forked from.
+Tạo một nhánh (fork) mới từ một message của người dùng trước đó trên nhánh đang hoạt động. Có thể bị hủy bởi một extension event handler `session_before_fork`. Trả về văn bản của message được fork.
 
 ```json
 {"type": "fork", "entryId": "abc123"}
@@ -653,7 +653,7 @@ Response:
 }
 ```
 
-If an extension cancelled the fork:
+Nếu một extension hủy bỏ việc fork:
 ```json
 {
   "type": "response",
@@ -665,7 +665,7 @@ If an extension cancelled the fork:
 
 #### clone
 
-Duplicate the current active branch into a new session at the current position. Can be cancelled by a `session_before_fork` extension event handler.
+Sao chép nhánh đang hoạt động hiện tại thành một session mới tại vị trí hiện tại. Có thể bị hủy bởi một extension event handler `session_before_fork`.
 
 ```json
 {"type": "clone"}
@@ -681,7 +681,7 @@ Response:
 }
 ```
 
-If an extension cancelled the clone:
+Nếu một extension hủy bỏ việc clone:
 ```json
 {
   "type": "response",
@@ -693,7 +693,7 @@ If an extension cancelled the clone:
 
 #### get_fork_messages
 
-Get user messages available for forking.
+Lấy các message của người dùng có thể dùng để fork.
 
 ```json
 {"type": "get_fork_messages"}
@@ -716,13 +716,13 @@ Response:
 
 #### get_entries
 
-Get all session entries in append order (excluding the session header). The session is an append-only tree of entries with stable ids, so an entry id works as a durable cursor: pass the last entry id you have seen as `since` to get only entries strictly after it, even across client restarts. Unlike `get_messages`, this includes pre-compaction history and abandoned branches.
+Lấy tất cả entry của session theo thứ tự thêm vào (không tính header của session). Session là một cây chỉ thêm (append-only) gồm các entry với id ổn định, nên entry id hoạt động như một con trỏ bền vững: hãy truyền entry id cuối cùng bạn đã thấy làm `since` để chỉ lấy các entry nằm sau nó, ngay cả khi client khởi động lại. Khác với `get_messages`, command này bao gồm cả lịch sử trước khi nén và các nhánh bị bỏ rơi.
 
 ```json
 {"type": "get_entries"}
 ```
 
-With a cursor:
+Kèm một con trỏ:
 ```json
 {"type": "get_entries", "since": "abc123"}
 ```
@@ -742,11 +742,11 @@ Response:
 }
 ```
 
-`leafId` is the id of the current leaf entry (`null` for an empty session), so a client can tell in one round trip whether the active branch moved. If `since` does not match any entry id, the response is `success: false`.
+`leafId` là id của entry lá hiện tại (`null` đối với session rỗng), giúp client xác định trong một lượt đi lại duy nhất xem nhánh đang hoạt động có thay đổi hay không. Nếu `since` không khớp với bất kỳ entry id nào, response là `success: false`.
 
 #### get_tree
 
-Get the session as a tree of entries. Each node is `{entry, children, label?, labelTimestamp?}`. A well-formed session has a single root; orphaned entries (broken parent chain) also appear as roots.
+Lấy session dưới dạng cây entry. Mỗi node là `{entry, children, label?, labelTimestamp?}`. Một session hợp lệ có một gốc duy nhất; các entry mồ côi (chuỗi parent bị gãy) cũng xuất hiện dưới dạng gốc.
 
 ```json
 {"type": "get_tree"}
@@ -774,7 +774,7 @@ Response:
 
 #### get_last_assistant_text
 
-Get the text content of the last assistant message.
+Lấy nội dung văn bản của message assistant cuối cùng.
 
 ```json
 {"type": "get_last_assistant_text"}
@@ -790,11 +790,11 @@ Response:
 }
 ```
 
-Returns `{"text": null}` if no assistant messages exist.
+Trả về `{"text": null}` nếu không có message assistant nào.
 
 #### set_session_name
 
-Set a display name for the current session. The name appears in session listings and helps identify sessions.
+Đặt tên hiển thị cho session hiện tại. Tên này xuất hiện trong danh sách session và giúp nhận diện các session.
 
 ```json
 {"type": "set_session_name", "name": "my-feature-work"}
@@ -809,13 +809,13 @@ Response:
 }
 ```
 
-The current session name is available via `get_state` in the `sessionName` field. To set the initial name when starting RPC mode, pass `--name <name>` or `-n <name>` to the `pi --mode rpc` process.
+Tên session hiện tại có thể lấy qua `get_state` trong trường `sessionName`. Để đặt tên ban đầu khi khởi động chế độ RPC, hãy truyền `--name <name>` hoặc `-n <name>` cho tiến trình `pi --mode rpc`.
 
 ### Commands
 
 #### get_commands
 
-Get available commands (extension commands, prompt templates, and skills). These can be invoked via the `prompt` command by prefixing with `/`.
+Lấy các command có sẵn (extension command, prompt template, và skill). Chúng có thể được gọi qua command `prompt` bằng cách thêm tiền tố `/`.
 
 ```json
 {"type": "get_commands"}
@@ -837,54 +837,54 @@ Response:
 }
 ```
 
-Each command has:
-- `name`: Command name (invoke with `/name`)
-- `description`: Human-readable description (optional for extension commands)
-- `source`: What kind of command:
-  - `"extension"`: Registered via `pi.registerCommand()` in an extension
-  - `"prompt"`: Loaded from a prompt template `.md` file
-  - `"skill"`: Loaded from a skill directory (name is prefixed with `skill:`)
-- `location`: Where it was loaded from (optional, not present for extensions):
-  - `"user"`: User-level (`~/.pi/agent/`)
-  - `"project"`: Project-level (`./.pi/agent/`)
-  - `"path"`: Explicit path via CLI or settings
-- `path`: Absolute file path to the command source (optional)
+Mỗi command có:
+- `name`: Tên command (gọi bằng `/name`)
+- `description`: Mô tả dễ hiểu (tùy chọn đối với extension command)
+- `source`: Loại command:
+  - `"extension"`: Đăng ký qua `pi.registerCommand()` trong một extension
+  - `"prompt"`: Tải từ một tệp template `.md`
+  - `"skill"`: Tải từ một thư mục skill (tên được thêm tiền tố `skill:`)
+- `location`: Nơi tải command (tùy chọn, không có đối với extension):
+  - `"user"`: Cấp người dùng (`~/.pi/agent/`)
+  - `"project"`: Cấp dự án (`./.pi/agent/`)
+  - `"path"`: Đường dẫn rõ ràng qua CLI hoặc settings
+- `path`: Đường dẫn tệp tuyệt đối tới nguồn của command (tùy chọn)
 
-**Note**: Built-in TUI commands (`/settings`, `/hotkeys`, etc.) are not included. They are handled only in interactive mode and would not execute if sent via `prompt`.
+**Lưu ý**: Các command TUI tích hợp sẵn (`/settings`, `/hotkeys`, v.v.) không được đưa vào. Chúng chỉ được xử lý ở chế độ tương tác và sẽ không thực thi nếu gửi qua `prompt`.
 
 ## Events
 
-Events are streamed to stdout as JSON lines during agent operation. Events do not generally include an `id` field; `bash_execution_update` includes the `id` of its originating `bash` command when one was provided.
+Các event được phát liên tục ra stdout dưới dạng các dòng JSON trong lúc agent vận hành. Nhìn chung event không chứa trường `id`; `bash_execution_update` là ngoại lệ, nó chứa `id` của command `bash` đã phát sinh ra nó khi có cung cấp.
 
-### Event Types
+### Các loại Event
 
-| Event | Description |
+| Event | Mô tả |
 |-------|-------------|
-| `agent_start` | Agent begins processing |
-| `agent_end` | One low-level agent run completes (may still be followed by retry, compaction, or queued continuations) |
-| `agent_settled` | Agent run is fully settled; no automatic retry, compaction retry, or queued continuation remains |
-| `turn_start` | New turn begins |
-| `turn_end` | Turn completes (includes assistant message and tool results) |
-| `message_start` | Message begins |
-| `message_update` | Streaming update (text/thinking/toolcall deltas) |
-| `message_end` | Message completes |
-| `bash_execution_update` | Direct RPC bash command output chunk |
-| `tool_execution_start` | Tool begins execution |
-| `tool_execution_update` | Tool execution progress (streaming output) |
-| `tool_execution_end` | Tool completes |
-| `queue_update` | Pending steering/follow-up queue changed |
-| `compaction_start` | Compaction begins |
-| `compaction_end` | Compaction completes |
-| `auto_retry_start` | Auto-retry begins (after transient error) |
-| `auto_retry_end` | Auto-retry completes (success or final failure) |
-| `summarization_retry_scheduled` | Retry scheduled for a transient compaction or branch-summary summarization error |
-| `summarization_retry_attempt_start` | Retried summarization request starts |
-| `summarization_retry_finished` | Summarization retry loop completes |
-| `extension_error` | Extension threw an error |
+| `agent_start` | Agent bắt đầu xử lý |
+| `agent_end` | Một lượt chạy agent cấp thấp hoàn tất (có thể vẫn tiếp theo bởi thử lại, nén, hoặc các tiếp nối trong hàng đợi) |
+| `agent_settled` | Lượt chạy agent đã ổn định hoàn toàn; không còn thử lại tự động, thử lại sau nén, hay tiếp nối trong hàng đợi |
+| `turn_start` | Bắt đầu một lượt (turn) mới |
+| `turn_end` | Lượt hoàn tất (bao gồm message assistant và kết quả tool) |
+| `message_start` | Bắt đầu một message |
+| `message_update` | Cập nhật streaming (các delta text/thinking/toolcall) |
+| `message_end` | Message hoàn tất |
+| `bash_execution_update` | Một đoạn đầu ra của command bash trực tiếp qua RPC |
+| `tool_execution_start` | Tool bắt đầu thực thi |
+| `tool_execution_update` | Tiến trình thực thi tool (đầu ra streaming) |
+| `tool_execution_end` | Tool hoàn tất |
+| `queue_update` | Hàng đợi steering/follow-up đang chờ thay đổi |
+| `compaction_start` | Bắt đầu nén context |
+| `compaction_end` | Nén context hoàn tất |
+| `auto_retry_start` | Bắt đầu thử lại tự động (sau lỗi tạm thời) |
+| `auto_retry_end` | Thử lại tự động hoàn tất (thành công hoặc thất bại cuối cùng) |
+| `summarization_retry_scheduled` | Đã lên lịch thử lại cho lỗi tạm thời trong quá trình nén hoặc tóm tắt nhánh |
+| `summarization_retry_attempt_start` | Bắt đầu yêu cầu tóm tắt đã được thử lại |
+| `summarization_retry_finished` | Vòng lặp thử lại tóm tắt hoàn tất |
+| `extension_error` | Extension ném ra một lỗi |
 
 ### agent_start
 
-Emitted when the agent begins processing a prompt.
+Được phát khi agent bắt đầu xử lý một prompt.
 
 ```json
 {"type": "agent_start"}
@@ -892,7 +892,7 @@ Emitted when the agent begins processing a prompt.
 
 ### agent_end
 
-Emitted when one low-level agent run completes. Contains all messages generated during this run. If `willRetry` is true, an automatic retry will follow.
+Được phát khi một lượt chạy agent cấp thấp hoàn tất. Chứa tất cả message được tạo trong lượt chạy này. Nếu `willRetry` là true, một lần thử lại tự động sẽ diễn ra tiếp theo.
 
 ```json
 {
@@ -904,7 +904,7 @@ Emitted when one low-level agent run completes. Contains all messages generated 
 
 ### agent_settled
 
-Emitted after the full session-level run settles. At this point Pi will not continue automatically through retry, compaction retry, or queued follow-up messages.
+Được phát sau khi lượt chạy ở cấp session đã ổn định hoàn toàn. Tại thời điểm này, Pi sẽ không tiếp tục tự động thông qua thử lại, thử lại sau nén, hay các follow-up message trong hàng đợi.
 
 ```json
 {"type": "agent_settled"}
@@ -912,7 +912,7 @@ Emitted after the full session-level run settles. At this point Pi will not cont
 
 ### turn_start / turn_end
 
-A turn consists of one assistant response plus any resulting tool calls and results.
+Một lượt (turn) gồm một phản hồi của assistant cùng với các tool call và kết quả tương ứng.
 
 ```json
 {"type": "turn_start"}
@@ -928,7 +928,7 @@ A turn consists of one assistant response plus any resulting tool calls and resu
 
 ### message_start / message_end
 
-Emitted when a message begins and completes. The `message` field contains an `AgentMessage`.
+Được phát khi một message bắt đầu và hoàn tất. Trường `message` chứa một `AgentMessage`.
 
 ```json
 {"type": "message_start", "message": {...}}
@@ -937,7 +937,7 @@ Emitted when a message begins and completes. The `message` field contains an `Ag
 
 ### message_update (Streaming)
 
-Emitted during streaming of assistant messages. Contains a delta event without a cumulative message snapshot.
+Được phát trong lúc streaming các message assistant. Chứa một event delta mà không kèm bản snapshot tích lũy của message.
 
 ```json
 {
@@ -958,21 +958,21 @@ Emitted during streaming of assistant messages. Contains a delta event without a
 }
 ```
 
-The `assistantMessageEvent` field contains one of these delta types:
+Trường `assistantMessageEvent` chứa một trong các loại delta sau:
 
-| Type | Description |
+| Type | Mô tả |
 |------|-------------|
-| `text_start` | Text content block started |
-| `text_delta` | Text content chunk |
-| `text_end` | Text content block ended |
-| `thinking_start` | Thinking block started |
-| `thinking_delta` | Thinking content chunk |
-| `thinking_end` | Thinking block ended |
-| `toolcall_start` | Tool call started (includes `id` and `toolName`) |
-| `toolcall_delta` | Tool call arguments chunk |
-| `toolcall_end` | Tool call ended (includes full `toolCall` object) |
+| `text_start` | Bắt đầu một block nội dung text |
+| `text_delta` | Một đoạn nội dung text |
+| `text_end` | Kết thúc block nội dung text |
+| `thinking_start` | Bắt đầu một block thinking |
+| `thinking_delta` | Một đoạn nội dung thinking |
+| `thinking_end` | Kết thúc block thinking |
+| `toolcall_start` | Bắt đầu một tool call (chứa `id` và `toolName`) |
+| `toolcall_delta` | Một đoạn đối số của tool call |
+| `toolcall_end` | Tool call kết thúc (chứa đối tượng `toolCall` đầy đủ) |
 
-Example streaming a text response:
+Ví dụ streaming một phản hồi dạng text:
 ```json
 {"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_start","contentIndex":0}}
 {"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}
@@ -980,26 +980,20 @@ Example streaming a text response:
 {"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_end","contentIndex":0,"content":"Hello world"}}
 ```
 
-The top-level `usage` field contains the latest cumulative provider-reported usage. It may remain
-zero until completion when a provider does not report usage during streaming.
+Trường `usage` ở cấp cao nhất chứa mức sử dụng mới nhất do nhà cung cấp báo cáo theo kiểu tích lũy. Nó có thể giữ ở mức không cho đến khi hoàn tất nếu nhà cung cấp không báo cáo mức sử dụng trong lúc streaming.
 
-Example starting a tool call:
+Ví dụ bắt đầu một tool call:
 ```json
 {"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"toolcall_start","contentIndex":1,"id":"call_abc123","toolName":"write"}}
 ```
 
-`message_update` intentionally omits the former cumulative `message` field and
-`assistantMessageEvent.partial`. Clients that need a live partial message must assemble it
-from `message_start` and subsequent events using `contentIndex`. Treat `message_end.message`
-as authoritative. For tool calls, `toolcall_start` provides the call `id` and `toolName`;
-buffer `toolcall_delta.delta` for arguments. `toolcall_end.toolCall` contains the completed
-call.
+`message_update` cố tình bỏ qua trường `message` tích lũy trước đây và `assistantMessageEvent.partial`. Client cần một message tạm thời theo thời gian thực phải tự lắp ráp từ `message_start` và các event tiếp theo bằng `contentIndex`. Hãy coi `message_end.message` là dữ liệu chuẩn xác. Đối với tool call, `toolcall_start` cung cấp `id` và `toolName` của lời gọi; hãy đệm `toolcall_delta.delta` làm đối số. `toolcall_end.toolCall` chứa lời gọi đã hoàn tất.
 
 ### bash_execution_update
 
-Emitted once for each output chunk from a direct `bash` command. `id` matches the command's `id`, allowing clients to associate output with the correct command.
+Được phát một lần cho mỗi đoạn đầu ra từ một command `bash` trực tiếp. `id` khớp với `id` của command, giúp client liên kết đầu ra với đúng command.
 
-Events stream all output while the command runs, even if the final `bash` response's `output` is truncated.
+Các event phát toàn bộ đầu ra trong lúc command chạy, ngay cả khi trường `output` của response `bash` cuối cùng bị cắt bớt.
 
 ```json
 {
@@ -1011,7 +1005,7 @@ Events stream all output while the command runs, even if the final `bash` respon
 
 ### tool_execution_start / tool_execution_update / tool_execution_end
 
-Emitted when a tool begins, streams progress, and completes execution.
+Được phát khi một tool bắt đầu, phát tiến trình streaming, và hoàn tất thực thi.
 
 ```json
 {
@@ -1022,7 +1016,7 @@ Emitted when a tool begins, streams progress, and completes execution.
 }
 ```
 
-During execution, `tool_execution_update` events stream partial results (e.g., bash output as it arrives):
+Trong lúc thực thi, các event `tool_execution_update` phát kết quả tạm thời (ví dụ đầu ra bash khi nó xuất hiện):
 
 ```json
 {
@@ -1037,7 +1031,7 @@ During execution, `tool_execution_update` events stream partial results (e.g., b
 }
 ```
 
-When complete:
+Khi hoàn tất:
 
 ```json
 {
@@ -1052,11 +1046,11 @@ When complete:
 }
 ```
 
-Use `toolCallId` to correlate events. The `partialResult` in `tool_execution_update` contains the accumulated output so far (not just the delta), allowing clients to simply replace their display on each update.
+Hãy dùng `toolCallId` để đối chiếu các event. `partialResult` trong `tool_execution_update` chứa đầu ra tích lũy tính đến thời điểm đó (không chỉ phần delta), giúp client chỉ cần thay thế nội dung hiển thị sau mỗi lần cập nhật.
 
 ### queue_update
 
-Emitted whenever the pending steering or follow-up queue changes.
+Được phát bất cứ khi nào hàng đợi steering hoặc follow-up đang chờ thay đổi.
 
 ```json
 {
@@ -1068,13 +1062,13 @@ Emitted whenever the pending steering or follow-up queue changes.
 
 ### compaction_start / compaction_end
 
-Emitted when compaction runs, whether manual or automatic.
+Được phát khi quá trình nén diễn ra, dù là thủ công hay tự động.
 
 ```json
 {"type": "compaction_start", "reason": "threshold"}
 ```
 
-The `reason` field is `"manual"`, `"threshold"`, or `"overflow"`.
+Trường `reason` là `"manual"`, `"threshold"`, hoặc `"overflow"`.
 
 ```json
 {
@@ -1100,15 +1094,15 @@ The `reason` field is `"manual"`, `"threshold"`, or `"overflow"`.
 }
 ```
 
-If `reason` was `"overflow"` and compaction succeeds, `willRetry` is `true` and the agent will automatically retry the prompt.
+Nếu `reason` là `"overflow"` và quá trình nén thành công, `willRetry` là `true` và agent sẽ tự động thử lại prompt.
 
-If compaction was aborted, `result` is `null` and `aborted` is `true`.
+Nếu quá trình nén bị hủy, `result` là `null` và `aborted` là `true`.
 
-If compaction failed (e.g., API quota exceeded), `result` is `null`, `aborted` is `false`, and `errorMessage` contains the error description.
+Nếu quá trình nén thất bại (ví dụ vượt hạn mức API), `result` là `null`, `aborted` là `false`, và `errorMessage` chứa mô tả lỗi.
 
 ### auto_retry_start / auto_retry_end
 
-Emitted when automatic retry is triggered after a transient error (overloaded, rate limit, 5xx).
+Được phát khi thử lại tự động được kích hoạt sau một lỗi tạm thời (quá tải, giới hạn tốc độ, 5xx).
 
 ```json
 {
@@ -1128,7 +1122,7 @@ Emitted when automatic retry is triggered after a transient error (overloaded, r
 }
 ```
 
-On final failure (max retries exceeded):
+Khi thất bại cuối cùng (vượt số lần thử lại tối đa):
 ```json
 {
   "type": "auto_retry_end",
@@ -1140,7 +1134,7 @@ On final failure (max retries exceeded):
 
 ### summarization_retry_scheduled / summarization_retry_attempt_start / summarization_retry_finished
 
-Emitted when compaction or branch-summary summarization retries after a transient provider error. These events use the same retry settings as automatic assistant-turn retries.
+Được phát khi quá trình nén hoặc tóm tắt nhánh thử lại sau một lỗi tạm thời từ nhà cung cấp. Các event này dùng cùng cài đặt thử lại với việc thử lại tự động các lượt assistant.
 
 ```json
 {
@@ -1160,7 +1154,7 @@ Emitted when compaction or branch-summary summarization retries after a transien
 }
 ```
 
-For branch summaries, `source` is `"branchSummary"` and no `reason` is present.
+Đối với bản tóm tắt nhánh, `source` là `"branchSummary"` và không có `reason`.
 
 ```json
 {
@@ -1170,7 +1164,7 @@ For branch summaries, `source` is `"branchSummary"` and no `reason` is present.
 
 ### extension_error
 
-Emitted when an extension throws an error.
+Được phát khi một extension ném ra lỗi.
 
 ```json
 {
@@ -1181,36 +1175,36 @@ Emitted when an extension throws an error.
 }
 ```
 
-## Extension UI Protocol
+## Giao thức UI của Extension
 
-Extensions can request user interaction via `ctx.ui.select()`, `ctx.ui.confirm()`, etc. In RPC mode, these are translated into a request/response sub-protocol on top of the base command/event flow.
+Các extension có thể yêu cầu tương tác người dùng qua `ctx.ui.select()`, `ctx.ui.confirm()`, v.v. Trong chế độ RPC, những lời gọi này được chuyển thành một giao thức con dạng yêu cầu/phản hồi nằm trên luồng command/event cơ bản.
 
-There are two categories of extension UI methods:
+Có hai nhóm phương thức UI của extension:
 
-- **Dialog methods** (`select`, `confirm`, `input`, `editor`): emit an `extension_ui_request` on stdout and block until the client sends back an `extension_ui_response` on stdin with the matching `id`.
-- **Fire-and-forget methods** (`notify`, `setStatus`, `setWidget`, `setTitle`, `set_editor_text`): emit an `extension_ui_request` on stdout but do not expect a response. The client can display the information or ignore it.
+- **Phương thức hộp thoại (Dialog)** (`select`, `confirm`, `input`, `editor`): phát một `extension_ui_request` ra stdout và chờ cho đến khi client gửi lại một `extension_ui_response` trên stdin với `id` tương ứng.
+- **Phương thức fire-and-forget** (`notify`, `setStatus`, `setWidget`, `setTitle`, `set_editor_text`): phát một `extension_ui_request` ra stdout nhưng không mong đợi phản hồi. Client có thể hiển thị thông tin hoặc bỏ qua.
 
-If a dialog method includes a `timeout` field, the agent-side will auto-resolve with a default value when the timeout expires. The client does not need to track timeouts.
+Nếu một phương thức hộp thoại có trường `timeout`, phía agent sẽ tự động phân giải với một giá trị mặc định khi hết thời gian chờ. Client không cần theo dõi timeout.
 
-Some `ExtensionUIContext` methods are not supported or degraded in RPC mode because they require direct TUI access:
-- `custom()` returns `undefined`
-- `setWorkingMessage()`, `setWorkingIndicator()`, `setFooter()`, `setHeader()`, `setEditorComponent()`, `setToolsExpanded()` are no-ops
-- `getEditorText()` returns `""`
-- `getToolsExpanded()` returns `false`
-- `pasteToEditor()` delegates to `setEditorText()` (no paste/collapse handling)
-- `getAllThemes()` returns `[]`
-- `getTheme()` returns `undefined`
-- `setTheme()` returns `{ success: false, error: "..." }`
+Một số phương thức của `ExtensionUIContext` không được hỗ trợ hoặc bị suy giảm ở chế độ RPC vì chúng cần truy cập trực tiếp vào TUI:
+- `custom()` trả về `undefined`
+- `setWorkingMessage()`, `setWorkingIndicator()`, `setFooter()`, `setHeader()`, `setEditorComponent()`, `setToolsExpanded()` là các phép toán vô hiệu (no-op)
+- `getEditorText()` trả về `""`
+- `getToolsExpanded()` trả về `false`
+- `pasteToEditor()` ủy thác cho `setEditorText()` (không xử lý dán/thu gọn)
+- `getAllThemes()` trả về `[]`
+- `getTheme()` trả về `undefined`
+- `setTheme()` trả về `{ success: false, error: "..." }`
 
-Note: `ctx.mode` is `"rpc"` and `ctx.hasUI` is `true` in RPC mode because the dialog and fire-and-forget methods are functional via the extension UI sub-protocol. Use `ctx.mode === "tui"` to guard TUI-specific features like `custom()` that require a real terminal.
+Lưu ý: `ctx.mode` là `"rpc"` và `ctx.hasUI` là `true` ở chế độ RPC vì các phương thức hộp thoại và fire-and-forget hoạt động được thông qua giao thức con UI của extension. Hãy dùng `ctx.mode === "tui"` để bảo vệ các tính năng riêng của TUI như `custom()` — vốn cần một terminal thật.
 
-### Extension UI Requests (stdout)
+### Yêu cầu UI của Extension (stdout)
 
-All requests have `type: "extension_ui_request"`, a unique `id`, and a `method` field.
+Tất cả yêu cầu đều có `type: "extension_ui_request"`, một `id` duy nhất, và một trường `method`.
 
 #### select
 
-Prompt the user to choose from a list. Dialog methods with a `timeout` field include the timeout in milliseconds; the agent auto-resolves with `undefined` if the client doesn't respond in time.
+Nhắc người dùng chọn từ một danh sách. Các phương thức hộp thoại có trường `timeout` sẽ kèm thời gian chờ tính bằng mili giây; agent tự phân giải với `undefined` nếu client không phản hồi kịp thời.
 
 ```json
 {
@@ -1223,11 +1217,11 @@ Prompt the user to choose from a list. Dialog methods with a `timeout` field inc
 }
 ```
 
-Expected response: `extension_ui_response` with `value` (the selected option string) or `cancelled: true`.
+Response mong đợi: `extension_ui_response` với `value` (chuỗi tùy chọn đã chọn) hoặc `cancelled: true`.
 
 #### confirm
 
-Prompt the user for yes/no confirmation.
+Nhắc người dùng xác nhận có/không.
 
 ```json
 {
@@ -1240,11 +1234,11 @@ Prompt the user for yes/no confirmation.
 }
 ```
 
-Expected response: `extension_ui_response` with `confirmed: true/false` or `cancelled: true`.
+Response mong đợi: `extension_ui_response` với `confirmed: true/false` hoặc `cancelled: true`.
 
 #### input
 
-Prompt the user for free-form text.
+Nhắc người dùng nhập văn bản tự do.
 
 ```json
 {
@@ -1256,11 +1250,11 @@ Prompt the user for free-form text.
 }
 ```
 
-Expected response: `extension_ui_response` with `value` (the entered text) or `cancelled: true`.
+Response mong đợi: `extension_ui_response` với `value` (văn bản đã nhập) hoặc `cancelled: true`.
 
 #### editor
 
-Open a multi-line text editor with optional prefilled content.
+Mở một trình soạn thảo văn bản nhiều dòng với nội dung điền sẵn tùy chọn.
 
 ```json
 {
@@ -1272,11 +1266,11 @@ Open a multi-line text editor with optional prefilled content.
 }
 ```
 
-Expected response: `extension_ui_response` with `value` (the edited text) or `cancelled: true`.
+Response mong đợi: `extension_ui_response` với `value` (văn bản đã chỉnh sửa) hoặc `cancelled: true`.
 
 #### notify
 
-Display a notification. Fire-and-forget, no response expected.
+Hiển thị một thông báo. Fire-and-forget, không mong đợi phản hồi.
 
 ```json
 {
@@ -1288,11 +1282,11 @@ Display a notification. Fire-and-forget, no response expected.
 }
 ```
 
-The `notifyType` field is `"info"`, `"warning"`, or `"error"`. Defaults to `"info"` if omitted.
+Trường `notifyType` là `"info"`, `"warning"`, hoặc `"error"`. Mặc định là `"info"` nếu bỏ qua.
 
 #### setStatus
 
-Set or clear a status entry in the footer/status bar. Fire-and-forget.
+Đặt hoặc xóa một mục trạng thái trong footer/thanh trạng thái. Fire-and-forget.
 
 ```json
 {
@@ -1304,11 +1298,11 @@ Set or clear a status entry in the footer/status bar. Fire-and-forget.
 }
 ```
 
-Send `statusText: undefined` (or omit it) to clear the status entry for that key.
+Gửi `statusText: undefined` (hoặc bỏ qua trường này) để xóa mục trạng thái của key đó.
 
 #### setWidget
 
-Set or clear a widget (block of text lines) displayed above or below the editor. Fire-and-forget.
+Đặt hoặc xóa một widget (khối các dòng văn bản) hiển thị phía trên hoặc phía dưới trình soạn thảo. Fire-and-forget.
 
 ```json
 {
@@ -1321,11 +1315,11 @@ Set or clear a widget (block of text lines) displayed above or below the editor.
 }
 ```
 
-Send `widgetLines: undefined` (or omit it) to clear the widget. The `widgetPlacement` field is `"aboveEditor"` (default) or `"belowEditor"`. Only string arrays are supported in RPC mode; component factories are ignored.
+Gửi `widgetLines: undefined` (hoặc bỏ qua) để xóa widget. Trường `widgetPlacement` là `"aboveEditor"` (mặc định) hoặc `"belowEditor"`. Trong chế độ RPC chỉ hỗ trợ mảng chuỗi; các factory component bị bỏ qua.
 
 #### setTitle
 
-Set the terminal window/tab title. Fire-and-forget.
+Đặt tiêu đề của cửa sổ/tab terminal. Fire-and-forget.
 
 ```json
 {
@@ -1338,7 +1332,7 @@ Set the terminal window/tab title. Fire-and-forget.
 
 #### set_editor_text
 
-Set the text in the input editor. Fire-and-forget.
+Đặt văn bản trong trình soạn thảo đầu vào. Fire-and-forget.
 
 ```json
 {
@@ -1349,33 +1343,33 @@ Set the text in the input editor. Fire-and-forget.
 }
 ```
 
-### Extension UI Responses (stdin)
+### Phản hồi UI của Extension (stdin)
 
-Responses are sent for dialog methods only (`select`, `confirm`, `input`, `editor`). The `id` must match the request.
+Phản hồi chỉ được gửi cho các phương thức hộp thoại (`select`, `confirm`, `input`, `editor`). `id` phải khớp với yêu cầu.
 
-#### Value response (select, input, editor)
+#### Phản hồi giá trị (select, input, editor)
 
 ```json
 {"type": "extension_ui_response", "id": "uuid-1", "value": "Allow"}
 ```
 
-#### Confirmation response (confirm)
+#### Phản hồi xác nhận (confirm)
 
 ```json
 {"type": "extension_ui_response", "id": "uuid-2", "confirmed": true}
 ```
 
-#### Cancellation response (any dialog)
+#### Phản hồi hủy bỏ (bất kỳ hộp thoại nào)
 
-Dismiss any dialog method. The extension receives `undefined` (for select/input/editor) or `false` (for confirm).
+Đóng bất kỳ phương thức hộp thoại nào. Extension nhận `undefined` (với select/input/editor) hoặc `false` (với confirm).
 
 ```json
 {"type": "extension_ui_response", "id": "uuid-3", "cancelled": true}
 ```
 
-## Error Handling
+## Xử lý lỗi
 
-Failed commands return a response with `success: false`:
+Các command thất bại trả về một response với `success: false`:
 
 ```json
 {
@@ -1386,7 +1380,7 @@ Failed commands return a response with `success: false`:
 }
 ```
 
-Parse errors:
+Lỗi phân tích cú pháp (parse errors):
 
 ```json
 {
@@ -1399,12 +1393,12 @@ Parse errors:
 
 ## Types
 
-Source files:
+Các tệp nguồn:
 - [`packages/ai/src/types.ts`](../../ai/src/types.ts) - `Model`, `UserMessage`, `AssistantMessage`, `ToolResultMessage`
 - [`packages/agent/src/types.ts`](../../agent/src/types.ts) - `AgentMessage`, `AgentEvent`
 - [`src/core/messages.ts`](../src/core/messages.ts) - `BashExecutionMessage`
 - [`src/modes/json-event.ts`](../src/modes/json-event.ts) - `JsonAgentSessionEvent`
-- [`src/modes/rpc/rpc-types.ts`](../src/modes/rpc/rpc-types.ts) - RPC command/response types, extension UI request/response types
+- [`src/modes/rpc/rpc-types.ts`](../src/modes/rpc/rpc-types.ts) - Các kiểu command/response của RPC, các kiểu yêu cầu/phản hồi UI của extension
 
 ### Model
 
@@ -1439,7 +1433,7 @@ Source files:
 }
 ```
 
-The `content` field can be a string or an array of `TextContent`/`ImageContent` blocks.
+Trường `content` có thể là một chuỗi hoặc một mảng gồm các block `TextContent`/`ImageContent`.
 
 ### AssistantMessage
 
@@ -1466,7 +1460,7 @@ The `content` field can be a string or an array of `TextContent`/`ImageContent` 
 }
 ```
 
-Stop reasons: `"stop"`, `"length"`, `"toolUse"`, `"error"`, `"aborted"`
+Lý do dừng (stop reasons): `"stop"`, `"length"`, `"toolUse"`, `"error"`, `"aborted"`
 
 ### ToolResultMessage
 
@@ -1489,11 +1483,11 @@ Stop reasons: `"stop"`, `"length"`, `"toolUse"`, `"error"`, `"aborted"`
 }
 ```
 
-`usage` is optional and reports nested LLM work performed by the tool. When present, it contributes to session token and cost totals.
+`usage` là tùy chọn và báo cáo công việc LLM lồng nhau do tool thực hiện. Khi có, nó được tính vào tổng token và chi phí của session.
 
 ### BashExecutionMessage
 
-Created by the `bash` RPC command (not by LLM tool calls):
+Được tạo bởi command RPC `bash` (không phải bởi tool call của LLM):
 
 ```json
 {
@@ -1523,7 +1517,7 @@ Created by the `bash` RPC command (not by LLM tool calls):
 }
 ```
 
-## Example: Basic Client (Python)
+## Ví dụ: Client cơ bản (Python)
 
 ```python
 import subprocess
@@ -1559,11 +1553,11 @@ for event in read_events():
         break
 ```
 
-## Example: Interactive Client (Node.js)
+## Ví dụ: Client tương tác (Node.js)
 
-See [`test/rpc-example.ts`](../test/rpc-example.ts) for a complete interactive example, or [`src/modes/rpc/rpc-client.ts`](../src/modes/rpc/rpc-client.ts) for a typed client implementation.
+Xem [`test/rpc-example.ts`](../test/rpc-example.ts) để có một ví dụ tương tác đầy đủ, hoặc [`src/modes/rpc/rpc-client.ts`](../src/modes/rpc/rpc-client.ts) để có một triển khai client có kiểu rõ ràng (typed).
 
-For a complete example of handling the extension UI protocol, see [`examples/rpc-extension-ui.ts`](../examples/rpc-extension-ui.ts) which pairs with the [`examples/extensions/rpc-demo.ts`](../examples/extensions/rpc-demo.ts) extension.
+Để có ví dụ đầy đủ về xử lý giao thức UI của extension, xem [`examples/rpc-extension-ui.ts`](../examples/rpc-extension-ui.ts), đi kèm với extension [`examples/extensions/rpc-demo.ts`](../examples/extensions/rpc-demo.ts).
 
 ```javascript
 const { spawn } = require("child_process");
@@ -1616,3 +1610,4 @@ process.on("SIGINT", () => {
     agent.stdin.write(JSON.stringify({ type: "abort" }) + "\n");
 });
 ```
+

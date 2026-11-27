@@ -1,157 +1,157 @@
-# ⚡ 天玄 (TianXuan) — 核心调用链路与执行时序 (Execution Traces)
+# ⚡ CTHarness — Các luồng gọi cốt lõi và trình tự thực thi (Execution Traces)
 
 ---
 
-## 1. Agent 发起与工具执行循环 (Harness Loop)
+## 1. Khởi tạo Agent và vòng lặp thực thi công cụ (Harness Loop)
 
 ```text
 ChatScreen (UI)
   └─► ChatViewModel.send(prompt)
         └─► HarnessLoop.send()
-              ├─► ProviderRepository 读取 BaseURL / Model / ApiKey
-              ├─► ProviderClient / ChatApi ➔ 流式接收 reasoning & text / tool_calls
-              └─► 当模型返回 tool_calls:
-                    ├─► HarnessApiMapper 映射 read / write / edit / base / process
-                    ├─► ApprovalPolicyEngine 计算审批要求
-                    ├─► ToolExecutor 分派文件访问或 LinuxRuntime
-                    ├─► 回传 ToolResult 到对话历史 (core:database)
-                    └─► 继续进入下一轮推理，直至任务全部完成
+              ├─► ProviderRepository đọc BaseURL / Model / ApiKey
+              ├─► ProviderClient / ChatApi ➔ nhận luồng reasoning & text / tool_calls
+              └─► Khi mô hình trả về tool_calls:
+                    ├─► HarnessApiMapper ánh xạ read / write / edit / base / process
+                    ├─► ApprovalPolicyEngine tính yêu cầu phê duyệt
+                    ├─► ToolExecutor phân phối truy cập tệp hoặc LinuxRuntime
+                    ├─► trả ToolResult về lịch sử hội thoại (core:database)
+                    └─► tiếp tục vòng suy luận tiếp theo cho đến khi hoàn thành mọi nhiệm vụ
 ```
 
 ---
 
-## 2. 宿主与沙箱存储挂载 (Storage Mount)
+## 2. Mount bộ lưu trữ giữa máy chủ Android và sandbox (Storage Mount)
 
 ```text
 StorageMountSettingsScreen (UI)
-  └─► SettingsDataStore (保存 mountDownloadEnabled / customMountBindings)
+  └─► SettingsDataStore (lưu mountDownloadEnabled / customMountBindings)
         └─► ProotCommandBuilder.build()
-              └─► 动态追加 "-b /storage/emulated/0/Download:/sdcard/Download"
-                    └─► PRoot 进程启动，沙箱内可直接访问 /sdcard
+              └─► thêm động "-b /storage/emulated/0/Download:/sdcard/Download"
+                    └─► Tiến trình PRoot khởi chạy, trong sandbox có thể truy cập trực tiếp /sdcard
 ```
 
 ---
 
-## 3. 终端交互与原生 PTY (Matrix Terminal)
+## 3. Tương tác terminal và PTY bản địa (Matrix Terminal)
 
 ```text
 TerminalScreen (UI)
   └─► TerminalViewModel
         └─► TerminalPtyManager.createPty()
               └─► JNI pty.c (openpty / fork / execve proot)
-                    ├─► PtyInputStream ➔ TerminalViewModel.screen (VT100 状态机解析)
-                    └─► PtyOutputStream ◄─ TerminalScreen 键盘与辅助按键输入 (ExtraKeys)
+                    ├─► PtyInputStream ➔ TerminalViewModel.screen (phân tích bằng máy trạng thái VT100)
+                    └─► PtyOutputStream ◄─ TerminalScreen nhập từ bàn phím và các phím hỗ trợ (ExtraKeys)
 ```
 
 ---
 
-## 4. 任务拆解与进度卡片 (Task Plan Checkpoints)
+## 4. Chia nhỏ nhiệm vụ và thẻ tiến độ (Task Plan Checkpoints)
 
 ```text
-Model Output (包含 - [ ] / - [x] 格式文本)
+Model Output (chứa văn bản dạng - [ ] / - [x])
   └─► ChatScreen.kt -> extractTaskPlanSteps(message.text)
-        └─► 当步骤数 >= 2 时 ➔ 渲染 TaskPlanCard
-              ├─► 动态计算进度百分比与完成度徽章 (LinearProgressIndicator)
-              ├─► 提供触觉反馈与平滑展开/折叠动效
+        └─► Khi số bước >= 2 ➔ hiển thị TaskPlanCard
+              ├─► tính động phần trăm tiến độ và huy hiệu hoàn thành (LinearProgressIndicator)
+              ├─► cung cấp phản hồi xúc giác và hiệu ứng mở rộng/thu gọn mượt mà
 ```
 
 ---
 
-## 5. 宽屏与折叠屏双栏联动 (Dual-Pane Layout)
+## 5. Bố cục hai cột cho màn hình rộng và thiết bị gập (Dual-Pane Layout)
 
 ```text
 ChatScreen.kt (BoxWithConstraints)
   ├─► maxWidth >= 720.dp:
-  │     ├─► 左栏 (48% 宽度): ChatPaneContent (Agent 对话与输入框)
-  │     ├─► 中间: VerticalDivider
-  │     └─► 右栏 (52% 宽度): TerminalScreen(project = workspace) (实时 Linux 终端)
+  │     ├─► Cột trái (48% chiều rộng): ChatPaneContent (hội thoại agent và ô nhập)
+  │     ├─► Ở giữa: VerticalDivider
+  │     └─► Cột phải (52% chiều rộng): TerminalScreen(project = workspace) (terminal Linux thời gian thực)
   └─► maxWidth < 720.dp:
-        └─► 单栏 Phone 视图
+        └─► Chế độ xem một cột trên điện thoại
 ```
 
 ---
 
-## 6. Agent 前台命令与托管进程 (Command Lifecycle)
+## 6. Vòng đời lệnh foreground của Agent và tiến trình được quản lý (Command Lifecycle)
 
 ```text
 AgentSettingsScreen
-  └─► SettingsDataStore.baseCommandTimeoutSeconds（1–60 分钟，默认 10 分钟）
+  └─► SettingsDataStore.baseCommandTimeoutSeconds(1–60 phút, mặc định 10 phút)
         └─► ToolExecutor.executeBase()
-              ├─► 未传 timeout_seconds：读取用户默认值
-              └─► 单次覆盖：校验 1–3600 秒 ➔ LinuxRuntime.execute(ShellCommand)
+              ├─► Không truyền timeout_seconds: đọc giá trị mặc định của người dùng
+              └─► Ghi đè cho một lần: kiểm tra 1–3600 giây ➔ LinuxRuntime.execute(ShellCommand)
 
 Harness process(action=start, id, command)
   └─► ToolExecutor.executeProcess()
         └─► LinuxRuntime.startBackground(type=COMMAND)
               └─► ProcessRegistry
-                    ├─► 保存 agent-process:<id> / PID / LinuxSession
-                    ├─► 缓存并暴露日志
+                    ├─► Lưu agent-process:<id> / PID / LinuxSession
+                    ├─► Lưu cache và cung cấp log
                     └─► status / logs / list / stop
 ```
 
-> **进程生命周期特别说明**：
-> PRoot 启动参数包含 `--kill-on-exit`。普通 `base` 中的 `nohup`、`setsid`、`&` 或自行 daemonize 不能保证跨 PRoot 会话存活；必须使用 `process` 托管，并让被托管命令保持前台运行。Android 强制停止、系统回收应用进程或设备重启不属于进程托管保证范围。
+> **Lưu ý đặc biệt về vòng đời tiến trình**：
+> Tham số khởi động PRoot chứa `--kill-on-exit`. Việc dùng `nohup`, `setsid`, `&` hoặc tự daemonize trong `base` thông thường không đảm bảo tiến trình sống qua các phiên PRoot; phải dùng `process` để quản lý và giữ lệnh được quản lý chạy ở foreground. Android force-stop, hệ thống thu hồi tiến trình ứng dụng hoặc khởi động lại thiết bị nằm ngoài phạm vi đảm bảo của cơ chế quản lý tiến trình.
 
 ---
 
-## 7. 工作区导入、导出与构建 (Workspace Lifecycle)
+## 7. Vòng đời workspace: nhập, xuất và build (Workspace Lifecycle)
 
 ```text
 WorkspaceScreen
   └─► WorkspaceViewModel
         ├─► WorkspaceManager.createProject()
-        ├─► importProjectArchive() ➔ SAF URI ➔ 安全解压到 /workspace
+        ├─► importProjectArchive() ➔ SAF URI ➔ giải nén an toàn vào /workspace
         ├─► importGithubProject() ➔ LinuxRuntime.execute(git clone)
-        ├─► exportProject() ➔ ZIP ➔ SAF 目标目录
+        ├─► exportProject() ➔ ZIP ➔ thư mục đích SAF
         └─► WorkspaceBuildTaskCoordinator.start(project)
               └─► WorkspaceBuildRunner.runProject()
                     ├─► BuildEnvironmentPreflight
-                    ├─► Android / Flutter：最长 30 分钟构建
-                    ├─► 持续 StateFlow、通知与构建日志
-                    └─► ApkArtifactVerifier ➔ APK 安装入口
+                    ├─► Android / Flutter: build tối đa 30 phút
+                    ├─► Liên tục cập nhật StateFlow, thông báo và log build
+                    └─► ApkArtifactVerifier ➔ điểm vào cài APK
 ```
 
 ---
 
-## 8. ARM64 Android 离线套件安装与构建 (Sandbox Android Toolchain)
+## 8. Cài đặt và build bộ công cụ Android ngoại tuyến ARM64 (Sandbox Android Toolchain)
 
 ```text
 WorkspaceScreen / ToolCenterScreen
   └─► ToolManager.batchInstallComponents() / GenericRecipeInstaller
-        ├─► LocalPluginPayloadManager 流式复制 payload，并按字节上报 [COPY] 进度
+        ├─► LocalPluginPayloadManager sao chép payload theo luồng và báo tiến độ [COPY] theo số byte
         └─► android-suite-offline manifest + install-android-suite.sh
-              ├─► [TIANXUAN_PROGRESS:n] 协议 ➔ InstallEvent.Progress
-              ├─► 安装不可变 JDK / SDK / AAPT2 / NDK / Gradle / CMake / Ninja / Flutter
-              ├─► /root/.gradle/init.d/tianxuan-android-ndk.gradle 唯一注入 android.ndkPath
-              └─► gradle.properties 固定移动端资源策略
+              ├─► [TIANXUAN_PROGRESS:n] giao thức ➔ InstallEvent.Progress
+              ├─► Cài đặt bất biến JDK / SDK / AAPT2 / NDK / Gradle / CMake / Ninja / Flutter
+              ├─► /root/.gradle/init.d/tianxuan-android-ndk.gradle điểm duy nhất tiêm android.ndkPath
+              └─► gradle.properties cố định chính sách tài nguyên cho thiết bị di động
                     ├─► daemon=false / parallel=false / workers.max=2
                     └─► Gradle Xmx=1024m / Metaspace=384m / SerialGC
 
 WorkspaceBuildRunner
   └─► build_android.sh / build_flutter.sh
-        ├─► 清理 local.properties 中遗留 ndk.dir，不再写回
-                    └─► --no-daemon --max-workers=2 ➔ 构建与产物校验
+        ├─► Xóa ndk.dir còn sót trong local.properties, không ghi lại nữa
+                    └─► --no-daemon --max-workers=2 ➔ build và kiểm tra sản phẩm
 ```
 
 ---
 
-## 9. 无线 ADB 自动发现与日志抓取 (Wireless ADB / Logcat)
+## 9. Tự phát hiện ADB không dây và thu log (Wireless ADB / Logcat)
 
 ```text
 DeveloperScreen
   └─► EmbeddedAdbManager
-        ├─► NsdManager/mDNS 发现 _adb-tls-pairing._tcp 与 _adb-tls-connect._tcp
-        ├─► 首次输入 6 位配对码 ➔ TLS + SPAKE2+ 配对 ➔ 私钥写入应用私有目录
-        ├─► 后续启动发现连接端口 ➔ 自动复用持久密钥重连
-        └─► shell UID 执行 logcat（包名 PID / Tag / 优先级 / 关键词过滤）
+        ├─► NsdManager/mDNS phát hiện _adb-tls-pairing._tcp và _adb-tls-connect._tcp
+        ├─► Lần đầu nhập mã ghép đôi 6 chữ số ➔ ghép đôi TLS + SPAKE2+ ➔ ghi khóa riêng vào thư mục riêng của ứng dụng
+        ├─► Các lần khởi động sau phát hiện cổng kết nối ➔ tự dùng lại khóa bền vững để kết nối lại
+        └─► UID shell thực thi logcat (lọc PID theo tên gói / Tag / mức ưu tiên / từ khóa)
 
 Harness host(action=logcat)
-  ├─► 优先 EmbeddedAdbManager（无需 Shizuku/Root）
-  └─► 无线 ADB 不可用时回退 PrivilegeManager
+  ├─► Ưu tiên EmbeddedAdbManager (không cần Shizuku/Root)
+  └─► Chuyển sang PrivilegeManager khi ADB không dây không khả dụng
 
-PRoot 沙箱 /opt/tianxuan/bin/logcat-grabber & tianxuan-host logcat
+sandbox PRoot /opt/tianxuan/bin/logcat-grabber & tianxuan-host logcat
   └─► HostBridge (127.0.0.1:7980)
         ├─► POST /api/logcat ➔ EmbeddedAdbManager.captureLogcat()
-        ├─► POST /api/shell ➔ 内置无线 ADB 回退（无 Shizuku 亦可执行 Shell）
-        └─► POST /api/install-apk ➔ 内置无线 ADB 静默安装（连通时免系统弹窗）
+        ├─► POST /api/shell ➔ phương án dự phòng ADB không dây tích hợp (vẫn thực thi Shell khi không có Shizuku)
+        └─► POST /api/install-apk ➔ cài đặt im lặng qua ADB không dây tích hợp (không có hộp thoại hệ thống khi đã kết nối)
 ```

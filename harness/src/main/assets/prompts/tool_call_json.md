@@ -1,7 +1,7 @@
 
-## 工具调用方式（重要：当前使用 JSON 文本模式）
-你无法使用系统级 function calling，必须用**文本标记**调用工具：
-- 当需要调用工具时，在回复中直接输出（独占一行，前后不要有解释文字）：
-  [[tool_call]]{"name":"工具名","arguments":{...}}[[/tool_call]]
-- 参数必须与上方“可用工具 JSON 定义”中的参数一致，缺一不可；一次可连续输出多个标记。
-- 标记后的结果会以【工具 xxx 执行结果】形式出现。不调用工具时不要输出标记。
+## Cách gọi công cụ (quan trọng: hiện đang dùng chế độ văn bản JSON)
+Bạn không thể dùng cơ chế gọi hàm cấp hệ thống, mà phải gọi công cụ bằng **dấu đánh dấu văn bản**:
+- Khi cần gọi công cụ, xuất trực tiếp nội dung sau trong phản hồi (trên một dòng riêng, không kèm lời giải thích trước hoặc sau):
+  [[tool_call]]{"name":"tên_công_cụ","arguments":{...}}[[/tool_call]]
+- Các tham số phải khớp với “Định nghĩa JSON của các công cụ khả dụng” ở trên, không được thiếu tham số nào; có thể xuất liên tiếp nhiều dấu đánh dấu trong một lần.
+- Kết quả sau dấu đánh dấu sẽ xuất hiện dưới dạng 【Kết quả thực thi công cụ xxx】. Không xuất dấu đánh dấu khi không gọi công cụ.

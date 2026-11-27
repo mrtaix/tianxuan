@@ -1,34 +1,34 @@
-# UX 问题台账（2026-08-29）
+# Sổ theo dõi vấn đề UX (2026-08-29)
 
-> 2026-08-29 完成一轮全量 UX 审查（约 150 条，覆盖 feature 全部 UI 模块 + app 装配层）并**全部修复**，逐条明细见当日提交记录。
-> 本文件现仅记录：已落地的系统性修复、**遗留项**、以及后续新增 UX 问题的登记区。
-> 新问题按「`文件:行号 — 描述 — 严重度`」追加到文末，修复后删除。
+> Ngày 2026-08-29 đã hoàn tất một đợt rà soát UX toàn diện (khoảng 150 mục, bao phủ mọi module UI trong feature + lớp lắp ghép app) và **sửa toàn bộ**; xem chi tiết từng mục trong lịch sử commit ngày đó.
+> Tệp này hiện chỉ ghi lại: các bản sửa có tính hệ thống đã triển khai, **mục còn tồn đọng** và khu vực đăng ký vấn đề UX mới.
+> Thêm vấn đề mới vào cuối tệp theo dạng "`tệp:số dòng — mô tả — mức độ nghiêm trọng`", xóa sau khi sửa.
 
-## 已落地的系统性修复（组件/VM 层收敛）
+## Các bản sửa có tính hệ thống đã triển khai (chuẩn hóa ở lớp thành phần/VM)
 
-| # | 修复 | 位置 |
+| # | Bản sửa | Vị trí |
 |---|------|------|
-| S1 | 图标按钮语义：各屏图标按钮补 `contentDescription`（走 stringResource）；RuntimeIconButton Material 分支忽略描述的缺陷已修；ToolCard/MCP/权限状态点等纯颜色指示补 semantics | 各 feature 模块 |
-| S2 | 破坏性二次确认（12 处）：删会话/消息/模型档案、清空草稿、关终端会话（3 秒倒计时）、放弃编辑、删构建脚本、删 GGUF 模型（倒计时）、卸载工具（卡片+详情页共用 `UninstallToolConfirmDialog`，internal）、删快捷短语、删挂载点、删 MCP 服务、Skill 删除 | 各 feature 模块 |
-| S3 | 表单/弹窗状态 `remember` → `rememberSaveable`/listSaver/mapSaver；DistroManagement 安装进度整体迁入 VM `DistroInstallUiState`（旋转可恢复）；聊天输入草稿入 SavedStateHandle；聊天弹窗开关/编辑目标、工作区三步向导（含 mapSaver）、模型编辑器全字段迁移 | 各 feature 模块 |
-| S4 | 静默失败改可观察：ToolCenterViewModel `operationError`+`isSyncing`、ToolDetailViewModel toggleAutoStart 失败上抛、APK 下载失败对话框内错误文案、聊天附件失败计数+Toast、系统页跳转失败 Toast | 各模块 |
-| S5 | `throwable.message` 直出全部映射为用户文案，原始异常进 Log | 各模块 |
-| S6 | 字符串 `contains("失败")` 判错全部改为 VM 类型化标记（`xxxIsError: StateFlow<Boolean>`）：workspace ×3（`messageIsError`）、settings ×8 | workspace/settings |
-| S7 | <48dp 触摸目标全部加 `Modifier.minimumInteractiveComponentSize()` 或放大；RuntimeIconButton 玻璃分支同步 | 全应用 |
-| S8 | 点名硬编码文案迁移 strings 资源并同步 values-en（chat +30 条、workspace 模板/智坊整屏、home/terminal、settings、components、custom_iteration 新建 res） | 各模块 |
+| S1 | Ngữ nghĩa nút biểu tượng: thêm `contentDescription` (qua stringResource) cho nút ở từng màn hình; sửa lỗi nhánh Material của RuntimeIconButton bỏ qua mô tả; thêm semantics cho các chỉ báo chỉ dùng màu như ToolCard/MCP/trạng thái quyền | Các module feature |
+| S2 | Xác nhận lần hai cho thao tác phá hủy (12 chỗ): xóa phiên/tin nhắn/hồ sơ model, xóa toàn bộ bản nháp, đóng phiên terminal (đếm ngược 3 giây), bỏ chỉnh sửa, xóa script build, xóa model GGUF (đếm ngược), gỡ công cụ (thẻ và trang chi tiết dùng chung `UninstallToolConfirmDialog`, internal), xóa cụm từ nhanh, xóa điểm mount, xóa dịch vụ MCP, xóa Skill | Các module feature |
+| S3 | Trạng thái biểu mẫu/hộp thoại chuyển từ `remember` → `rememberSaveable`/listSaver/mapSaver; toàn bộ tiến độ cài DistroManagement chuyển vào VM `DistroInstallUiState` (khôi phục được sau xoay màn hình); bản nháp nhập chat lưu vào SavedStateHandle; chuyển trạng thái mở/đóng hộp thoại chat, đối tượng chỉnh sửa, trình hướng dẫn workspace ba bước (gồm mapSaver) và mọi trường của trình chỉnh sửa model | Các module feature |
+| S4 | Biến lỗi âm thầm thành lỗi quan sát được: `operationError`+`isSyncing` trong ToolCenterViewModel, đẩy lỗi toggleAutoStart của ToolDetailViewModel lên trên, thông báo lỗi tải APK trong hộp thoại, bộ đếm lỗi đính kèm chat + Toast, Toast khi điều hướng từ trang hệ thống thất bại | Các module |
+| S5 | Mọi chỗ xuất trực tiếp `throwable.message` đều chuyển sang thông báo cho người dùng; ngoại lệ gốc đưa vào Log | Các module |
+| S6 | Thay toàn bộ cách nhận diện lỗi bằng chuỗi `contains("失败")` bằng cờ có kiểu trong VM (`xxxIsError: StateFlow<Boolean>`): workspace ×3 (`messageIsError`), settings ×8 | workspace/settings |
+| S7 | Mọi vùng chạm <48dp được thêm `Modifier.minimumInteractiveComponentSize()` hoặc tăng kích thước; đồng bộ nhánh kính của RuntimeIconButton | Toàn ứng dụng |
+| S8 | Chuyển các chuỗi viết cứng đã xác định sang tài nguyên strings và đồng bộ values-en (chat +30 mục, toàn màn hình mẫu/workshop trong workspace, home/terminal, settings, components, tạo res cho custom_iteration) | Các module |
 
-专项（非穷举）：终端启动失败可重试（`retryInitialize`）、内嵌终端隐藏返回键（`showBackButton`）、终端错误单一入口、LazyColumn 稳定 key（会话/技能/MCP/终端行）、Markdown 表格横向滚动、diff 虚拟化（LazyColumn + DiffLine）、FlowRow 徽章、轮询 100/200ms→500ms、审批卡 busy、`/clear` 与同名模型档案提示、输入校验（端口 1024-65535/挂载路径/gguf/URL/文件名，VM 前置校验）、创建工程进行中反馈、子目录加载遮罩、AI 自愈两入口日志统一、提示词编辑 400ms 防抖、`terminal_*`/`home_*` 等文案资源化、PTY 标题架构动态取 `Build.SUPPORTED_ABIS`。
+Các mục chuyên biệt (không liệt kê hết): cho phép thử lại khi khởi động terminal thất bại (`retryInitialize`), ẩn nút quay lại của terminal nhúng (`showBackButton`), một điểm hiển thị lỗi terminal, key ổn định cho LazyColumn (phiên/Skill/MCP/dòng terminal), cuộn ngang bảng Markdown, ảo hóa diff (LazyColumn + DiffLine), huy hiệu FlowRow, chu kỳ thăm dò 100/200ms→500ms, trạng thái busy của thẻ phê duyệt, gợi ý cho `/clear` và hồ sơ model trùng tên, kiểm tra dữ liệu nhập (cổng 1024-65535/đường dẫn mount/gguf/URL/tên tệp, kiểm tra trước trong VM), phản hồi khi đang tạo dự án, lớp phủ khi tải thư mục con, thống nhất log hai điểm vào tự phục hồi của AI, debounce 400ms khi sửa prompt, tài nguyên hóa chuỗi như `terminal_*`/`home_*`, xác định động kiến trúc trong tiêu đề PTY từ `Build.SUPPORTED_ABIS`.
 
-## 遗留项（经评估暂不处理）
+## Mục còn tồn đọng (đã đánh giá và tạm chưa xử lý)
 
-- `RuntimeIcon` 的 `contentDescription` 默认仍为 null（改必传需动全量调用点签名）；语义修复落在调用点与 RuntimeIconButton 层。
-- 聊天死代码：`ContextUsageButton`、`ChatTurnAnchorBar` 保留未删。
-- `CodeEditorScreen` 的 `TextFieldState` 不可保存（光标位置旋转丢失；内容由 VM 恢复）；编辑器深色配色不随主题（重设计项）。
-- settings 模块未加全局表单 BackHandler（影响面大，仅做了状态保存）。
-- custom_iteration Screen 正文、WorkspaceScreen 向导 :1107-1154 等未点名硬编码文案未迁移（长期清理项）。
-- values-en 历史存量缺失条目未追溯补齐。
-- Agent 会话 LMK/SIGKILL 内存治理另见 docs/KNOWN_ISSUES.md。
+- `contentDescription` của `RuntimeIcon` mặc định vẫn là null (đổi thành bắt buộc sẽ phải sửa chữ ký mọi điểm gọi); bản sửa ngữ nghĩa được áp dụng ở điểm gọi và lớp RuntimeIconButton.
+- Mã chat không còn dùng: vẫn giữ `ContextUsageButton`, `ChatTurnAnchorBar`.
+- `TextFieldState` của `CodeEditorScreen` không lưu được (mất vị trí con trỏ khi xoay; VM khôi phục nội dung); màu tối của trình chỉnh sửa không theo theme (hạng mục thiết kế lại).
+- Module settings chưa có BackHandler biểu mẫu toàn cục (phạm vi ảnh hưởng lớn, mới chỉ lưu trạng thái).
+- Nội dung Screen custom_iteration, trình hướng dẫn WorkspaceScreen :1107-1154 và các chuỗi viết cứng chưa được chỉ rõ khác chưa chuyển đổi (hạng mục dọn dẹp dài hạn).
+- Chưa bổ sung hồi tố các mục còn thiếu trong values-en từ trước.
+- Quản lý bộ nhớ LMK/SIGKILL của phiên agent xem riêng tại docs/KNOWN_ISSUES.md.
 
-## 新增问题登记区
+## Khu vực đăng ký vấn đề mới
 
-（空）
+(Trống)

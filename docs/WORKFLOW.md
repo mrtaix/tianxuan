@@ -1,105 +1,105 @@
-# 天玄工作流
+# Quy trình làm việc CTHarness
 
-天玄工作流是持久化的纯 Kotlin DAG 定义，由 Harness 调度，Compose 特性层负责浏览、启动、展示执行时间线和处理人工审批。工作流本身不依赖 Android SDK，可独立验证和测试。
+Quy trình làm việc CTHarness là định nghĩa DAG thuần Kotlin, được lưu trữ bền vững và do Harness điều phối; tầng tính năng Compose đảm nhiệm duyệt, khởi động, hiển thị dòng thời gian thực thi và xử lý phê duyệt của con người. Bản thân quy trình không phụ thuộc vào Android SDK, có thể kiểm chứng và kiểm thử độc lập.
 
-## 入口
+## Điểm vào
 
-- 工作区页面右上角的“工作流”入口。
-- 项目卡片菜单中的“运行工作流”。
-- 智枢输入 `/wf` 打开当前项目的工作流目录；输入 `/wf <workflow-id>` 打开指定工作流的运行确认与参数表单。
-- 工作区构建失败或生成 APK 后，智枢输入区会显示类型化事件驱动的建议药丸；点击后携带构建错误或 APK 路径启动对应工作流。
+- Mục "Quy trình làm việc" ở góc trên bên phải của trang không gian làm việc.
+- Mục "Chạy quy trình làm việc" trong menu thẻ dự án.
+- Gõ `/wf` trong Tri-Shu để mở danh mục quy trình của dự án hiện tại; gõ `/wf <workflow-id>` để mở biểu mẫu xác nhận chạy và tham số của quy trình cụ thể.
+- Sau khi dựng không gian làm việc thất bại hoặc tạo APK, ô nhập của Tri-Shu hiển thị các thẻ gợi ý dựa trên sự kiện có kiểu; bấm vào sẽ khởi động quy trình tương ứng kèm lỗi dựng hoặc đường dẫn APK.
 
-## 可视化编辑器
+## Trình biên tập trực quan
 
-- 新建自定义工作流，或从内置工作流创建可编辑副本。
-- 节点可拖拽并按网格吸附；节点与连线共享同一画布变换。
-- 支持添加、删除、选择节点，编辑标题、说明、超时、失败策略与 JSON 字符串键值配置。多行提示词以 `\n` 保存；无效 JSON 无法应用，不会静默丢失内容。
-- 自动排版采用最长路径分层与重心排序减少交叉；属于同一编辑历史，可撤销/重做。内置流程默认使用分层坐标。
-- 从节点发起连线并选择目标节点，自动拒绝重复连接、自连接和成环连接。
-- 连接可选择任意输出、成功或失败端口，并支持 `exitCode == 0`、`output contains 文本` 和正则条件；编辑器校验与调度器共用同一套匹配语义。
-- 支持删除连接、60 步撤销/重做、未保存离开确认和 Room 持久化。
-- 可添加智能体推理与子智能体委派节点；两者支持提示词变量、等待、超时和结构化取消。
+- Tạo quy trình tùy chỉnh mới, hoặc tạo bản sao có thể chỉnh sửa từ quy trình tích hợp sẵn.
+- Nút có thể kéo thả và bắt dính theo lưới; nút và đường nối dùng chung một phép biến đổi khung vẽ.
+- Hỗ trợ thêm, xóa, chọn nút; chỉnh tiêu đề, mô tả, thời gian chờ, chiến lược xử lý thất bại và cấu hình khóa-giá trị dạng chuỗi JSON. Lời nhắc nhiều dòng được lưu bằng `\n`; JSON không hợp lệ không thể áp dụng và sẽ không làm mất nội dung một cách im lặng.
+- Tự sắp xếp dùng phân tầng đường dài nhất và sắp theo trọng tâm để giảm giao nhau; thuộc cùng một lịch sử chỉnh sửa, có thể hoàn tác/làm lại. Quy trình tích hợp mặc định dùng tọa độ phân tầng.
+- Kéo đường nối từ nút và chọn nút đích; tự động từ chối kết nối trùng, tự nối và các kết nối tạo chu trình.
+- Đường nối có thể chọn bất kỳ cổng đầu ra, thành công hay thất bại, hỗ trợ điều kiện `exitCode == 0`, `output contains 文本` (đầu ra chứa văn bản) và biểu thức chính quy; trình biên tập và bộ điều phối dùng chung một ngữ nghĩa khớp.
+- Hỗ trợ xóa kết nối, hoàn tác/làm lại 60 bước, xác nhận khi rời đi có thay đổi chưa lưu và lưu bền vững qua Room.
+- Có thể thêm nút suy luận của Agent và nút phái Agent con; cả hai hỗ trợ biến lời nhắc, chờ, giới hạn thời gian và hủy có cấu trúc.
 
-## 调度语义
+## Ngữ nghĩa điều phối
 
-- 同一波次内所有就绪节点并发执行，后继节点等待其依赖终态。
-- 条件边只激活匹配分支；未选分支会传播为 `SKIPPED`，不会让汇合节点永久等待。
-- 节点支持超时、一次自动重试、用户确认后重试以及取消。
-- 超时返回失败（退出码 124），不会误报为用户取消；重试耗尽或拒绝重试后中止，只有显式 CONTINUE 才继续调度。
-- 并行审批按到达顺序展示；关闭/取消后释放对应请求，不覆盖或丢失另一节点的审批。
-- 定义保存前执行结构校验，包括重复 ID、悬空边、非法超时和环检测。
-- 每次运行的完整状态历史写入 Room；数据库版本为 47。
-- 编辑定义、重新播种内置流程不会删除历史；历史携带当时的定义快照，保存旧运行不会覆盖新编辑。目录底部可打开最近 5 次记录回看，也可一键「重跑」（沿用当时的定义、变量与工作区，显式用户动作才发起）。
+- Tất cả nút sẵn sàng trong cùng một lượt chạy song song; nút kế tiếp chờ trạng thái kết thúc của các nút phụ thuộc.
+- Cạnh điều kiện chỉ kích hoạt nhánh khớp; nhánh không chọn được lan truyền thành `SKIPPED`, không làm nút hợp nhất chờ vĩnh viễn.
+- Nút hỗ trợ giới hạn thời gian, một lần tự thử lại, thử lại sau xác nhận của người dùng và hủy.
+- Hết thời gian chờ trả về thất bại (mã thoát 124), không báo sai thành người dùng hủy; khi hết lượt thử lại hoặc bị từ chối sẽ dừng, chỉ `CONTINUE` rõ ràng mới tiếp tục điều phối.
+- Phê duyệt song song hiển thị theo thứ tự đến; đóng/hủy sẽ giải phóng yêu cầu tương ứng, không ghi đè hay làm mất phê duyệt của nút khác.
+- Trước khi lưu định nghĩa, thực hiện kiểm tra cấu trúc gồm ID trùng, cạnh treo, thời gian chờ không hợp lệ và phát hiện chu trình.
+- Toàn bộ lịch sử trạng thái của mỗi lần chạy được ghi vào Room; phiên bản cơ sở dữ liệu là 47.
+- Chỉnh sửa định nghĩa hay khởi tạo lại quy trình tích hợp sẵn không xóa lịch sử; lịch sử mang bản chụp định nghĩa tại thời điểm đó, nên lưu lần chạy cũ không ghi đè bản chỉnh sửa mới. Cuối danh mục có thể mở 5 bản ghi gần nhất để xem lại, hoặc một chạm "Chạy lại" (dùng lại định nghĩa, biến và không gian làm việc lúc đó; chỉ khởi động bằng hành động rõ ràng của người dùng).
 
-## 手机与宽屏运行界面
+## Giao diện chạy trên điện thoại và màn hình rộng
 
-- 手机时间线展示状态、实时耗时、运行进度、退出码、错误和产物路径。
-- 运行时若已授予「显示在其他应用上层」，会显示工作流悬浮窗：当前节点/步骤、成功或失败、以及停止按钮。感知与点击等屏幕操作前会暂时卸下悬浮窗，避免 uiautomator 读到 HUD 节点；模型思考与节点等待时再显示。
-- 日志 / Diff 可展开、滚动和选择复制；命令执行每约 300 ms 刷新日志尾部，保留最多约 200 万字符的流式缓存。
-- 宽屏显示画布及右侧详情栏，点选节点查看同样的日志与结果；节点和连线仍使用统一世界坐标变换。
-- 运行前统一显示确认表单：必填变量、可选默认变量；若流程含智能体节点，可从已配置模型列表中选择本次使用的模型（写入 `WORKFLOW_MODEL_ID` / `WORKFLOW_MODEL_VARIANT`，不改全局默认）。人工审批展示上游结果供审阅。
+- Dòng thời gian trên điện thoại hiển thị trạng thái, thời gian thực, tiến độ chạy, mã thoát, lỗi và đường dẫn sản phẩm đầu ra.
+- Khi chạy, nếu đã cấp quyền "hiện trên các ứng dụng khác", sẽ hiện cửa sổ nổi quy trình: nút/bước hiện tại, thành công hay thất bại và nút dừng. Trước các thao tác màn hình như nhận diện và chạm, cửa sổ nổi sẽ tạm tháo ra để uiautomator không đọc được nút HUD; lúc mô hình suy nghĩ và nút chờ thì hiện lại.
+- Nhật ký / bản so sánh thay đổi có thể mở rộng, cuộn và chọn để sao chép; trong lúc chạy lệnh, phần cuối nhật ký được làm mới khoảng mỗi 300 ms, giữ tối đa khoảng 2 triệu ký tự trong bộ đệm luồng.
+- Màn hình rộng hiển thị khung vẽ cùng thanh chi tiết bên phải; bấm nút để xem nhật ký và kết quả tương tự; nút và đường nối vẫn dùng chung phép biến đổi tọa độ thế giới.
+- Trước khi chạy luôn hiển thị biểu mẫu xác nhận: biến bắt buộc, biến tùy chọn có giá trị mặc định; nếu quy trình có nút Agent, có thể chọn mô hình dùng cho lần này từ danh sách mô hình đã cấu hình (ghi vào `WORKFLOW_MODEL_ID` / `WORKFLOW_MODEL_VARIANT`, không đổi mặc định toàn cục). Phê duyệt thủ công hiển thị kết quả từ các bước trước để người dùng xem xét.
 
-## 内置流程
+## Quy trình tích hợp sẵn
 
-- 发布构建 → 确认 → APK 安装。
-- 构建完成事件 → 确认安装刚生成的 APK。
-- 构建失败事件 → 环境 doctor / analyze。
-- 输入构建错误 → 只读智能体诊断 → 确认修改 → 子智能体最小修复 → Diff → 确认重新构建。
-- APK 解包与反编译 → 智能体只读审计 → 带证据的报告；不强制覆盖已有解包目录。
-- Git Diff → 智能体提交建议 → 用户输入确认提交说明 → 本地提交；不推送。
-- **宿主自动化实验室**：权限探测 → 打开设置 → 等待前台 → 屏幕感知 → 通知（无特权则 Toast 降级）。
-- **广播 + 系统设置演示**：变量 → 自定义广播 → 读亮度 → 审批后写亮度。
-- **智能体 GUI 试飞**：特权检查 → 人工确认 → 打开 QQ → 本地 `gui_pilot` 循环（感知 → 模型 JSON 决策 → 点击），默认进天玄群发试飞文案。
+- Dựng bản phát hành → xác nhận → cài đặt APK.
+- Sự kiện dựng hoàn tất → xác nhận cài APK vừa tạo.
+- Sự kiện dựng thất bại → chẩn đoán / phân tích môi trường.
+- Nhập lỗi dựng → Agent chỉ đọc chẩn đoán → xác nhận sửa → Agent con sửa tối thiểu → so sánh thay đổi → xác nhận dựng lại.
+- Giải nén và dịch ngược APK → Agent kiểm toán chỉ đọc → báo cáo có bằng chứng; không ép ghi đè thư mục giải nén đã có.
+- So sánh thay đổi Git → Agent gợi ý bản ghi → người dùng nhập xác nhận thông điệp → ghi nhận thay đổi cục bộ; không đẩy lên kho từ xa.
+- **Phòng thí nghiệm tự động hóa phía chủ**: dò quyền → mở cài đặt → chờ ứng dụng lên tiền cảnh → nhận diện màn hình → thông báo (không có đặc quyền thì chuyển sang Toast).
+- **Minh họa phát tin quảng bá + cài đặt hệ thống**: biến → phát tin tùy chỉnh → đọc độ sáng → sau phê duyệt ghi độ sáng.
+- **Chuyến bay thử giao diện của Agent**: kiểm tra đặc quyền → xác nhận thủ công → mở QQ → vòng `gui_pilot` cục bộ (nhận diện → mô hình quyết định JSON → chạm), mặc định gửi nội dung thử tới nhóm CTHarness.
 
-## 节点与安全边界
+## Nút và ranh giới bảo mật
 
-当前可执行节点覆盖触发器、终止节点、Bash、托管进程、智能体推理、子智能体委派、天玄构建、**宿主动作（应用/广播/设置/GUI/特权 shell）**、**条件求值**、延时、设置变量和人工审批。
+Các nút thực thi hiện tại bao gồm kích hoạt, nút kết thúc, Bash, tiến trình được quản lý, suy luận Agent, phái Agent con, dựng CTHarness, **hành động phía chủ (ứng dụng/phát tin quảng bá/cài đặt/giao diện/shell đặc quyền)**, **đánh giá điều kiện**, chờ, đặt biến và phê duyệt thủ công.
 
-### 宿主动作（HOST_ACTION）
+### Hành động phía chủ (HOST_ACTION)
 
-编辑器按分类选择动作；标记「需特权」的项要求设置中已切换到 **Shizuku 或 Root** 且授权生效：
+Trình biên tập chọn hành động theo danh mục; mục đánh dấu "cần đặc quyền" yêu cầu trong cài đặt đã chuyển sang **Shizuku hoặc Root** và ủy quyền có hiệu lực:
 
-- **诊断**：权限状态、桥健康、设备快照、logcat
-- **应用**：打开应用、强停、清数据、冻结/解冻、授权/撤销权限、等待前台
-- **Intent**：发送广播、启动 Activity/Service（支持 extras：`key=value` / `key:int=1` / `flag:bool=true`）
-- **系统**：settings get/put、飞行模式、Wi‑Fi、媒体音量
-- **GUI**：感知屏幕；点击/双击/长按/滑动/滚动/按键/粘贴（`HostGuiToolkit`：有 Shizuku/Root 时自动开通无障碍手势服务，再降级 `cmd input` / `bin input`；中文走剪贴板粘贴）
-- **交互**：Toast、震动、剪贴板、通知
-- **高级**：特权 shell、`cmd` 服务调用；未知 action 可回退到自定义 `command`
+- **Chẩn đoán**: trạng thái quyền, sức khỏe cầu nối, bản chụp trạng thái thiết bị, logcat
+- **Ứng dụng**: mở ứng dụng, buộc dừng, xóa dữ liệu, đóng băng/mở băng, cấp/rút quyền, chờ ứng dụng lên tiền cảnh
+- **Intent**: phát tin quảng bá, khởi động Activity/Service (hỗ trợ dữ liệu bổ sung: `key=value` / `key:int=1` / `flag:bool=true`)
+- **Hệ thống**: đọc/ghi cài đặt, chế độ máy bay, Wi‑Fi, âm lượng đa phương tiện
+- **Giao diện**: nhận diện màn hình; chạm/chạm đúp/nhấn giữ/vuốt/cuộn/nhấn phím/dán (`HostGuiToolkit`: có Shizuku/Root thì tự bật dịch vụ cử chỉ trợ năng, rồi chuyển sang `cmd input` / `bin input` nếu cần; tiếng Trung đi qua dán bộ nhớ tạm)
+- **Tương tác**: Toast, rung, bộ nhớ tạm, thông báo
+- **Nâng cao**: shell đặc quyền, gọi dịch vụ `cmd`; hành động không nhận diện được có thể quay về `command` tùy chỉnh
 
-广播与启动 Activity 默认先走应用 Context；失败或勾选强制 shell 时走 `am broadcast` / `am start`。
+Phát tin quảng bá và khởi động Activity mặc định đi qua Application Context trước; khi thất bại hoặc chọn ép shell thì dùng `am broadcast` / `am start`.
 
-### 条件分支（CONDITION_BRANCH）
+### Nhánh điều kiện (CONDITION_BRANCH)
 
-节点配置 `expression` 并真正求值（不再只是透传）：
+Nút cấu hình `expression` và thực sự đánh giá (không còn chỉ truyền qua):
 
 - `exitCode == 0` / `!=`
 - `output contains …` / `output matches …`
-- `${VAR} == …` / `!=` / `contains` / `matches` / 数值比较
+- `${VAR} == …` / `!=` / `contains` / `matches` / so sánh số
 - `empty VAR` / `notEmpty VAR`
-- `&&` / `||` 组合
+- kết hợp `&&` / `||`
 
-成立时节点 `exitCode=0` 并写入 `CONDITION_RESULT=true`；不成立为 `exitCode=1`。边上仍可用 `exitCode` / success·failure 端口分流。
+Khi đúng, nút có `exitCode=0` và ghi `CONDITION_RESULT=true`; khi sai là `exitCode=1`. Cạnh vẫn dùng được `exitCode` / cổng success·failure để tách luồng.
 
-### 其它
+### Khác
 
-- `DELAY`：等待秒数；`SET_VARIABLE`：多行 `KEY=value` 注入全局变量。
-- 内置发布工作流在 APK 安装前要求确认；智能提交只在本地提交，不默认推送远端。
-- 新增内置示例：`host_automation_lab`（打开设置 + 屏幕感知）、`host_broadcast_and_settings`（广播 + 设置）。
+- `DELAY`: chờ số giây; `SET_VARIABLE`: chèn biến toàn cục qua `KEY=value` nhiều dòng.
+- Quy trình phát hành tích hợp yêu cầu xác nhận trước khi cài APK; ghi nhận thay đổi thông minh chỉ ghi cục bộ, mặc định không đẩy lên kho từ xa.
+- Thêm mẫu tích hợp mới: `host_automation_lab` (mở cài đặt + nhận diện màn hình), `host_broadcast_and_settings` (phát tin quảng bá + cài đặt).
 
-智能体节点通过每次运行、每个节点独立的持久化 Harness 会话与 Lane 执行，不切换智枢当前会话。`prompt` 支持 `${WORKSPACE_PATH}`、`${变量名}`、`${节点ID.output}` 与 `${previous.output}`；后者只合并实际激活的直接前驱，按连线顺序输出，不受无关并行节点影响。子智能体节点可配置 `role`，或同时配置 `department` 与 `agentQuery`，写权限范围由逗号分隔的 `writePaths` 声明。
+Nút Agent chạy qua phiên Harness và Lane bền vững riêng cho từng lần chạy, từng nút, không chuyển phiên hiện tại của Tri-Shu. `prompt` hỗ trợ `${WORKSPACE_PATH}`, `${变量名}` (tên biến), `${节点ID.output}` (đầu ra của ID nút) và `${previous.output}`; biến sau chỉ hợp nhất các nút tiền nhiệm trực tiếp thực sự được kích hoạt, xuất theo thứ tự đường nối, không bị ảnh hưởng bởi nút song song không liên quan. Nút Agent con có thể cấu hình `role`, hoặc cấu hình đồng thời `department` và `agentQuery`; phạm vi quyền ghi do `writePaths` phân tách bằng dấu phẩy khai báo.
 
-主动推荐目前接入构建失败、APK 产出两类领域事件，仅推荐、不自动执行。Git 脏状态与 FileWatch 仍是扩展点，没有启用后台监听。
+Gợi ý chủ động hiện mới nối với hai loại sự kiện nghiệp vụ: dựng thất bại và APK tạo ra; chỉ gợi ý, không tự thực thi. Trạng thái Git có thay đổi chưa ghi nhận và FileWatch vẫn là điểm mở rộng, chưa bật lắng nghe nền.
 
-## 后台运行与定时计划（2026-09）
+## Chạy nền và lịch trình (2026-09)
 
-- **运行与 UI 解耦**：执行由进程级单例 `WorkflowRunManager`（harness）持有，运行页退出/销毁 ViewModel 不再取消工作流；引擎层支持多运行并发，页面通过 `viewRun(executionId)` 切换关注的运行。目录页对仍在推进的运行显示「后台运行中」横幅，可一键查看。
-- **持久化**：启动即写 RUNNING 行，运行中按约 3 秒节流 upsert 面包屑，终态写最终快照；历史行记录 `triggerSource`（MANUAL/SCHEDULE）与 `scheduleId`。进程被杀后启动对账（`reconcileInterruptedRuns`）把非终态行标为 CANCELLED（"进程曾被系统终止"），节点状态与日志保留，可在目录页手动重新运行。断点续跑不做。
-- **前台保活**：有运行时 Application 联动拉起 `WorkflowForegroundService`（dataSync + WakeLock/WifiLock），逐运行展示进度通知；结束发终态通知后自动退出。Android 15+ dataSync 6h 硬超时后服务按 DETACH 退出前台，运行继续。
-- **审批**：后台出现待审批节点时发 IMPORTANCE_HIGH 通知，可直接「批准/拒绝」（`WorkflowApprovalReceiver`），点正文深链打开运行页（`AppNavigationTarget.WorkflowRun`）。
-- **定时计划**：`workflow_schedules` 表 + WorkManager（UniqueWork，tag=计划 id）。重复方式：每天 HH:mm（24h 周期 + initialDelay）、每 N 分钟（下限 15）、一次性延时（触发后自动停用）。WorkManager 按需初始化（`Configuration.Provider` + KoinWorkerFactory），进程被杀/设备重启后到点自动拉起执行。到点 Worker 走 `WorkflowRunManager.start(trigger=SCHEDULE)`；沙箱未就绪先等待（约 2 分钟），未安装 RootFS 不自动下载，直接落 FAILED 历史。DAILY/INTERVAL 在 Doze 下可能有分钟级顺延。
-- **会话恢复边界**：`workflow:<executionId>:<nodeId>` 前缀的 Harness 会话不参与 `recoverAllInterruptedSessions` 自动续跑，避免死运行的副作用重放。修复流程拒绝后续审批不会自动回滚已有修改。
+- **Tách chạy khỏi giao diện**: việc thực thi do đối tượng duy nhất cấp tiến trình `WorkflowRunManager` (harness) giữ; rời hoặc hủy ViewModel trang chạy không hủy quy trình; tầng bộ máy hỗ trợ nhiều lần chạy đồng thời, trang dùng `viewRun(executionId)` để đổi lần đang theo dõi. Trang danh mục hiện biểu ngữ "Đang chạy nền" cho các lần vẫn đang tiến triển, bấm một lần để xem.
+- **Lưu bền vững**: khởi động là ghi dòng RUNNING, trong lúc chạy cập nhật hoặc chèn dấu vết tiến độ theo nhịp khoảng 3 giây, khi kết thúc ghi bản chụp trạng thái cuối; dòng lịch sử ghi `triggerSource` (MANUAL/SCHEDULE) và `scheduleId`. Sau khi tiến trình bị giết, lúc khởi động đối soát (`reconcileInterruptedRuns`) đánh dấu các dòng chưa kết thúc là CANCELLED ("tiến trình từng bị hệ thống kết thúc"), giữ nguyên trạng thái nút và nhật ký, có thể chạy lại thủ công từ trang danh mục. Không tiếp tục từ điểm ngắt.
+- **Giữ tiến trình tiền cảnh**: khi có lần chạy, Application khởi động `WorkflowForegroundService` (dataSync + WakeLock/WifiLock), hiển thị thông báo tiến độ cho từng lần chạy; khi kết thúc gửi thông báo trạng thái cuối rồi tự thoát. Trên Android 15+, sau giới hạn cứng 6h của dataSync, dịch vụ thoát tiền cảnh theo kiểu DETACH, lần chạy vẫn tiếp tục.
+- **Phê duyệt**: khi có nút chờ phê duyệt trong nền, gửi thông báo IMPORTANCE_HIGH, cho phép "Phê duyệt/Từ chối" trực tiếp (`WorkflowApprovalReceiver`), bấm vào nội dung mở thẳng trang chạy (`AppNavigationTarget.WorkflowRun`).
+- **Lịch trình**: bảng `workflow_schedules` + WorkManager (UniqueWork, tag=id lịch trình). Lặp lại: mỗi ngày HH:mm (chu kỳ 24h + initialDelay), mỗi N phút (tối thiểu 15), một lần sau thời gian trễ (tự vô hiệu sau khi kích hoạt). WorkManager khởi tạo theo nhu cầu (`Configuration.Provider` + KoinWorkerFactory), sau khi tiến trình bị giết/khởi động lại thiết bị sẽ tự kích hoạt theo lịch. Worker đến hạn đi qua `WorkflowRunManager.start(trigger=SCHEDULE)`; nếu sandbox chưa sẵn sàng thì chờ (khoảng 2 phút), nếu chưa cài RootFS sẽ không tự tải, ghi thẳng lịch sử FAILED. DAILY/INTERVAL dưới Doze có thể trễ vài phút.
+- **Ranh giới khôi phục phiên**: các phiên Harness có tiền tố `workflow:<executionId>:<nodeId>` không tham gia `recoverAllInterruptedSessions` tự chạy tiếp, tránh phát lại tác dụng phụ của lần chạy đã chết. Việc từ chối phê duyệt tiếp theo trong luồng sửa không tự hoàn tác các thay đổi đã có.
 
-## 验证范围
+## Phạm vi kiểm chứng
 
-自动化覆盖 DAG 分支与并发、超时恢复、立即取消、重试耗尽、并行审批、直接上游传参、布局稳定性以及 Room 历史保留。设备上的 Linux 工具链、模型账号、安装权限仍是端到端运行的前置条件；编译或单元测试通过不等同于真实模型/构建/安装全链路验收。
+Tự động hóa bao phủ rẽ nhánh và song song của DAG, phục hồi sau khi hết thời gian chờ, hủy ngay lập tức, hết lượt thử lại, phê duyệt song song, truyền tham số từ nút tiền nhiệm trực tiếp, ổn định bố cục và lưu lịch sử Room. Chuỗi công cụ Linux trên thiết bị, tài khoản mô hình và quyền cài đặt vẫn là điều kiện tiên quyết để chạy đầu cuối; dựng hay kiểm thử đơn vị vượt qua không đồng nghĩa với nghiệm thu toàn chuỗi mô hình/dựng/cài đặt thật.

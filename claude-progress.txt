@@ -1,55 +1,55 @@
-# Progress Log
+# Nhật ký tiến độ
 
-## 2026-11-27 — CTHarness localization continuation
+## 2026-11-27 — Tiếp tục bản địa hóa CTHarness
 
-### Scope
-- CTH-VI-002: localize the complete app-customization entry flow without redesigning its UI or changing its execution protocol.
-- Keep branch feat/ctharness-vi and all preexisting uncommitted changes. No commit, push, release, APK installation or signing.
+### Phạm vi
+- CTH-VI-002: bản địa hóa toàn bộ luồng vào tùy chỉnh ứng dụng mà không thiết kế lại giao diện hay thay đổi giao thức thực thi.
+- Giữ nhánh feat/ctharness-vi và tất cả các thay đổi chưa commit sẵn có. Không commit, push, phát hành, cài đặt APK hay ký.
 
-### Changes implemented
-- Extracted 15 customization-screen strings and the generated chat title into Chinese, English and Vietnamese resources.
-- Moved the user-visible customization prompt into localized resources and format it with the fork URL and existing workspace name.
-- Updated customization source metadata to mrtaix/tianxuan and prompt guidance to CTHarness Dev / com.ctharness.app.dev.
-- Preserved custom_tianxuan, tianxuan-custom-iteration, tianxuandev-build.yml and tianxuandev-apk identifiers.
-- Corrected UI claims: a separate directory is not a security boundary; skill installation and CI setup are prerequisites, not completed actions.
-- Added two contract regression tests and feature_list.json for ongoing tracking.
+### Các thay đổi đã thực hiện
+- Trích xuất 15 chuỗi của màn hình tùy chỉnh và tiêu đề chat được tạo ra sang tài nguyên tiếng Trung, tiếng Anh và tiếng Việt.
+- Chuyển lời nhắc tùy chỉnh hiển thị cho người dùng vào tài nguyên bản địa hóa và định dạng nó với fork URL cùng tên workspace hiện có.
+- Cập nhật siêu dữ liệu nguồn tùy chỉnh thành mrtaix/tianxuan và hướng dẫn lời nhắc thành CTHarness Dev / com.ctharness.app.dev.
+- Giữ nguyên các định danh custom_tianxuan, tianxuan-custom-iteration, tianxuandev-build.yml và tianxuandev-apk.
+- Đính chính các tuyên bố về giao diện: một thư mục riêng không phải là ranh giới bảo mật; cài đặt skill và thiết lập CI là điều kiện tiên quyết, không phải hành động đã hoàn tất.
+- Thêm hai test hồi quy hợp đồng và feature_list.json để theo dõi liên tục.
 
-### Verification observed so far
-- BASELINE PASS: python3 tools/check-ctharness.py — original 7/7 tests passed.
-- RED EXPECTED: same command after adding the two regressions — 2 failures, caused by untranslated screen strings and old repository metadata. See .agent/iteration-red.log.
-- PASS: same command after implementation — 9/9 tests passed. See .agent/iteration-check.log.
-- PASS: aapt2 compile on all 41 strings.xml / legacy_strings.xml files — exit 0. Resource compilation only, not APK linking. See .agent/iteration-aapt2.log.
-- PASS: git diff --check after implementation.
-- Inventory: 1,787 Vietnamese string keys in 16 resource XML files.
-- Environment: installed openjdk-25 through the approved package tool; java -version executed successfully and reported 25.0.5.1. SDK inspection found only android-35; project requires compileSdk 37.1.
-- PASS: `:feature:navigation:compileDebugKotlin` — `BUILD SUCCESSFUL in 15m 21s`, `GRADLE_EXIT=0`; changed Kotlin for custom_iteration, navigation and settings modules compiled. See .agent/iteration-gradle-nav.log.
-- Environment-only additions for that build: openjdk-17 and openjdk-25 installed; SDK licences accepted at the user's explicit approval; build-tools 36.0.0 and platform android-37.1 downloaded; `.agent/build-nav.sh` swaps the x86 bundled aidl for the phone's ARM64 aidl.
-- NOT RUN: APK assembly/link, signing, installation and device smoke tests for locale, customization and links. A module compile is not an APK build.
+### Kiểm chứng đã quan sát được cho đến nay
+- BASELINE PASS: [REDACTED] tools/check-ctharness.py — 7/7 test ban đầu đều đạt.
+- RED EXPECTED: cùng lệnh đó sau khi thêm hai test hồi quy — 2 lỗi, do các chuỗi trên màn hình chưa được dịch và siêu dữ liệu kho lưu trữ cũ. Xem .agent/iteration-red.log.
+- PASS: [REDACTED] lệnh sau khi triển khai — 9/9 test đạt. Xem .agent/iteration-check.log.
+- PASS: [REDACTED] biên dịch trên toàn bộ 41 tệp strings.xml / legacy_strings.xml — exit 0. Chỉ biên dịch tài nguyên, không liên kết APK. Xem .agent/iteration-[REDACTED].log.
+- PASS: [REDACTED] diff --check sau khi triển khai.
+- Kiểm kê: 1.787 khóa chuỗi tiếng Việt trong 16 tệp tài nguyên XML.
+- Môi trường: đã cài openjdk-25 qua công cụ gói được phê duyệt; java -version chạy thành công và báo 25.0.5.1. Kiểm tra SDK chỉ thấy android-35; dự án yêu cầu compileSdk 37.1.
+- PASS: [REDACTED] — `BUILD SUCCESSFUL in 15m 21s`, `GRADLE_EXIT=0`; mã Kotlin đã thay đổi cho các module custom_iteration, navigation và settings được biên dịch. Xem .agent/iteration-gradle-nav.log.
+- Các bổ sung chỉ liên quan đến môi trường cho bản dựng đó: đã cài openjdk-17 và openjdk-25; chấp nhận license SDK theo sự phê duyệt rõ ràng của người dùng; đã tải build-tools 36.0.0 và platform android-37.1; `.agent/build-nav.sh` thay thế aidl x86 đi kèm bằng aidl ARM64 của điện thoại.
+- CHƯA CHẠY: lắp ráp/liên kết APK, ký, cài đặt và test smoke trên thiết bị cho locale, tùy chỉnh và liên kết. Biên dịch một module không phải là bản dựng APK.
 
-### Latest session — header logo and three runtime defects
-- CTH-VI-005: removed TianXuanBrandBadge from RuntimeTopBar, ChatTopBar and SessionsPaneHeader. The new regression failed on all three before the edit.
-- CTH-VI-006: raised streamed attachment cap from 50 MB to 500 MB; made queued-message launches report success, recover stale RUNNING tasks and surface failures instead of losing messages; made Shizuku wait for a late Binder and give an actionable re-authorization message with CTHarness branding.
-- PASS: `python3 tools/check-ctharness.py` — 13 tests, exit 0.
-- PASS: `:feature:navigation:compileDebugKotlin` after all edits — `BUILD SUCCESSFUL in 5m 41s`, exit 0. Transitively compiled chat, components, custom_iteration, harness, runtime and navigation.
-- NOT RUN: APK build/install and device reproduction of the Shizuku, queue and heavy-attachment reports. The phone still has upstream `top.wkbin.tianxuan` 0.36.4 installed.
+### Phiên mới nhất — logo tiêu đề và ba lỗi runtime
+- CTH-VI-005: đã loại bỏ TianXuanBrandBadge khỏi RuntimeTopBar, ChatTopBar và SessionsPaneHeader. Test hồi quy mới đã thất bại trên cả ba vị trí trước khi sửa.
+- CTH-VI-006: nâng giới hạn tệp đính kèm streamed từ 50 MB lên 500 MB; các lời gọi khởi chạy theo hàng đợi giờ báo thành công, khôi phục tác vụ RUNNING cũ và phản ánh lỗi thay vì làm mất tin nhắn; đồng thời cho Shizuku chờ Binder đến muộn và đưa ra thông báo cấp quyền lại kèm hướng dẫn với thương hiệu CTHarness.
+- PASS: [REDACTED] tools/check-ctharness.py` — 13 test, exit 0.
+- PASS: [REDACTED] sau tất cả các sửa đổi — `BUILD SUCCESSFUL in 5m 41s`, exit 0. Đã biên dịch bắc cầu các module chat, components, custom_iteration, harness, runtime và navigation.
+- CHƯA CHẠY: bản dựng/cài đặt APK và tái hiện trên thiết bị các báo cáo về Shizuku, hàng đợi và tệp đính kèm lớn. Điện thoại vẫn đang cài upstream `top.wkbin.tianxuan` 0.36.4.
 
-### Feature status
-- CTH-VI-001: in_progress; identity and locale static checks plus module compiles passed, no APK/device verification.
-- CTH-VI-002: in_progress; implementation, static contracts, resource compilation and Kotlin compilation passed; device smoke test outstanding.
-- CTH-VI-004: in_progress; link targets verified live and static contracts pass; in-app click-through not verified on device.
-- CTH-VI-005: in_progress; static regression and Kotlin compile pass; device appearance not checked.
-- CTH-VI-006: in_progress; static regression and Kotlin compile pass; user-reported symptoms not reproduced or confirmed fixed on device.
-- CTH-VI-003: pending; whole-app localization is not complete.
+### Trạng thái tính năng
+- CTH-VI-001: in_progress; các kiểm tra tĩnh về nhận diện và locale cùng các bản biên dịch module đã đạt, chưa kiểm chứng APK/thiết bị.
+- CTH-VI-002: in_progress; triển khai, hợp đồng tĩnh, biên dịch tài nguyên và biên dịch Kotlin đã đạt; còn thiếu test smoke trên thiết bị.
+- CTH-VI-004: in_progress; mục tiêu liên kết đã được kiểm chứng trực tiếp và hợp đồng tĩnh đạt; chưa kiểm chứng thao tác click trong ứng dụng trên thiết bị.
+- CTH-VI-005: in_progress; hồi quy tĩnh và biên dịch Kotlin đạt; chưa kiểm tra ngoại quan trên thiết bị.
+- CTH-VI-006: in_progress; hồi quy tĩnh và biên dịch Kotlin đạt; triệu chứng do người dùng báo chưa được tái hiện hay xác nhận đã sửa trên thiết bị.
+- CTH-VI-003: pending; bản địa hóa toàn ứng dụng chưa hoàn tất.
 
-### Remaining localization audit
-- Read-only audit call_GP3oEobQnNAUMPKAqWuUO3Pm found confirmed lower-bound uncovered UI occurrences: browser >=31, workflow >=152, preview >=60, knowledge >=34, navigation 3, components 4. These are occurrence counts, not unique keys or an exhaustive census.
-- Customization screen had no remaining Chinese UI literals on the audit recheck.
-- The settings LocalizedText bridge covers many source literals, but does not automatically cover shared-component arguments or AnnotatedString overloads.
+### Kiểm toán bản địa hóa còn lại
+- Lời gọi kiểm toán chỉ đọc call_GP3oEobQnNAUMPKAqWuUO3Pm cho thấy số lần xuất hiện UI chưa được bao phủ ở mức dưới đã được xác nhận: browser >=31, workflow >=152, preview >=60, knowledge >=34, navigation 3, components 4. Đây là số lần xuất hiện, không phải khóa duy nhất hay một bản thống kê đầy đủ.
+- Màn hình tùy chỉnh không còn literal UI tiếng Trung khi kiểm tra lại.
+- Cầu nối LocalizedText trong settings bao phủ nhiều literal trong mã nguồn, nhưng không tự động bao phủ các đối số của component dùng chung hay các overload AnnotatedString.
 
-### Exact next steps
-1. Publish a release in `mrtaix/tianxuan`; until then update checks return no release and the release-history page is empty.
-2. Assemble and sign a debug APK, then verify on device: Vietnamese on first launch, a later system-language choice, the customization flow, and the updated sponsor list and installer links.
-3. Decide whether the sponsor email and QQ group should stay upstream support channels or become CTHarness channels; both need a real replacement destination first.
-4. For the next translation unit, localize knowledge end to end: KnowledgeScreen.kt, AddDocumentDialog.kt, EmbeddingSettingsCard.kt and the ViewModel validation message. Preserve @kb: syntax, model IDs, endpoints and stored status codes.
-5. GitHub CI is running on `feat/ctharness-vi`; download the CTHarnessDev artifact from the run and install it, then reproduce the three reported defects before calling CTH-VI-006 fixed: grant Shizuku to the new package, queue messages during a run and after an interrupted task, and attach a file larger than 50 MB.
-6. Do not mark any feature verified until its documented device criteria actually pass.
+### Các bước tiếp theo chính xác
+1. Phát hành một bản release trong `mrtaix/tianxuan`; cho đến lúc đó các kiểm tra cập nhật không trả về bản phát hành nào và trang lịch sử phát hành vẫn trống.
+2. Lắp ráp và ký một APK debug, sau đó kiểm chứng trên thiết bị: tiếng Việt khi khởi chạy lần đầu, lựa chọn ngôn ngữ hệ thống về sau, luồng tùy chỉnh, cùng danh sách sponsor và liên kết trình cài đặt đã cập nhật.
+3. Quyết định xem email sponsor và nhóm QQ nên giữ làm kênh hỗ trợ upstream hay chuyển thành kênh của CTHarness; cả hai đều cần một đích thay thế thực trước đã.
+4. Cho đơn vị dịch tiếp theo, hãy bản địa hóa knowledge từ đầu đến cuối: KnowledgeScreen.kt, AddDocumentDialog.kt, EmbeddingSettingsCard.kt và thông báo xác thực của ViewModel. Giữ nguyên cú pháp @kb:, ID mô hình, endpoint và mã trạng thái đã lưu.
+5. GitHub CI đang chạy trên `feat/ctharness-vi`; tải artifact CTHarnessDev từ lần chạy đó và cài đặt, rồi tái hiện ba lỗi đã báo trước khi coi CTH-VI-006 là đã sửa: cấp Shizuku cho gói mới, xếp hàng tin nhắn trong lúc chạy và sau một tác vụ bị gián đoạn, và đính kèm tệp lớn hơn 50 MB.
+6. Không đánh dấu tính năng nào là đã kiểm chứng cho đến khi các tiêu chí trên thiết bị được ghi trong tài liệu thực sự đạt.

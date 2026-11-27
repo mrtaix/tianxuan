@@ -1,13 +1,13 @@
-# Codex 兼容性记录
+# Ghi chú về khả năng tương thích của Codex
 
-- 适配器：`CodexToolInstaller`
-- 安装方式：OpenAI 官方 Linux 安装脚本
-- 命令：通过 HTTPS 下载 OpenAI 官方 `install.sh` 到 Linux 临时目录，校验非空后执行；安装过程不使用 `curl | sh`，并将 `HOME` 指向 `/opt/tianxuan/tools/codex`，再创建 `/opt/tianxuan/bin/codex` 入口。
-- 验证：`codex --version`
-- 运行时：Linux ARM64；安装前提供 `curl` 和 CA 证书
-- 数据策略：程序安装在 `/opt/tianxuan/tools/codex`，`CODEX_HOME` 指向 `/opt/tianxuan/data/codex`；默认卸载保留该数据目录，用户勾选删除数据时才移除。
-- 最后核对：2026-08-17
+- Adapter: `CodexToolInstaller`
+- Cách cài đặt: dùng script cài đặt Linux chính thức của OpenAI
+- Lệnh: tải `install.sh` chính thức của OpenAI qua HTTPS về thư mục tạm của Linux, kiểm tra tệp không rỗng rồi thực thi; quá trình cài đặt không dùng `curl | sh`, đồng thời trỏ `HOME` tới `/opt/tianxuan/tools/codex`, sau đó tạo lối vào `/opt/tianxuan/bin/codex`.
+- Xác minh: `codex --version`
+- Runtime: Linux ARM64; cung cấp `curl` và CA certificate trước khi cài đặt
+- Chính sách dữ liệu: chương trình được cài tại `/opt/tianxuan/tools/codex`, `CODEX_HOME` trỏ tới `/opt/tianxuan/data/codex`; mặc định gỡ cài đặt giữ lại thư mục dữ liệu này, chỉ xóa khi người dùng chọn xóa dữ liệu.
+- Lần đối chiếu cuối: 2026-08-17
 
-来源：[OpenAI Codex 官方 README](https://github.com/openai/codex/blob/main/README.md)
+Nguồn: [README chính thức của OpenAI Codex](https://github.com/openai/codex/blob/main/README.md)
 
-正式发布前仍需在目标 Android ARM64 设备上确认官方二进制或 npm fallback 的兼容性，并复核许可。
+Trước khi phát hành chính thức, vẫn cần xác nhận trên thiết bị Android ARM64 mục tiêu về khả năng tương thích của file nhị phân chính thức hoặc npm fallback, đồng thời rà soát lại giấy phép.

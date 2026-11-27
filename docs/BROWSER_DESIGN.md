@@ -1,99 +1,99 @@
-# 🌐 天玄 (TianXuan) — 内置浏览器与 Harness 集成方案 (Browser Design)
+# 🌐 CTHarness — Phương án tích hợp trình duyệt và Harness
 
-> **范围**：在 Android 无 Root TianXuan 内置一个 `in-app WebView`，并让 harness 通过 MCP 协议像 Codex 操纵内置 In-App Browser 一样驱动它；可同时被桌面 Claude / Cursor / Copilot 通过 `adb reverse` 接入。
-> **状态**：v0.9.0-MVP 落地切片（首期实现 in-app 一族 + 文件系统一族）。
-> **作者**：TianXuan Architecture Team
-> **创建日期**：2026-09-02
+> **Phạm vi**: Tích hợp một `in-app WebView` vào CTHarness trên Android không cần Root, cho phép harness điều khiển qua MCP tương tự cách Codex điều khiển trình duyệt trong ứng dụng; đồng thời cho phép Claude / Cursor / Copilot trên máy tính kết nối qua `adb reverse`.
+> **Trạng thái**: Các phần triển khai v0.9.0-MVP (giai đoạn đầu triển khai nhóm in-app + nhóm hệ thống tệp).
+> **Tác giả**: Nhóm kiến trúc CTHarness
+> **Ngày tạo**: 2026-09-02
 
 ---
 
-## 1. 🎯 目标与对位
+## 1. 🎯 Mục tiêu và đối chiếu
 
-### 1.1 目标
+### 1.1 Mục tiêu
 
-让 TianXuan 的 Agent Harness 能像 Codex desktop 内置浏览器那样：
+Cho phép Agent Harness của CTHarness hoạt động như trình duyệt tích hợp trong Codex trên máy tính:
 
-1. **内置可见**：用户能在 App 内打开一个真正的浏览器页面（多 Tab、URL Bar、Co-browsing 状态条）。
-2. **AI 可控**：harness 内的 LLM 通过 MCP 工具（`mcp__browser__open` / `navigate` / `snapshot` / `click` / `type` / `screenshot` …）调度同一个浏览器实例。
-3. **共驾（Co-browsing）**：UI 操作、AI 操作在同一个 `WebView` 上交替发生，谁的最近一次操作、谁在接管，可视化切换。
-4. **可选外接**：同端口（`127.0.0.1:8787` 或 `0.0.0.0:8787`）允许桌面 AI / CLI 通过 MCP JSON-RPC 接入。
-5. **安全闭环**：复用 `core:security/SecretRedactor`，敏感 Cookie / Authorization / Password 默认脱敏；按风险等级（LOW / MEDIUM / HIGH / CRITICAL）申请审批。
+1. **Tích hợp và hiển thị được**: Người dùng mở được một trang trình duyệt thực sự trong ứng dụng (nhiều tab, thanh URL, thanh trạng thái cùng duyệt web).
+2. **AI điều khiển được**: LLM trong harness điều phối cùng một phiên bản trình duyệt thông qua công cụ MCP (`mcp__browser__open` / `navigate` / `snapshot` / `click` / `type` / `screenshot` …).
+3. **Cùng duyệt web (Co-browsing)**: Thao tác UI và AI luân phiên trên cùng một `WebView`, hiển thị rõ ai vừa thao tác và ai đang nắm quyền điều khiển.
+4. **Kết nối ngoài tùy chọn**: Cùng một cổng (`127.0.0.1:8787` hoặc `0.0.0.0:8787`) cho phép AI / CLI trên máy tính kết nối qua MCP JSON-RPC.
+5. **Bảo mật xuyên suốt**: Tái sử dụng `core:security/SecretRedactor`, mặc định che Cookie / Authorization / Password nhạy cảm; yêu cầu phê duyệt theo mức rủi ro (LOW / MEDIUM / HIGH / CRITICAL).
 
-### 1.2 Codex 对位
+### 1.2 Đối chiếu với Codex
 
-| Codex desktop | TianXuan（本方案） |
+| Codex trên máy tính | CTHarness (phương án này) |
 | --- | --- |
 | `agent.browsers.list()` / `get(name)` / `getForUrl()` / `getDefault()` | `BrowserRegistry.listFamilies()` / `get(family)` / `getForUrl()` / `getDefault()` |
-| 内置 In-App Browser（XAML / WKWebView） | in-app `WebView`（`androidx.webkit`） |
-| 通过 Chrome Extension + CDP 操纵桌面 Chrome | 通过 **in-process MCP server** 操纵自己 app 内的 WebView；外部 Chrome 走 Intent 唤起（v1.1+） |
-| 工具结果含 base64 截图 | `ToolResult.imageAttachments: List<ToolImageRef>`，UI 用 Coil 渲染本地文件 |
-| 持久化浏览器 binding 跨 turn | `BrowserRegistry` 单例 + `BrowserSessionToken`（按 agent session） |
-| 选择策略：用户显式 > URL 隐式 > 默认 | `BrowserSelectionPolicy.decide(request, prefs, urlHint)` |
+| Trình duyệt trong ứng dụng (XAML / WKWebView) | `WebView` trong ứng dụng (`androidx.webkit`) |
+| Điều khiển Chrome trên máy tính qua Chrome Extension + CDP | Điều khiển WebView trong chính ứng dụng qua **MCP server chạy trong tiến trình**; mở Chrome bên ngoài bằng Intent (v1.1+) |
+| Kết quả công cụ chứa ảnh chụp base64 | `ToolResult.imageAttachments: List<ToolImageRef>`, UI dùng Coil hiển thị tệp cục bộ |
+| Duy trì liên kết trình duyệt qua các lượt | Singleton `BrowserRegistry` + `BrowserSessionToken` (theo phiên agent) |
+| Chính sách chọn: người dùng chỉ định rõ > suy ra từ URL > mặc định | `BrowserSelectionPolicy.decide(request, prefs, urlHint)` |
 
-### 1.3 与 WebReverse-MCP 的关系
+### 1.3 Quan hệ với WebReverse-MCP
 
-本方案**借鉴**其模块切分粒度 / 工具动词集 / 风险矩阵 / Evidence Store 设计；**不复用其代码**（他们的 `pluginManagement` 与 `gradle 7.x` 配置不适配 TianXuan），后续若有强需求可独立 PR 借鉴特定模块。
+Phương án này **tham khảo** cách chia module / tập động từ công cụ / ma trận rủi ro / thiết kế Evidence Store; **không tái sử dụng mã nguồn** (cấu hình `pluginManagement` và `gradle 7.x` của họ không phù hợp với CTHarness). Nếu sau này có nhu cầu rõ rệt, có thể tham khảo từng module qua PR riêng.
 
 ---
 
-## 2. 🏗️ 模块拓扑
+## 2. 🏗️ Sơ đồ module
 
 ```
-feature/browser               ── Compose UI（RuntimeCard/RuntimeTopBar 设计系统）
+feature/browser               ── Compose UI (hệ thống thiết kế RuntimeCard/RuntimeTopBar)
        │
        ▼
-runtime/browser               ── BrowserRegistry + WebView pool + InApp Engine + MCP tool handlers
+runtime/browser               ── BrowserRegistry + pool WebView + InApp Engine + bộ xử lý công cụ MCP
        │                          │
-       │                          ├─► McpInProcessServer (loopback HTTP)
+       │                          ├─► McpInProcessServer (HTTP loopback)
        │                          │
-       └─► 复用 runtime/WorkspaceManager & WorkspaceFileService（file.* 工具全走它）
+       └─► Tái sử dụng runtime/WorkspaceManager & WorkspaceFileService (mọi công cụ file.* đều đi qua đây)
 
-harness/mcp/server            ── Ktor 起服务：POST /mcp/sse、Auth、Tool Dispatch、Resources
+harness/mcp/server            ── Ktor khởi chạy dịch vụ: POST /mcp/sse, Auth, phân phối công cụ, Resources
        │
        ▼
-harness (现有 McpManager)     ── bootstrapBuiltinBrowser() 启动时插入配置 + 保活
+harness (McpManager hiện có)  ── bootstrapBuiltinBrowser() chèn cấu hình lúc khởi động + giữ dịch vụ hoạt động
        │
        ▼
 core/browser (Pure Kotlin)    ── BrowserFamily / Risk / Capability / SnapshotRef / PageSnapshot
-core/datastore                ── BrowserPreferences 分面（homeUrl / allowRemote / allowEvalJs / coBrowsing）
-core/model                    ── ToolResult.imageAttachments（已加）、McpServerConfig.isBuiltin（已有）
+core/datastore                ── Facade BrowserPreferences (homeUrl / allowRemote / allowEvalJs / coBrowsing)
+core/model                    ── ToolResult.imageAttachments (đã thêm), McpServerConfig.isBuiltin (đã có)
 ```
 
-### 2.1 单向依赖
+### 2.1 Phụ thuộc một chiều
 
-保持与全项目一致的：`feature/* → runtime/* → core/*`；新增模块**严格不可被反向依赖**。
+Giữ thống nhất với toàn dự án: `feature/* → runtime/* → core/*`; **nghiêm cấm phụ thuộc ngược vào các module mới**.
 
 ---
 
-## 3. 🔌 协议与数据形态
+## 3. 🔌 Giao thức và dạng dữ liệu
 
-### 3.1 工具命名（统一 MCP 风格）
+### 3.1 Đặt tên công cụ (thống nhất theo kiểu MCP)
 
-工具在模型侧的呈现：
+Cách các công cụ được trình bày cho mô hình:
 
 ```
-mcp__browser__open                ── 新建或复用 tab 打开 URL
-mcp__browser__navigate            ── 当前 tab 跳转
-mcp__browser__snapshot            ── 提取交互元素 ref
-mcp__browser__click               ── 按 ref 点击
-mcp__browser__type                ── 按 ref 键入文本
-mcp__browser__press               ── 按 ref + 按键（Enter/Tab/Escape…）
-mcp__browser__screenshot          ── 当前 tab 全屏截图落盘并返回 image_ref
-mcp__browser__current_url         ── 取 URL / Title
-mcp__browser__list_tabs           ── 列出所有 tab
-mcp__browser__close_tab           ── 关闭指定 tab
-mcp__browser__evaluate            ── 在当前页执行一段 JS（critical）
-mcp__browser__page_source         ── 返回页面 pretty print HTML
-mcp__browser__network_list        ── 列出已捕获网络请求
-mcp__browser__cookies_get         ── 取 Cookie（高风险）
+mcp__browser__open                ── Tạo mới hoặc tái sử dụng tab để mở URL
+mcp__browser__navigate            ── Điều hướng tab hiện tại
+mcp__browser__snapshot            ── Trích ref của phần tử tương tác
+mcp__browser__click               ── Nhấp theo ref
+mcp__browser__type                ── Nhập văn bản theo ref
+mcp__browser__press               ── Nhấn phím theo ref (Enter/Tab/Escape…)
+mcp__browser__screenshot          ── Lưu ảnh chụp toàn màn hình tab hiện tại và trả image_ref
+mcp__browser__current_url         ── Lấy URL / tiêu đề
+mcp__browser__list_tabs           ── Liệt kê mọi tab
+mcp__browser__close_tab           ── Đóng tab chỉ định
+mcp__browser__evaluate            ── Thực thi một đoạn JS trong trang hiện tại (critical)
+mcp__browser__page_source         ── Trả HTML của trang được định dạng dễ đọc
+mcp__browser__network_list        ── Liệt kê yêu cầu mạng đã thu thập
+mcp__browser__cookies_get         ── Lấy Cookie (rủi ro cao)
 mcp__browser__local_get / list / delete / clear
-mcp__browser__session_*           ── 同 local
-mcp__browser__file_*              ── 工作目录读/写/搜/hash/zip/share（复用 WorkspaceFileService）
+mcp__browser__session_*           ── Tương tự local
+mcp__browser__file_*              ── Đọc/ghi/tìm/hash/zip/share trong thư mục làm việc (tái sử dụng WorkspaceFileService)
 ```
 
-> 命名解析走现有 `harness/mcp/McpToolApiName.encode` / `legacy` 兼容。模型看到的实际是 `mcp__browser__open__<hash>`，但**不影响** harness 拼回 `McpToolInfo`。
+> Phân giải tên dùng cơ chế tương thích `harness/mcp/McpToolApiName.encode` / `legacy` hiện có. Tên mô hình thực sự thấy là `mcp__browser__open__<hash>`, nhưng **không ảnh hưởng** việc harness khôi phục `McpToolInfo`.
 
-### 3.2 Snapshot Ref 协议（防泄露内部 selector）
+### 3.2 Giao thức Snapshot Ref (tránh lộ selector nội bộ)
 
 ```json
 {
@@ -107,108 +107,108 @@ mcp__browser__file_*              ── 工作目录读/写/搜/hash/zip/share�
 }
 ```
 
-- 模型只能拿到 `e12 / e15 / e18`，**拿不到**真实 selector。
-- `runtime/browser/snapshot/RefResolver` 内部维护 `tabId → refMap` 映射；用户点击元素后（用户事件）也写入 refMap（避免 AI 与 UI 互踢）。
+- Mô hình chỉ nhận được `e12 / e15 / e18`, **không nhận được** selector thật.
+- `runtime/browser/snapshot/RefResolver` duy trì ánh xạ `tabId → refMap` bên trong; sau khi người dùng nhấp phần tử (sự kiện người dùng), cũng ghi vào refMap để tránh AI và UI làm mất hiệu lực tham chiếu của nhau.
 
-### 3.3 Screenshot 返回
+### 3.3 Kết quả trả về của Screenshot
 
-`ToolResult.imageAttachments[0] = ToolImageRef(uri = "screenshots://tianxuan-browser/t1/2026-09-02T11-09-09.png", mime = "image/png", w = 1080, h = 2400)`。
+`ToolResult.imageAttachments[0] = ToolImageRef(uri = "screenshots://tianxuan-browser/t1/2026-09-02T11-09-09.png", mime = "image/png", w = 1080, h = 2400)`.
 
-UI 用 `Coil` 渲染缩略图，点击进入 `BrowserActionCard` 全屏预览。文件落到 `/data/data/<app>/cache/tianxuan-browser/screenshots/...`；**不外发**，符合"敏感数据不出本地"原则。
+UI dùng `Coil` hiển thị ảnh thu nhỏ; nhấp để mở bản xem trước toàn màn hình trong `BrowserActionCard`. Tệp được lưu vào `/data/data/<app>/cache/tianxuan-browser/screenshots/...`; **không gửi ra ngoài**, tuân thủ nguyên tắc "dữ liệu nhạy cảm không rời thiết bị".
 
-### 3.4 MCP Resources（外部 AI / IDE 可订阅）
+### 3.4 MCP Resources (AI / IDE bên ngoài có thể đăng ký theo dõi)
 
 ```
-browser://current-page      ── 当前 tab URL + 标题
-browser://dom               ── 最近一次 snapshot 全量
-browser://console           ── 最近 console 日志
-browser://network           ── 已捕获网络请求
-browser://tabs              ── 所有 tab 摘要
-browser://storage           ── Cookie / Local / Session 摘要
+browser://current-page      ── URL + tiêu đề tab hiện tại
+browser://dom               ── Toàn bộ snapshot gần nhất
+browser://console           ── Log console gần nhất
+browser://network           ── Yêu cầu mạng đã thu thập
+browser://tabs              ── Tóm tắt mọi tab
+browser://storage           ── Tóm tắt Cookie / Local / Session
 ```
 
 ---
 
-## 4. ⚖️ 风险与审批矩阵
+## 4. ⚖️ Ma trận rủi ro và phê duyệt
 
-| 工具前缀 | riskLevel | REQUEST 模式审批 | ASSISTED 模式审批 | FULL_ACCESS 自动 |
+| Tiền tố công cụ | riskLevel | Phê duyệt chế độ REQUEST | Phê duyệt chế độ ASSISTED | Tự động trong FULL_ACCESS |
 | --- | --- | --- | --- | --- |
-| `*snapshot` / `*screenshot` / `*current_url` / `*list_tabs` / `*page_source` / `console.*` / `network.list` / `page.*_info` / `*_get`（只读） | LOW | 否 | 否 | 否 |
-| `*open` / `*navigate` / `*back` / `*forward` / `*refresh` / `*close_tab` | MEDIUM | **是** | 是 | 否 |
-| `*click` / `*type` / `*press` / `*scroll` / `*network_set_cache_disabled` / `*local_set` / `*local_delete` / `*cookies_set` | HIGH | **是** | 是 | 否 |
-| `*evaluate`（页内 JS 注入）/ `*cookies_get` / `*local_get_specific`（敏感字段） | CRITICAL | **是** + 二级确认 | 是 | **是**（仍建议二次确认） |
-| `*file.delete` / `*file.unzip_to_system` | HIGH/CRITICAL | **是** | 是 | 否 |
+| `*snapshot` / `*screenshot` / `*current_url` / `*list_tabs` / `*page_source` / `console.*` / `network.list` / `page.*_info` / `*_get` (chỉ đọc) | LOW | Không | Không | Không |
+| `*open` / `*navigate` / `*back` / `*forward` / `*refresh` / `*close_tab` | MEDIUM | **Có** | Có | Không |
+| `*click` / `*type` / `*press` / `*scroll` / `*network_set_cache_disabled` / `*local_set` / `*local_delete` / `*cookies_set` | HIGH | **Có** | Có | Không |
+| `*evaluate` (tiêm JS vào trang) / `*cookies_get` / `*local_get_specific` (trường nhạy cảm) | CRITICAL | **Có** + xác nhận cấp hai | Có | **Có** (vẫn khuyến nghị xác nhận lần hai) |
+| `*file.delete` / `*file.unzip_to_system` | HIGH/CRITICAL | **Có** | Có | Không |
 
-实现落点：走现有 `McpManager.executeTool` + 现有 `AgentApprovalRequestEntity`；额外在 `harness/mcp/server/McpAuth` 注入工具级 grant 表（与"用户授权过的 tool 才返回"叠加）。
+Điểm triển khai: dùng `McpManager.executeTool` + `AgentApprovalRequestEntity` hiện có; bổ sung bảng cấp quyền theo công cụ vào `harness/mcp/server/McpAuth` (kết hợp với quy tắc "chỉ trả về công cụ người dùng đã cấp quyền").
 
 ---
 
-## 5. ⚙️ 核心调用时序
+## 5. ⚙️ Trình tự lời gọi cốt lõi
 
-### 5.1 Agent 主动调用
+### 5.1 Agent chủ động gọi
 
 ```
 ChatScreen
   └─► ChatViewModel.send(prompt)
         └─► HarnessLoop.send()
-              ├─► ProviderClient 拉模型（tool list 含 mcp__browser__*）
-              └─► 模型返回 tool_call { name = "mcp__browser__<server>__<hash>", args = {action, ...} }
+              ├─► ProviderClient gọi mô hình (danh sách công cụ chứa mcp__browser__*)
+              └─► Mô hình trả tool_call { name = "mcp__browser__<server>__<hash>", args = {action, ...} }
                     └─► McpManager.executeTool(fullToolName, args)
                           └─► McpHttpTransport.execute(builtinServer, tool, args)
-                                └─► POST http://127.0.0.1:8787/mcp   (in-process)
+                                └─► POST http://127.0.0.1:8787/mcp   (trong tiến trình)
                                       └─► McpInProcessServer → McpToolDispatcher
                                             └─► BrowserMcpTools.dispatch(tool, args)
                                                   └─► BrowserRegistry.getDefault().<engine>.<action>(args)
                                                         └─► AndroidInAppBrowser / NetworkInterceptor / …
-                          └─► 返回 (ok, output + image_ref)
-                    └─► 回到 HarnessLoop：下一个 tool round 或产出 AssistantText
+                          └─► Trả về (ok, output + image_ref)
+                    └─► Trở lại HarnessLoop: vòng công cụ tiếp theo hoặc tạo AssistantText
 ```
 
-### 5.2 用户手动操作（Co-browsing）
+### 5.2 Người dùng thao tác thủ công (Co-browsing)
 
 ```
 BrowserScreen
   └─► BrowserViewModel.onUrlBarCommit(text)
         └─► AndroidInAppBrowser.loadUrl(text)
               └─► WebViewClient.onPageFinished
-                    ├─► 运行 ref 提取脚本
-                    ├─► SnapshotBuilder → 推给 BrowserEventBus
-                    └─► harness 端通过 resource 订阅（如果有）拿到下一次 tool 调用的 refMap
+                    ├─► Chạy script trích ref
+                    ├─► SnapshotBuilder → đẩy tới BrowserEventBus
+                    └─► Phía harness lấy refMap cho lần gọi công cụ tiếp theo qua đăng ký resource (nếu có)
 
-用户点击
+Người dùng nhấp
   └─► AndroidInAppBrowser.onUserInteraction
-        └─► 暂停 harness 接管（coBrowsingDisabled=true 时，ref 仍然累积但不再写入）
+        └─► Tạm dừng quyền điều khiển của harness (khi coBrowsingDisabled=true, ref vẫn tích lũy nhưng không ghi tiếp)
 ```
 
-### 5.3 外接桌面 AI
+### 5.3 Kết nối AI trên máy tính
 
 ```
-桌面 Claude/Cursor
+Claude/Cursor trên máy tính
   └─► mcpServers.webreverse.url = "http://<Android-IP>:8787/mcp"
-       (或 adb reverse tcp:8787 tcp:8787 后用 http://127.0.0.1:8787/mcp)
-        └─► McpHttpTransport（同款 JSON-RPC 2.0 / Streamable HTTP）
-              └─► Bearer Token 由 AgentPreferences 提供
+       (hoặc dùng http://127.0.0.1:8787/mcp sau adb reverse tcp:8787 tcp:8787)
+        └─► McpHttpTransport (cùng JSON-RPC 2.0 / Streamable HTTP)
+              └─► Bearer [REDACTED] do AgentPreferences cung cấp
                     └─► McpInProcessServer → BrowserTools.dispatch
 ```
 
 ---
 
-## 6. 🔐 安全策略
+## 6. 🔐 Chính sách bảo mật
 
-| 层 | 策略 |
+| Lớp | Chính sách |
 | --- | --- |
-| SecretRedactor | 所有 cookie / Authorization / password / set-cookie / token 自动替换为 `[REDACTED_*]`（复用 `core:security` 已实现） |
-| 风险等级 | LOW/MEDIUM/HIGH/CRITICAL 四档；HIGH+ 触发 ApprovalRequestDialog |
-| 外接开关 | `browserPreferences.allowRemoteConnect` 默认 `false`；开启后端口仅绑 `0.0.0.0`，同时要求 User 已设置 `browserRemoteToken`（≥32 字节 base64）|
-| 敏感域白名单 | 主域列表（`localhost`、`127.0.0.1`、用户配置的允许域）允许 `cleartext`；其它强制 HTTPS（Koin Qualifier + NetworkSecurityConfig） |
-| 文件沙箱 | `*file.*` 工具复用现有 `WorkspaceFileService` 路径校验，禁止 `/proc /sys /dev /system /root` |
-| Token | `mcp__browser__*` 内置 server 默认走 loopback 不需要 token；外接强制要求 token；token 通过 SecureRandom 生成、SecretRedactor 加密保存 |
+| SecretRedactor | Tự động thay mọi cookie / Authorization / password / set-cookie / token bằng `[REDACTED_*]` (tái sử dụng triển khai sẵn có trong `core:security`) |
+| Mức rủi ro | Bốn mức LOW/MEDIUM/HIGH/CRITICAL; HIGH trở lên kích hoạt ApprovalRequestDialog |
+| Công tắc kết nối ngoài | `browserPreferences.allowRemoteConnect` mặc định `false`; khi bật, chỉ bind cổng vào `0.0.0.0`, đồng thời yêu cầu người dùng đã đặt `browserRemoteToken` (base64 ≥32 byte) |
+| Danh sách cho phép miền nhạy cảm | Danh sách miền chính (`localhost`, `127.0.0.1`, miền được người dùng cho phép) được dùng `cleartext`; các miền khác bắt buộc HTTPS (Koin Qualifier + NetworkSecurityConfig) |
+| Sandbox tệp | Công cụ `*file.*` tái sử dụng kiểm tra đường dẫn của `WorkspaceFileService`, cấm `/proc /sys /dev /system /root` |
+| Token | Server tích hợp `mcp__browser__*` mặc định đi qua loopback nên không cần token; kết nối ngoài bắt buộc token; token được tạo bằng SecureRandom, mã hóa và lưu bằng SecretRedactor |
 
 ---
 
-## 7. 📁 文件索引（落盘清单）
+## 7. 📁 Chỉ mục tệp (danh sách cần tạo trên đĩa)
 
-### 新增模块与目录
+### Module và thư mục mới
 
 ```
 core/browser/src/main/java/top/wkbin/tianxuan/core/browser/
@@ -218,8 +218,8 @@ core/browser/src/main/java/top/wkbin/tianxuan/core/browser/
     BrowserDescriptor.kt
     SnapshotRef.kt
     PageSnapshot.kt
-    BrowserSelectionPolicy.kt          (Pure Kotlin, 单测覆盖)
-    BrowserPreferences.kt              (Pure Kotlin 配置数据类)
+    BrowserSelectionPolicy.kt          (Pure Kotlin, có unit test)
+    BrowserPreferences.kt              (data class cấu hình Pure Kotlin)
 
 core/browser/src/test/java/top/wkbin/tianxuan/core/browser/
     BrowserSelectionPolicyTest.kt
@@ -228,142 +228,142 @@ core/browser/src/test/java/top/wkbin/tianxuan/core/browser/
 runtime/browser/src/main/java/top/wkbin/tianxuan/runtime/browser/
     BrowserRegistry.kt                (interface)
     BrowserRegistryImpl.kt            (@Singleton)
-    BrowserSessionToken.kt            (按 agent session 绑定)
-    BrowserEventBus.kt                (snapshot/url/title/console/network 事件)
+    BrowserSessionToken.kt            (liên kết theo phiên agent)
+    BrowserEventBus.kt                (sự kiện snapshot/url/title/console/network)
     engine/BrowserEngine.kt           (interface)
     engine/AndroidInAppBrowserEngine.kt
     engine/AndroidWebViewFactory.kt
     engine/WebViewTabPool.kt
-    snapshot/SnapshotBuilder.kt       (evaluateJavascript + AccessibilityNode 简化)
-    snapshot/RefResolver.kt           (ref → selector 表)
-    screenshot/ScreenshotRecorder.kt  (PixelCopy 异步截图 → internalCache)
-    network/NetworkInterceptor.kt     (shouldInterceptRequest 缓存层)
+    snapshot/SnapshotBuilder.kt       (evaluateJavascript + AccessibilityNode rút gọn)
+    snapshot/RefResolver.kt           (bảng ref → selector)
+    screenshot/ScreenshotRecorder.kt  (chụp bất đồng bộ PixelCopy → internalCache)
+    network/NetworkInterceptor.kt     (lớp cache shouldInterceptRequest)
     storage/StorageController.kt      (CookieManager + WebStorage)
-    js/JsEvaluator.kt                 (evaluateJavascript 包装 + 超时)
-    secret/SecretRedactingInterceptor.kt (页面 header / body 脱敏落库)
-    tools/BrowserMcpTools.kt          (注册全部 mcp__browser__* tool handler)
-    tools/BrowserMcpResources.kt      (browser://* resource handler)
-    capabilities/BrowserCapabilities.kt (engine.family → capability set)
-    di/BrowserModule.kt               (Koin bindings)
+    js/JsEvaluator.kt                 (bọc evaluateJavascript + timeout)
+    secret/SecretRedactingInterceptor.kt (che header / body trang trước khi lưu cơ sở dữ liệu)
+    tools/BrowserMcpTools.kt          (đăng ký mọi bộ xử lý công cụ mcp__browser__*)
+    tools/BrowserMcpResources.kt      (bộ xử lý resource browser://*)
+    capabilities/BrowserCapabilities.kt (engine.family → tập năng lực)
+    di/BrowserModule.kt               (liên kết Koin)
 
 runtime/browser/src/main/AndroidManifest.xml
 
 feature/browser/src/main/java/top/wkbin/tianxuan/ui/browser/
     BrowserScreen.kt
     BrowserViewModel.kt
-    BrowserTopBar.kt                  (URL Bar / Forward / Back / Refresh / Co-browsing toggle)
-    BrowserTabBar.kt                  (横滚 tab 切换)
-    BrowserCoBrowsingPill.kt          ("AI 已接管" / "你正在接管")
-    BrowserActionCard.kt              (供 ChatToolCards 复用的缩略图卡)
-    snapshot/SnapshotSheet.kt         (全屏 snapshot 预览)
+    BrowserTopBar.kt                  (thanh URL / tiến / lùi / làm mới / bật tắt cùng duyệt web)
+    BrowserTabBar.kt                  (chuyển tab với cuộn ngang)
+    BrowserCoBrowsingPill.kt          ("AI đang điều khiển" / "Bạn đang điều khiển")
+    BrowserActionCard.kt              (thẻ ảnh thu nhỏ để ChatToolCards tái sử dụng)
+    snapshot/SnapshotSheet.kt         (xem trước snapshot toàn màn hình)
     BrowserNavRoute.kt
 
 harness/src/main/java/top/wkbin/tianxuan/harness/mcp/server/
-    McpInProcessServer.kt             (Ktor 起服，POST /mcp/sse + Bearer auth)
+    McpInProcessServer.kt             (Ktor khởi chạy dịch vụ, POST /mcp/sse + Bearer [REDACTED])
     McpAuthFilter.kt
-    McpToolDispatcher.kt              (mcp__<server>__<tool> → 路由到 BrowserMcpTools)
+    McpToolDispatcher.kt              (mcp__<server>__<tool> → định tuyến tới BrowserMcpTools)
     McpResourceDispatcher.kt
-    McpServerRuntime.kt               (singleton, 启停)
+    McpServerRuntime.kt               (singleton, khởi động/dừng)
     di/McpServerModule.kt
 
 harness/src/main/java/top/wkbin/tianxuan/harness/browser/
     BrowserMcpBootstrap.kt            (McpManager.bootstrapBuiltinBrowser())
 ```
 
-### 修改文件
+### Tệp cần sửa
 
 ```
-settings.gradle.kts                                       ── 加 :core:browser / :runtime:browser / :feature:browser
-gradle/libs.versions.toml                                 ── 加 ktor-server-cio / ktor-server-sse / androidx-webkit
-core/model/.../HarnessMessage.kt                          ── ToolResult 加 imageAttachments + ToolImageRef
-core/model/.../McpModels.kt                               ── McpServerConfig 新增 builtinRisk / bootstrapOrder（如未对齐现有 isBuiltin）
-core/datastore/.../PreferenceFacades.kt                   ── 新增 BrowserPreferences 分面
-harness/.../McpManager.kt                                 ── init { ... } 阶段调用 McpServerRuntime.bootstrap()
+settings.gradle.kts                                       ── Thêm :core:browser / :runtime:browser / :feature:browser
+gradle/libs.versions.toml                                 ── Thêm ktor-server-cio / ktor-server-sse / androidx-webkit
+core/model/.../HarnessMessage.kt                          ── Thêm imageAttachments + ToolImageRef vào ToolResult
+core/model/.../McpModels.kt                               ── Thêm builtinRisk / bootstrapOrder vào McpServerConfig (nếu chưa thống nhất với isBuiltin hiện có)
+core/datastore/.../PreferenceFacades.kt                   ── Thêm facade BrowserPreferences
+harness/.../McpManager.kt                                 ── Gọi McpServerRuntime.bootstrap() trong giai đoạn init { ... }
 app/build.gradle.kts                                      ── implementation(project(":runtime:browser"))
 runtime/build.gradle.kts                                  ── implementation(project(":core:browser"))
-feature/navigation/.../TianXuanNavHost.kt                    ── 注册 BrowserRoute
-feature/home/.../HomeScreen.kt                            ── 入口 RuntimeCard
-feature/chat/.../ChatToolCards.kt                         ── 复用 BrowserActionCard
-docs/AI_NAVIGATION.md, docs/ARCHITECTURE.md, docs/FILE_INDEX.md ── 同步新增模块
+feature/navigation/.../TianXuanNavHost.kt                    ── Đăng ký BrowserRoute
+feature/home/.../HomeScreen.kt                            ── Điểm vào RuntimeCard
+feature/chat/.../ChatToolCards.kt                         ── Tái sử dụng BrowserActionCard
+docs/AI_NAVIGATION.md, docs/ARCHITECTURE.md, docs/FILE_INDEX.md ── Cập nhật đồng bộ module mới
 ```
 
 ---
 
-## 8. 🧪 测试策略
+## 8. 🧪 Chiến lược kiểm thử
 
-| 层级 | 覆盖目标 | 工具 |
+| Lớp | Mục tiêu bao phủ | Công cụ |
 | --- | --- | --- |
-| **Pure 模型层（必过）** | `BrowserSelectionPolicy` / `SnapshotRef` / `ToolImageRef` 序列化 | JUnit4，纯 JVM |
-| **MCP 分发（必过）** | `McpToolDispatcher` 路由、`McpAuthFilter` 拒绝无 token | JUnit4 + Mockk |
-| **WebView（Robolectric）** | `WebViewTabPool` 复用 / `RefResolver` 解析 | Robolectric 4.16 |
-| **UI（Compose 截图）** | `BrowserScreen` 首屏布局 | Compose UI test |
-| **端到端（手工）** | 主流程：Agent → MCP server → WebView → screenshot → 回灌 | adb + 手工 case |
+| **Lớp model thuần túy (bắt buộc đạt)** | Tuần tự hóa `BrowserSelectionPolicy` / `SnapshotRef` / `ToolImageRef` | JUnit4, JVM thuần |
+| **Phân phối MCP (bắt buộc đạt)** | Định tuyến `McpToolDispatcher`, `McpAuthFilter` từ chối khi không có token | JUnit4 + Mockk |
+| **WebView (Robolectric)** | Tái sử dụng `WebViewTabPool` / phân giải `RefResolver` | Robolectric 4.16 |
+| **UI (ảnh chụp Compose)** | Bố cục màn hình đầu tiên của `BrowserScreen` | Kiểm thử Compose UI |
+| **Đầu cuối (thủ công)** | Luồng chính: Agent → MCP server → WebView → screenshot → đưa kết quả trở lại | adb + ca kiểm thử thủ công |
 
-关键单测文件已列入 §7，需与代码一并提交。
+Các tệp unit test quan trọng đã được liệt kê ở §7, cần commit cùng mã nguồn.
 
 ---
 
-## 9. 🚀 MVP 切片（2 周）
+## 9. 🚀 Các phần triển khai MVP (2 tuần)
 
-| Step | 目标 | PR |
+| Bước | Mục tiêu | PR |
 | --- | --- | --- |
-| 1 | `:core:browser` 模型层 + 单测 | #1 |
-| 2 | `:core:datastore` BrowserPreferences 分面 | #2 |
-| 3 | `:runtime/browser` 骨架（BrowserRegistry、InApp Engine、SnapShot/Screenshot 简化版） | #3 |
-| 4 | `harness/mcp/server` Ktor 起服 + Bootstrap | #4 |
-| 5 | `:feature/browser` Compose 主屏（URL Bar / 单 Tab / Co-browsing pill）| #5 |
-| 6 | NavHost + HomeScreen 入口 + ChatToolCards 接入 | #6 |
-| 7 | 文档同步 + architectureCheck | #7 |
+| 1 | Lớp model `:core:browser` + unit test | #1 |
+| 2 | Facade BrowserPreferences trong `:core:datastore` | #2 |
+| 3 | Khung `:runtime/browser` (BrowserRegistry, InApp Engine, bản rút gọn SnapShot/Screenshot) | #3 |
+| 4 | Khởi chạy dịch vụ Ktor trong `harness/mcp/server` + Bootstrap | #4 |
+| 5 | Màn hình chính Compose `:feature/browser` (thanh URL / một tab / nhãn cùng duyệt web) | #5 |
+| 6 | Điểm vào NavHost + HomeScreen + tích hợp ChatToolCards | #6 |
+| 7 | Cập nhật tài liệu + architectureCheck | #7 |
 
-每个 PR 后跑 `architectureCheck` 与既有 `:app:preBuild`。
-
----
-
-## 9.5 🎣 注入式 Hook 引擎与 CDP 调试（阶段 1 + 2，已落地）
-
-> 2026-09 起在 MVP 之上扩展的网页逆向能力，对标 WebReverse-MCP 的 hook/断点特性。
-
-### 9.5.1 注入式 Hook 引擎（阶段 1，allowHooks 门禁）
-
-- **架构**：`hook/` 包 + assets `hook_runtime.js`。规则存 `HookRuleStore`（线程安全），经 `HookInstaller` 以 document-start（`WebViewCompat.addDocumentStartJavaScript`，WebView 105+；古董版本降级 onPageStarted 补种）注入页面；页面侧改写 fetch/XHR/函数/属性，经 `TianxuanHookBridge`（addJavascriptInterface）回吐事件到 `HookEventPipeline` → `BrowserEventBus`。
-- **动作集**：网络类规则支持 `log / block / redirect / mock / modify_headers` + `captureBody`；body 存 `NetworkBodyStore`（LRU，总字节预算）。
-- **MCP 工具**：`browser.hook_create / hook_list / hook_remove / hook_reset / hook_hits / inject_script / network_detail`。
-- **降级链**：document-start 不可用 → onPageStarted 注入 → onPageFinished 幂等校验补种。
-
-### 9.5.2 CDP 断点与 Worker 级拦截（阶段 2，allowCdp 门禁）
-
-- **传输**：`CdpTransport`（LocalSocket 连 `webview_devtools_remote_<pid>`）→ 自实现 WS 握手与帧编解码（`WsFrameCodec`）→ `CdpSession`（命令关联/事件分发/断连清理）。
-- **生命周期**：Application 发起的 `BrowserMcpBootstrap` 在注册引擎、创建首个 tab 前，等待主线程按 `allowCdp` 应用进程级 WebView 调试开关；`CdpManager` 每次 attach 可重试开启，不再使用引用计数或主线程 latch。detach/shutdown 只释放会话，开关保持到进程结束，关闭偏好需重启。`CdpTargetMatcher` 通过 `window.__tianxuanTabId` 标记把 MCP tab 匹配到 CDP target；`CdpTabConnection` 持单 tab 连接 + Worker 子会话（`Target.setAutoAttach` flatten）。
-- **连接与诊断**：LocalSocket 必须先 connect 再设置读写超时；连接前设置超时会因客户端 fd 未创建而抛 `socket not created`，不能由此推断 WebView 服务端未监听。连接错误保留阶段、异常类型与原因，并记录 pid、WebView provider、开关状态和 `/proc/net/unix` 读取失败原因；当前进程 pid 候选不依赖 proc 可读性。WS 使用完整 `/devtools/page/...` 路径，marker 探测启动接收会话后再发求值命令。
-- **断点**：`CdpDebugController` —— set/remove/list 断点、暂停状态、单步（over/into/out）、暂停帧求值（`debug_eval`，可读写局部变量）、作用域读取。断点在 detach 后重 attach 自动重放。
-- **Worker 级拦截**：`CdpFetchInterceptor` 用 `Fetch.requestPaused` 做引擎级网络改写，与注入式规则共享 `HookRuleStore` 决策（`CdpFetchDecision`），覆盖 Worker/Service Worker 与注入盲区子资源。
-- **MCP 工具**：`browser.debug_attach / detach / set_breakpoint / remove_breakpoint / list_breakpoints / resume / step / state / eval / scope / status` 共 11 个。
-
-### 9.5.3 门禁与安全
-
-- `allowHooks` / `allowCdp` 为**独立 DataStore 偏好**（默认 false），设置页「MCP 插件与协议生态 → 浏览器 MCP 安全门禁」四开关（远程连接/JS 执行/Hook/CDP）；池级开关，改后需重启应用。
-- attach 期间页面暂停会冻结页内工具（evaluate/snapshot/click 拒绝），detach 前自动 resume 兜底。
-- **已知容错**：`tokenOf` 对模型丢 `t:` 前缀的 tab id 做后缀归一匹配；`sanitizeUrl` 剥离模型偶发的反引号包裹。
+Sau mỗi PR, chạy `architectureCheck` và `:app:preBuild` hiện có.
 
 ---
 
-## 10. 📜 决策记录（ADR 摘要）
+## 9.5 🎣 Engine Hook tiêm vào trang và gỡ lỗi CDP (giai đoạn 1 + 2, đã triển khai)
 
-- **ADR-001**：工具暴露走 MCP，**不**走原生工具（`HarnessTool.BROWSER`）。理由：与 harness 既有 `McpManager` 流水线零冲突；未来工具集可平滑扩到 200+。
-- **ADR-002**：MCP server 跑在 TianXuan 自己的 Android 进程内（loopback），使用 Ktor 起服。理由：无需 fork WebReverse-MCP；与现有 `McpHttpTransport` 同协议同形态；外接零开发。
-- **ADR-003**：内建 server 默认 `isBuiltin=true` 且 `isEnabled=true`，但配置写入 `McpServerRepository`。理由：与用户对 MCP server 的"启用/禁用"心智模型一致；用户关闭时不影响其它 MCP server。
-- **ADR-004**：ref 不暴露真实 selector；用户和 AI 操作共用一张 `refMap`，ref 在 tab 重建时归零。理由：防止 prompt 里出现内部 path / 减少幻觉、同时支持 co-browsing。
-- **ADR-005**：第一版 MVP **不**实现 CDP hub、断点、hook、JSVMP/WASM、Evidence Graph。理由：TianXuan 主要用例是"AI 打开网页、读 DOM、读 API、点击登录"，不必要求 web 逆向工程能力。**（2026-09 演进：阶段 1 注入式 Hook 引擎与阶段 2 CDP 断点/Worker 级拦截已落地，见 §9.5；JSVMP/WASM 与 Evidence Graph 仍未实现）**
+> Năng lực dịch ngược trang web mở rộng trên nền MVP từ 2026-09, đối chiếu với tính năng hook/điểm dừng của WebReverse-MCP.
+
+### 9.5.1 Engine Hook tiêm vào trang (giai đoạn 1, kiểm soát bằng allowHooks)
+
+- **Kiến trúc**: Gói `hook/` + tài nguyên `hook_runtime.js`. Quy tắc lưu trong `HookRuleStore` (an toàn luồng), được `HookInstaller` tiêm vào trang ở document-start (`WebViewCompat.addDocumentStartJavaScript`, WebView 105+; bản cũ chuyển sang tiêm bổ sung ở onPageStarted); phía trang ghi đè fetch/XHR/hàm/thuộc tính, trả sự kiện qua `TianxuanHookBridge` (addJavascriptInterface) tới `HookEventPipeline` → `BrowserEventBus`.
+- **Tập thao tác**: Quy tắc mạng hỗ trợ `log / block / redirect / mock / modify_headers` + `captureBody`; body lưu trong `NetworkBodyStore` (LRU, giới hạn tổng số byte).
+- **Công cụ MCP**: `browser.hook_create / hook_list / hook_remove / hook_reset / hook_hits / inject_script / network_detail`.
+- **Chuỗi dự phòng**: document-start không khả dụng → tiêm ở onPageStarted → kiểm tra lũy đẳng và tiêm bổ sung ở onPageFinished.
+
+### 9.5.2 Điểm dừng CDP và chặn ở cấp Worker (giai đoạn 2, kiểm soát bằng allowCdp)
+
+- **Truyền tải**: `CdpTransport` (LocalSocket kết nối `webview_devtools_remote_<pid>`) → tự triển khai bắt tay WS và mã hóa/giải mã khung (`WsFrameCodec`) → `CdpSession` (ghép lệnh với phản hồi/phân phối sự kiện/dọn dẹp khi ngắt kết nối).
+- **Vòng đời**: `BrowserMcpBootstrap` do Application khởi chạy chờ luồng chính áp dụng công tắc gỡ lỗi WebView cấp tiến trình theo `allowCdp` trước khi đăng ký engine và tạo tab đầu tiên; `CdpManager` có thể thử bật lại mỗi lần attach, không còn dùng đếm tham chiếu hay latch luồng chính. detach/shutdown chỉ giải phóng phiên, công tắc giữ nguyên đến khi tiến trình kết thúc; tắt tùy chọn cần khởi động lại. `CdpTargetMatcher` dùng dấu `window.__tianxuanTabId` để ghép tab MCP với target CDP; `CdpTabConnection` giữ kết nối một tab + phiên Worker con (`Target.setAutoAttach` flatten).
+- **Kết nối và chẩn đoán**: LocalSocket phải connect trước rồi mới đặt timeout đọc/ghi; đặt timeout trước khi kết nối sẽ ném `socket not created` vì fd phía client chưa được tạo, không được từ đó suy ra phía WebView chưa lắng nghe. Lỗi kết nối giữ lại giai đoạn, loại ngoại lệ và nguyên nhân, đồng thời ghi pid, WebView provider, trạng thái công tắc và nguyên nhân đọc `/proc/net/unix` thất bại; ứng viên pid tiến trình hiện tại không phụ thuộc khả năng đọc proc. WS dùng đường dẫn đầy đủ `/devtools/page/...`; việc dò marker chỉ gửi lệnh đánh giá sau khi khởi chạy phiên nhận dữ liệu.
+- **Điểm dừng**: `CdpDebugController` — đặt/xóa/liệt kê điểm dừng, trạng thái tạm dừng, chạy từng bước (over/into/out), đánh giá trong khung đang dừng (`debug_eval`, có thể đọc/ghi biến cục bộ), đọc scope. Điểm dừng tự động được áp dụng lại khi attach sau detach.
+- **Chặn cấp Worker**: `CdpFetchInterceptor` dùng `Fetch.requestPaused` để sửa lưu lượng mạng ở cấp engine, chia sẻ quyết định `HookRuleStore` (`CdpFetchDecision`) với quy tắc tiêm vào trang, bao phủ Worker/Service Worker và tài nguyên con nằm ngoài vùng tiêm.
+- **Công cụ MCP**: `browser.debug_attach / detach / set_breakpoint / remove_breakpoint / list_breakpoints / resume / step / state / eval / scope / status`, tổng cộng 11 công cụ.
+
+### 9.5.3 Cổng kiểm soát và bảo mật
+
+- `allowHooks` / `allowCdp` là **các tùy chọn DataStore độc lập** (mặc định false); trang cài đặt "Plugin MCP và hệ sinh thái giao thức → Cổng bảo mật MCP trình duyệt" có bốn công tắc (kết nối từ xa/thực thi JS/Hook/CDP); công tắc áp dụng ở cấp pool, thay đổi cần khởi động lại ứng dụng.
+- Trang bị tạm dừng trong thời gian attach sẽ làm đóng băng công cụ trong trang (từ chối evaluate/snapshot/click), tự động resume trước detach để dự phòng.
+- **Khả năng chịu lỗi đã có**: `tokenOf` chuẩn hóa và ghép hậu tố cho tab id khi mô hình bỏ tiền tố `t:`; `sanitizeUrl` bỏ cặp dấu backtick mà mô hình đôi khi thêm vào URL.
 
 ---
 
-## 11. 🔗 关联文档
+## 10. 📜 Bản ghi quyết định (tóm tắt ADR)
 
-- 架构总览：[`ARCHITECTURE.md`](ARCHITECTURE.md)
-- AI 语义导航：[`AI_NAVIGATION.md`](AI_NAVIGATION.md)
-- 数据流与时序：[`EXECUTION_TRACES.md`](EXECUTION_TRACES.md)
-- 架构铁律：[`ARCHITECTURE_RULES.md`](ARCHITECTURE_RULES.md)
-- 文件索引：[`FILE_INDEX.md`](FILE_INDEX.md)
-- MCP 既有实现：`harness/src/main/java/top/wkbin/tianxuan/harness/mcp/`
-- 工具执行器：`harness/src/main/java/top/wkbin/tianxuan/harness/ToolExecutor.kt`
-- 审批引擎：`harness/src/main/java/top/wkbin/tianxuan/harness/ApprovalPolicyEngine.kt`
+- **ADR-001**: Cung cấp công cụ qua MCP, **không** qua công cụ gốc (`HarnessTool.BROWSER`). Lý do: không xung đột với pipeline `McpManager` hiện có của harness; tập công cụ có thể mở rộng mượt lên hơn 200 trong tương lai.
+- **ADR-002**: MCP server chạy trong chính tiến trình Android của CTHarness (loopback), dùng Ktor khởi chạy dịch vụ. Lý do: không cần fork WebReverse-MCP; cùng giao thức và dạng truyền tải với `McpHttpTransport` hiện có; kết nối ngoài không cần phát triển thêm.
+- **ADR-003**: Server tích hợp mặc định `isBuiltin=true` và `isEnabled=true`, nhưng cấu hình ghi vào `McpServerRepository`. Lý do: phù hợp cách người dùng hiểu "bật/tắt" MCP server; khi tắt không ảnh hưởng MCP server khác.
+- **ADR-004**: ref không tiết lộ selector thật; thao tác người dùng và AI dùng chung một `refMap`, ref đặt lại về không khi tạo lại tab. Lý do: tránh đưa đường dẫn nội bộ vào prompt / giảm ảo giác, đồng thời hỗ trợ cùng duyệt web.
+- **ADR-005**: MVP đầu tiên **không** triển khai CDP hub, điểm dừng, hook, JSVMP/WASM, Evidence Graph. Lý do: trường hợp sử dụng chính của CTHarness là "AI mở trang web, đọc DOM, đọc API, nhấp đăng nhập", không bắt buộc năng lực dịch ngược web. **(Tiến triển 2026-09: giai đoạn 1 engine Hook tiêm vào trang và giai đoạn 2 điểm dừng CDP/chặn cấp Worker đã triển khai, xem §9.5; JSVMP/WASM và Evidence Graph vẫn chưa triển khai)**
+
+---
+
+## 11. 🔗 Tài liệu liên quan
+
+- Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- Điều hướng ngữ nghĩa cho AI: [`AI_NAVIGATION.md`](AI_NAVIGATION.md)
+- Luồng dữ liệu và trình tự: [`EXECUTION_TRACES.md`](EXECUTION_TRACES.md)
+- Nguyên tắc kiến trúc bắt buộc: [`ARCHITECTURE_RULES.md`](ARCHITECTURE_RULES.md)
+- Chỉ mục tệp: [`FILE_INDEX.md`](FILE_INDEX.md)
+- Triển khai MCP hiện có: `harness/src/main/java/top/wkbin/tianxuan/harness/mcp/`
+- Bộ thực thi công cụ: `harness/src/main/java/top/wkbin/tianxuan/harness/ToolExecutor.kt`
+- Engine phê duyệt: `harness/src/main/java/top/wkbin/tianxuan/harness/ApprovalPolicyEngine.kt`

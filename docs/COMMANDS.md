@@ -1,13 +1,13 @@
-# 🛠️ 天玄 (TianXuan) — 常用开发与自动化命令速查 (Runbook & Commands)
+# 🛠️ CTHarness — Sổ tay lệnh phát triển và tự động hóa thường dùng
 
 ---
 
-## 1. 构建环境要求 (Prerequisites)
+## 1. Yêu cầu môi trường biên dịch
 
-- **Android SDK**：主工程需要 Android SDK Platform 37.1（A2UI alpha 依赖要求）；targetSdk 仍为 37。已接受 SDK 许可证时，Gradle 可自动安装缺失的平台。
+- **Android SDK**: Dự án chính cần Android SDK Platform 37.1 (do A2UI alpha yêu cầu); targetSdk vẫn là 37. Khi giấy phép SDK đã được chấp nhận, Gradle có thể tự động cài đặt nền tảng bị thiếu.
 
-- **JDK 环境变量设置（Windows PowerShell）**：
-  必须通过设置 `JAVA_HOME` 指向 Android Studio 自带的 JBR（支持 Java 25 / 17+）执行 Gradle 任务：
+- **Thiết lập biến môi trường JDK (Windows PowerShell)**:
+  Phải thiết lập `JAVA_HOME` trỏ tới JBR đi kèm Android Studio (hỗ trợ Java 25 / 17+) rồi mới chạy các tác vụ Gradle:
   ```powershell
   $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
   # 或自定义安装路径（例如 D:\Program Files\Android\Android Studio\jbr）
@@ -15,56 +15,57 @@
 
 ---
 
-## 2. 核心构建与测试命令 (Build & Test)
+## 2. Lệnh biên dịch và kiểm thử cốt lõi
 
 ```powershell
-# 1. 运行所有单元测试（全库回归）
+# 1. Chạy toàn bộ unit test (hồi quy toàn kho)
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat test --console=plain
 
-# 2. 运行单模块单元测试
+# 2. Chạy unit test của một module
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat :feature:settings:testDebugUnitTest --console=plain
 
-# 3. 仅编译 Kotlin 代码（快速语法与类型检查）
+# 3. Chỉ biên dịch mã Kotlin (kiểm tra nhanh cú pháp và kiểu)
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat compileDebugKotlin --console=plain
 
-# 4. 单模块快速编译验证
+# 4. Kiểm tra biên dịch nhanh cho một module
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat :harness:compileDebugKotlin --console=plain -q
 
-# 5. 编译并打包 Debug APK
+# 5. Biên dịch và đóng gói Debug APK
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat assembleDebug --console=plain
 
-# 6. 验证架构依赖边界（规则唯一事实源：根目录 architecture-policy.json）
+# 6. Kiểm tra ranh giới phụ thuộc kiến trúc (nguồn sự thật duy nhất của quy tắc: architecture-policy.json ở thư mục gốc)
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat architectureCheck --console=plain
-# 检查内容：模块依赖白名单（含反向依赖）、依赖图无环、import 黑名单（模型层纯 Kotlin / DAO 直连）、
-#          文件尺寸棘轮（maxFileLines=400，存量超限文件登记在 .architecture-baseline.json，只许缩减）
+# Nội dung kiểm tra: danh sách trắng phụ thuộc module (bao gồm phụ thuộc ngược), đồ thị phụ thuộc không có chu trình,
+#          danh sách đen import (tầng model thuần Kotlin / DAO kết nối trực tiếp),
+#          cơ chế ratchet kích thước tệp (maxFileLines=400; các tệp vượt giới hạn từ trước được đăng ký trong .architecture-baseline.json và chỉ được phép giảm)
 
-# 6.1 同步尺寸棘轮基线（收缩下调 / 拒绝上涨 / 清理失效条目；代码缩减后运行以下调基线）
+# 6.1 Đồng bộ baseline ratchet kích thước (thu hạ khi rút gọn / từ chối tăng / dọn mục đã hết hạn; chạy lệnh dưới đây sau khi rút gọn mã để hạ baseline)
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat architectureBaselineSync --console=plain
-# 注意：新增模块或调整模块依赖时必须同步登记 architecture-policy.json 的 requires，否则门禁失败
+# Lưu ý: khi thêm module mới hoặc điều chỉnh quan hệ phụ thuộc module, phải đồng bộ đăng ký mục requires trong architecture-policy.json, nếu không cổng kiểm tra sẽ thất bại
 
-# 7. 仅验证 Harness 内置工具契约与执行策略
+# 7. Chỉ xác minh hợp đồng công cụ tích hợp sẵn của Harness và chính sách thực thi
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat :harness:testDebugUnitTest --tests "top.wkbin.tianxuan.harness.*" --console=plain
 ```
 
 ---
 
-## 3. 设备部署与实时日志调试 (Deploy & Debug)
+## 3. Triển khai lên thiết bị và xem nhật ký gỡ lỗi thời gian thực
 
 ```powershell
-# 1. 安装 Debug APK 到已连接的真机或模拟器
+# 1. Cài đặt Debug APK lên thiết bị thật hoặc emulator đã kết nối
 adb install -r app/build/outputs/apk/debug/tianxuan-v0.5.0-debug.apk
 
-# 2. 启动天玄主入口 Activity
+# 2. Khởi chạy Activity cổng vào chính của CTHarness
 adb shell am start -n top.wkbin.tianxuan/.MainActivity
 
-# 3. 实时过滤天玄运行时与智能体核心日志
+# 3. Lọc log thời gian thực của runtime CTHarness và lõi agent
 adb logcat -s TianXuan:V HarnessLoop:V ProotProcess:V
 ```
 
-## 4. Koin 依赖图回归
+## 4. Hồi quy đồ thị phụ thuộc Koin
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest --tests "top.wkbin.tianxuan.di.*" --console=plain
 ```
 
-修改依赖注册后同时运行完整单元测试和 `:app:assembleDebug`。依赖注入已迁移为 Koin DSL。
+Sau khi sửa đăng ký phụ thuộc, hãy chạy đồng thời toàn bộ kiểm thử đơn vị và `:app:assembleDebug`. Cơ chế tiêm phụ thuộc đã được chuyển sang Koin DSL.

@@ -1,23 +1,22 @@
-# 🧭 天玄 (TianXuan) — AI 导航入口
+# 🧭 CTHarness — Lối vào điều hướng cho AI
 
-> 本文件为导航入口，默认载入。全部细节（技术栈 / 模块拓扑 / 调用链路 / 文件索引 / 铁律 / 命令）在 [`docs/AI_NAVIGATION.md`](docs/AI_NAVIGATION.md)，按需读取。
+> Tệp này là lối vào điều hướng, được tải theo mặc định. Toàn bộ chi tiết (stack kỹ thuật / cấu trúc module / chuỗi lời gọi / chỉ mục tệp / nguyên tắc cốt lõi / lệnh) nằm tại [`docs/AI_NAVIGATION.md`](docs/AI_NAVIGATION.md), hãy đọc theo nhu cầu.
 
-## 是什么
+## Là cái gì
 
-Android 无 Root 下用 PRoot 跑 Linux 多发行版沙箱 + AI Agent Harness + 原生 PTY 终端。Kotlin 2.4 / Compose / Koin / Room / Navigation3，仅 `arm64-v8a`。当前版本 v0.36.4 — 已完成 DeepSeek Harness 全核心机制对齐（33 项增强，全部真实接入运行链路），并完成多轮逐文件深挖修复（并发原子性、协程取消透传等）。
+Chạy sandbox Linux đa bản phân phối bằng PRoot trên Android không Root, kết hợp AI Agent Harness và terminal PTY bản địa. Kotlin 2.4 / Compose / Koin / Room / Navigation3, chỉ hỗ trợ `arm64-v8a`. Phiên bản hiện tại v0.36.4 — đã hoàn thành căn chỉnh toàn bộ cơ chế cốt lõi của DeepSeek Harness (33 cải tiến, tất cả đều được tích hợp thực tế vào chuỗi chạy), đồng thời hoàn thành nhiều vòng rà soát và sửa lỗi sâu theo từng tệp (tính nguyên tử của concurrent, truyền qua việc hủy coroutine, v.v.).
 
-## 模块
+## Các module
 
-`app`(壳/装配/JNI) · `core`(model·common·database·datastore·network·security) · `runtime`(PRoot/RootFS/PTY/工作区) · `tools`(Registry/安装事务/Provider安全) · `harness`(Agent循环/MCP/子智能体) · `feature`(components·theme·home·chat·terminal·workspace·settings·developer·onboarding·custom\_iteration·navigation)
+`app`(vỏ ứng dụng/lắp ráp/JNI) · `core`(model·common·database·datastore·network·security) · `runtime`(PRoot/RootFS/PTY/workspace) · `tools`(Registry/giao dịch cài đặt/bảo mật Provider) · `harness`(vòng lặp Agent/MCP/subagent) · `feature`(components·theme·home·chat·terminal·workspace·settings·developer·onboarding·custom\_iteration·navigation)
 
-## 动手前先读
+## Đọc trước khi bắt tay vào việc
 
-| 要做什么                  | 推荐阅读文档                                                                |
-| :-------------------- | :-------------------------------------------------------------------- |
-| **快速把握全局**            | [`docs/AI_NAVIGATION.md`](docs/AI_NAVIGATION.md)（语义导航总览）              |
-| **写代码 / 改模块 / 理拓扑**   | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)（架构与模块拓扑）               |
-| **追踪数据流 / 调用链路**      | [`docs/EXECUTION_TRACES.md`](docs/EXECUTION_TRACES.md)（核心执行时序）        |
-| **定位某个类 / 寻找文件**      | [`docs/FILE_INDEX.md`](docs/FILE_INDEX.md)（关键文件索引速查）                  |
-| **UI/UX 设计系统与架构铁律**   | [`docs/ARCHITECTURE_RULES.md`](docs/ARCHITECTURE_RULES.md)（设计规范与避坑指南） |
-| **构建 / 测试 / 打包 / 调试** | [`docs/COMMANDS.md`](docs/COMMANDS.md)（常用命令速查）                        |
-
+| Việc cần làm | Tài liệu nên đọc |
+| :--- | :--- |
+| **Nắm bắt nhanh toàn cảnh** | [`docs/AI_NAVIGATION.md`](docs/AI_NAVIGATION.md) (tổng quan điều hướng ngữ nghĩa) |
+| **Viết mã / sửa module / rà soát cấu trúc** | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (kiến trúc và cấu trúc module) |
+| **Theo dõi luồng dữ liệu / chuỗi lời gọi** | [`docs/EXECUTION_TRACES.md`](docs/EXECUTION_TRACES.md) (trình tự thực thi cốt lõi) |
+| **Tìm một class / định vị một tệp** | [`docs/FILE_INDEX.md`](docs/FILE_INDEX.md) (tra cứu nhanh chỉ mục tệp quan trọng) |
+| **Hệ thống thiết kế UI/UX và nguyên tắc kiến trúc** | [`docs/ARCHITECTURE_RULES.md`](docs/ARCHITECTURE_RULES.md) (quy chuẩn thiết kế và cách tránh bẫy) |
+| **Build / test / đóng gói / debug** | [`docs/COMMANDS.md`](docs/COMMANDS.md) (xem nhanh lệnh thông dụng) |

@@ -1,61 +1,61 @@
-> pi can create extensions. Ask it to build one for your use case.
+> pi có thể tạo extension. Hãy yêu cầu nó xây dựng một extension cho trường hợp sử dụng của bạn.
 
-# Extensions
+# Extensions (Tiện ích mở rộng)
 
-Extensions are TypeScript modules that extend pi's behavior. They can subscribe to lifecycle events, register custom tools callable by the LLM, add commands, and more.
+Extension là các module TypeScript mở rộng hành vi của pi. Chúng có thể đăng ký các sự kiện vòng đời, đăng ký công cụ tùy chỉnh để LLM gọi, thêm lệnh, và nhiều hơn nữa.
 
-> **Placement for /reload:** Put extensions in `~/.pi/agent/extensions/` (global) or `.pi/extensions/` (project-local) for auto-discovery. Use `pi -e ./path.ts` only for quick tests. Extensions in auto-discovered locations can be hot-reloaded with `/reload`.
+> **Vị trí để dùng `/reload`:** Đặt extension vào `~/.pi/agent/extensions/` (toàn cục) hoặc `.pi/extensions/` (cục bộ theo dự án) để tự động phát hiện. Chỉ dùng `pi -e ./path.ts` cho các bài test nhanh. Extension nằm ở vị trí được tự động phát hiện có thể được tải lại nóng bằng `/reload`.
 
-**Key capabilities:**
-- **Custom tools** - Register tools the LLM can call via `pi.registerTool()`
-- **Event interception** - Block or modify tool calls, inject context, customize compaction
-- **User interaction** - Prompt users via `ctx.ui` (select, confirm, input, notify)
-- **Custom UI components** - Full TUI components with keyboard input via `ctx.ui.custom()` for complex interactions
-- **Custom commands** - Register commands like `/mycommand` via `pi.registerCommand()`
-- **Session persistence** - Store state that survives restarts via `pi.appendEntry()`
-- **Custom rendering** - Control how tool calls/results and messages appear in TUI
+**Khả năng chính:**
+- **Công cụ tùy chỉnh** — Đăng ký công cụ để LLM gọi qua `pi.registerTool()`
+- **Chặn sự kiện** — Chặn hoặc sửa đổi tool call, chèn context, tùy chỉnh compaction
+- **Tương tác người dùng** — Nhắc người dùng qua `ctx.ui` (select, confirm, input, notify)
+- **Thành phần UI tùy chỉnh** — Các thành phần TUI đầy đủ với khả năng nhập bằng bàn phím qua `ctx.ui.custom()` cho các tương tác phức tạp
+- **Lệnh tùy chỉnh** — Đăng ký các lệnh như `/mycommand` qua `pi.registerCommand()`
+- **Lưu session** — Lưu trạng thái tồn tại qua các lần khởi động lại qua `pi.appendEntry()`
+- **Render tùy chỉnh** — Kiểm soát cách tool call/kết quả và tin nhắn hiển thị trong TUI
 
-**Example use cases:**
-- Permission gates (confirm before `rm -rf`, `sudo`, etc.)
-- Git checkpointing (stash at each turn, restore on branch)
-- Path protection (block writes to `.env`, `node_modules/`)
-- Custom compaction (summarize conversation your way)
-- Conversation summaries (see `summarize.ts` example)
-- Interactive tools (questions, wizards, custom dialogs)
-- Stateful tools (todo lists, connection pools)
-- External integrations (file watchers, webhooks, CI triggers)
-- Games while you wait (see `snake.ts` example)
+**Ví dụ trường hợp sử dụng:**
+- Cổng xác nhận quyền (xác nhận trước `rm -rf`, `sudo`, v.v.)
+- Checkpoint Git (stash ở mỗi lượt, khôi phục trên branch)
+- Bảo vệ đường dẫn (chặn ghi vào `.env`, `node_modules/`)
+- Compaction tùy chỉnh (tóm tắt cuộc hội thoại theo cách của bạn)
+- Tóm tắt hội thoại (xem ví dụ `summarize.ts`)
+- Công cụ tương tác (câu hỏi, wizard, hộp thoại tùy chỉnh)
+- Công cụ có trạng thái (danh sách todo, pool kết nối)
+- Tích hợp bên ngoài (file watcher, webhook, trigger CI)
+- Trò chơi trong lúc chờ (xem ví dụ `snake.ts`)
 
-See [examples/extensions/](../examples/extensions/) for working implementations.
+Xem [examples/extensions/](../examples/extensions/) để có các triển khai chạy được.
 
-## Table of Contents
+## Mục lục
 
-- [Quick Start](#quick-start)
-- [Extension Locations](#extension-locations)
-- [Available Imports](#available-imports)
-- [Writing an Extension](#writing-an-extension)
-  - [Extension Styles](#extension-styles)
-- [Events](#events)
-  - [Lifecycle Overview](#lifecycle-overview)
-  - [Resource Events](#resource-events)
-  - [Session Events](#session-events)
-  - [Agent Events](#agent-events)
-  - [Model Events](#model-events)
-  - [Tool Events](#tool-events)
+- [Bắt đầu nhanh](#quick-start)
+- [Vị trí Extension](#extension-locations)
+- [Import có sẵn](#available-imports)
+- [Viết Extension](#writing-an-extension)
+  - [Kiểu Extension](#extension-styles)
+- [Sự kiện](#events)
+  - [Tổng quan vòng đời](#lifecycle-overview)
+  - [Sự kiện tài nguyên](#resource-events)
+  - [Sự kiện Session](#session-events)
+  - [Sự kiện Agent](#agent-events)
+  - [Sự kiện Model](#model-events)
+  - [Sự kiện Tool](#tool-events)
 - [ExtensionContext](#extensioncontext)
 - [ExtensionCommandContext](#extensioncommandcontext)
-- [ExtensionAPI Methods](#extensionapi-methods)
-- [State Management](#state-management)
-- [Custom Tools](#custom-tools)
-  - [Dynamic Tool Loading](#dynamic-tool-loading)
-- [Custom UI](#custom-ui)
-- [Error Handling](#error-handling)
-- [Mode Behavior](#mode-behavior)
-- [Examples Reference](#examples-reference)
+- [Phương thức ExtensionAPI](#extensionapi-methods)
+- [Quản lý trạng thái](#state-management)
+- [Công cụ tùy chỉnh](#custom-tools)
+  - [Tải công cụ động](#dynamic-tool-loading)
+- [UI tùy chỉnh](#custom-ui)
+- [Xử lý lỗi](#error-handling)
+- [Hành vi chế độ](#mode-behavior)
+- [Tham chiếu ví dụ](#examples-reference)
 
-## Quick Start
+## Bắt đầu nhanh
 
-Create `~/.pi/agent/extensions/my-extension.ts`:
+Tạo `~/.pi/agent/extensions/my-extension.ts`:
 
 ```typescript
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -100,26 +100,26 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-Test with `--extension` (or `-e`) flag:
+Test với cờ `--extension` (hoặc `-e`):
 
 ```bash
 pi -e ./my-extension.ts
 ```
 
-## Extension Locations
+## Vị trí Extension
 
-> **Security:** Extensions run with your full system permissions and can execute arbitrary code. Only install from sources you trust.
+> **Bảo mật:** Extension chạy với toàn bộ quyền của hệ thống bạn và có thể thực thi mã tùy ý. Chỉ cài đặt từ nguồn bạn tin cậy.
 
-Extensions are auto-discovered from trusted locations. Project-local `.pi/extensions` entries load only after the project is trusted.
+Extension được tự động phát hiện từ các vị trí đáng tin cậy. Các mục cục bộ theo dự án trong `.pi/extensions` chỉ được tải sau khi dự án được đánh dấu là tin cậy.
 
-| Location | Scope |
+| Vị trí | Phạm vi |
 |----------|-------|
-| `~/.pi/agent/extensions/*.ts` | Global (all projects) |
-| `~/.pi/agent/extensions/*/index.ts` | Global (subdirectory) |
-| `.pi/extensions/*.ts` | Project-local |
-| `.pi/extensions/*/index.ts` | Project-local (subdirectory) |
+| `~/.pi/agent/extensions/*.ts` | Toàn cục (tất cả dự án) |
+| `~/.pi/agent/extensions/*/index.ts` | Toàn cục (thư mục con) |
+| `.pi/extensions/*.ts` | Cục bộ theo dự án |
+| `.pi/extensions/*/index.ts` | Cục bộ theo dự án (thư mục con) |
 
-Additional paths via `settings.json`:
+Các đường dẫn bổ sung qua `settings.json`:
 
 ```json
 {
@@ -134,26 +134,26 @@ Additional paths via `settings.json`:
 }
 ```
 
-To share extensions via npm or git as pi packages, see [packages.md](packages.md).
+Để chia sẻ extension qua npm hoặc git dưới dạng pi package, xem [packages.md](packages.md).
 
-## Available Imports
+## Import có sẵn
 
-| Package | Purpose |
+| Package | Mục đích |
 |---------|---------|
-| `@earendil-works/pi-coding-agent` | Extension types (`ExtensionAPI`, `ExtensionContext`, events) |
-| `typebox` | Schema definitions for tool parameters |
-| `@earendil-works/pi-ai` | AI utilities (`StringEnum` for Google-compatible enums) |
-| `@earendil-works/pi-tui` | TUI components for custom rendering |
+| `@earendil-works/pi-coding-agent` | Kiểu extension (`ExtensionAPI`, `ExtensionContext`, sự kiện) |
+| `typebox` | Định nghĩa schema cho tham số công cụ |
+| `@earendil-works/pi-ai` | Tiện ích AI (`StringEnum` cho enum tương thích Google) |
+| `@earendil-works/pi-tui` | Thành phần TUI để render tùy chỉnh |
 
-npm dependencies work too. Add a `package.json` next to your extension (or in a parent directory), run `npm install`, and imports from `node_modules/` are resolved automatically.
+Dependency npm cũng hoạt động. Thêm `package.json` cạnh extension (hoặc trong thư mục cha), chạy `npm install`, và các import từ `node_modules/` sẽ được tự động phân giải.
 
-For distributed pi packages installed with `pi install` (npm or git), runtime deps must be in `dependencies`. Package installation uses production installs (`npm install --omit=dev`) by default, so `devDependencies` are not available at runtime; when `npmCommand` is configured, git packages use plain `install` for compatibility with wrappers.
+Với pi package phân phối được cài bằng `pi install` (npm hoặc git), dependency runtime phải nằm trong `dependencies`. Việc cài package dùng bản cài production (`npm install --omit=dev`) theo mặc định, nên `devDependencies` không có sẵn lúc runtime; khi `npmCommand` được cấu hình, package git dùng lệnh `install` thuần để tương thích với các wrapper.
 
-Node.js built-ins (`node:fs`, `node:path`, etc.) are also available.
+Các built-in của Node.js (`node:fs`, `node:path`, v.v.) cũng có sẵn.
 
-## Writing an Extension
+## Viết Extension
 
-An extension exports a default factory function that receives `ExtensionAPI`. The factory can be synchronous or asynchronous:
+Một extension export một hàm factory mặc định nhận `ExtensionAPI`. Factory có thể đồng bộ hoặc bất đồng bộ:
 
 ```typescript
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -176,13 +176,13 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-Extensions are loaded via [jiti](https://github.com/unjs/jiti), so TypeScript works without compilation.
+Extension được tải qua [jiti](https://github.com/unjs/jiti), nên TypeScript hoạt động mà không cần biên dịch.
 
-If the factory returns a `Promise`, pi awaits it before continuing startup. That means async initialization completes before `session_start`, before `resources_discover`, and before provider registrations queued via `pi.registerProvider()` are flushed.
+Nếu factory trả về `Promise`, pi sẽ chờ nó trước khi tiếp tục khởi động. Điều đó có nghĩa là khởi tạo bất đồng bộ hoàn tất trước `session_start`, trước `resources_discover`, và trước khi các đăng ký provider được xếp hàng qua `pi.registerProvider()` được flush.
 
-### Async factory functions
+### Hàm factory bất đồng bộ
 
-Use an async factory for one-time startup work such as fetching remote configuration or dynamically discovering available models.
+Dùng factory bất đồng bộ cho công việc khởi động một lần như lấy cấu hình từ xa hoặc tự động phát hiện model có sẵn.
 
 ```typescript
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -200,7 +200,7 @@ export default async function (pi: ExtensionAPI) {
 
   pi.registerProvider("local-openai", {
     baseUrl: "http://localhost:1234/v1",
-    apiKey: "$LOCAL_OPENAI_API_KEY",
+    apiKey: "[REDACTED]",
     api: "openai-completions",
     models: payload.data.map((model) => ({
       id: model.id,
@@ -215,24 +215,24 @@ export default async function (pi: ExtensionAPI) {
 }
 ```
 
-This pattern makes the fetched models available during normal startup and to `pi --list-models`.
+Mẫu này giúp các model vừa lấy được có sẵn trong quá trình khởi động bình thường và cho `pi --list-models`.
 
-### Long-lived resources and shutdown
+### Tài nguyên tồn tại lâu và shutdown
 
-Extension factories may run in invocations that never start a session. Do not start background resources such as processes, sockets, file watchers, or timers from the factory.
+Factory extension có thể chạy trong các lần gọi mà không bao giờ bắt đầu session. Đừng khởi động các tài nguyên nền như process, socket, file watcher, hay timer từ factory.
 
-Defer background resource startup until `session_start` or the command/tool/event that needs the resource. Register an idempotent `session_shutdown` handler to close any session-scoped resources you start.
+Hãy trì hoãn việc khởi động tài nguyên nền cho đến `session_start` hoặc lệnh/công cụ/sự kiện cần tài nguyên đó. Đăng ký một handler `session_shutdown` có tính idempotent để đóng bất kỳ tài nguyên phạm vi session nào bạn khởi động.
 
-### Extension Styles
+### Kiểu Extension
 
-**Single file** - simplest, for small extensions:
+**Một tệp** — đơn giản nhất, cho extension nhỏ:
 
 ```
 ~/.pi/agent/extensions/
 └── my-extension.ts
 ```
 
-**Directory with index.ts** - for multi-file extensions:
+**Thư mục với index.ts** — cho extension nhiều tệp:
 
 ```
 ~/.pi/agent/extensions/
@@ -242,7 +242,7 @@ Defer background resource startup until `session_start` or the command/tool/even
     └── utils.ts        # Helper module
 ```
 
-**Package with dependencies** - for extensions that need npm packages:
+**Package có dependency** — cho extension cần package npm:
 
 ```
 ~/.pi/agent/extensions/
@@ -268,11 +268,11 @@ Defer background resource startup until `session_start` or the command/tool/even
 }
 ```
 
-Run `npm install` in the extension directory, then imports from `node_modules/` work automatically.
+Chạy `npm install` trong thư mục extension, rồi các import từ `node_modules/` sẽ hoạt động tự động.
 
-## Events
+## Sự kiện
 
-### Lifecycle Overview
+### Tổng quan vòng đời
 
 ```
 pi starts
@@ -348,11 +348,11 @@ exit (Ctrl+C, Ctrl+D, SIGHUP, SIGTERM)
   └─► session_shutdown
 ```
 
-### Startup Events
+### Sự kiện khởi động
 
 #### project_trust
 
-Fired before pi decides whether to trust a project with dynamic configs (`.pi` or `.agents/skills`). It runs during startup and when session replacement (for example `/resume`) enters a cwd whose trust has not been resolved in the current process. Only user/global extensions and CLI `-e` extensions participate; project-local extensions are not loaded until after trust is resolved.
+Được kích hoạt trước khi pi quyết định có tin cậy một dự án với cấu hình động (`.pi` hoặc `.agents/skills`). Sự kiện chạy trong lúc khởi động và khi thay thế session (ví dụ `/resume`) đi vào một cwd mà quyền tin cậy chưa được giải quyết trong tiến trình hiện tại. Chỉ extension user/global và extension CLI `-e` tham gia; extension cục bộ theo dự án không được tải cho đến sau khi quyền tin cậy được giải quyết.
 
 ```typescript
 pi.on("project_trust", async (event, ctx) => {
@@ -365,14 +365,14 @@ pi.on("project_trust", async (event, ctx) => {
 });
 ```
 
-A `project_trust` handler must return `{ trusted: "yes" | "no" | "undecided" }`. A user/global or CLI extension that returns `"yes"` or `"no"` owns the decision; the first yes/no decision wins and suppresses the built-in trust prompt. Use `remember: true` to persist a yes/no decision; otherwise it applies only to the current process. Return `"undecided"` to let later handlers or the built-in trust flow decide. Check `ctx.hasUI` before prompting. If no handler returns yes/no, normal trust resolution continues: saved `trust.json` decisions apply first, then `defaultProjectTrust` controls whether pi asks, trusts, or declines by default.
+Handler `project_trust` phải trả về `{ trusted: "yes" | "no" | "undecided" }`. Một extension user/global hoặc CLI trả về `"yes"` hoặc `"no"` sẽ nắm quyền quyết định; quyết định yes/no đầu tiên thắng và triệt tiêu lời nhắc tin cậy tích hợp sẵn. Dùng `remember: true` để lưu bền quyết định yes/no; nếu không, quyết định chỉ áp dụng cho tiến trình hiện tại. Trả về `"undecided"` để handler sau hoặc luồng tin cậy tích hợp quyết định. Kiểm tra `ctx.hasUI` trước khi nhắc người dùng. Nếu không handler nào trả về yes/no, quá trình giải quyết tin cậy bình thường tiếp tục: quyết định `trust.json` đã lưu được áp dụng trước, sau đó `defaultProjectTrust` kiểm soát việc pi hỏi, tin cậy, hay từ chối theo mặc định.
 
-### Resource Events
+### Sự kiện tài nguyên
 
 #### resources_discover
 
-Fired after `session_start` so extensions can contribute additional skill, prompt, and theme paths.
-The startup path uses `reason: "startup"`. Reload uses `reason: "reload"`.
+Được kích hoạt sau `session_start` để extension có thể bổ sung thêm đường dẫn skill, prompt, và theme.
+Đường khởi động dùng `reason: "startup"`. Lần reload dùng `reason: "reload"`.
 
 ```typescript
 pi.on("resources_discover", async (event, _ctx) => {
@@ -386,13 +386,13 @@ pi.on("resources_discover", async (event, _ctx) => {
 });
 ```
 
-### Session Events
+### Sự kiện Session
 
-See [Session Format](session-format.md) for session storage internals and the SessionManager API.
+Xem [Session Format](session-format.md) để biết chi tiết lưu trữ session và API SessionManager.
 
 #### session_start
 
-Fired when a session is started, loaded, or reloaded.
+Được kích hoạt khi một session được bắt đầu, tải, hoặc tải lại.
 
 ```typescript
 pi.on("session_start", async (event, ctx) => {
@@ -404,7 +404,7 @@ pi.on("session_start", async (event, ctx) => {
 
 #### session_info_changed
 
-Fired when the current session display name is set via `/name`, RPC, or `pi.setSessionName()`.
+Được kích hoạt khi tên hiển thị của session hiện tại được đặt qua `/name`, RPC, hoặc `pi.setSessionName()`.
 
 ```typescript
 pi.on("session_info_changed", async (event, ctx) => {
@@ -415,7 +415,7 @@ pi.on("session_info_changed", async (event, ctx) => {
 
 #### session_before_switch
 
-Fired before starting a new session (`/new`) or switching sessions (`/resume`).
+Được kích hoạt trước khi bắt đầu session mới (`/new`) hoặc chuyển session (`/resume`).
 
 ```typescript
 pi.on("session_before_switch", async (event, ctx) => {
@@ -429,12 +429,12 @@ pi.on("session_before_switch", async (event, ctx) => {
 });
 ```
 
-After a successful switch or new-session action, pi emits `session_shutdown` for the old extension instance, reloads and rebinds extensions for the new session, then emits `session_start` with `reason: "new" | "resume"` and `previousSessionFile`.
-Do cleanup work in `session_shutdown`, then reestablish any in-memory state in `session_start`.
+Sau khi chuyển session hoặc tạo session mới thành công, pi phát `session_shutdown` cho instance extension cũ, tải lại và gắn lại extension cho session mới, rồi phát `session_start` với `reason: "new" | "resume"` và `previousSessionFile`.
+Hãy dọn dẹp trong `session_shutdown`, rồi thiết lập lại mọi trạng thái trong bộ nhớ ở `session_start`.
 
 #### session_before_fork
 
-Fired when forking via `/fork` or cloning via `/clone`.
+Được kích hoạt khi fork qua `/fork` hoặc clone qua `/clone`.
 
 ```typescript
 pi.on("session_before_fork", async (event, ctx) => {
@@ -446,12 +446,12 @@ pi.on("session_before_fork", async (event, ctx) => {
 });
 ```
 
-After a successful fork or clone, pi emits `session_shutdown` for the old extension instance, reloads and rebinds extensions for the new session, then emits `session_start` with `reason: "fork"` and `previousSessionFile`.
-Do cleanup work in `session_shutdown`, then reestablish any in-memory state in `session_start`.
+Sau khi fork hoặc clone thành công, pi phát `session_shutdown` cho instance extension cũ, tải lại và gắn lại extension cho session mới, rồi phát `session_start` với `reason: "fork"` và `previousSessionFile`.
+Hãy dọn dẹp trong `session_shutdown`, rồi thiết lập lại mọi trạng thái trong bộ nhớ ở `session_start`.
 
 #### session_before_compact / session_compact / session_compact_failed
 
-Fired on compaction. See [compaction.md](compaction.md) for details.
+Được kích hoạt khi compaction. Xem [compaction.md](compaction.md) để biết chi tiết.
 
 ```typescript
 pi.on("session_before_compact", async (event, ctx) => {
@@ -492,7 +492,7 @@ pi.on("session_compact_failed", async (event, ctx) => {
 
 #### session_before_tree / session_tree
 
-Fired on `/tree` navigation. See [Sessions](sessions.md) for tree navigation concepts.
+Được kích hoạt khi điều hướng `/tree`. Xem [Sessions](sessions.md) để tìm hiểu khái niệm điều hướng cây.
 
 ```typescript
 pi.on("session_before_tree", async (event, ctx) => {
@@ -515,7 +515,7 @@ pi.on("session_tree", async (event, ctx) => {
 
 #### session_shutdown
 
-Fired before a started session runtime is torn down. Use this to clean up resources opened from `session_start` or other session-scoped hooks.
+Được kích hoạt trước khi runtime của session đã bắt đầu bị dỡ bỏ. Dùng sự kiện này để dọn dẹp tài nguyên đã mở từ `session_start` hoặc hook khác có phạm vi session.
 
 ```typescript
 pi.on("session_shutdown", async (event, ctx) => {
@@ -525,11 +525,11 @@ pi.on("session_shutdown", async (event, ctx) => {
 });
 ```
 
-### Agent Events
+### Sự kiện Agent
 
 #### before_agent_start
 
-Fired after user submits prompt, before agent loop. Can inject a message and/or modify the system prompt.
+Được kích hoạt sau khi người dùng gửi prompt, trước vòng lặp agent. Có thể chèn tin nhắn và/hoặc sửa đổi system prompt.
 
 ```typescript
 pi.on("before_agent_start", async (event, ctx) => {
@@ -560,13 +560,13 @@ pi.on("before_agent_start", async (event, ctx) => {
 });
 ```
 
-The `systemPromptOptions` field gives extensions access to the same structured data Pi uses to build the system prompt. This lets you inspect what Pi has loaded — custom prompts, guidelines, tool snippets, context files, skills — without re-discovering resources or re-parsing flags. Use it when your extension needs to make deep, informed changes to the system prompt while respecting user-provided configuration.
+Trường `systemPromptOptions` cho extension truy cập cùng dữ liệu có cấu trúc mà Pi dùng để xây dựng system prompt. Điều này cho phép bạn kiểm tra những gì Pi đã tải — custom prompt, guideline, tool snippet, context file, skill — mà không cần phát hiện lại tài nguyên hay phân tích lại cờ. Hãy dùng trường này khi extension cần thực hiện thay đổi sâu và có căn cứ đối với system prompt nhưng vẫn tôn trọng cấu hình do người dùng cung cấp.
 
-Inside `before_agent_start`, `event.systemPrompt` and `ctx.getSystemPrompt()` both reflect the chained system prompt as of the current handler. Later `before_agent_start` handlers can still modify it again.
+Bên trong `before_agent_start`, cả `event.systemPrompt` và `ctx.getSystemPrompt()` đều phản ánh system prompt được nối chuỗi tính đến handler hiện tại. Các handler `before_agent_start` về sau vẫn có thể sửa đổi lại nó.
 
 #### agent_start / agent_end / agent_settled
 
-`agent_start` fires when a low-level agent run begins. `agent_end` fires when that run ends, but Pi may still auto-retry, auto-compact and retry, or continue with queued follow-up messages. Use `agent_settled` for status integrations that need to know Pi will not continue running automatically.
+`agent_start` kích hoạt khi một lần chạy agent cấp thấp bắt đầu. `agent_end` kích hoạt khi lần chạy đó kết thúc, nhưng Pi vẫn có thể tự retry, tự compact rồi retry, hoặc tiếp tục với các tin nhắn follow-up trong hàng đợi. Hãy dùng `agent_settled` cho các tích hợp trạng thái cần biết Pi sẽ không tự động chạy tiếp.
 
 ```typescript
 pi.on("agent_start", async (_event, ctx) => {});
@@ -582,9 +582,9 @@ pi.on("agent_settled", async (_event, ctx) => {
 
 #### ui_prompt_start / ui_prompt_end
 
-Notification-only lifecycle events for blocking user-facing extension UI prompts. They fire around `ctx.ui.select()`, `ctx.ui.confirm()`, `ctx.ui.input()`, `ctx.ui.editor()`, and `ctx.ui.custom()` so host/status integrations can report "waiting for user" instead of just "running".
+Các sự kiện vòng đời chỉ để thông báo, dành cho lời nhắc UI extension chặn người dùng. Chúng kích hoạt quanh `ctx.ui.select()`, `ctx.ui.confirm()`, `ctx.ui.input()`, `ctx.ui.editor()`, và `ctx.ui.custom()` để tích hợp host/trạng thái có thể báo "đang chờ người dùng" thay vì chỉ "đang chạy".
 
-Nested or overlapping prompts are coalesced into one outer waiting span. Handlers are invoked best-effort and are not awaited before showing or closing the prompt.
+Các lời nhắc lồng nhau hoặc chồng chéo được gộp thành một khoảng chờ bên ngoài duy nhất. Handler được gọi theo cơ chế best-effort và không được chờ trước khi hiển thị hoặc đóng lời nhắc.
 
 ```typescript
 pi.on("ui_prompt_start", async (event, ctx) => {
@@ -600,7 +600,7 @@ pi.on("ui_prompt_end", async (event, ctx) => {
 
 #### turn_start / turn_end
 
-Fired for each turn (one LLM response + tool calls).
+Được kích hoạt cho mỗi lượt (một phản hồi LLM + các tool call).
 
 ```typescript
 pi.on("turn_start", async (event, ctx) => {
@@ -614,11 +614,11 @@ pi.on("turn_end", async (event, ctx) => {
 
 #### message_start / message_update / message_end
 
-Fired for message lifecycle updates.
+Được kích hoạt cho các cập nhật vòng đời của tin nhắn.
 
-- `message_start` and `message_end` fire for user, assistant, and toolResult messages.
-- `message_update` fires for assistant streaming updates.
-- `message_end` handlers can return `{ message }` to replace the finalized message. The replacement must keep the same `role`.
+- `message_start` và `message_end` kích hoạt cho tin nhắn user, assistant, và toolResult.
+- `message_update` kích hoạt cho các cập nhật streaming của assistant.
+- Handler `message_end` có thể trả về `{ message }` để thay thế tin nhắn đã hoàn tất. Tin nhắn thay thế phải giữ nguyên `role`.
 
 ```typescript
 pi.on("message_start", async (event, ctx) => {
@@ -650,13 +650,13 @@ pi.on("message_end", async (event, ctx) => {
 
 #### tool_execution_start / tool_execution_update / tool_execution_end
 
-Fired for tool execution lifecycle updates.
+Được kích hoạt cho các cập nhật vòng đời của việc thực thi công cụ.
 
-In parallel tool mode:
-- `tool_execution_start` is emitted in assistant source order during the preflight phase
-- `tool_execution_update` events may interleave across tools
-- `tool_execution_end` is emitted in tool completion order after each tool is finalized
-- final `toolResult` message events are still emitted later in assistant source order
+Trong chế độ công cụ song song:
+- `tool_execution_start` được phát theo thứ tự nguồn của assistant trong giai đoạn preflight
+- Các sự kiện `tool_execution_update` có thể xen kẽ giữa các công cụ
+- `tool_execution_end` được phát theo thứ tự công cụ hoàn thành sau khi mỗi công cụ được hoàn tất
+- Các sự kiện tin nhắn `toolResult` cuối cùng vẫn được phát sau đó theo thứ tự nguồn của assistant
 
 ```typescript
 pi.on("tool_execution_start", async (event, ctx) => {
@@ -674,7 +674,7 @@ pi.on("tool_execution_end", async (event, ctx) => {
 
 #### context
 
-Fired before each LLM call. Modify messages non-destructively. See [Session Format](session-format.md) for message types.
+Được kích hoạt trước mỗi lần gọi LLM. Sửa đổi tin nhắn theo cách không phá hủy. Xem [Session Format](session-format.md) để biết kiểu tin nhắn.
 
 ```typescript
 pi.on("context", async (event, ctx) => {
@@ -686,9 +686,9 @@ pi.on("context", async (event, ctx) => {
 
 #### before_provider_headers
 
-Fired after the outgoing HTTP headers are assembled. Use it to add, override, or remove request headers.
+Được kích hoạt sau khi header HTTP gửi đi được lắp ráp. Dùng để thêm, ghi đè, hoặc xóa header của request.
 
-Handlers mutate `event.headers` in place. Set a key to a string to add or override it, or to `null` to delete it.
+Handler thay đổi `event.headers` ngay tại chỗ. Gán một key thành chuỗi để thêm hoặc ghi đè, hoặc thành `null` để xóa.
 
 ```typescript
 pi.on("before_provider_headers", (event, ctx) => {
@@ -700,13 +700,13 @@ pi.on("before_provider_headers", (event, ctx) => {
 });
 ```
 
-Runs once per provider request; retries reuse the same headers rather than re-firing the hook.
+Chạy một lần cho mỗi request đến provider; các lần retry dùng lại cùng header thay vì kích hoạt lại hook.
 
 #### before_provider_request
 
-Fired after the provider-specific payload is built, right before the request is sent. Handlers run in extension load order. Returning `undefined` keeps the payload unchanged. Returning any other value replaces the payload for later handlers and for the actual request.
+Được kích hoạt sau khi payload riêng của provider được xây dựng, ngay trước khi request được gửi. Handler chạy theo thứ tự tải extension. Trả về `undefined` giữ nguyên payload. Trả về bất kỳ giá trị nào khác sẽ thay thế payload cho các handler sau và cho request thực tế.
 
-This hook can rewrite provider-level system instructions or remove them entirely. Those payload-level changes are not reflected by `ctx.getSystemPrompt()`, which reports Pi's system prompt string rather than the final serialized provider payload.
+Hook này có thể viết lại system instruction cấp provider hoặc xóa hoàn toàn. Những thay đổi ở cấp payload này không được phản ánh qua `ctx.getSystemPrompt()`, vì hàm này báo chuỗi system prompt của Pi chứ không phải payload cuối cùng được serialize gửi cho provider.
 
 ```typescript
 pi.on("before_provider_request", (event, ctx) => {
@@ -717,11 +717,11 @@ pi.on("before_provider_request", (event, ctx) => {
 });
 ```
 
-This is mainly useful for debugging provider serialization and cache behavior.
+Chủ yếu hữu ích để debug quá trình serialize của provider và hành vi cache.
 
 #### after_provider_response
 
-Fired after an HTTP response is received and before its stream body is consumed. Handlers run in extension load order.
+Được kích hoạt sau khi nhận phản hồi HTTP và trước khi consume stream body. Handler chạy theo thứ tự tải extension.
 
 ```typescript
 pi.on("after_provider_response", (event, ctx) => {
@@ -733,13 +733,13 @@ pi.on("after_provider_response", (event, ctx) => {
 });
 ```
 
-Header availability depends on provider and transport. Providers that abstract HTTP responses may not expose headers.
+Việc có sẵn header tùy thuộc vào provider và phương thức vận chuyển. Các provider trừu tượng hóa phản hồi HTTP có thể không expose header.
 
-### Model Events
+### Sự kiện Model
 
 #### model_select
 
-Fired when the model changes via `/model` command, model cycling (`Ctrl+P`), or session restore.
+Được kích hoạt khi model thay đổi qua lệnh `/model`, cycling model (`Ctrl+P`), hoặc khôi phục session.
 
 ```typescript
 pi.on("model_select", async (event, ctx) => {
@@ -756,11 +756,11 @@ pi.on("model_select", async (event, ctx) => {
 });
 ```
 
-Use this to update UI elements (status bars, footers) or perform model-specific initialization when the active model changes.
+Dùng sự kiện này để cập nhật thành phần UI (thanh trạng thái, footer) hoặc thực hiện khởi tạo riêng cho model khi model đang hoạt động thay đổi.
 
 #### thinking_level_select
 
-Fired when the thinking level changes. This is notification-only; handler return values are ignored.
+Được kích hoạt khi thinking level thay đổi. Đây là sự kiện chỉ thông báo; giá trị trả về của handler bị bỏ qua.
 
 ```typescript
 pi.on("thinking_level_select", async (event, ctx) => {
@@ -771,26 +771,26 @@ pi.on("thinking_level_select", async (event, ctx) => {
 });
 ```
 
-Use this to update extension UI when `pi.setThinkingLevel()`, model changes, or built-in thinking-level controls change the active thinking level.
+Dùng sự kiện này để cập nhật UI extension khi `pi.setThinkingLevel()`, thay đổi model, hoặc các điều khiển thinking level tích hợp thay đổi level đang hoạt động.
 
-### Tool Events
+### Sự kiện Tool
 
 #### tool_call
 
-Fired after `tool_execution_start`, before the tool executes. **Can block.** Use `isToolCallEventType` to narrow and get typed inputs.
+Được kích hoạt sau `tool_execution_start`, trước khi công cụ thực thi. **Có thể chặn.** Dùng `isToolCallEventType` để thu hẹp kiểu và lấy input được gõ kiểu.
 
-Before `tool_call` runs, pi waits for previously emitted Agent events to finish draining through `AgentSession`. This means `ctx.sessionManager` is up to date through the current assistant tool-calling message.
+Trước khi `tool_call` chạy, pi chờ các sự kiện Agent đã phát trước đó kết thúc việc chảy qua `AgentSession`. Điều này có nghĩa là `ctx.sessionManager` đã được cập nhật đến tin nhắn assistant gọi công cụ hiện tại.
 
-In the default parallel tool execution mode, sibling tool calls from the same assistant message are preflighted sequentially, then executed concurrently. `tool_call` is not guaranteed to see sibling tool results from that same assistant message in `ctx.sessionManager`.
+Trong chế độ thực thi công cụ song song mặc định, các tool call cùng cấp từ cùng một tin nhắn assistant được preflight tuần tự, rồi thực thi đồng thời. `tool_call` không đảm bảo thấy kết quả của tool call cùng cấp từ cùng tin nhắn assistant đó trong `ctx.sessionManager`.
 
-`event.input` is mutable. Mutate it in place to patch tool arguments before execution.
+`event.input` có thể thay đổi. Hãy chỉnh sửa trực tiếp tại chỗ để vá đối số công cụ trước khi thực thi.
 
-Behavior guarantees:
-- Mutations to `event.input` affect the actual tool execution
-- Later `tool_call` handlers see mutations made by earlier handlers
-- No re-validation is performed after your mutation
-- Return values from `tool_call` control blocking via `{ block: true, reason?: string, terminate?: boolean }`
-- `terminate` only applies to a blocked call; the agent stops early only when every finalized result in the batch is terminating
+Các đảm bảo hành vi:
+- Thay đổi với `event.input` ảnh hưởng đến việc thực thi công cụ thực tế
+- Handler `tool_call` về sau thấy các thay đổi do handler trước thực hiện
+- Không có bước xác thực lại sau khi bạn thay đổi
+- Giá trị trả về từ `tool_call` kiểm soát việc chặn qua `{ block: true, reason?: string, terminate?: boolean }`
+- `terminate` chỉ áp dụng cho một lời gọi bị chặn; agent chỉ dừng sớm khi mọi kết quả đã hoàn tất trong batch đều là terminating
 
 ```typescript
 import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
@@ -817,16 +817,16 @@ pi.on("tool_call", async (event, ctx) => {
 });
 ```
 
-#### Typing custom tool input
+#### Gõ kiểu input của công cụ tùy chỉnh
 
-Custom tools should export their input type:
+Công cụ tùy chỉnh nên export kiểu input của chúng:
 
 ```typescript
 // my-extension.ts
 export type MyToolInput = Static<typeof myToolSchema>;
 ```
 
-Use `isToolCallEventType` with explicit type parameters:
+Dùng `isToolCallEventType` với tham số kiểu rõ ràng:
 
 ```typescript
 import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
@@ -841,16 +841,16 @@ pi.on("tool_call", (event) => {
 
 #### tool_result
 
-Fired after tool execution finishes and before `tool_execution_end` plus the final tool result message events are emitted. **Can modify result.**
+Được kích hoạt sau khi thực thi công cụ kết thúc và trước khi `tool_execution_end` cùng các sự kiện tin nhắn kết quả công cụ cuối cùng được phát. **Có thể sửa đổi kết quả.**
 
-In parallel tool mode, `tool_result` and `tool_execution_end` may interleave in tool completion order, while final `toolResult` message events are still emitted later in assistant source order.
+Trong chế độ công cụ song song, `tool_result` và `tool_execution_end` có thể xen kẽ theo thứ tự hoàn thành của công cụ, trong khi các sự kiện tin nhắn `toolResult` cuối cùng vẫn được phát sau đó theo thứ tự nguồn của assistant.
 
-`tool_result` handlers chain like middleware:
-- Handlers run in extension load order
-- Each handler sees the latest result after previous handler changes
-- Handlers can return partial patches (`content`, `details`, `isError`, or `usage`); omitted fields keep their current values
+Handler `tool_result` nối chuỗi như middleware:
+- Handler chạy theo thứ tự tải extension
+- Mỗi handler thấy kết quả mới nhất sau các thay đổi của handler trước
+- Handler có thể trả về bản vá một phần (`content`, `details`, `isError`, hoặc `usage`); các trường bỏ qua giữ nguyên giá trị hiện tại
 
-Use `ctx.signal` for nested async work inside the handler. This lets Esc cancel model calls, `fetch()`, and other abort-aware operations started by the extension.
+Dùng `ctx.signal` cho công việc bất đồng bộ lồng nhau bên trong handler. Điều này cho phép Esc hủy các lời gọi model, `fetch()`, và các hoạt động khác có hỗ trợ abort do extension khởi động.
 
 ```typescript
 import { isBashToolResult } from "@earendil-works/pi-coding-agent";
@@ -874,11 +874,11 @@ pi.on("tool_result", async (event, ctx) => {
 });
 ```
 
-### User Bash Events
+### Sự kiện Bash của người dùng
 
 #### user_bash
 
-Fired when user executes `!` or `!!` commands. **Can intercept.**
+Được kích hoạt khi người dùng chạy lệnh `!` hoặc `!!`. **Có thể chặn.**
 
 ```typescript
 import { createLocalBashOperations } from "@earendil-works/pi-coding-agent";
@@ -906,18 +906,18 @@ pi.on("user_bash", (event, ctx) => {
 });
 ```
 
-### Input Events
+### Sự kiện Input
 
 #### input
 
-Fired when user input is received, after extension commands are checked but before skill and template expansion. The event sees the raw input text, so `/skill:foo` and `/template` are not yet expanded.
+Được kích hoạt khi nhận input từ người dùng, sau khi kiểm tra lệnh extension nhưng trước khi mở rộng skill và template. Sự kiện thấy văn bản input thô, nên `/skill:foo` và `/template` chưa được mở rộng.
 
-**Processing order:**
-1. Extension commands (`/cmd`) checked first - if found, handler runs and input event is skipped
-2. `input` event fires - can intercept, transform, or handle
-3. If not handled: skill commands (`/skill:name`) expanded to skill content
-4. If not handled: prompt templates (`/template`) expanded to template content
-5. Agent processing begins (`before_agent_start`, etc.)
+**Thứ tự xử lý:**
+1. Lệnh extension (`/cmd`) được kiểm tra trước — nếu tìm thấy, handler chạy và sự kiện input bị bỏ qua
+2. Sự kiện `input` kích hoạt — có thể chặn, chuyển đổi, hoặc xử lý
+3. Nếu chưa được xử lý: lệnh skill (`/skill:name`) được mở rộng thành nội dung skill
+4. Nếu chưa được xử lý: prompt template (`/template`) được mở rộng thành nội dung template
+5. Bắt đầu xử lý agent (`before_agent_start`, v.v.)
 
 ```typescript
 pi.on("input", async (event, ctx) => {
@@ -950,34 +950,34 @@ pi.on("input", async (event, ctx) => {
 });
 ```
 
-**Results:**
-- `continue` - pass through unchanged (default if handler returns nothing)
-- `transform` - modify text/images, then continue to expansion
-- `handled` - skip agent entirely (first handler to return this wins)
+**Kết quả:**
+- `continue` — chuyển qua không thay đổi (mặc định nếu handler không trả về gì)
+- `transform` — sửa văn bản/hình ảnh, rồi tiếp tục đến bước mở rộng
+- `handled` — bỏ qua hoàn toàn agent (handler đầu tiên trả về giá trị này sẽ thắng)
 
-Transforms chain across handlers. See [input-transform.ts](../examples/extensions/input-transform.ts) and [input-transform-streaming.ts](../examples/extensions/input-transform-streaming.ts) for `streamingBehavior`-aware routing.
+Các phép biến đổi nối chuỗi qua các handler. Xem [input-transform.ts](../examples/extensions/input-transform.ts) và [input-transform-streaming.ts](../examples/extensions/input-transform-streaming.ts) để biết định tuyến theo `streamingBehavior`.
 
 ## ExtensionContext
 
-All handlers receive `ctx: ExtensionContext`.
+Mọi handler đều nhận `ctx: ExtensionContext`.
 
 ### ctx.ui
 
-UI methods for user interaction. See [Custom UI](#custom-ui) for full details.
+Các phương thức UI để tương tác với người dùng. Xem [Custom UI](#custom-ui) để biết đầy đủ chi tiết.
 
 ### ctx.mode
 
-Current run mode: `"tui"`, `"rpc"`, `"json"`, or `"print"`. Use `ctx.mode === "tui"` to guard terminal-only features such as `custom()`, component factories, terminal input, and direct TUI rendering.
+Chế độ chạy hiện tại: `"tui"`, `"rpc"`, `"json"`, hoặc `"print"`. Dùng `ctx.mode === "tui"` để bảo vệ các tính năng chỉ dành cho terminal như `custom()`, component factory, input terminal, và render TUI trực tiếp.
 
 ### ctx.hasUI
 
-`true` in TUI and RPC modes. `false` in print mode (`-p`) and JSON mode. Use this to guard dialog methods (`select`, `confirm`, `input`, `editor`) and fire-and-forget methods (`notify`, `setStatus`, `setWidget`, `setTitle`, `setEditorText`) that work in both TUI and RPC modes. In RPC mode, some TUI-specific methods are no-ops or return defaults (see [rpc.md](rpc.md#extension-ui-protocol)).
+`true` trong chế độ TUI và RPC. `false` trong chế độ print (`-p`) và JSON. Dùng giá trị này để bảo vệ các phương thức hộp thoại (`select`, `confirm`, `input`, `editor`) và các phương thức fire-and-forget (`notify`, `setStatus`, `setWidget`, `setTitle`, `setEditorText`) vốn hoạt động ở cả chế độ TUI và RPC. Trong chế độ RPC, một số phương thức đặc thù TUI là no-op hoặc trả về giá trị mặc định (xem [rpc.md](rpc.md#extension-ui-protocol)).
 
 ### ctx.cwd
 
-Current working directory.
+Thư mục làm việc hiện tại.
 
-Use `CONFIG_DIR_NAME` instead of hardcoding `.pi` when constructing project-local config paths. Rebranded distributions can use a different config directory name.
+Dùng `CONFIG_DIR_NAME` thay vì hardcode `.pi` khi xây dựng đường dẫn cấu hình cục bộ theo dự án. Các bản phân phối đổi thương hiệu có thể dùng tên thư mục cấu hình khác.
 
 ```typescript
 import { CONFIG_DIR_NAME, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -993,15 +993,15 @@ export default function (pi: ExtensionAPI) {
 
 ### ctx.isProjectTrusted()
 
-Returns whether project-local trust is active for the current session context. This includes temporary trust decisions and CLI trust overrides, not just saved decisions in the global trust store.
+Trả về việc quyền tin cậy cục bộ theo dự án có đang hoạt động cho ngữ cảnh session hiện tại hay không. Bao gồm cả quyết định tin cậy tạm thời và ghi đè tin cậy từ CLI, không chỉ các quyết định đã lưu trong kho tin cậy toàn cục.
 
-Use this before reading project-local extension configuration that should only be honored for trusted projects.
+Dùng hàm này trước khi đọc cấu hình extension cục bộ theo dự án mà chỉ nên được tuân thủ cho các dự án đáng tin cậy.
 
 ### ctx.sessionManager
 
-Read-only access to session state. See [Session Format](session-format.md) for the full SessionManager API and entry types.
+Quyền truy cập chỉ đọc vào trạng thái session. Xem [Session Format](session-format.md) để biết API SessionManager đầy đủ và các kiểu entry.
 
-For `tool_call`, this state is synchronized through the current assistant message before handlers run. In parallel tool execution mode it is still not guaranteed to include sibling tool results from the same assistant message.
+Với `tool_call`, trạng thái này được đồng bộ đến tin nhắn assistant hiện tại trước khi handler chạy. Trong chế độ thực thi công cụ song song, nó vẫn không đảm bảo chứa kết quả của tool call cùng cấp từ cùng tin nhắn assistant.
 
 ```typescript
 ctx.sessionManager.getEntries()             // All entries
@@ -1012,27 +1012,27 @@ ctx.sessionManager.getLeafId()              // Current leaf entry ID
 
 ### ctx.modelRegistry / ctx.model / ctx.thinkingLevel / ctx.scopedModels
 
-Access to models, providers, and resolved authentication. `ctx.modelRegistry.getProvider(id)` returns the effective pi-ai provider, while `getProviderAuth(id)` resolves its current API key, headers, base URL, and provider-scoped environment without requiring a loaded model. `ctx.model` is the active model, and `ctx.thinkingLevel` is its current effective thinking level.
+Truy cập model, provider, và thông tin xác thực đã được giải quyết. `ctx.modelRegistry.getProvider(id)` trả về provider pi-ai hiệu dụng, trong khi `getProviderAuth(id)` giải quyết API key, header, base URL, và môi trường theo phạm vi provider hiện tại mà không cần model đã tải. `ctx.model` là model đang hoạt động, và `ctx.thinkingLevel` là thinking level hiệu dụng hiện tại của nó.
 
-`ctx.scopedModels` is the read-only list of models scoped to the current session — the same set the `/scoped-models` command shows. It is resolved at session start from the `--models` CLI flag and the `enabledModels` setting (matched against the available catalogue with minimatch on `provider/modelId` or a bare `modelId`). It is empty when no scoping is configured, meaning every available model is usable. Each entry is `{ model, thinkingLevel? }`, where `thinkingLevel` is set only when a pattern pinned it (e.g. `anthropic/*:high`). Use it to populate a model picker that mirrors the built-in one instead of enumerating the whole catalogue via `ctx.modelRegistry.getAvailable()`.
+`ctx.scopedModels` là danh sách model chỉ đọc được giới hạn trong session hiện tại — cùng tập với những gì lệnh `/scoped-models` hiển thị. Tập này được giải quyết lúc bắt đầu session từ cờ CLI `--models` và thiết lập `enabledModels` (đối chiếu với catalogue có sẵn bằng minimatch trên `provider/modelId` hoặc `modelId` thuần). Danh sách rỗng khi không cấu hình giới hạn, nghĩa là mọi model có sẵn đều dùng được. Mỗi mục có dạng `{ model, thinkingLevel? }`, trong đó `thinkingLevel` chỉ được đặt khi một pattern gắn cố định nó (ví dụ `anthropic/*:high`). Dùng danh sách này để điền bộ chọn model phản ánh bộ chọn tích hợp, thay vì liệt kê toàn bộ catalogue qua `ctx.modelRegistry.getAvailable()`.
 
-#### Streaming model calls
+#### Gọi model dạng streaming
 
-Use `ctx.modelRegistry.streamSimple(model, context, options)` for provider-neutral options such as `reasoning`, or `stream()` for API-specific options. Both use configured providers and resolve authentication, including for providers registered with `pi.registerProvider()`. Use these instead of `pi-ai/compat` streaming functions, which cannot see extension provider registrations.
+Dùng `ctx.modelRegistry.streamSimple(model, context, options)` cho các tùy chọn trung lập provider như `reasoning`, hoặc `stream()` cho tùy chọn đặc thù API. Cả hai dùng provider đã cấu hình và giải quyết xác thực, kể cả provider đăng ký qua `pi.registerProvider()`. Hãy dùng các hàm này thay vì hàm streaming trong `pi-ai/compat`, vì các hàm đó không thấy đăng ký provider của extension.
 
-Both return an `AssistantMessageEventStream`. Iterate it for response events and await `.result()` for the final message. Setup failures produce error events and error results.
+Cả hai trả về `AssistantMessageEventStream`. Duyệt qua nó để nhận sự kiện phản hồi và await `.result()` để lấy tin nhắn cuối cùng. Lỗi thiết lập tạo ra sự kiện lỗi và kết quả lỗi.
 
 ### ctx.signal
 
-The current agent abort signal, or `undefined` when no agent turn is active.
+Tín hiệu abort của agent hiện tại, hoặc `undefined` khi không có lượt agent nào đang hoạt động.
 
-Use this for abort-aware nested work started by extension handlers, for example:
+Dùng giá trị này cho công việc lồng nhau có hỗ trợ abort do handler extension khởi động, ví dụ:
 - `fetch(..., { signal: ctx.signal })`
-- model calls that accept `signal`
-- file or process helpers that accept `AbortSignal`
+- lời gọi model chấp nhận `signal`
+- hàm tiện ích tệp hoặc process chấp nhận `AbortSignal`
 
-`ctx.signal` is typically defined during active turn events such as `tool_call`, `tool_result`, `message_update`, and `turn_end`.
-It is usually `undefined` in idle or non-turn contexts such as session events, extension commands, and shortcuts fired while pi is idle.
+`ctx.signal` thường được định nghĩa trong các sự kiện lượt đang hoạt động như `tool_call`, `tool_result`, `message_update`, và `turn_end`.
+Nó thường là `undefined` trong ngữ cảnh nhàn rỗi hoặc ngoài lượt như sự kiện session, lệnh extension, và shortcut kích hoạt khi pi đang nhàn rỗi.
 
 ```typescript
 pi.on("tool_result", async (event, ctx) => {
@@ -1049,17 +1049,17 @@ pi.on("tool_result", async (event, ctx) => {
 
 ### ctx.isIdle() / ctx.abort() / ctx.hasPendingMessages()
 
-Control flow helpers. `ctx.isIdle()` is false while Pi is processing an agent run, automatic retry, auto-compaction retry, or queued continuation.
+Các hàm tiện ích kiểm soát luồng. `ctx.isIdle()` trả về false khi Pi đang xử lý một lần chạy agent, retry tự động, retry sau auto-compaction, hoặc phần tiếp theo trong hàng đợi.
 
 ### ctx.shutdown()
 
-Request a graceful shutdown of pi.
+Yêu cầu shutdown êm ái của pi.
 
-- **Interactive mode:** Deferred until the agent becomes idle (after processing all queued steering and follow-up messages).
-- **RPC mode:** Deferred until the next idle state (after completing the current command response, when waiting for the next command).
-- **Print mode:** No-op. The process exits automatically when all prompts are processed.
+- **Chế độ tương tác:** Trì hoãn đến khi agent nhàn rỗi (sau khi xử lý mọi tin nhắn steering và follow-up trong hàng đợi).
+- **Chế độ RPC:** Trì hoãn đến trạng thái nhàn rỗi tiếp theo (sau khi hoàn tất phản hồi lệnh hiện tại, lúc chờ lệnh tiếp theo).
+- **Chế độ print:** Không làm gì. Tiến trình tự thoát khi mọi prompt được xử lý xong.
 
-Emits `session_shutdown` event to all extensions before exiting. Available in all contexts (event handlers, tools, commands, shortcuts).
+Phát sự kiện `session_shutdown` tới mọi extension trước khi thoát. Có sẵn trong mọi ngữ cảnh (handler sự kiện, công cụ, lệnh, shortcut).
 
 ```typescript
 pi.on("tool_call", (event, ctx) => {
@@ -1071,7 +1071,7 @@ pi.on("tool_call", (event, ctx) => {
 
 ### ctx.getContextUsage()
 
-Returns current context usage for the active model. Uses last assistant usage when available, then estimates tokens for trailing messages.
+Trả về mức sử dụng context hiện tại cho model đang hoạt động. Dùng usage của assistant gần nhất khi có, sau đó ước lượng token cho các tin nhắn ở cuối.
 
 ```typescript
 const usage = ctx.getContextUsage();
@@ -1082,7 +1082,7 @@ if (usage && usage.tokens > 100_000) {
 
 ### ctx.compact()
 
-Trigger compaction without awaiting completion. Use `onComplete` and `onError` for follow-up actions.
+Kích hoạt compaction mà không chờ hoàn tất. Dùng `onComplete` và `onError` cho các hành động tiếp theo.
 
 ```typescript
 ctx.compact({
@@ -1098,12 +1098,12 @@ ctx.compact({
 
 ### ctx.getSystemPrompt()
 
-Returns Pi's current system prompt string.
+Trả về chuỗi system prompt hiện tại của Pi.
 
-- During `before_agent_start`, this reflects chained system-prompt changes made so far for the current turn.
-- It does not include later `context` message mutations.
-- It does not include `before_provider_request` payload rewrites.
-- If later-loaded extensions run after yours, they can still change what is ultimately sent.
+- Trong `before_agent_start`, hàm phản ánh các thay đổi system prompt được nối chuỗi tính đến hiện tại cho lượt này.
+- Không bao gồm các thay đổi tin nhắn của sự kiện `context` về sau.
+- Không bao gồm các lần viết lại payload của `before_provider_request`.
+- Nếu extension được tải sau chạy sau bạn, chúng vẫn có thể thay đổi nội dung cuối cùng được gửi đi.
 
 ```typescript
 pi.on("before_agent_start", (event, ctx) => {
@@ -1114,24 +1114,24 @@ pi.on("before_agent_start", (event, ctx) => {
 
 ## ExtensionCommandContext
 
-Command handlers receive `ExtensionCommandContext`, which extends `ExtensionContext` with session control methods. These are only available in commands because they can deadlock if called from event handlers.
+Handler lệnh nhận `ExtensionCommandContext`, mở rộng `ExtensionContext` với các phương thức điều khiển session. Các phương thức này chỉ có trong lệnh vì chúng có thể gây deadlock nếu gọi từ handler sự kiện.
 
 ### ctx.getSystemPromptOptions()
 
-Returns the base inputs Pi currently uses to build the system prompt.
+Trả về các đầu vào cơ bản Pi đang dùng để xây dựng system prompt.
 
 ```typescript
 const options = ctx.getSystemPromptOptions();
 const contextPaths = options.contextFiles?.map((file) => file.path) ?? [];
 ```
 
-This has the same shape and mutability as `before_agent_start` `event.systemPromptOptions`: custom prompt, active tools, tool snippets, prompt guidelines, appended system prompt text, cwd, loaded context files, and loaded skills. It may include full context file contents, so treat it as sensitive extension-local data and avoid exposing it through command lists, logs, or autocomplete metadata.
+Hàm có cùng cấu trúc và khả năng thay đổi như `event.systemPromptOptions` của `before_agent_start`: custom prompt, công cụ đang hoạt động, tool snippet, prompt guideline, văn bản system prompt được nối thêm, cwd, context file đã tải, và skill đã tải. Kết quả có thể chứa toàn bộ nội dung context file, nên hãy coi đây là dữ liệu nhạy cảm nội bộ extension và tránh expose qua danh sách lệnh, log, hoặc metadata autocomplete.
 
-This reports the current base prompt inputs. It does not include per-turn `before_agent_start` chained system-prompt changes, later `context` event message mutations, or `before_provider_request` payload rewrites.
+Hàm báo các đầu vào cơ bản hiện tại. Không bao gồm thay đổi system prompt được nối chuỗi theo từng lượt của `before_agent_start`, thay đổi tin nhắn của sự kiện `context` về sau, hay các lần viết lại payload của `before_provider_request`.
 
 ### ctx.waitForIdle()
 
-Wait for the agent to fully settle, including automatic retries, auto-compaction retries, and queued continuations:
+Chờ agent ổn định hoàn toàn, bao gồm retry tự động, retry sau auto-compaction, và các phần tiếp theo trong hàng đợi:
 
 ```typescript
 pi.registerCommand("my-cmd", {
@@ -1144,7 +1144,7 @@ pi.registerCommand("my-cmd", {
 
 ### ctx.newSession(options?)
 
-Create a new session:
+Tạo session mới:
 
 ```typescript
 const parentSession = ctx.sessionManager.getSessionFile();
@@ -1170,14 +1170,14 @@ if (result.cancelled) {
 }
 ```
 
-Options:
-- `parentSession`: parent session file to record in the new session header
-- `setup`: mutate the new session's `SessionManager` before `withSession` runs
-- `withSession`: run post-switch work against a fresh replacement-session context. Do not use captured old `pi` / command `ctx`; see [Session replacement lifecycle and footguns](#session-replacement-lifecycle-and-footguns).
+Tùy chọn:
+- `parentSession`: tệp session cha để ghi vào header của session mới
+- `setup`: thay đổi `SessionManager` của session mới trước khi `withSession` chạy
+- `withSession`: chạy công việc sau chuyển đổi với một ngữ cảnh session thay thế hoàn toàn mới. Đừng dùng `pi` / `ctx` của lệnh cũ đã capture; xem [Vòng đời thay thế session và các bẫy thường gặp](#session-replacement-lifecycle-and-footguns).
 
 ### ctx.fork(entryId, options?)
 
-Fork from a specific entry, creating a new session file:
+Fork từ một entry cụ thể, tạo tệp session mới:
 
 ```typescript
 const result = await ctx.fork("entry-id-123", {
@@ -1196,14 +1196,14 @@ if (cloneResult.cancelled) {
 }
 ```
 
-Options:
-- `position`: `"before"` (default) forks before the selected user message, restoring that prompt into the editor
-- `position`: `"at"` duplicates the active path through the selected entry without restoring editor text
-- `withSession`: run post-switch work against a fresh replacement-session context. Do not use captured old `pi` / command `ctx`; see [Session replacement lifecycle and footguns](#session-replacement-lifecycle-and-footguns).
+Tùy chọn:
+- `position`: `"before"` (mặc định) fork trước tin nhắn user đã chọn, khôi phục prompt đó vào editor
+- `position`: `"at"` nhân đôi đường dẫn đang hoạt động đến entry đã chọn mà không khôi phục văn bản editor
+- `withSession`: chạy công việc sau chuyển đổi với một ngữ cảnh session thay thế hoàn toàn mới. Đừng dùng `pi` / `ctx` của lệnh cũ đã capture; xem [Vòng đời thay thế session và các bẫy thường gặp](#session-replacement-lifecycle-and-footguns).
 
 ### ctx.navigateTree(targetId, options?)
 
-Navigate to a different point in the session tree. Rejects while an agent response, manual or automatic compaction, or another tree navigation is active, even with `summarize: false`. These conflicts leave the active branch unchanged and reject the promise rather than returning `{ cancelled: true }`. Wait for the active operation to finish (for example, with `await ctx.waitForIdle()` in a command handler) and retry:
+Điều hướng đến một điểm khác trong cây session. Từ chối khi có phản hồi agent, compaction thủ công hoặc tự động, hoặc một lần điều hướng cây khác đang hoạt động, ngay cả với `summarize: false`. Các xung đột này giữ nguyên nhánh đang hoạt động và từ chối promise thay vì trả về `{ cancelled: true }`. Hãy chờ thao tác đang hoạt động kết thúc (ví dụ dùng `await ctx.waitForIdle()` trong handler lệnh) rồi thử lại:
 
 ```typescript
 const result = await ctx.navigateTree("entry-id-456", {
@@ -1214,15 +1214,15 @@ const result = await ctx.navigateTree("entry-id-456", {
 });
 ```
 
-Options:
-- `summarize`: Whether to generate a summary of the abandoned branch
-- `customInstructions`: Custom instructions for the summarizer
-- `replaceInstructions`: If true, `customInstructions` replaces the default prompt instead of being appended
-- `label`: Label to attach to the branch summary entry (or target entry if not summarizing)
+Tùy chọn:
+- `summarize`: Có tạo tóm tắt cho nhánh bị bỏ hay không
+- `customInstructions`: Hướng dẫn tùy chỉnh cho trình tóm tắt
+- `replaceInstructions`: Nếu true, `customInstructions` thay thế prompt mặc định thay vì được nối thêm
+- `label`: Nhãn gắn vào entry tóm tắt nhánh (hoặc entry đích nếu không tóm tắt)
 
 ### ctx.switchSession(sessionPath, options?)
 
-Switch to a different session file:
+Chuyển sang một tệp session khác:
 
 ```typescript
 const result = await ctx.switchSession("/path/to/session.jsonl", {
@@ -1235,10 +1235,10 @@ if (result.cancelled) {
 }
 ```
 
-Options:
-- `withSession`: run post-switch work against a fresh replacement-session context. Do not use captured old `pi` / command `ctx`; see [Session replacement lifecycle and footguns](#session-replacement-lifecycle-and-footguns).
+Tùy chọn:
+- `withSession`: chạy công việc sau chuyển đổi với một ngữ cảnh session thay thế hoàn toàn mới. Đừng dùng `pi` / `ctx` của lệnh cũ đã capture; xem [Vòng đời thay thế session và các bẫy thường gặp](#session-replacement-lifecycle-and-footguns).
 
-To discover available sessions, use the static `SessionManager.list()` or `SessionManager.listAll()` methods:
+Để khám phá session có sẵn, dùng phương thức tĩnh `SessionManager.list()` hoặc `SessionManager.listAll()`:
 
 ```typescript
 import { SessionManager } from "@earendil-works/pi-coding-agent";
@@ -1263,18 +1263,18 @@ pi.registerCommand("switch", {
 });
 ```
 
-### Session replacement lifecycle and footguns
+### Vòng đời thay thế session và các bẫy thường gặp
 
-`withSession` receives a fresh `ReplacedSessionContext`, which extends `ExtensionCommandContext` with async `sendMessage()` and `sendUserMessage()` helpers bound to the replacement session.
+`withSession` nhận một `ReplacedSessionContext` mới, mở rộng `ExtensionCommandContext` với các hàm bất đồng bộ `sendMessage()` và `sendUserMessage()` gắn với session thay thế.
 
-Lifecycle and footguns:
-- `withSession` runs only after the old session has emitted `session_shutdown`, the old runtime has been torn down, the replacement session has been rebound, and the new extension instance has already received `session_start`.
-- The callback still executes in the original closure, not inside the new extension instance. That means your old extension instance may already have run its shutdown cleanup before `withSession` starts.
-- Captured old `pi` / old command `ctx` session-bound objects are stale after replacement and will throw if used. Use only the `ctx` passed to `withSession` for session-bound work.
-- Previously extracted raw objects are still your responsibility. For example, if you capture `const sm = ctx.sessionManager` before replacement, `sm` is still the old `SessionManager` object. Do not reuse it after replacement.
-- Code in `withSession` should assume any state invalidated by your `session_shutdown` handler is already gone. Only capture plain data that survives shutdown cleanly, such as strings, ids, and serialized config.
+Vòng đời và các bẫy:
+- `withSession` chỉ chạy sau khi session cũ đã phát `session_shutdown`, runtime cũ đã bị dỡ bỏ, session thay thế đã được gắn lại, và instance extension mới đã nhận `session_start`.
+- Callback vẫn thực thi trong closure gốc, không nằm trong instance extension mới. Nghĩa là instance extension cũ của bạn có thể đã chạy dọn dẹp shutdown trước khi `withSession` bắt đầu.
+- Các đối tượng `pi` / `ctx` của lệnh cũ đã capture và gắn với session trở nên cũ sau thay thế và sẽ ném lỗi nếu dùng. Chỉ dùng `ctx` truyền cho `withSession` cho công việc gắn với session.
+- Các đối tượng thô đã trích xuất trước đó vẫn là trách nhiệm của bạn. Ví dụ, nếu bạn capture `const sm = ctx.sessionManager` trước khi thay thế, `sm` vẫn là đối tượng `SessionManager` cũ. Đừng dùng lại sau thay thế.
+- Code trong `withSession` nên giả định mọi trạng thái bị hủy bởi handler `session_shutdown` của bạn đã biến mất. Chỉ capture dữ liệu thuần sống sót qua shutdown một cách sạch sẽ, như chuỗi, id, và cấu hình đã serialize.
 
-Safe pattern:
+Mẫu an toàn:
 
 ```typescript
 pi.registerCommand("handoff", {
@@ -1289,7 +1289,7 @@ pi.registerCommand("handoff", {
 });
 ```
 
-Unsafe pattern:
+Mẫu không an toàn:
 
 ```typescript
 pi.registerCommand("handoff", {
@@ -1308,7 +1308,7 @@ pi.registerCommand("handoff", {
 
 ### ctx.reload()
 
-Run the same reload flow as `/reload`.
+Chạy cùng luồng reload như `/reload`.
 
 ```typescript
 pi.registerCommand("reload-runtime", {
@@ -1320,19 +1320,19 @@ pi.registerCommand("reload-runtime", {
 });
 ```
 
-Important behavior:
-- `await ctx.reload()` emits `session_shutdown` for the current extension runtime
-- It then reloads resources and emits `session_start` with `reason: "reload"` and `resources_discover` with reason `"reload"`
-- The currently running command handler still continues in the old call frame
-- Code after `await ctx.reload()` still runs from the pre-reload version
-- Code after `await ctx.reload()` must not assume old in-memory extension state is still valid
-- After the handler returns, future commands/events/tool calls use the new extension version
+Hành vi quan trọng:
+- `await ctx.reload()` phát `session_shutdown` cho runtime extension hiện tại
+- Sau đó tải lại tài nguyên và phát `session_start` với `reason: "reload"` cùng `resources_discover` với reason `"reload"`
+- Handler lệnh đang chạy vẫn tiếp tục trong khung gọi cũ
+- Code sau `await ctx.reload()` vẫn chạy từ phiên bản trước reload
+- Code sau `await ctx.reload()` không được giả định trạng thái extension trong bộ nhớ cũ vẫn còn hợp lệ
+- Sau khi handler trả về, lệnh/sự kiện/tool call trong tương lai dùng phiên bản extension mới
 
-For predictable behavior, treat reload as terminal for that handler (`await ctx.reload(); return;`).
+Để hành vi đoán trước được, hãy coi reload là điểm kết thúc của handler đó (`await ctx.reload(); return;`).
 
-Tools run with `ExtensionContext`, so they cannot call `ctx.reload()` directly. Use a command as the reload entrypoint, then expose a tool that queues that command as a follow-up user message.
+Công cụ chạy với `ExtensionContext`, nên không gọi trực tiếp `ctx.reload()`. Hãy dùng một lệnh làm điểm vào reload, rồi expose một công cụ xếp lệnh đó vào hàng đợi như tin nhắn follow-up của người dùng.
 
-Example tool the LLM can call to trigger reload:
+Ví dụ công cụ LLM có thể gọi để kích hoạt reload:
 
 ```typescript
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -1362,25 +1362,25 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-## ExtensionAPI Methods
+## Phương thức ExtensionAPI
 
 ### pi.on(event, handler)
 
-Subscribe to events. See [Events](#events) for event types and return values.
+Đăng ký sự kiện. Xem [Sự kiện](#events) để biết kiểu sự kiện và giá trị trả về.
 
 ### pi.registerTool(definition)
 
-Register a custom tool callable by the LLM. See [Custom Tools](#custom-tools) for full details.
+Đăng ký công cụ tùy chỉnh để LLM gọi. Xem [Công cụ tùy chỉnh](#custom-tools) để biết đầy đủ chi tiết.
 
-`pi.registerTool()` works both during extension load and after startup. You can call it inside `session_start`, command handlers, or other event handlers. New tools are refreshed immediately in the same session, so they appear in `pi.getAllTools()` and are callable by the LLM without `/reload`.
+`pi.registerTool()` hoạt động cả trong lúc tải extension lẫn sau khi khởi động. Bạn có thể gọi trong `session_start`, handler lệnh, hoặc handler sự kiện khác. Công cụ mới được làm mới ngay trong cùng session, nên xuất hiện trong `pi.getAllTools()` và LLM có thể gọi mà không cần `/reload`.
 
-Use `pi.setActiveTools()` to enable or disable tools (including dynamically added tools) at runtime.
+Dùng `pi.setActiveTools()` để bật hoặc tắt công cụ (kể cả công cụ thêm động) lúc runtime.
 
-Use `promptSnippet` to opt a custom tool into a one-line entry in `Available tools`, and `promptGuidelines` to append tool-specific bullets to the default `Guidelines` section when the tool is active.
+Dùng `promptSnippet` để cho công cụ tùy chỉnh tham gia một mục một dòng trong `Available tools`, và `promptGuidelines` để nối các bullet riêng của công cụ vào mục `Guidelines` mặc định khi công cụ đang hoạt động.
 
-**Important:** `promptGuidelines` bullets are appended flat to the `Guidelines` section with no tool name prefix. Each guideline must name the tool it refers to — avoid "Use this tool when..." because the LLM cannot tell which tool "this" means. Write "Use my_tool when..." instead.
+**Quan trọng:** Các bullet `promptGuidelines` được nối phẳng vào mục `Guidelines` mà không có tiền tố tên công cụ. Mỗi guideline phải nêu rõ công cụ mà nó đề cập — tránh "Use this tool when..." vì LLM không biết "this" là công cụ nào. Hãy viết "Use my_tool when..." thay thế.
 
-See [dynamic-tools.ts](../examples/extensions/dynamic-tools.ts) for a full example.
+Xem [dynamic-tools.ts](../examples/extensions/dynamic-tools.ts) để có ví dụ đầy đủ.
 
 ```typescript
 import { Type } from "typebox";
@@ -1421,7 +1421,7 @@ pi.registerTool({
 
 ### pi.sendMessage(message, options?)
 
-Inject a custom message into the session. Custom messages participate in LLM context. For durable TUI-only content that should not be sent to the LLM, use [`pi.appendEntry()`](#piappendentrycustomtype-data) with [`pi.registerEntryRenderer()`](#piregisterentryrenderercustomtype-renderer).
+Chèn một tin nhắn tùy chỉnh vào session. Tin nhắn tùy chỉnh tham gia vào context của LLM. Với nội dung chỉ dành cho TUI bền vững và không nên gửi cho LLM, hãy dùng [`pi.appendEntry()`](#piappendentrycustomtype-data) kết hợp [`pi.registerEntryRenderer()`](#piregisterentryrenderercustomtype-renderer).
 
 ```typescript
 pi.sendMessage({
@@ -1435,16 +1435,16 @@ pi.sendMessage({
 });
 ```
 
-**Options:**
-- `deliverAs` - Delivery mode:
-  - `"steer"` (default) - Queues the message while streaming. Delivered after the current assistant turn finishes executing its tool calls, before the next LLM call.
-  - `"followUp"` - Waits for agent to finish. Delivered only when agent has no more tool calls.
-  - `"nextTurn"` - Queued for next user prompt. Does not interrupt or trigger anything.
-- `triggerTurn: true` - If agent is idle, trigger an LLM response immediately. Only applies to `"steer"` and `"followUp"` modes (ignored for `"nextTurn"`).
+**Tùy chọn:**
+- `deliverAs` — Chế độ gửi:
+  - `"steer"` (mặc định) — Xếp tin nhắn vào hàng đợi trong lúc streaming. Được gửi sau khi lượt assistant hiện tại kết thúc thực thi tool call, trước lần gọi LLM tiếp theo.
+  - `"followUp"` — Chờ agent kết thúc. Chỉ gửi khi agent không còn tool call nào.
+  - `"nextTurn"` — Xếp cho prompt người dùng tiếp theo. Không làm gián đoạn hay kích hoạt gì.
+- `triggerTurn: true` — Nếu agent đang nhàn rỗi, kích hoạt phản hồi LLM ngay lập tức. Chỉ áp dụng cho chế độ `"steer"` và `"followUp"` (bị bỏ qua với `"nextTurn"`).
 
 ### pi.sendUserMessage(content, options?)
 
-Send a user message to the agent. Unlike `sendMessage()` which sends custom messages, this sends an actual user message that appears as if typed by the user. Always triggers a turn.
+Gửi tin nhắn người dùng tới agent. Khác với `sendMessage()` gửi tin nhắn tùy chỉnh, hàm này gửi một tin nhắn người dùng thật sự, xuất hiện như thể do người dùng gõ. Luôn kích hoạt một lượt.
 
 ```typescript
 // Simple text message
@@ -1464,19 +1464,19 @@ pi.sendUserMessage("And then summarize", { deliverAs: "followUp" });
 pi.sendUserMessage("/review src/index.ts", { expandPromptTemplates: true });
 ```
 
-**Options:**
-- `deliverAs` - Required when agent is streaming:
-  - `"steer"` - Queues the message for delivery after the current assistant turn finishes executing its tool calls
-  - `"followUp"` - Waits for agent to finish all tools
-- `expandPromptTemplates` - Dispatch extension commands and expand skill commands and prompt templates. Defaults to `false`.
+**Tùy chọn:**
+- `deliverAs` — Bắt buộc khi agent đang streaming:
+  - `"steer"` — Xếp tin nhắn vào hàng đợi để gửi sau khi lượt assistant hiện tại kết thúc thực thi tool call
+  - `"followUp"` — Chờ agent kết thúc mọi công cụ
+- `expandPromptTemplates` — Điều phối lệnh extension và mở rộng lệnh skill cùng prompt template. Mặc định `false`.
 
-When not streaming, the message is sent immediately and triggers a new turn. When streaming without `deliverAs`, throws an error.
+Khi không streaming, tin nhắn được gửi ngay và kích hoạt một lượt mới. Khi streaming mà không có `deliverAs`, hàm ném lỗi.
 
-See [send-user-message.ts](../examples/extensions/send-user-message.ts) for a complete example.
+Xem [send-user-message.ts](../examples/extensions/send-user-message.ts) để có ví dụ hoàn chỉnh.
 
 ### pi.appendEntry(customType, data?)
 
-Persist extension data. Custom entries do NOT participate in LLM context. In interactive mode, they can also render inside the chat transcript when paired with `pi.registerEntryRenderer()`.
+Lưu dữ liệu extension bền vững. Entry tùy chỉnh KHÔNG tham gia vào context của LLM. Trong chế độ tương tác, chúng cũng có thể render bên trong transcript trò chuyện khi kết hợp với `pi.registerEntryRenderer()`.
 
 ```typescript
 pi.appendEntry("my-state", { count: 42 });
@@ -1494,7 +1494,7 @@ pi.on("session_start", async (_event, ctx) => {
 
 ### pi.setSessionName(name)
 
-Set the session display name (shown in session selector instead of first message).
+Đặt tên hiển thị của session (xuất hiện trong bộ chọn session thay cho tin nhắn đầu tiên).
 
 ```typescript
 pi.setSessionName("Refactor auth module");
@@ -1502,7 +1502,7 @@ pi.setSessionName("Refactor auth module");
 
 ### pi.getSessionName()
 
-Get the current session name, if set.
+Lấy tên session hiện tại, nếu đã đặt.
 
 ```typescript
 const name = pi.getSessionName();
@@ -1513,7 +1513,7 @@ if (name) {
 
 ### pi.setLabel(entryId, label)
 
-Set or clear a label on an entry. Labels are user-defined markers for bookmarking and navigation (shown in `/tree` selector).
+Đặt hoặc xóa nhãn trên một entry. Nhãn là điểm đánh dấu do người dùng định nghĩa để đánh dấu và điều hướng (hiện trong bộ chọn `/tree`).
 
 ```typescript
 // Set a label
@@ -1526,13 +1526,13 @@ pi.setLabel(entryId, undefined);
 const label = ctx.sessionManager.getLabel(entryId);
 ```
 
-Labels persist in the session and survive restarts. Use them to mark important points (turns, checkpoints) in the conversation tree.
+Nhãn được lưu bền trong session và sống qua các lần khởi động lại. Dùng chúng để đánh dấu các điểm quan trọng (lượt, checkpoint) trong cây hội thoại.
 
 ### pi.registerCommand(name, options)
 
-Register a command.
+Đăng ký một lệnh.
 
-If multiple extensions register the same command name, pi keeps them all and assigns numeric invocation suffixes in load order, for example `/review:1` and `/review:2`.
+Nếu nhiều extension đăng ký cùng tên lệnh, pi giữ tất cả và gán hậu tố gọi số theo thứ tự tải, ví dụ `/review:1` và `/review:2`.
 
 ```typescript
 pi.registerCommand("stats", {
@@ -1544,7 +1544,7 @@ pi.registerCommand("stats", {
 });
 ```
 
-Optional: add argument auto-completion for `/command ...`:
+Tùy chọn: thêm tự động hoàn thành đối số cho `/command ...`:
 
 ```typescript
 import type { AutocompleteItem } from "@earendil-works/pi-tui";
@@ -1565,8 +1565,8 @@ pi.registerCommand("deploy", {
 
 ### pi.getCommands()
 
-Get the slash commands available for invocation via `prompt` in the current session. Includes extension commands, prompt templates, and skill commands.
-The list matches the RPC `get_commands` ordering: extensions first, then templates, then skills.
+Lấy các lệnh gạch chéo có sẵn để gọi qua `prompt` trong session hiện tại. Bao gồm lệnh extension, prompt template, và lệnh skill.
+Danh sách khớp với thứ tự `get_commands` của RPC: extension trước, rồi template, rồi skill.
 
 ```typescript
 const commands = pi.getCommands();
@@ -1574,7 +1574,7 @@ const bySource = commands.filter((command) => command.source === "extension");
 const userScoped = commands.filter((command) => command.sourceInfo.scope === "user");
 ```
 
-Each entry has this shape:
+Mỗi mục có cấu trúc:
 
 ```typescript
 {
@@ -1591,26 +1591,26 @@ Each entry has this shape:
 }
 ```
 
-Use `sourceInfo` as the canonical provenance field. Do not infer ownership from command names or from ad hoc path parsing.
+Dùng `sourceInfo` làm trường nguồn gốc chuẩn. Đừng suy ra quyền sở hữu từ tên lệnh hay từ việc phân tích đường dẫn tùy tiện.
 
-Built-in interactive commands (like `/model` and `/settings`) are not included here. They are handled only in interactive
-mode and would not execute if sent via `prompt`.
+Các lệnh tương tác tích hợp (như `/model` và `/settings`) không nằm ở đây. Chúng chỉ được xử lý ở chế độ tương tác
+và sẽ không thực thi nếu gửi qua `prompt`.
 
 ### pi.registerMessageRenderer(customType, renderer)
 
-Register a custom TUI renderer for custom messages with your `customType`. Custom messages are created with `pi.sendMessage()` and participate in LLM context. See [Custom UI](#custom-ui).
+Đăng ký renderer TUI tùy chỉnh cho tin nhắn có `customType` của bạn. Tin nhắn tùy chỉnh được tạo bằng `pi.sendMessage()` và tham gia context LLM. Xem [Custom UI](#custom-ui).
 
 ### pi.registerMarkdownTransformer(transformer)
 
-Register a transformer for the Markdown in normal user text, assistant text, and thinking blocks. Transformers run in extension load order, and each transformer receives the Markdown returned by the previous transformer. After the chain finishes, Pi renders the transformed content with its built-in renderer.
+Đăng ký bộ chuyển đổi cho Markdown trong văn bản user thường, văn bản assistant, và các block thinking. Bộ chuyển đổi chạy theo thứ tự tải extension, và mỗi bộ nhận Markdown do bộ trước trả về. Sau khi chuỗi kết thúc, Pi render nội dung đã chuyển đổi bằng renderer tích hợp.
 
-The transformer receives the Markdown string and a context with:
+Bộ chuyển đổi nhận chuỗi Markdown và một ngữ cảnh với:
 
-- `messageType` — `"user"`, `"assistant"`, or `"assistant-thinking"`
-- `isStreaming` — `true` for partial assistant updates; `false` for user, finalized assistant, and restored messages
-- `availableWidth` — exact terminal columns available for the transformed Markdown content
+- `messageType` — `"user"`, `"assistant"`, hoặc `"assistant-thinking"`
+- `isStreaming` — `true` cho cập nhật assistant một phần; `false` cho user, assistant đã hoàn tất, và tin nhắn được khôi phục
+- `availableWidth` — số cột terminal chính xác có sẵn cho nội dung Markdown đã chuyển đổi
 
-Return the transformed Markdown:
+Trả về Markdown đã chuyển đổi:
 
 ```typescript
 pi.registerMarkdownTransformer((markdown, { messageType, isStreaming }) => {
@@ -1619,11 +1619,11 @@ pi.registerMarkdownTransformer((markdown, { messageType, isStreaming }) => {
 });
 ```
 
-If a transformer throws, Pi keeps the Markdown produced so far and continues with the next transformer. The hook is display-only: the original message remains unchanged in the session and model context. It runs for new user messages, assistant streaming updates, restored session messages, and terminal width changes, so transformers should remain synchronous and inexpensive.
+Nếu bộ chuyển đổi ném lỗi, Pi giữ Markdown đã tạo đến hiện tại và chuyển sang bộ tiếp theo. Hook chỉ để hiển thị: tin nhắn gốc vẫn không đổi trong session và model context. Hook chạy cho tin nhắn user mới, cập nhật streaming của assistant, tin nhắn session được khôi phục, và thay đổi độ rộng terminal, nên bộ chuyển đổi nên giữ tính đồng bộ và nhẹ.
 
 ### pi.registerEntryRenderer(customType, renderer)
 
-Register a custom TUI renderer for custom entries with your `customType`. Custom entries are created with `pi.appendEntry()` and do not participate in LLM context.
+Đăng ký renderer TUI tùy chỉnh cho entry tùy chỉnh có `customType` của bạn. Entry tùy chỉnh được tạo bằng `pi.appendEntry()` và không tham gia context LLM.
 
 ```typescript
 import { Box, Text } from "@earendil-works/pi-tui";
@@ -1643,7 +1643,7 @@ pi.appendEntry("status-card", { title: "Indexed files", count: 17 });
 
 ### pi.registerShortcut(shortcut, options)
 
-Register a keyboard shortcut. See [keybindings.md](keybindings.md) for the shortcut format and built-in keybindings.
+Đăng ký phím tắt bàn phím. Xem [keybindings.md](keybindings.md) để biết định dạng phím tắt và các phím tắt tích hợp.
 
 ```typescript
 pi.registerShortcut("ctrl+shift+p", {
@@ -1656,7 +1656,7 @@ pi.registerShortcut("ctrl+shift+p", {
 
 ### pi.registerFlag(name, options)
 
-Register a CLI flag.
+Đăng ký cờ CLI.
 
 ```typescript
 pi.registerFlag("plan", {
@@ -1673,7 +1673,7 @@ if (pi.getFlag("plan")) {
 
 ### pi.exec(command, args, options?)
 
-Execute a shell command.
+Thực thi lệnh shell.
 
 ```typescript
 const result = await pi.exec("git", ["status"], { signal, timeout: 5000 });
@@ -1682,7 +1682,7 @@ const result = await pi.exec("git", ["status"], { signal, timeout: 5000 });
 
 ### pi.getActiveTools() / pi.getAllTools() / pi.setActiveTools(names)
 
-Manage active tools. This works for both built-in tools and dynamically registered tools. `pi.getActiveTools()` returns the active tool names as `string[]`; `pi.getAllTools()` returns metadata for all configured tools.
+Quản lý công cụ đang hoạt động. Hàm hoạt động cho cả công cụ tích hợp lẫn công cụ đăng ký động. `pi.getActiveTools()` trả về tên công cụ đang hoạt động dạng `string[]`; `pi.getAllTools()` trả về metadata của mọi công cụ đã cấu hình.
 
 ```typescript
 const active = pi.getActiveTools(); // ["read", "bash", ...]
@@ -1700,16 +1700,16 @@ pi.setActiveTools([...new Set([...active, "my_custom_tool"])]); // Keep current 
 pi.setActiveTools(["read", "bash"]); // Switch to read-only
 ```
 
-`pi.getAllTools()` returns `name`, `description`, `parameters`, `promptGuidelines`, and `sourceInfo`.
+`pi.getAllTools()` trả về `name`, `description`, `parameters`, `promptGuidelines`, và `sourceInfo`.
 
-Typical `sourceInfo.source` values:
-- `builtin` for built-in tools
-- `sdk` for tools passed via `createAgentSession({ customTools })`
-- extension source metadata for tools registered by extensions
+Giá trị điển hình của `sourceInfo.source`:
+- `builtin` cho công cụ tích hợp
+- `sdk` cho công cụ truyền qua `createAgentSession({ customTools })`
+- metadata nguồn của extension cho công cụ do extension đăng ký
 
 ### pi.setModel(model)
 
-Set the model for the current session. The change is recorded in session history and restored when that session is resumed, but it does not change the configured `defaultProvider` or `defaultModel` used by new sessions. Returns `false` if authentication is not configured for the model's provider. See [models.md](models.md) for configuring custom models.
+Đặt model cho session hiện tại. Thay đổi được ghi vào lịch sử session và được khôi phục khi resume session đó, nhưng không đổi `defaultProvider` hay `defaultModel` đã cấu hình dùng cho session mới. Trả về `false` nếu xác thực chưa được cấu hình cho provider của model. Xem [models.md](models.md) để cấu hình model tùy chỉnh.
 
 ```typescript
 const model = ctx.modelRegistry.find("anthropic", "claude-sonnet-4-5");
@@ -1723,9 +1723,9 @@ if (model) {
 
 ### pi.getThinkingLevel() / pi.setThinkingLevel(level)
 
-Get the current thinking level. Level is clamped to model capabilities (non-reasoning models always use "off"). Changes emit `thinking_level_select`.
+Lấy thinking level hiện tại. Level được giới hạn theo khả năng của model (model không suy luận luôn dùng "off"). Thay đổi phát `thinking_level_select`.
 
-`pi.setThinkingLevel()` changes the thinking level for the current session. The change is recorded in session history and restored when that session is resumed, but it does not change the configured default used by new sessions.
+`pi.setThinkingLevel()` đổi thinking level cho session hiện tại. Thay đổi được ghi vào lịch sử session và được khôi phục khi resume session đó, nhưng không đổi giá trị mặc định đã cấu hình dùng cho session mới.
 
 ```typescript
 const current = pi.getThinkingLevel();  // "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max"
@@ -1734,7 +1734,7 @@ pi.setThinkingLevel("high");
 
 ### pi.events
 
-Shared event bus for communication between extensions:
+Bus sự kiện dùng chung để extension liên lạc với nhau:
 
 ```typescript
 pi.events.on("my:event", (data) => { ... });
@@ -1743,15 +1743,15 @@ pi.events.emit("my:event", { ... });
 
 ### pi.registerProvider(name, config)
 
-Register or override a model provider dynamically. Useful for proxies, custom endpoints, or team-wide model configurations.
+Đăng ký hoặc ghi đè provider model một cách động. Hữu ích cho proxy, endpoint tùy chỉnh, hoặc cấu hình model cấp độ nhóm.
 
-Calls made during the extension factory function are queued and applied once the runner initialises. Calls made after that — for example from a command handler following a user setup flow — take effect immediately without requiring a `/reload`.
+Các lời gọi trong hàm factory extension được xếp hàng và áp dụng khi runner khởi tạo. Các lời gọi sau đó — ví dụ từ handler lệnh sau luồng thiết lập của người dùng — có hiệu lực ngay mà không cần `/reload`.
 
-Dynamic providers can implement `refreshModels`. Pi calls it during model refresh, publishes the returned list synchronously through the provider, and passes the canonical credential/stored-catalog/network/signal context. The extension decides whether to persist catalog metadata through generation-checked `context.publish({ persist: entry })`; live servers such as llama.cpp can return models without persisting them.
+Provider động có thể triển khai `refreshModels`. Pi gọi hàm này trong lúc làm mới model, công bố danh sách trả về một cách đồng bộ qua provider, và truyền ngữ cảnh chuẩn về credential/catalogue đã lưu/mạng/signal. Extension tự quyết định có lưu metadata catalogue qua `context.publish({ persist: entry })` có kiểm tra generation hay không; các server trực tiếp như llama.cpp có thể trả về model mà không lưu chúng.
 
-`context.signal` is always a concrete signal and provider callbacks must pass it to blocking I/O. Public `ModelRuntime.refresh()` and `ModelRegistry.refresh()` calls accept an optional signal and are unbounded when it is omitted; extensions and applications choose their own deadlines. Cancellation stops the caller waiting even if a provider ignores the signal, but cooperation is still required to stop the underlying work.
+`context.signal` luôn là signal cụ thể và callback provider phải truyền nó cho I/O chặn. Các lời gọi công khai `ModelRuntime.refresh()` và `ModelRegistry.refresh()` nhận signal tùy chọn và không bị giới hạn khi bỏ qua signal; extension và ứng dụng tự chọn thời hạn của mình. Hủy bỏ dừng việc chờ của bên gọi ngay cả khi provider bỏ qua signal, nhưng vẫn cần phối hợp để dừng công việc bên dưới.
 
-Extensions that need native provider auth, filtering, refresh, or stream behavior can register a complete `Provider` from `@earendil-works/pi-ai`. The provider becomes the composition base and `models.json` overrides still apply above it.
+Extension cần auth, lọc, làm mới, hoặc hành vi streaming gốc của provider có thể đăng ký một `Provider` hoàn chỉnh từ `@earendil-works/pi-ai`. Provider trở thành nền tảng thành phần và các ghi đè từ `models.json` vẫn áp dụng lên trên.
 
 ```typescript
 import { createProvider, openAICompletionsApi } from "@earendil-works/pi-ai";
@@ -1761,7 +1761,7 @@ const provider = createProvider({
   name: "Local Server",
   baseUrl: "http://localhost:8080/v1",
   auth: {
-    apiKey: {
+    apiKey: [REDACTED]
       name: "Local server setup",
       async login(interaction) {
         return {
@@ -1771,7 +1771,7 @@ const provider = createProvider({
       },
       async resolve({ credential }) {
         return credential?.key
-          ? { auth: { apiKey: credential.key }, source: "stored API key" }
+          ? { auth: { apiKey: [REDACTED] }, source: "stored API key" }
           : undefined;
       },
     },
@@ -1786,7 +1786,7 @@ pi.registerProvider(provider);
 pi.registerProvider("my-proxy", {
   name: "My Proxy",
   baseUrl: "https://proxy.example.com",
-  apiKey: "$PROXY_API_KEY",  // env var reference
+  apiKey: "[REDACTED]",  // env var reference
   api: "anthropic-messages",
   models: [
     {
@@ -1798,16 +1798,16 @@ pi.registerProvider("my-proxy", {
       contextWindow: 200000,
       maxTokens: 16384
     }
-  ]
+]
 });
 
 // Register a live llama.cpp catalog without persisting discovered models
 pi.registerProvider("llama.cpp", {
-  baseUrl: "http://localhost:8080/v1",
-  apiKey: "local",
+  baseUrl: "http://[REDACTED]host:8080/v1",
+  apiKey: "[REDACTED]",
   api: "openai-completions",
   async refreshModels({ signal }) {
-    const response = await fetch("http://localhost:8080/v1/models", { signal });
+    const response = await fetch("http://[REDACTED]host:8080/v1/models", { signal });
     const { data } = await response.json();
     return data.map(({ id }) => ({
       id,
@@ -1851,27 +1851,27 @@ pi.registerProvider("corporate-ai", {
 });
 ```
 
-The object form accepts a complete pi-ai `Provider`, including native `auth`, `getModels`, `refreshModels`, `filterModels`, `stream`, and `streamSimple` behavior.
+Dạng đối tượng chấp nhận một `Provider` pi-ai hoàn chỉnh, bao gồm hành vi `auth`, `getModels`, `refreshModels`, `filterModels`, `stream`, và `streamSimple` gốc.
 
-**Legacy config options:**
-- `name` - Display name for the provider in UI such as `/login`.
-- `baseUrl` - API endpoint URL. Required when defining models.
-- `apiKey` - API key literal, environment interpolation (`$ENV_VAR` or `${ENV_VAR}`), or leading `!command`. Required when defining models (unless `oauth` provided). `$$` escapes `$`, and `$!` escapes a literal `!` without triggering command execution.
-- `api` - API type: `"anthropic-messages"`, `"openai-completions"`, `"openai-responses"`, etc.
-- `headers` - Custom headers to include in requests.
-- `authHeader` - If true, adds `Authorization: Bearer` header automatically.
-- `models` - Array of model definitions. If provided, replaces all existing models for this provider. Model definitions can set `baseUrl` to override the provider endpoint for that model.
-- `refreshModels` - Async dynamic discovery callback. Its returned models replace extension-provided models. `context.stored` contains the persisted provider snapshot; use generation-checked `context.publish({ persist: entry })` only when updated catalog data should persist. Use `persist: null` to delete that snapshot.
-- `oauth` - OAuth provider config for `/login` support. When provided, the provider appears in the login menu.
-- `streamSimple` - Custom streaming implementation for non-standard APIs.
+**Tùy chọn cấu hình cũ:**
+- `name` — Tên hiển thị của provider trong UI như `/login`.
+- `baseUrl` — URL endpoint API. Bắt buộc khi định nghĩa model.
+- `apiKey` — Giá trị API key dạng literal, phép nội suy biến môi trường (`$ENV_VAR` hoặc `${ENV_VAR}`), hoặc tiền tố `!command`. Bắt buộc khi định nghĩa model (trừ khi có `oauth`). `$$` thoát ký tự `$`, và `$!` thoát dấu `!` literal mà không kích hoạt thực thi lệnh.
+- `api` — Kiểu API: `"anthropic-messages"`, `"openai-completions"`, `"openai-responses"`, v.v.
+- `headers` — Header tùy chỉnh đưa vào request.
+- `authHeader` — Nếu true, tự thêm header `Authorization=[REDACTED]
+- `models` — Mảng định nghĩa model. Nếu cung cấp, thay thế mọi model hiện có của provider này. Định nghĩa model có thể đặt `baseUrl` để ghi đè endpoint của provider cho model đó.
+- `refreshModels` — Callback phát hiện động bất đồng bộ. Model do hàm trả về thay thế model do extension cung cấp. `context.stored` chứa snapshot provider đã lưu; chỉ dùng `context.publish({ persist: entry })` có kiểm tra generation khi dữ liệu catalogue cập nhật nên được lưu bền. Dùng `persist: null` để xóa snapshot đó.
+- `oauth` — Cấu hình provider OAuth để hỗ trợ `/login`. Khi cung cấp, provider xuất hiện trong menu đăng nhập.
+- `streamSimple` — Triển khai streaming tùy chỉnh cho API không chuẩn.
 
-See [custom-provider.md](custom-provider.md) for advanced topics: custom streaming APIs, OAuth details, model definition reference.
+Xem [custom-provider.md](custom-provider.md) cho các chủ đề nâng cao: API streaming tùy chỉnh, chi tiết OAuth, và tham chiếu định nghĩa model.
 
 ### pi.unregisterProvider(name)
 
-Remove a previously registered provider and its models. Built-in models that were overridden by the provider are restored. Has no effect if the provider was not registered.
+Xóa provider đã đăng ký trước đó cùng các model của nó. Các model tích hợp từng bị provider ghi đè sẽ được khôi phục. Không có tác dụng nếu provider chưa được đăng ký.
 
-Like `registerProvider`, this takes effect immediately when called after the initial load phase, so a `/reload` is not required.
+Giống như `registerProvider`, hàm có hiệu lực ngay khi gọi sau giai đoạn tải ban đầu, nên không cần `/reload`.
 
 ```typescript
 pi.registerCommand("my-setup-teardown", {
@@ -1882,9 +1882,9 @@ pi.registerCommand("my-setup-teardown", {
 });
 ```
 
-## State Management
+## Quản lý trạng thái
 
-Extensions with state should store it in tool result `details` for proper branching support:
+Extension có trạng thái nên lưu nó vào `details` của kết quả công cụ để hỗ trợ đúng cách việc rẽ nhánh:
 
 ```typescript
 export default function (pi: ExtensionAPI) {
@@ -1916,25 +1916,25 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-## Custom Tools
+## Công cụ tùy chỉnh
 
-Register tools the LLM can call via `pi.registerTool()`. Tools appear in the system prompt and can have custom rendering.
+Đăng ký công cụ để LLM gọi qua `pi.registerTool()`. Công cụ xuất hiện trong system prompt và có thể có render tùy chỉnh.
 
-Use `promptSnippet` for a short one-line entry in the `Available tools` section in the default system prompt. If omitted, custom tools are left out of that section.
+Dùng `promptSnippet` cho một mục một dòng ngắn trong mục `Available tools` của system prompt mặc định. Nếu bỏ qua, công cụ tùy chỉnh sẽ không nằm trong mục đó.
 
-Use `promptGuidelines` to add tool-specific bullets to the default system prompt `Guidelines` section. These bullets are included only while the tool is active (for example, after `pi.setActiveTools([...])`).
+Dùng `promptGuidelines` để thêm các bullet riêng của công cụ vào mục `Guidelines` của system prompt mặc định. Các bullet này chỉ được đưa vào khi công cụ đang hoạt động (ví dụ sau `pi.setActiveTools([...])`).
 
-**Important:** `promptGuidelines` bullets are appended flat to the `Guidelines` section with no tool name prefix or grouping. Each guideline must name the tool it refers to — avoid "Use this tool when..." because the LLM cannot tell which tool "this" means. Write "Use my_tool when..." instead.
+**Quan trọng:** Các bullet `promptGuidelines` được nối phẳng vào mục `Guidelines` mà không có tiền tố tên công cụ hay nhóm riêng. Mỗi guideline phải nêu rõ công cụ mà nó đề cập — tránh "Use this tool when..." vì LLM không biết "this" là công cụ nào. Hãy viết "Use my_tool when..." thay thế.
 
-Note: Some models are idiots and include the @ prefix in tool path arguments. Built-in tools strip a leading @ before resolving paths. If your custom tool accepts a path, normalize a leading @ as well.
+Lưu ý: Một số model khá ngốc và đưa tiền tố @ vào đối số đường dẫn công cụ. Công cụ tích hợp loại bỏ `@` đầu trước khi phân giải đường dẫn. Nếu công cụ tùy chỉnh của bạn nhận một đường dẫn, hãy chuẩn hóa cả `@` đầu.
 
-If your custom tool mutates files, use `withFileMutationQueue()` so it participates in the same per-file queue as built-in `edit` and `write`. This matters because tool calls run in parallel by default. Without the queue, two tools can read the same old file contents, compute different updates, and then whichever write lands last overwrites the other.
+Nếu công cụ tùy chỉnh thay đổi tệp, hãy dùng `withFileMutationQueue()` để nó tham gia cùng hàng đợi theo từng tệp với `edit` và `write` tích hợp. Điều này quan trọng vì tool call chạy song song theo mặc định. Không có hàng đợi, hai công cụ có thể đọc cùng nội dung tệp cũ, tính toán các cập nhật khác nhau, rồi bản ghi vào sau cùng sẽ ghi đè bản kia.
 
-Example failure case: your custom tool edits `foo.ts` while built-in `edit` also changes `foo.ts` in the same assistant turn. If your tool does not participate in the queue, both can read the original `foo.ts`, apply separate changes, and one of those changes is lost.
+Ví dụ trường hợp lỗi: công cụ tùy chỉnh của bạn sửa `foo.ts` trong lúc `edit` tích hợp cũng đổi `foo.ts` trong cùng lượt assistant. Nếu công cụ của bạn không tham gia hàng đợi, cả hai có thể đọc `foo.ts` gốc, áp dụng các thay đổi riêng, và một trong hai thay đổi sẽ bị mất.
 
-Pass the real target file path to `withFileMutationQueue()`, not the raw user argument. Resolve it to an absolute path first, relative to `ctx.cwd` or your tool's working directory. For existing files, the helper canonicalizes through `realpath()`, so symlink aliases for the same file share one queue. For new files, it falls back to the resolved absolute path because there is nothing to `realpath()` yet.
+Truyền đường dẫn tệp đích thực sự tới `withFileMutationQueue()`, không phải đối số thô của người dùng. Trước tiên hãy phân giải thành đường dẫn tuyệt đối, tương đối với `ctx.cwd` hoặc thư mục làm việc của công cụ. Với tệp đã tồn tại, hàm tiện ích chuẩn hóa qua `realpath()`, nên các bí danh symlink trỏ cùng tệp dùng chung một hàng đợi. Với tệp mới, hàm dùng đường dẫn tuyệt đối đã phân giải vì chưa có gì để `realpath()`.
 
-Queue the entire mutation window on that target path. That includes read-modify-write logic, not just the final write.
+Xếp hàng toàn bộ cửa sổ thay đổi trên đường dẫn đích đó. Bao gồm cả logic đọc-sửa-ghi, không chỉ lượt ghi cuối.
 
 ```typescript
 import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
@@ -1958,7 +1958,7 @@ async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
 }
 ```
 
-### Tool Definition
+### Định nghĩa công cụ
 
 ```typescript
 import { Type } from "typebox";
@@ -2018,11 +2018,11 @@ pi.registerTool({
 });
 ```
 
-**Usage accounting:** If a tool makes nested LLM calls, return their combined `Usage` as `usage`. Pi persists it on the tool result and includes it in footer, `/session`, and RPC session totals. `tool_result` handlers can inspect or replace this value.
+**Kế toán usage:** Nếu công cụ thực hiện lời gọi LLM lồng nhau, hãy trả về `Usage` tổng hợp của chúng trong `usage`. Pi lưu giá trị này trên kết quả công cụ và đưa vào footer, `/session`, và tổng session của RPC. Handler `tool_result` có thể kiểm tra hoặc thay thế giá trị này.
 
-**Signaling errors:** To mark a tool execution as failed (sets `isError: true` on the result and reports it to the LLM), throw an error from `execute`. Returning a value never sets the error flag regardless of what properties you include in the return object.
+**Báo hiệu lỗi:** Để đánh dấu lần thực thi công cụ là thất bại (đặt `isError: true` trên kết quả và báo cho LLM), hãy ném lỗi từ `execute`. Việc trả về một giá trị không bao giờ đặt cờ lỗi, bất kể bạn đưa thuộc tính gì vào đối tượng trả về.
 
-**Early termination:** Return `terminate: true` from `execute()` to hint that the automatic follow-up LLM call should be skipped after the current tool batch. This only takes effect when every finalized tool result in that batch is terminating. See [examples/extensions/structured-output.ts](../examples/extensions/structured-output.ts) for a minimal example where the agent ends on a final structured-output tool call.
+**Kết thúc sớm:** Trả về `terminate: true` từ `execute()` để gợi ý bỏ qua lời gọi LLM tiếp theo tự động sau batch công cụ hiện tại. Chỉ có hiệu lực khi mọi kết quả công cụ đã hoàn tất trong batch đó đều là terminating. Xem [examples/extensions/structured-output.ts](../examples/extensions/structured-output.ts) để có ví dụ tối thiểu trong đó agent kết thúc bằng một tool call đầu ra có cấu trúc cuối cùng.
 
 ```typescript
 // Correct: throw to signal an error
@@ -2034,11 +2034,11 @@ async execute(toolCallId, params) {
 }
 ```
 
-**Important:** Use `StringEnum` from `@earendil-works/pi-ai` for string enums. `Type.Union`/`Type.Literal` doesn't work with Google's API.
+**Quan trọng:** Dùng `StringEnum` từ `@earendil-works/pi-ai` cho enum chuỗi. `Type.Union`/`Type.Literal` không hoạt động với API của Google.
 
-**Argument preparation:** `prepareArguments(args)` is optional. If defined, it runs before schema validation and before `execute()`. Use it to mimic an older accepted input shape when pi resumes an older session whose stored tool call arguments no longer match the current schema. Return the object you want validated against `parameters`. Keep the public schema strict. Do not add deprecated compatibility fields to `parameters` just to keep old resumed sessions working.
+**Chuẩn bị đối số:** `prepareArguments(args)` là tùy chọn. Nếu định nghĩa, hàm chạy trước khi xác thực schema và trước `execute()`. Dùng hàm này để mô phỏng dạng input cũ từng được chấp nhận khi pi resume một session cũ mà đối số tool call đã lưu không còn khớp schema hiện tại. Trả về đối tượng bạn muốn xác thực theo `parameters`. Giữ schema công khai nghiêm ngặt. Đừng thêm trường tương thích đã lỗi thời vào `parameters` chỉ để các session resume cũ tiếp tục hoạt động.
 
-Example: an older session may contain an `edit` tool call with top-level `oldText` and `newText`, while the current schema only accepts `edits: [{ oldText, newText }]`.
+Ví dụ: một session cũ có thể chứa tool call `edit` với `oldText` và `newText` ở cấp cao nhất, trong khi schema hiện tại chỉ nhận `edits: [{ oldText, newText }]`.
 
 ```typescript
 pi.registerTool({
@@ -2083,42 +2083,42 @@ pi.registerTool({
 });
 ```
 
-### Overriding Built-in Tools
+### Ghi đè công cụ tích hợp
 
-Extensions can override built-in tools (`read`, `bash`, `powershell`, `edit`, `write`, `grep`, `find`, `ls`) by registering a tool with the same name. Interactive mode displays a warning when this happens.
+Extension có thể ghi đè công cụ tích hợp (`read`, `bash`, `powershell`, `edit`, `write`, `grep`, `find`, `ls`) bằng cách đăng ký công cụ cùng tên. Chế độ tương tác hiển thị cảnh báo khi điều này xảy ra.
 
 ```bash
 # Extension's read tool replaces built-in read
 pi -e ./tool-override.ts
 ```
 
-Alternatively, use `--no-builtin-tools` to start without any built-in tools while keeping extension tools enabled:
+Ngoài ra, dùng `--no-builtin-tools` để khởi động mà không có công cụ tích hợp nào nhưng vẫn bật công cụ extension:
 ```bash
 # No built-in tools, only extension tools
 pi --no-builtin-tools -e ./my-extension.ts
 ```
 
-See [examples/extensions/tool-override.ts](../examples/extensions/tool-override.ts) for a complete example that overrides `read` with logging and access control.
+Xem [examples/extensions/tool-override.ts](../examples/extensions/tool-override.ts) để có ví dụ hoàn chỉnh ghi đè `read` bằng logging và kiểm soát truy cập.
 
-**Rendering:** Built-in renderer inheritance is resolved per slot. Execution override and rendering override are independent. If your override omits `renderCall`, the built-in `renderCall` is used. If your override omits `renderResult`, the built-in `renderResult` is used. If your override omits both, the built-in renderer is used automatically (syntax highlighting, diffs, etc.). This lets you wrap built-in tools for logging or access control without reimplementing the UI.
+**Render:** Kế thừa renderer tích hợp được giải quyết theo từng slot. Ghi đè thực thi và ghi đè render là độc lập. Nếu bản ghi đè bỏ qua `renderCall`, `renderCall` tích hợp được dùng. Nếu bỏ qua `renderResult`, `renderResult` tích hợp được dùng. Nếu bỏ qua cả hai, renderer tích hợp tự động được dùng (tô sáng cú pháp, diff, v.v.). Điều này cho phép bạn bọc công cụ tích hợp để logging hoặc kiểm soát truy cập mà không phải triển khai lại UI.
 
-**Prompt metadata:** `promptSnippet` and `promptGuidelines` are not inherited from the built-in tool. If your override should keep those prompt instructions, define them on the override explicitly.
+**Metadata prompt:** `promptSnippet` và `promptGuidelines` không được kế thừa từ công cụ tích hợp. Nếu bản ghi đè cần giữ các hướng dẫn prompt đó, hãy định nghĩa rõ ràng trên bản ghi đè.
 
-**Your implementation must match the exact result shape**, including the `details` type. The UI and session logic depend on these shapes for rendering and state tracking.
+**Triển khai của bạn phải khớp chính xác cấu trúc kết quả**, bao gồm cả kiểu `details`. UI và logic session phụ thuộc vào các cấu trúc này để render và theo dõi trạng thái.
 
-Built-in tool implementations:
-- [read.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/read.ts) - `ReadToolDetails`
-- [bash.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/bash.ts) - `BashToolDetails`
-- [powershell.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/powershell.ts) - `PowerShellToolDetails`
+Triển khai công cụ tích hợp:
+- [read.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/read.ts) — `ReadToolDetails`
+- [bash.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/bash.ts) — `BashToolDetails`
+- [powershell.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/powershell.ts) — `PowerShellToolDetails`
 - [edit.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/edit.ts)
 - [write.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/write.ts)
-- [grep.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/grep.ts) - `GrepToolDetails`
-- [find.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/find.ts) - `FindToolDetails`
-- [ls.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/ls.ts) - `LsToolDetails`
+- [grep.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/grep.ts) — `GrepToolDetails`
+- [find.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/find.ts) — `FindToolDetails`
+- [ls.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/ls.ts) — `LsToolDetails`
 
-### Remote Execution
+### Thực thi từ xa
 
-Built-in tools support pluggable operations for delegating to remote systems (SSH, containers, etc.):
+Công cụ tích hợp hỗ trợ operation có thể cắm để ủy thác cho hệ thống từ xa (SSH, container, v.v.):
 
 ```typescript
 import { createReadTool, createBashTool, type ReadOperations } from "@earendil-works/pi-coding-agent";
@@ -2140,16 +2140,16 @@ pi.registerTool({
       const tool = createReadTool(cwd, { operations: createRemoteOps(ssh) });
       return tool.execute(id, params, signal, onUpdate);
     }
-    return localRead.execute(id, params, signal, onUpdate);
+    return [REDACTED]Read.execute(id, params, signal, onUpdate);
   },
 });
 ```
 
-**Operations interfaces:** `ReadOperations`, `WriteOperations`, `EditOperations`, `BashOperations`, `PowerShellOperations`, `LsOperations`, `GrepOperations`, `FindOperations`
+**Interface operation:** `ReadOperations`, `WriteOperations`, `EditOperations`, `BashOperations`, `PowerShellOperations`, `LsOperations`, `GrepOperations`, `FindOperations`
 
-For `user_bash`, extensions can reuse pi's local shell backend via `createLocalBashOperations()` instead of reimplementing local process spawning, shell resolution, and process-tree termination.
+Với `user_bash`, extension có thể tận dụng backend shell tích hợp của pi qua `createLocalBashOperations()` thay vì triển khai lại việc khởi tạo tiến trình, phân giải shell, và kết thúc cây tiến trình.
 
-The `bash` and `powershell` tools also support a spawn hook to adjust the command, cwd, or env before execution:
+Công cụ `bash` và `powershell` cũng hỗ trợ hook spawn để điều chỉnh lệnh, cwd, hoặc env trước khi thực thi:
 
 ```typescript
 import { createBashTool } from "@earendil-works/pi-coding-agent";
@@ -2163,7 +2163,7 @@ const bashTool = createBashTool(cwd, {
 });
 ```
 
-`createBashTool()` and `createPowerShellTool()` expose the current session to commands through `PI_SESSION_ID`, `PI_SESSION_FILE`, `PI_PROVIDER`, `PI_MODEL`, and `PI_REASONING_LEVEL`. Injection happens before `spawnHook`, so hooks receive these values in `env` and preserve them when they spread the existing environment as above. Set `exposeSessionEnvironment: false` to disable them:
+`createBashTool()` và `createPowerShellTool()` expose session hiện tại cho lệnh qua `PI_SESSION_ID`, `PI_SESSION_FILE`, `PI_PROVIDER`, `PI_MODEL`, và `PI_REASONING_LEVEL`. Việc chèn xảy ra trước `spawnHook`, nên hook nhận các giá trị này trong `env` và bảo tồn chúng khi trải environment hiện tại như ở trên. Đặt `exposeSessionEnvironment: false` để tắt:
 
 ```typescript
 const bashTool = createBashTool(cwd, {
@@ -2171,16 +2171,16 @@ const bashTool = createBashTool(cwd, {
 });
 ```
 
-See [Shell tool session environment](environment-variables.md#shell-tool-session-environment) for variable semantics. See [examples/extensions/ssh.ts](../examples/extensions/ssh.ts) for a complete SSH example with `--ssh` flag.
+Xem [Shell tool session environment](environment-variables.md#shell-tool-session-environment) để biết ngữ nghĩa biến. Xem [examples/extensions/ssh.ts](../examples/extensions/ssh.ts) để có ví dụ SSH hoàn chỉnh với cờ `--ssh`.
 
-### Output Truncation
+### Cắt bớt đầu ra
 
-**Tools MUST truncate their output** to avoid overwhelming the LLM context. Large outputs can cause:
-- Context overflow errors (prompt too long)
-- Compaction failures
-- Degraded model performance
+**Công cụ PHẢI cắt bớt đầu ra** để tránh làm quá tải context của LLM. Đầu ra lớn có thể gây:
+- Lỗi tràn context (prompt quá dài)
+- Lỗi compaction
+- Suy giảm hiệu suất của model
 
-The built-in limit is **50KB** (~10k tokens) and **2000 lines**, whichever is hit first. Use the exported truncation utilities:
+Giới hạn tích hợp là **50KB** (~10k token) và **2000 dòng**, tùy theo giới hạn nào chạm trước. Dùng các tiện ích cắt bớt đã export:
 
 ```typescript
 import {
@@ -2217,17 +2217,17 @@ async execute(toolCallId, params, signal, onUpdate, ctx) {
 }
 ```
 
-**Key points:**
-- Use `truncateHead` for content where the beginning matters (search results, file reads)
-- Use `truncateTail` for content where the end matters (logs, command output)
-- Always inform the LLM when output is truncated and where to find the full version
-- Document the truncation limits in your tool's description
+**Điểm chính:**
+- Dùng `truncateHead` cho nội dung mà phần đầu quan trọng (kết quả tìm kiếm, đọc tệp)
+- Dùng `truncateTail` cho nội dung mà phần cuối quan trọng (log, đầu ra lệnh)
+- Luôn báo cho LLM khi đầu ra bị cắt và nơi tìm phiên bản đầy đủ
+- Ghi rõ giới hạn cắt bớt trong mô tả công cụ của bạn
 
-See [examples/extensions/truncated-tool.ts](../examples/extensions/truncated-tool.ts) for a complete example wrapping `rg` (ripgrep) with proper truncation.
+Xem [examples/extensions/truncated-tool.ts](../examples/extensions/truncated-tool.ts) để có ví dụ hoàn chỉnh bọc `rg` (ripgrep) với cách cắt bớt đúng.
 
-### Multiple Tools
+### Nhiều công cụ
 
-One extension can register multiple tools with shared state:
+Một extension có thể đăng ký nhiều công cụ dùng chung trạng thái:
 
 ```typescript
 export default function (pi: ExtensionAPI) {
@@ -2243,13 +2243,13 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-### Custom Rendering
+### Render tùy chỉnh
 
-Tools can provide `renderCall` and `renderResult` for custom TUI display. See [tui.md](tui.md) for the full component API and [tool-execution.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/components/tool-execution.ts) for how tool rows are composed.
+Công cụ có thể cung cấp `renderCall` và `renderResult` để hiển thị TUI tùy chỉnh. Xem [tui.md](tui.md) để biết API thành phần đầy đủ và [tool-execution.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/components/tool-execution.ts) để biết cách các dòng công cụ được lắp ráp.
 
-By default, tool output is wrapped in a `Box` that handles padding and background. A defined `renderCall` or `renderResult` must return a `Component`. If a slot renderer is not defined, `tool-execution.ts` uses fallback rendering for that slot.
+Theo mặc định, đầu ra công cụ được bọc trong `Box` xử lý padding và nền. `renderCall` hoặc `renderResult` được định nghĩa phải trả về một `Component`. Nếu renderer của một slot không được định nghĩa, `tool-execution.ts` dùng render dự phòng cho slot đó.
 
-Set `renderShell: "self"` when the tool should render its own shell instead of using the default `Box`. This is useful for tools that need complete control over framing or background behavior, for example large previews that must stay visually stable after the tool settles.
+Đặt `renderShell: "self"` khi công cụ nên render vỏ của chính nó thay vì dùng `Box` mặc định. Điều này hữu ích cho công cụ cần kiểm soát hoàn toàn khung hoặc hành vi nền, ví dụ bản xem trước lớn phải giữ ổn định về mặt thị giác sau khi công cụ ổn định.
 
 ```typescript
 pi.registerTool({
@@ -2267,18 +2267,18 @@ pi.registerTool({
 });
 ```
 
-`renderCall` and `renderResult` each receive a `context` object with:
-- `args` - the current tool call arguments
-- `state` - shared row-local state across `renderCall` and `renderResult`
-- `lastComponent` - the previously returned component for that slot, if any
-- `invalidate()` - request a rerender of this tool row
+`renderCall` và `renderResult` mỗi hàm nhận một đối tượng `context` với:
+- `args` — đối số tool call hiện tại
+- `state` — trạng thái dùng chung theo dòng giữa `renderCall` và `renderResult`
+- `lastComponent` — thành phần được trả về trước đó cho slot này, nếu có
+- `invalidate()` — yêu cầu render lại dòng công cụ này
 - `toolCallId`, `cwd`, `executionStarted`, `argsComplete`, `isPartial`, `expanded`, `showImages`, `isError`
 
-Use `context.state` for cross-slot shared state. Keep slot-local caches on the returned component instance when you want to reuse and mutate the same component across renders.
+Dùng `context.state` cho trạng thái dùng chung giữa các slot. Giữ cache riêng của slot trên instance component được trả về khi bạn muốn tái sử dụng và thay đổi cùng một component qua các lần render.
 
 #### renderCall
 
-Renders the tool call or header:
+Render lời gọi công cụ hoặc tiêu đề:
 
 ```typescript
 import { Text } from "@earendil-works/pi-tui";
@@ -2297,7 +2297,7 @@ renderCall(args, theme, context) {
 
 #### renderResult
 
-Renders the tool result or output:
+Render kết quả hoặc đầu ra công cụ:
 
 ```typescript
 renderResult(result, { expanded, isPartial }, theme, context) {
@@ -2319,11 +2319,11 @@ renderResult(result, { expanded, isPartial }, theme, context) {
 }
 ```
 
-If a slot intentionally has no visible content, return an empty `Component` such as an empty `Container`.
+Nếu một slot cố tình không có nội dung hiển thị, hãy trả về một `Component` rỗng chẳng hạn `Container` rỗng.
 
-#### Keybinding Hints
+#### Gợi ý phím tắt
 
-Use `keyHint()` to display keybinding hints that respect the active keybinding configuration:
+Dùng `keyHint()` để hiển thị gợi ý phím tắt tôn trọng cấu hình keybinding đang hoạt động:
 
 ```typescript
 import { keyHint } from "@earendil-works/pi-coding-agent";
@@ -2337,79 +2337,79 @@ renderResult(result, { expanded }, theme, context) {
 }
 ```
 
-Available functions:
-- `keyHint(keybinding, description)` - Formats a configured keybinding id such as `"app.tools.expand"` or `"tui.select.confirm"`
-- `keyText(keybinding)` - Returns the raw configured key text for a keybinding id
-- `rawKeyHint(key, description)` - Format a raw key string
+Các hàm có sẵn:
+- `keyHint(keybinding, description)` — Định dạng id keybinding đã cấu hình như `"app.tools.expand"` hoặc `"tui.select.confirm"`
+- `keyText(keybinding)` — Trả về văn bản phím đã cấu hình thô cho một id keybinding
+- `rawKeyHint(key, description)` — Định dạng chuỗi phím thô
 
-Use namespaced keybinding ids:
-- Coding-agent ids use the `app.*` namespace, for example `app.tools.expand`, `app.editor.external`, `app.session.rename`
-- Shared TUI ids use the `tui.*` namespace, for example `tui.select.confirm`, `tui.select.cancel`, `tui.input.tab`
+Dùng id keybinding có namespace:
+- Id của coding-agent dùng namespace `app.*`, ví dụ `app.tools.expand`, `app.editor.external`, `app.session.rename`
+- Id TUI dùng chung dùng namespace `tui.*`, ví dụ `tui.select.confirm`, `tui.select.cancel`, `tui.input.tab`
 
-For the exhaustive list of keybinding ids and defaults, see [keybindings.md](keybindings.md). `keybindings.json` uses those same namespaced ids.
+Xem [keybindings.md](keybindings.md) để có danh sách đầy đủ id keybinding và giá trị mặc định. `keybindings.json` dùng cùng id có namespace đó.
 
-Custom editors and `ctx.ui.custom()` components receive `keybindings: KeybindingsManager` as an injected argument. They should use that injected manager directly instead of calling `getKeybindings()` or `setKeybindings()`.
+Editor tùy chỉnh và thành phần `ctx.ui.custom()` nhận `keybindings: KeybindingsManager` như một đối số được tiêm. Chúng nên dùng trực tiếp manager đã tiêm thay vì gọi `getKeybindings()` hay `setKeybindings()`.
 
-#### Best Practices
+#### Thực hành tốt nhất
 
-- Use `Text` with padding `(0, 0)`. The default Box handles padding.
-- Use `\n` for multi-line content.
-- Handle `isPartial` for streaming progress.
-- Support `expanded` for detail on demand.
-- Keep default view compact.
-- Read `context.args` in `renderResult` instead of copying args into `context.state`.
-- Use `context.state` only for data that must be shared across call and result slots.
-- Reuse `context.lastComponent` when the same component instance can be updated in place.
-- Use `renderShell: "self"` only when the default boxed shell gets in the way. In self-shell mode the tool is responsible for its own framing, padding, and background.
+- Dùng `Text` với padding `(0, 0)`. `Box` mặc định xử lý padding.
+- Dùng `\n` cho nội dung nhiều dòng.
+- Xử lý `isPartial` cho tiến trình streaming.
+- Hỗ trợ `expanded` để xem chi tiết theo yêu cầu.
+- Giữ chế độ xem mặc định gọn.
+- Đọc `context.args` trong `renderResult` thay vì sao chép đối số vào `context.state`.
+- Chỉ dùng `context.state` cho dữ liệu bắt buộc phải chia sẻ giữa slot call và result.
+- Tái sử dụng `context.lastComponent` khi có thể cập nhật tại chỗ cùng một instance component.
+- Chỉ dùng `renderShell: "self"` khi vỏ hộp mặc định cản trở. Trong chế độ tự vỏ, công cụ tự chịu trách nhiệm khung, padding, và nền.
 
-#### Fallback
+#### Dự phòng
 
-If a slot renderer is not defined or throws:
-- `renderCall`: Shows the tool name
-- `renderResult`: Shows raw text from `content`
+Nếu renderer của slot không được định nghĩa hoặc ném lỗi:
+- `renderCall`: Hiển thị tên công cụ
+- `renderResult`: Hiển thị văn bản thô từ `content`
 
-### Dynamic Tool Loading
+### Tải công cụ động
 
-Extensions can register many tools while keeping only a small initial set active. A tool can then add more tools with `pi.setActiveTools()` during execution. Pi detects purely additive changes, records the newly available tool names on that tool result, and applies the updated active set before the next model request.
+Extension có thể đăng ký nhiều công cụ nhưng chỉ giữ một tập nhỏ hoạt động ban đầu. Sau đó một công cụ có thể thêm công cụ khác với `pi.setActiveTools()` trong lúc thực thi. Pi phát hiện các thay đổi hoàn toàn cộng thêm, ghi tên công cụ mới có sẵn trên kết quả công cụ đó, và áp dụng tập hoạt động cập nhật trước request model tiếp theo.
 
-This works with every model. Models with native deferred-loading support preserve the stable prompt prefix and load the new definitions at the tool-result position. Other models use the fallback described below.
+Cách này hoạt động với mọi model. Model hỗ trợ deferred loading gốc giữ tiền tố prompt ổn định và tải định nghĩa mới tại vị trí kết quả công cụ. Các model khác dùng cơ chế dự phòng mô tả bên dưới.
 
-The lifecycle is:
+Vòng đời:
 
-1. Register every tool with `pi.registerTool()` so it appears in `pi.getAllTools()`.
-2. Keep loader tools, such as `search_tools`, active and leave searchable tools inactive.
-3. During loader execution, call `pi.setActiveTools([...currentTools, ...matchingTools])`. The change must be additive: do not remove currently active tools in the same call.
-4. Pi records which tools were added on the loader's tool result.
-5. Before the next model response, Pi exposes the added definitions using native deferred loading when supported, or the normal active tool list otherwise.
+1. Đăng ký mọi công cụ với `pi.registerTool()` để xuất hiện trong `pi.getAllTools()`.
+2. Giữ công cụ loader như `search_tools` hoạt động và để các công cụ có thể tìm kiếm ở trạng thái không hoạt động.
+3. Trong lúc loader thực thi, gọi `pi.setActiveTools([...currentTools, ...matchingTools])`. Thay đổi phải mang tính cộng thêm: đừng xóa công cụ đang hoạt động trong cùng lời gọi.
+4. Pi ghi lại công cụ nào được thêm trên kết quả công cụ của loader.
+5. Trước phản hồi model tiếp theo, Pi expose các định nghĩa mới bằng deferred loading gốc khi hỗ trợ, nếu không thì dùng danh sách công cụ hoạt động thông thường.
 
-You do not need to return provider-specific tool references or mark the loader as a special search tool. The active-tool change is the signal. Names passed to `pi.setActiveTools()` must already be registered; unknown names are ignored.
+Bạn không cần trả về tham chiếu công cụ riêng của provider hay đánh dấu loader là công cụ tìm kiếm đặc biệt. Thay đổi tập công cụ hoạt động chính là tín hiệu. Tên truyền cho `pi.setActiveTools()` phải đã được đăng ký; tên không biết bị bỏ qua.
 
-#### Models with native deferred loading
+#### Model có deferred loading gốc
 
 - **Anthropic**
-  - **Models:** Sonnet, Opus, Fable version 4.5 or newer (without Haiku)
-  - **Native representation:** Deferred definitions use `defer_loading`; the load point uses `tool_reference` content.
+  - **Model:** Sonnet, Opus, Fable phiên bản 4.5 trở lên (không gồm Haiku)
+  - **Biểu diễn gốc:** Định nghĩa deferred dùng `defer_loading`; điểm tải dùng nội dung `tool_reference`.
 - **Fireworks Messages API**
-  - **Native representation:** Deferred definitions use `defer_loading`; the load point uses `tool_reference` content.
-  - **Loader names:** Use `ToolSearch` or `tool_search` for prefix deferral. Other loader names still work, but Fireworks includes the loaded schemas in the initial tool prefix, losing the cache benefit.
-  - This does not change API routing: Fireworks GLM models and Kimi K3 use Chat Completions, not Messages.
+  - **Biểu diễn gốc:** Định nghĩa deferred dùng `defer_loading`; điểm tải dùng nội dung `tool_reference`.
+  - **Tên loader:** Dùng `ToolSearch` hoặc `tool_search` để defer theo tiền tố. Tên loader khác vẫn hoạt động, nhưng Fireworks đưa schema đã tải vào tiền tố công cụ ban đầu, làm mất lợi ích cache.
+  - Điều này không đổi định tuyến API: model GLM của Fireworks và Kimi K3 dùng Chat Completions, không phải Messages.
 - **OpenAI**
-  - **Models:** `gpt-5.4` and newer family
-  - **Native representation:** Pi adds completed client `tool_search_call` and `tool_search_output` items at the load point.
+  - **Model:** họ `gpt-5.4` trở lên
+  - **Biểu diễn gốc:** Pi thêm các mục `tool_search_call` và `tool_search_output` đã hoàn tất phía client tại điểm tải.
 
-For a verified custom model or proxy, native handling can be enabled with `compat.supportsToolReferences: true` for `anthropic-messages`, or `compat.supportsToolSearch: true` for `openai-responses` and `openai-codex-responses`. Leave these disabled unless the endpoint and model accept the corresponding native protocol.
+Với model tùy chỉnh hoặc proxy đã kiểm chứng, có thể bật xử lý gốc với `compat.supportsToolReferences: true` cho `anthropic-messages`, hoặc `compat.supportsToolSearch: true` cho `openai-responses` và `openai-codex-responses`. Để các tùy chọn này tắt trừ khi endpoint và model chấp nhận giao thức gốc tương ứng.
 
-#### Fallback behavior
+#### Hành vi dự phòng
 
-For all other models and providers, dynamic activation still works: Pi sends the complete current active tool list normally on the next request. The model can call the newly activated tools, but adding their definitions may invalidate the provider's cached prompt prefix.
+Với mọi model và provider khác, kích hoạt động vẫn hoạt động: Pi gửi danh sách công cụ hoạt động hiện tại đầy đủ như bình thường ở request tiếp theo. Model có thể gọi công cụ mới được kích hoạt, nhưng việc thêm định nghĩa có thể làm mất hiệu lực tiền tố prompt đã cache của provider.
 
-Pi also uses this safe fallback when the active set is not purely additive, such as replacing one group of tools with another. Tool removals therefore work, but they do not use deferred loading.
+Pi cũng dùng dự phòng an toàn này khi tập hoạt động không hoàn toàn mang tính cộng thêm, chẳng hạn thay thế một nhóm công cụ bằng nhóm khác. Vì vậy việc xóa công cụ hoạt động, nhưng không dùng deferred loading.
 
-For the best cache behavior, keep the loader tool active for the whole session and add tools instead of replacing the active set. Also note that activating a tool with `promptSnippet` or `promptGuidelines` rebuilds the system prompt; that system-prompt change can invalidate the prefix even when the provider supports deferred schemas. Lazily loaded tools should usually rely on their tool `description` and omit active-only prompt metadata.
+Để có hành vi cache tốt nhất, giữ công cụ loader hoạt động trong suốt session và thêm công cụ thay vì thay thế tập hoạt động. Cũng lưu ý rằng kích hoạt công cụ có `promptSnippet` hoặc `promptGuidelines` sẽ xây dựng lại system prompt; thay đổi system prompt đó có thể làm mất hiệu lực tiền tố ngay cả khi provider hỗ trợ schema deferred. Công cụ tải lười thường nên dựa vào `description` của công cụ và bỏ qua metadata prompt chỉ hoạt động khi active.
 
-#### Search tool example
+#### Ví dụ công cụ tìm kiếm
 
-The following extension registers two searchable tools, removes them from the initial active set, and keeps only `search_tools` as their loader. The example uses simple keyword matching, but the search implementation could use BM25, embeddings, a remote catalog, or project-specific routing.
+Extension sau đăng ký hai công cụ có thể tìm kiếm, xóa chúng khỏi tập hoạt động ban đầu, và chỉ giữ `search_tools` làm loader. Ví dụ dùng đối chiếu từ khóa đơn giản, nhưng phần tìm kiếm có thể dùng BM25, embedding, catalogue từ xa, hoặc định tuyến riêng của dự án.
 
 ```typescript
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -2488,46 +2488,25 @@ export default function (pi: ExtensionAPI) {
         content: [{
           type: "text",
           text: added.length > 0
-            ? `Loaded tools: ${added.join(", ")}`
-            : `Matching tools already active: ${matches.join(", ")}`,
-        }],
-        details: { matches, added },
-      };
-    },
-  });
-
-  pi.on("session_start", () => {
-    // Keep searchable tools registered but initially inactive. Preserve built-ins
-    // and tools owned by other extensions, and keep the loader itself active.
-    const initialTools = pi.getActiveTools().filter(
-      (name) => !SEARCHABLE_TOOL_NAMES.has(name),
-    );
-    pi.setActiveTools([...new Set([...initialTools, "search_tools"])]);
+          details: {},
+        };
+      },
+    });
   });
 }
 ```
 
-When `search_tools` adds a match, the model receives that definition on the immediately following request. On a native-capable model the definition is anchored after the search result without changing the initial tool-schema prefix. On other models it appears in the normal tool list on that same following request.
+Xem [examples/extensions/dynamic-tools.ts](../examples/extensions/dynamic-tools.ts) để có ví dụ chạy được.
 
-## Custom UI
+## UI tùy chỉnh
 
-Extensions can interact with users via `ctx.ui` methods and customize how messages/tools render.
+Extension có thể tương tác với người dùng qua `ctx.ui`. Tất cả phương thức UI đều có sẵn trong extension, công cụ, và lệnh. Các phương thức `select`, `confirm`, `input`, và `editor` chỉ nên dùng ở chế độ có UI (xem `ctx.hasUI`).
 
-**For custom components, see [tui.md](tui.md)** which has copy-paste patterns for:
-- Selection dialogs (SelectList)
-- Async operations with cancel (BorderedLoader)
-- Settings toggles (SettingsList)
-- Status indicators (setStatus)
-- Working message, visibility, and indicator during streaming (`setWorkingMessage`, `setWorkingVisible`, `setWorkingIndicator`)
-- Widgets above/below editor (setWidget)
-- Autocomplete providers layered on top of built-in slash/path completion (addAutocompleteProvider)
-- Custom footers (setFooter)
-
-### Dialogs
+### Hộp thoại và thông báo
 
 ```typescript
-// Select from options
-const choice = await ctx.ui.select("Pick one:", ["A", "B", "C"]);
+// Selection list
+const choice = await ctx.ui.select("Pick one:", ["Option A", "Option B"]);
 
 // Confirm dialog
 const ok = await ctx.ui.confirm("Delete?", "This cannot be undone");
@@ -2542,9 +2521,9 @@ const text = await ctx.ui.editor("Edit:", "prefilled text");
 ctx.ui.notify("Done!", "info");  // "info" | "warning" | "error"
 ```
 
-#### Timed Dialogs with Countdown
+#### Hộp thoại có thời hạn với đồng hồ đếm ngược
 
-Dialogs support a `timeout` option that auto-dismisses with a live countdown display:
+Hộp thoại hỗ trợ tùy chọn `timeout` tự động đóng với đồng hồ đếm ngược trực tiếp:
 
 ```typescript
 // Dialog shows "Title (5s)" → "Title (4s)" → ... → auto-dismisses at 0
@@ -2561,14 +2540,14 @@ if (confirmed) {
 }
 ```
 
-**Return values on timeout:**
-- `select()` returns `undefined`
-- `confirm()` returns `false`
-- `input()` returns `undefined`
+**Giá trị trả về khi hết thời hạn:**
+- `select()` trả về `undefined`
+- `confirm()` trả về `false`
+- `input()` trả về `undefined`
 
-#### Manual Dismissal with AbortSignal
+#### Tự đóng thủ công với AbortSignal
 
-For more control (e.g., to distinguish timeout from user cancel), use `AbortSignal`:
+Để kiểm soát chặt hơn (ví dụ phân biệt hết thời hạn với người dùng hủy), dùng `AbortSignal`:
 
 ```typescript
 const controller = new AbortController();
@@ -2591,9 +2570,9 @@ if (confirmed) {
 }
 ```
 
-See [examples/extensions/timed-confirm.ts](../examples/extensions/timed-confirm.ts) for complete examples.
+Xem [examples/extensions/timed-confirm.ts](../examples/extensions/timed-confirm.ts) để có ví dụ hoàn chỉnh.
 
-### Widgets, Status, and Footer
+### Widget, trạng thái, và footer
 
 ```typescript
 // Status in footer (persistent until cleared)
@@ -2656,156 +2635,89 @@ ctx.ui.addAutocompleteProvider((current) => ({
 
     return {
       prefix: `#${match[1] ?? ""}`,
-      items: [{ value: "#2983", label: "#2983", description: "Extension API for autocomplete" }],
+      items: [
+        { value: "#2983", label: "#2983", description: "Extension API for registering custom @ autocomplete providers" },
+        { value: "#2753", label: "#2753", description: "Reload stale resource settings" },
+      ],
     };
-  },
-  applyCompletion(lines, line, col, item, prefix) {
-    return current.applyCompletion(lines, line, col, item, prefix);
-  },
-  shouldTriggerFileCompletion(lines, line, col) {
-    return current.shouldTriggerFileCompletion?.(lines, line, col) ?? true;
-  },
-}));
-
-// Tool output expansion
-const wasExpanded = ctx.ui.getToolsExpanded();
-ctx.ui.setToolsExpanded(true);
-ctx.ui.setToolsExpanded(wasExpanded);
-
-// Custom editor (vim mode, emacs mode, etc.)
-ctx.ui.setEditorComponent((tui, theme, keybindings) => new VimEditor(tui, theme, keybindings));
-const currentEditor = ctx.ui.getEditorComponent();
-ctx.ui.setEditorComponent((tui, theme, keybindings) =>
-  new WrappedEditor(tui, theme, keybindings, currentEditor?.(tui, theme, keybindings))
-);
-ctx.ui.setEditorComponent(undefined);  // Restore default editor
-
-// Theme management (see themes.md for creating themes)
-const themes = ctx.ui.getAllThemes();  // [{ name: "dark", path: "/..." | undefined }, ...]
-const lightTheme = ctx.ui.getTheme("light");  // Load without switching
-const result = ctx.ui.setTheme("light");  // Switch by name
-if (!result.success) {
-  ctx.ui.notify(`Failed: ${result.error}`, "error");
-}
-ctx.ui.setTheme(lightTheme!);  // Or switch by Theme object
-ctx.ui.theme.fg("accent", "styled text");  // Access current theme
-```
-
-Custom working-indicator frames are rendered verbatim. If you want colors, add them to the frame strings yourself, for example with `ctx.ui.theme.fg(...)`.
-
-### Autocomplete Providers
-
-Use `ctx.ui.addAutocompleteProvider()` to stack custom autocomplete logic on top of the built-in slash-command and path provider. Set `triggerCharacters` for custom natural triggers such as `$`.
-
-Typical pattern:
-
-- inspect the text before the cursor
-- return your own suggestions when your extension-specific syntax matches
-- otherwise delegate to `current.getSuggestions(...)`
-- delegate `applyCompletion(...)` unless you need custom insertion behavior
-
-```typescript
-pi.on("session_start", (_event, ctx) => {
-  ctx.ui.addAutocompleteProvider((current) => ({
-    triggerCharacters: ["#"],
-    async getSuggestions(lines, cursorLine, cursorCol, options) {
-      const line = lines[cursorLine] ?? "";
-      const beforeCursor = line.slice(0, cursorCol);
-      const match = beforeCursor.match(/(?:^|[ \t])#([^\s#]*)$/);
-      if (!match) {
-        return current.getSuggestions(lines, cursorLine, cursorCol, options);
-      }
-
-      return {
-        prefix: `#${match[1] ?? ""}`,
-        items: [
-          { value: "#2983", label: "#2983", description: "Extension API for registering custom @ autocomplete providers" },
-          { value: "#2753", label: "#2753", description: "Reload stale resource settings" },
-        ],
-      };
-    },
-
-    applyCompletion(lines, cursorLine, cursorCol, item, prefix) {
-      return current.applyCompletion(lines, cursorLine, cursorCol, item, prefix);
-    },
-
-    shouldTriggerFileCompletion(lines, cursorLine, cursorCol) {
-      return current.shouldTriggerFileCompletion?.(lines, cursorLine, cursorCol) ?? true;
-    },
-  }));
-});
-```
-
-See [github-issue-autocomplete.ts](../examples/extensions/github-issue-autocomplete.ts) for a complete example that preloads the latest open GitHub issues with `gh issue list` and filters them locally for fast `#...` completion. It requires GitHub CLI (`gh`) and a GitHub repository checkout.
-
-### Custom Components
-
-For complex UI, use `ctx.ui.custom()`. This temporarily replaces the editor with your component until `done()` is called:
-
-```typescript
-import { Text, Component } from "@earendil-works/pi-tui";
-
-const result = await ctx.ui.custom<boolean>((tui, theme, keybindings, done) => {
-  const text = new Text("Press Enter to confirm, Escape to cancel", 1, 1);
-
-  text.onKey = (key) => {
-    if (key === "return") done(true);
-    if (key === "escape") done(false);
-    return true;
-  };
-
-  return text;
-});
-
-if (result) {
-  // User pressed Enter
-}
-```
-
-The callback receives:
-- `tui` - TUI instance (for screen dimensions, focus management)
-- `theme` - Current theme for styling
-- `keybindings` - App keybinding manager (for checking shortcuts)
-- `done(value)` - Call to close component and return value
-
-See [tui.md](tui.md) for the full component API.
-
-#### Overlay Mode (Experimental)
-
-Pass `{ overlay: true }` to render the component as a floating modal on top of existing content, without clearing the screen:
-
-```typescript
-const result = await ctx.ui.custom<string | null>(
-  (tui, theme, keybindings, done) => new MyOverlayComponent({ onClose: done }),
-  { overlay: true }
-);
-```
-
-For advanced positioning (anchors, margins, percentages, responsive visibility), pass `overlayOptions`. Use `onHandle` to control focus or visibility programmatically:
-
-```typescript
-const result = await ctx.ui.custom<string | null>(
-  (tui, theme, keybindings, done) => new MyOverlayComponent({ onClose: done }),
-  {
-    overlay: true,
-    overlayOptions: { anchor: "top-right", width: "50%", margin: 2 },
-    onHandle: (handle) => {
-      handle.focus(); // focus this overlay and bring it to the visual front
-      // handle.unfocus({ target: editorComponent }); // release input to a specific component
-      // handle.setHidden(true/false); // toggle visibility
-      // handle.hide(); // permanently remove
-    }
   }
-);
+}));
 ```
 
-A focused visible overlay can reclaim input after temporary non-overlay custom UI closes. If you intentionally want another component to keep input while the overlay stays visible, call `handle.unfocus({ target })`. Passing `{ target: null }` releases the overlay without focusing another component.
+### Thành phần UI tùy chỉnh
 
-See [tui.md](tui.md) for the full `OverlayOptions` and `OverlayHandle` API and [overlay-qa-tests.ts](../examples/extensions/overlay-qa-tests.ts) for examples.
+Đối với các tương tác phức tạp, dùng `ctx.ui.custom()` để render một thành phần TUI đầy đủ:
 
-### Custom Editor
+```typescript
+import { Container, Text, SelectList, type TUI, type Theme } from "@earendil-works/pi-tui";
 
-Replace the main input editor with a custom implementation (vim mode, emacs mode, etc.):
+const result = await ctx.ui.custom<string>((tui: TUI, theme: Theme, keybindings, done) => {
+  const list = new SelectList(["Option A", "Option B"], 2, theme);
+  list.onSelection = (value) => done(value);
+
+  const container = new Container();
+  container.addChild(new Text("Choose an option:", 1, 0));
+  container.addChild(list);
+
+  return {
+    render: (width) => container.render(width),
+    invalidate: () => container.invalidate(),
+    handleInput: (data) => list.handleInput(data),
+  };
+});
+```
+
+`ctx.ui.custom()` cung cấp một đối tượng `TUI` thô và theme. Dùng các thành phần [`@earendil-works/pi-tui`](tui.md) để hiển thị nhất quán.
+
+Đối với thành phần kiểu overlay/editor, truyền `overlay: true` và `overlayOptions` tùy chọn:
+
+```typescript
+await ctx.ui.custom((tui, theme, keybindings, done) => {
+  // ...
+  return component;
+}, {
+  overlay: true,
+  overlayOptions: { anchor: "top-right", width: "50%", margin: 2 },
+  onHandle: (handle) => {
+    // Called when the overlay is created/destroyed
+  },
+});
+```
+
+#### Chế độ Overlay (Thử nghiệm)
+
+`ctx.ui.custom()` có thể render các thành phần bên trong overlay với hỗ trợ các lớp nổi lồng nhau:
+
+```typescript
+await ctx.ui.custom((tui, theme, keybindings, done) => {
+  const box = new Box(1, 1, (s) => theme.bg("customMessageBg", s));
+  box.addChild(new Text("Overlay content", 1, 0));
+
+  // Get a handle to create nested overlays
+  const handle = tui.getCustomHandle();
+
+  return {
+    render: (width) => box.render(width),
+    invalidate: () => box.invalidate(),
+    handleInput: (data) => {
+      if (matchesKey(data, "escape")) done(undefined);
+      else box.handleInput(data);
+    },
+  };
+}, { overlay: true, overlayOptions: { anchor: "center", width: 40 } });
+```
+
+**Tùy chọn overlay:**
+- `anchor`: `"center" | "top-left" | "top-right" | "bottom-left" | "bottom-right"`
+- `width`: Số cột cố định hoặc chuỗi phần trăm (ví dụ: `"50%"`)
+- `margin`: Khoảng cách từ cạnh màn hình
+- `maxHeight`: Chiều cao tối đa trước khi cuộn
+
+Chế độ overlay đang ở dạng thử nghiệm — API có thể thay đổi trong các phiên bản tương lai.
+
+### Editor tùy chỉnh
+
+Thay thế editor nhập liệu chính bằng một triển khai tùy chỉnh (chế độ vim, chế độ emacs, v.v.):
 
 ```typescript
 import { CustomEditor, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -2836,15 +2748,15 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-**Key points:**
-- Extend `CustomEditor` (not base `Editor`) to get app keybindings (escape to abort, ctrl+d, model switching)
-- Call `super.handleInput(data)` for keys you don't handle
-- Custom editors keep the standalone working row by default. Pass `{ embedWorkingStatus: true }` as the fourth `CustomEditor` constructor argument to use the built-in editor-border spinner instead.
-- Factory receives `tui`, `theme`, and `keybindings` from the app
-- Use `ctx.ui.getEditorComponent()` before `setEditorComponent()` to wrap the previously configured custom editor
-- Pass `undefined` to restore default: `ctx.ui.setEditorComponent(undefined)`
+**Điểm chính:**
+- Kế thừa `CustomEditor` (không phải `Editor` gốc) để có các phím tắt của ứng dụng (escape để hủy, ctrl+d, chuyển model)
+- Gọi `super.handleInput(data)` cho các phím bạn không xử lý
+- Editor tùy chỉnh giữ dòng working độc lập theo mặc định. Truyền `{ embedWorkingStatus: true }` làm đối số thứ tư của hàm tạo `CustomEditor` để dùng spinner viền editor tích hợp thay thế.
+- Factory nhận `tui`, `theme`, và `keybindings` từ ứng dụng
+- Dùng `ctx.ui.getEditorComponent()` trước `setEditorComponent()` để bọc editor tùy chỉnh đã cấu hình trước đó
+- Truyền `undefined` để khôi phục mặc định: `ctx.ui.setEditorComponent(undefined)`
 
-To compose with another extension that already replaced the editor, capture the previous factory before setting yours:
+Để kết hợp với extension khác đã thay thế editor, hãy lưu factory trước đó trước khi đặt factory của bạn:
 
 ```typescript
 const previous = ctx.ui.getEditorComponent();
@@ -2853,11 +2765,11 @@ ctx.ui.setEditorComponent((tui, theme, keybindings) =>
 );
 ```
 
-See [tui.md](tui.md) Pattern 7 for a complete example with mode indicator.
+Xem [tui.md](tui.md) Pattern 7 để có ví dụ đầy đủ với chỉ báo chế độ.
 
-### Message and Entry Rendering
+### Render tin nhắn và entry
 
-Register a custom renderer for messages with your `customType`. Use message renderers for content that should participate in LLM context:
+Đăng ký renderer tùy chỉnh cho tin nhắn với `customType` của bạn. Dùng message renderer cho nội dung nên tham gia vào context của LLM:
 
 ```typescript
 import { Text } from "@earendil-works/pi-tui";
@@ -2875,7 +2787,7 @@ pi.registerMessageRenderer("my-extension", (message, options, theme) => {
 });
 ```
 
-Messages are sent via `pi.sendMessage()`:
+Tin nhắn được gửi qua `pi.sendMessage()`:
 
 ```typescript
 pi.sendMessage({
@@ -2886,7 +2798,7 @@ pi.sendMessage({
 });
 ```
 
-For TUI-only content that should not be sent to the LLM, render custom entries instead:
+Đối với nội dung chỉ dành cho TUI không nên gửi tới LLM, hãy render các entry tùy chỉnh thay thế:
 
 ```typescript
 pi.registerEntryRenderer("my-card", (entry, options, theme) => {
@@ -2896,9 +2808,9 @@ pi.registerEntryRenderer("my-card", (entry, options, theme) => {
 pi.appendEntry("my-card", { status: "done" });
 ```
 
-### Theme Colors
+### Màu theme
 
-All render functions receive a `theme` object. See [themes.md](themes.md) for creating custom themes and the full color palette.
+Tất cả hàm render đều nhận một đối tượng `theme`. Xem [themes.md](themes.md) để tạo theme tùy chỉnh và bảng màu đầy đủ.
 
 ```typescript
 // Foreground colors
@@ -2916,7 +2828,7 @@ theme.italic(text)
 theme.strikethrough(text)
 ```
 
-For syntax highlighting in custom tool renderers:
+Để tô sáng cú pháp trong renderer công cụ tùy chỉnh:
 
 ```typescript
 import { highlightCode, getLanguageFromPath } from "@earendil-works/pi-coding-agent";
@@ -2929,105 +2841,105 @@ const lang = getLanguageFromPath("/path/to/file.rs");  // "rust"
 const highlighted = highlightCode(code, lang, theme);
 ```
 
-## Error Handling
+## Xử lý lỗi
 
-- Extension errors are logged, agent continues
-- `tool_call` errors block the tool (fail-safe)
-- Tool `execute` errors must be signaled by throwing; the thrown error is caught, reported to the LLM with `isError: true`, and execution continues
+- Lỗi extension được ghi log, agent tiếp tục chạy
+- Lỗi `tool_call` chặn công cụ (fail-safe)
+- Lỗi `execute` của công cụ phải được báo bằng cách ném ngoại lệ; ngoại lệ bị bắt, báo cho LLM với `isError: true`, và việc thực thi tiếp tục
 
-## Mode Behavior
+## Hành vi chế độ
 
-| Mode | `ctx.mode` | `ctx.hasUI` | Notes |
+| Chế độ | `ctx.mode` | `ctx.hasUI` | Ghi chú |
 |------|------------|-------------|-------|
-| Interactive | `"tui"` | `true` | Full TUI with terminal rendering |
-| RPC (`--mode rpc`) | `"rpc"` | `true` | Dialogs and notifications via JSON protocol; `custom()` returns `undefined`. See [rpc.md](rpc.md) |
-| JSON (`--mode json`) | `"json"` | `false` | Event stream to stdout; UI methods are no-ops |
-| Print (`-p`) | `"print"` | `false` | Extensions run but can't prompt |
+| Tương tác | `"tui"` | `true` | TUI đầy đủ với hiển thị terminal |
+| RPC (`--mode rpc`) | `"rpc"` | `true` | Hộp thoại và thông báo qua giao thức JSON; `custom()` trả về `undefined`. Xem [rpc.md](rpc.md) |
+| JSON (`--mode json`) | `"json"` | `false` | Luồng sự kiện ra stdout; các phương thức UI không làm gì cả |
+| Print (`-p`) | `"print"` | `false` | Extension chạy nhưng không thể nhắc người dùng |
 
-Use `ctx.mode === "tui"` before TUI-specific features (`custom()`, component factories, terminal input). Use `ctx.hasUI` before dialog and notification methods that work in both TUI and RPC modes.
+Dùng `ctx.mode === "tui"` trước các tính năng riêng của TUI (`custom()`, factory thành phần, đầu vào terminal). Dùng `ctx.hasUI` trước các phương thức hộp thoại và thông báo hoạt động ở cả chế độ TUI và RPC.
 
-## Examples Reference
+## Tham chiếu ví dụ
 
-All examples in [examples/extensions/](../examples/extensions/).
+Tất cả ví dụ nằm trong [examples/extensions/](../examples/extensions/).
 
-| Example | Description | Key APIs |
+| Ví dụ | Mô tả | API chính |
 |---------|-------------|----------|
-| **Tools** |||
-| `hello.ts` | Minimal tool registration | `registerTool` |
-| `question.ts` | Tool with user interaction | `registerTool`, `ui.select` |
-| `questionnaire.ts` | Multi-step wizard tool | `registerTool`, `ui.custom` |
-| `todo.ts` | Stateful tool with persistence | `registerTool`, `appendEntry`, `renderResult`, session events |
-| `dynamic-tools.ts` | Register tools after startup and during commands | `registerTool`, `session_start`, `registerCommand` |
-| `structured-output.ts` | Final structured-output tool with `terminate: true` | `registerTool`, terminating tool results |
-| `truncated-tool.ts` | Output truncation example | `registerTool`, `truncateHead` |
-| `tool-override.ts` | Override built-in read tool | `registerTool` (same name as built-in) |
-| **Commands** |||
-| `pirate.ts` | Modify system prompt per-turn | `registerCommand`, `before_agent_start` |
-| `summarize.ts` | Conversation summary command | `registerCommand`, `ui.custom` |
-| `handoff.ts` | Cross-provider model handoff | `registerCommand`, `ui.editor`, `ui.custom` |
-| `qna.ts` | Q&A with custom UI | `registerCommand`, `ui.custom`, `setEditorText` |
-| `send-user-message.ts` | Inject user messages | `registerCommand`, `sendUserMessage` |
-| `reload-runtime.ts` | Reload command and LLM tool handoff | `registerCommand`, `ctx.reload()`, `sendUserMessage` |
-| `shutdown-command.ts` | Graceful shutdown command | `registerCommand`, `shutdown()` |
-| **Events & Gates** |||
-| `permission-gate.ts` | Block dangerous commands | `on("tool_call")`, `ui.confirm` |
-| `project-trust.ts` | Decide or defer project trust from a user/global or CLI extension | `on("project_trust")`, trust UI, required trust result |
-| `protected-paths.ts` | Block writes to specific paths | `on("tool_call")` |
-| `confirm-destructive.ts` | Confirm session changes | `on("session_before_switch")`, `on("session_before_fork")` |
-| `dirty-repo-guard.ts` | Warn on dirty git repo | `on("session_before_*")`, `exec` |
-| `input-transform.ts` | Transform user input | `on("input")` |
-| `input-transform-streaming.ts` | Streaming-aware input transform | `on("input")`, `streamingBehavior` |
-| `model-status.ts` | React to model changes | `on("model_select")`, `setStatus` |
-| `provider-payload.ts` | Inspect payloads and provider response headers | `on("before_provider_request")`, `on("after_provider_response")` |
-| `system-prompt-header.ts` | Display system prompt info | `on("agent_start")`, `getSystemPrompt` |
-| `claude-rules.ts` | Load rules from files | `on("session_start")`, `on("before_agent_start")` |
-| `prompt-customizer.ts` | Add context-aware tool guidance using `systemPromptOptions` | `on("before_agent_start")`, `BuildSystemPromptOptions` |
-| `file-trigger.ts` | File watcher triggers messages | `sendMessage` |
-| **Compaction & Sessions** |||
-| `custom-compaction.ts` | Custom compaction summary | `on("session_before_compact")` |
-| `trigger-compact.ts` | Trigger compaction manually | `compact()` |
-| `git-checkpoint.ts` | Git stash on turns | `on("turn_start")`, `on("session_before_fork")`, `exec` |
-| `git-merge-and-resolve.ts` | Fetch, merge, and resolve conflicts | `on("agent_end")`, `exec`, `sendUserMessage` |
-| `auto-commit-on-exit.ts` | Commit on shutdown | `on("session_shutdown")`, `exec` |
-| **UI Components** |||
-| `status-line.ts` | Footer status indicator | `setStatus`, session events |
-| `working-indicator.ts` | Customize the streaming working indicator | `setWorkingIndicator`, `registerCommand` |
-| `github-issue-autocomplete.ts` | Add `#1234` issue completions on top of built-in autocomplete by preloading recent open issues from `gh issue list` | `addAutocompleteProvider`, `on("session_start")`, `exec` |
-| `custom-footer.ts` | Replace footer entirely | `registerCommand`, `setFooter` |
-| `custom-header.ts` | Replace startup header | `on("session_start")`, `setHeader` |
-| `modal-editor.ts` | Vim-style modal editor | `setEditorComponent`, `CustomEditor` |
-| `rainbow-editor.ts` | Custom editor styling | `setEditorComponent` |
-| `widget-placement.ts` | Widget above/below editor | `setWidget` |
-| `overlay-test.ts` | Overlay components | `ui.custom` with overlay options |
-| `overlay-qa-tests.ts` | Comprehensive overlay tests | `ui.custom`, all overlay options |
-| `notify.ts` | Simple notifications | `ui.notify` |
-| `timed-confirm.ts` | Dialogs with timeout | `ui.confirm` with timeout/signal |
-| `mac-system-theme.ts` | Auto-switch theme | `setTheme`, `exec` |
-| **Complex Extensions** |||
-| `plan-mode/` | Full plan mode implementation | All event types, `registerCommand`, `registerShortcut`, `registerFlag`, `setStatus`, `setWidget`, `sendMessage`, `setActiveTools` |
-| `preset.ts` | Saveable presets (model, tools, thinking) | `registerCommand`, `registerShortcut`, `registerFlag`, `setModel`, `setActiveTools`, `setThinkingLevel`, `appendEntry` |
-| `tools.ts` | Toggle tools on/off UI | `registerCommand`, `setActiveTools`, `SettingsList`, session events |
+| **Công cụ** |||
+| `hello.ts` | Đăng ký công cụ tối thiểu | `registerTool` |
+| `question.ts` | Công cụ với tương tác người dùng | `registerTool`, `ui.select` |
+| `questionnaire.ts` | Công cụ wizard nhiều bước | `registerTool`, `ui.custom` |
+| `todo.ts` | Công cụ có trạng thái với lưu trữ | `registerTool`, `appendEntry`, `renderResult`, sự kiện session |
+| `dynamic-tools.ts` | Đăng ký công cụ sau khi khởi động và trong lúc chạy lệnh | `registerTool`, `session_start`, `registerCommand` |
+| `structured-output.ts` | Công cụ output có cấu trúc cuối cùng với `terminate: true` | `registerTool`, kết quả công cụ kết thúc |
+| `truncated-tool.ts` | Ví dụ cắt bớt đầu ra | `registerTool`, `truncateHead` |
+| `tool-override.ts` | Ghi đè công cụ read tích hợp | `registerTool` (cùng tên với công cụ tích hợp) |
+| **Lệnh** |||
+| `pirate.ts` | Sửa system prompt theo từng lượt | `registerCommand`, `before_agent_start` |
+| `summarize.ts` | Lệnh tóm tắt cuộc hội thoại | `registerCommand`, `ui.custom` |
+| `handoff.ts` | Chuyển model giữa các provider | `registerCommand`, `ui.editor`, `ui.custom` |
+| `qna.ts` | Hỏi & đáp với UI tùy chỉnh | `registerCommand`, `ui.custom`, `setEditorText` |
+| `send-user-message.ts` | Chèn tin nhắn người dùng | `registerCommand`, `sendUserMessage` |
+| `reload-runtime.ts` | Lệnh reload và bàn giao công cụ LLM | `registerCommand`, `ctx.reload()`, `sendUserMessage` |
+| `shutdown-command.ts` | Lệnh tắt máy graceful | `registerCommand`, `shutdown()` |
+| **Sự kiện & Cổng** |||
+| `permission-gate.ts` | Chặn lệnh nguy hiểm | `on("tool_call")`, `ui.confirm` |
+| `project-trust.ts` | Quyết định hoặc hoãn việc tin tưởng dự án từ extension user/global hoặc CLI | `on("project_trust")`, UI tin tưởng, kết quả tin tưởng bắt buộc |
+| `protected-paths.ts` | Chặn ghi vào các đường dẫn cụ thể | `on("tool_call")` |
+| `confirm-destructive.ts` | Xác nhận thay đổi session | `on("session_before_switch")`, `on("session_before_fork")` |
+| `dirty-repo-guard.ts` | Cảnh báo repo git có thay đổi | `on("session_before_*")`, `exec` |
+| `input-transform.ts` | Biến đổi đầu vào người dùng | `on("input")` |
+| `input-transform-streaming.ts` | Biến đổi đầu vào nhận biết streaming | `on("input")`, `streamingBehavior` |
+| `model-status.ts` | Phản ứng với thay đổi model | `on("model_select")`, `setStatus` |
+| `provider-payload.ts` | Kiểm tra payload và header phản hồi của provider | `on("before_provider_request")`, `on("after_provider_response")` |
+| `system-prompt-header.ts` | Hiển thị thông tin system prompt | `on("agent_start")`, `getSystemPrompt` |
+| `claude-rules.ts` | Tải rule từ tệp | `on("session_start")`, `on("before_agent_start")` |
+| `prompt-customizer.ts` | Thêm hướng dẫn công cụ theo context dùng `systemPromptOptions` | `on("before_agent_start")`, `BuildSystemPromptOptions` |
+| `file-trigger.ts` | File watcher kích hoạt tin nhắn | `sendMessage` |
+| **Compaction & Session** |||
+| `custom-compaction.ts` | Tóm tắt compaction tùy chỉnh | `on("session_before_compact")` |
+| `trigger-compact.ts` | Kích hoạt compaction thủ công | `compact()` |
+| `git-checkpoint.ts` | Git stash ở mỗi lượt | `on("turn_start")`, `on("session_before_fork")`, `exec` |
+| `git-merge-and-resolve.ts` | Lấy, merge và giải quyết xung đột | `on("agent_end")`, `exec`, `sendUserMessage` |
+| `auto-commit-on-exit.ts` | Commit khi tắt máy | `on("session_shutdown")`, `exec` |
+| **Thành phần UI** |||
+| `status-line.ts` | Chỉ báo trạng thái ở footer | `setStatus`, sự kiện session |
+| `working-indicator.ts` | Tùy biến chỉ báo working khi streaming | `setWorkingIndicator`, `registerCommand` |
+| `github-issue-autocomplete.ts` | Thêm gợi ý issue `#1234` lên autocomplete tích hợp bằng cách tải trước các issue mở gần đây từ `gh issue list` | `addAutocompleteProvider`, `on("session_start")`, `exec` |
+| `custom-footer.ts` | Thay thế footer hoàn toàn | `registerCommand`, `setFooter` |
+| `custom-header.ts` | Thay thế header khởi động | `on("session_start")`, `setHeader` |
+| `modal-editor.ts` | Editor kiểu modal vim | `setEditorComponent`, `CustomEditor` |
+| `rainbow-editor.ts` | Tạo kiểu editor tùy chỉnh | `setEditorComponent` |
+| `widget-placement.ts` | Widget phía trên/dưới editor | `setWidget` |
+| `overlay-test.ts` | Thành phần overlay | `ui.custom` với các tùy chọn overlay |
+| `overlay-qa-tests.ts` | Kiểm tra overlay toàn diện | `ui.custom`, tất cả tùy chọn overlay |
+| `notify.ts` | Thông báo đơn giản | `ui.notify` |
+| `timed-confirm.ts` | Hộp thoại có thời hạn | `ui.confirm` với timeout/signal |
+| `mac-system-theme.ts` | Tự động đổi theme | `setTheme`, `exec` |
+| **Extension phức tạp** |||
+| `plan-mode/` | Triển khai đầy đủ chế độ plan | Tất cả kiểu sự kiện, `registerCommand`, `registerShortcut`, `registerFlag`, `setStatus`, `setWidget`, `sendMessage`, `setActiveTools` |
+| `preset.ts` | Preset có thể lưu (model, công cụ, thinking) | `registerCommand`, `registerShortcut`, `registerFlag`, `setModel`, `setActiveTools`, `setThinkingLevel`, `appendEntry` |
+| `tools.ts` | UI bật/tắt công cụ | `registerCommand`, `setActiveTools`, `SettingsList`, sự kiện session |
 | **Remote & Sandbox** |||
-| `ssh.ts` | SSH remote execution | `registerFlag`, `on("user_bash")`, `on("before_agent_start")`, tool operations |
-| `interactive-shell.ts` | Persistent shell session | `on("user_bash")` |
-| `sandbox/` | Sandboxed tool execution | Tool operations |
-| `gondolin/` | Route built-in tools and `!` commands into a Gondolin micro-VM | Tool operations, built-in tool overrides, `on("user_bash")` |
-| `subagent/` | Spawn sub-agents | `registerTool`, `exec` |
-| **Games** |||
-| `snake.ts` | Snake game | `registerCommand`, `ui.custom`, keyboard handling |
-| `space-invaders.ts` | Space Invaders game | `registerCommand`, `ui.custom` |
-| `doom-overlay/` | Doom in overlay | `ui.custom` with overlay |
-| **Providers** |||
-| `custom-provider-anthropic/` | Custom Anthropic proxy | `registerProvider` |
-| `custom-provider-gitlab-duo/` | GitLab Duo integration | `registerProvider` with OAuth |
-| **Messages & Communication** |||
-| `message-renderer.ts` | Custom message rendering | `registerMessageRenderer`, `sendMessage` |
-| `entry-renderer.ts` | TUI-only custom entry rendering | `registerEntryRenderer`, `appendEntry` |
-| `event-bus.ts` | Inter-extension events | `pi.events` |
-| **Session Metadata** |||
-| `session-name.ts` | Name sessions for selector | `setSessionName`, `getSessionName` |
-| `bookmark.ts` | Bookmark entries for /tree | `setLabel` |
-| **Misc** |||
-| `inline-bash.ts` | Inline bash in tool calls | `on("tool_call")` |
-| `bash-spawn-hook.ts` | Adjust bash command, cwd, and env before execution | `createBashTool`, `spawnHook` |
-| `with-deps/` | Extension with npm dependencies | Package structure with `package.json` |
+| `ssh.ts` | Thực thi SSH từ xa | `registerFlag`, `on("user_bash")`, `on("before_agent_start")`, thao tác công cụ |
+| `interactive-shell.ts` | Phiên shell liên tục | `on("user_bash")` |
+| `sandbox/` | Thực thi công cụ trong sandbox | Thao tác công cụ |
+| `gondolin/` | Điều hướng công cụ tích hợp và lệnh `!` vào micro-VM Gondolin | Thao tác công cụ, ghi đè công cụ tích hợp, `on("user_bash")` |
+| `subagent/` | Tạo sub-agent | `registerTool`, `exec` |
+| **Trò chơi** |||
+| `snake.ts` | Trò chơi Snake | `registerCommand`, `ui.custom`, xử lý bàn phím |
+| `space-invaders.ts` | Trò chơi Space Invaders | `registerCommand`, `ui.custom` |
+| `doom-overlay/` | Doom trong overlay | `ui.custom` với overlay |
+| **Provider** |||
+| `custom-provider-anthropic/` | Proxy Anthropic tùy chỉnh | `registerProvider` |
+| `custom-provider-gitlab-duo/` | Tích hợp GitLab Duo | `registerProvider` với OAuth |
+| **Tin nhắn & Giao tiếp** |||
+| `message-renderer.ts` | Render tin nhắn tùy chỉnh | `registerMessageRenderer`, `sendMessage` |
+| `entry-renderer.ts` | Render entry tùy chỉnh chỉ cho TUI | `registerEntryRenderer`, `appendEntry` |
+| `event-bus.ts` | Sự kiện giữa các extension | `pi.events` |
+| **Metadata session** |||
+| `session-name.ts` | Đặt tên session cho bộ chọn | `setSessionName`, `getSessionName` |
+| `bookmark.ts` | Đánh dấu entry cho /tree | `setLabel` |
+| **Khác** |||
+| `inline-bash.ts` | Bash nội tuyến trong lời gọi công cụ | `on("tool_call")` |
+| `bash-spawn-hook.ts` | Điều chỉnh lệnh bash, cwd và env trước khi thực thi | `createBashTool`, `spawnHook` |
+| `with-deps/` | Extension với dependency npm | Cấu trúc package với `package.json` |

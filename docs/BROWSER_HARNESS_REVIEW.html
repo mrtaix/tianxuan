@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TianXuan 内置浏览器 · Harness 驱动链路代码审查</title>
+<title>CTHarness: trình duyệt tích hợp · Rà soát mã luồng điều khiển Harness</title>
 <style>
   :root{
     --text:#1A1B1C; --secondary:#6B7280; --bg:#F4F3EE; --card:#FFFFFF;
@@ -50,174 +50,174 @@
 <body>
 <div class="wrap">
 
-  <h1>🌐 TianXuan 内置浏览器 · Harness 驱动链路代码审查</h1>
-  <div class="sub">范围：feature/browser + runtime/browser + harness 侧 MCP 桥接 · 审查日期：2026-09-02 · 结论：链路可通，但存在 1 处阻断性时序 Bug 与若干安全/多 tab 隐患</div>
+  <h1>🌐 CTHarness: trình duyệt tích hợp · Rà soát mã luồng điều khiển Harness</h1>
+  <div class="sub">Phạm vi: feature/browser + runtime/browser + cầu nối MCP phía harness · Ngày rà soát: 2026-09-02 · Kết luận: luồng hoạt động, nhưng có một lỗi thời điểm gây chặn và một số rủi ro bảo mật/đa tab</div>
   <div class="meta">
-    <span class="pill red">🔴 高危 × 4</span>
-    <span class="pill" style="border-color:var(--orange);color:var(--orange);">🟠 中危 × 5</span>
-    <span class="pill" style="border-color:var(--green);color:var(--green);">🟡 低危 × 7</span>
-    <span class="pill">✔ 编译/单测已跑通</span>
+    <span class="pill red">🔴 Rủi ro cao × 4</span>
+    <span class="pill" style="border-color:var(--orange);color:var(--orange);">🟠 Rủi ro trung bình × 5</span>
+    <span class="pill" style="border-color:var(--green);color:var(--green);">🟡 Rủi ro thấp × 7</span>
+    <span class="pill">✔ Biên dịch/kiểm thử đơn vị đã chạy thành công</span>
   </div>
 
-  <h2>一、结论摘要</h2>
+  <h2>1. Tóm tắt kết luận</h2>
   <div class="card">
-    <p><b>整条链路是通的：</b>模型 tool_call（<code>mcp__tianxuan-browser-bu__browser_*__&lt;hash&gt;</code>）→ <code>ToolExecutor(MCP)</code> → <code>McpManager</code> → <code>McpHttpTransport</code> → 回环 HTTP <code>127.0.0.1:8787/mcp</code> → <code>McpServerRuntime</code> → <code>BrowserMcpTools</code> → <code>AndroidInAppBrowserEngine</code> → WebView。内置 server 配置已写入 <code>BuiltinMcpPresets</code>（id=<code>tianxuan-browser-builtin</code>，默认启用），UI 与 harness 共用同一 <code>BrowserRegistry</code> 实例，设计正确。</p>
-    <p><b>但当前实现有几个会实际咬人的坑：</b>最严重的是 <code>browser.snapshot</code> 的快照异步发布竞态（首次拿空、之后滞后）；其次是审批风险矩阵完全没落地（安全闭环缺失）与脱敏层未接线（敏感数据可能回灌模型）。多 tab 场景下有全局状态串扰；离屏 tab 截图大概率空白。</p>
+    <p><b>Toàn bộ luồng hoạt động:</b> Lời gọi tool_call của mô hình (<code>mcp__tianxuan-browser-bu__browser_*__&lt;hash&gt;</code>)→ <code>ToolExecutor(MCP)</code> → <code>McpManager</code> → <code>McpHttpTransport</code> → HTTP loopback <code>127.0.0.1:8787/mcp</code> → <code>McpServerRuntime</code> → <code>BrowserMcpTools</code> → <code>AndroidInAppBrowserEngine</code> → WebView. Cấu hình máy chủ tích hợp đã được ghi vào <code>BuiltinMcpPresets</code> (id=<code>tianxuan-browser-builtin</code>, bật theo mặc định); Giao diện và harness dùng chung một thực thể <code>BrowserRegistry</code>, thiết kế hợp lý.</p>
+    <p><b>Tuy nhiên, bản triển khai hiện tại còn một số vấn đề gây lỗi thực tế:</b> Nghiêm trọng nhất là lỗi của <code>browser.snapshot</code> khi công bố snapshot bất đồng bộ (lần đầu rỗng, các lần sau bị trễ); tiếp theo là ma trận rủi ro phê duyệt chưa được triển khai (thiếu cơ chế bảo mật khép kín) và lớp khử dữ liệu nhạy cảm chưa kết nối (dữ liệu nhạy cảm có thể được gửi lại mô hình). Nhiều tab có thể dùng lẫn trạng thái toàn cục; ảnh chụp tab ngoài màn hình có thể bị trắng.</p>
   </div>
 
-  <h2>二、驱动链路总览</h2>
+  <h2>2. Tổng quan luồng điều khiển</h2>
   <div class="chain">
-    <div class="node"><b>① 模型 tool_call</b><span>mcp__tianxuan-browser-bu__browser_click__&lt;hash&gt;（McpToolApiName 编码/匹配正常）</span></div>
+    <div class="node"><b>① tool_call của mô hình</b><span>mcp__tianxuan-browser-bu__browser_click__&lt;hash&gt;(McpToolApiName mã hóa/đối sánh bình thường)</span></div>
     <div class="arrow">▼</div>
-    <div class="node"><b>② ToolExecutor · HarnessTool.MCP</b><span>审批判定入口 → 风险矩阵未按工具粒度落地 <span class="badge high">#2</span></span></div>
+    <div class="node"><b>② ToolExecutor · HarnessTool.MCP</b><span>Điểm quyết định phê duyệt → ma trận rủi ro chưa áp dụng theo từng công cụ <span class="badge high">#2</span></span></div>
     <div class="arrow">▼</div>
-    <div class="node"><b>③ McpManager → McpHttpTransport</b><span>SSE→HTTP Streamable 会话 · POST http://127.0.0.1:8787/mcp（tools/call 120s 超时）</span></div>
+    <div class="node"><b>③ McpManager → McpHttpTransport</b><span>Phiên SSE→HTTP Streamable · POST http://127.0.0.1:8787/mcp (tools/call có thời gian chờ 120 giây)</span></div>
     <div class="arrow">▼</div>
-    <div class="node"><b>④ McpServerRuntime · POST /mcp</b><span>suspend handler 直接 await（无 runBlocking）</span></div>
+    <div class="node"><b>④ McpServerRuntime · POST /mcp</b><span>Hàm xử lý dùng suspend và await trực tiếp (không dùng runBlocking)</span></div>
     <div class="arrow">▼</div>
-    <div class="node"><b>⑤ McpToolDispatcher → BrowserMcpTools.invoke</b><span>click/type/press 嵌套 runBlocking + 每次全量重扫 DOM <span class="badge">#6</span> · 脱敏未接线 <span class="badge high">#3</span></span></div>
+    <div class="node"><b>⑤ McpToolDispatcher → BrowserMcpTools.invoke</b><span>click/type/press lồng runBlocking + quét lại toàn bộ DOM mỗi lần <span class="badge">#6</span> · Chưa kết nối khử dữ liệu nhạy cảm <span class="badge high">#3</span></span></div>
     <div class="arrow">▼</div>
-    <div class="node"><b>⑥ AndroidInAppBrowserEngine</b><span>snapshot 竞态（首次空/滞后）<span class="badge high">#1</span> · refMap 非线程安全 <span class="badge">#7</span> · 离屏截图空白 <span class="badge">#9</span></span></div>
+    <div class="node"><b>⑥ AndroidInAppBrowserEngine</b><span>Lỗi cạnh tranh snapshot (lần đầu rỗng/bị trễ)<span class="badge high">#1</span> · refMap không an toàn luồng <span class="badge">#7</span> · Ảnh chụp ngoài màn hình bị trắng <span class="badge">#9</span></span></div>
     <div class="arrow">▼</div>
-    <div class="node"><b>⑦ WebView + BrowserEventBus</b><span>url/title/snapshot 全局单值 → 多 tab 串扰 <span class="badge">#5</span></span></div>
+    <div class="node"><b>⑦ WebView + BrowserEventBus</b><span>url/title/snapshot dùng một giá trị toàn cục → trạng thái lẫn giữa nhiều tab <span class="badge">#5</span></span></div>
   </div>
 
-  <h2>三、问题明细</h2>
+  <h2>3. Chi tiết vấn đề</h2>
 
-  <h3>🔴 高危（建议优先处理）</h3>
-
-  <div class="issue high">
-    <h3><span class="tag high">高危</span>#1 browser.snapshot 返回滞后 / 首次为空（时序竞态）</h3>
-    <div class="field"><b>位置：</b>AndroidInAppBrowserEngine.snapshot()（L63-68）、SnapshotBuilder.refresh()（L37-67）</div>
-    <p><code>SnapshotBuilder.refresh()</code> 里 <code>scope.launch { eventBus.publish(SnapshotUpdated) }</code> 是<b>异步</b>发布；而 <code>engine.snapshot()</code> 在 refresh() 返回后<b>立即</b>读 <code>eventBus.snapshot.value</code>。snapshot 调用发生在 CIO 线程（非主线程），Main.immediate 会异步派发 → refresh 返回时快照还没写进 bus → 返回的是<b>上一次</b>快照；首次调用直接返回空 <code>PageSnapshot("...","empty",{})</code>。onPageFinished 里那次同步 publish 掩盖了多数场景，但动态页面/并发时内容会与本次扫描不一致。</p>
-    <p><b>影响：</b>模型第一次 snapshot 拿不到 refs；click/type 引用不存在的 ref 全部失败，是驱动链路最直接的阻断点。</p>
-    <p><b>建议：</b>refresh() 直接返回 PageSnapshot；或 snapshot() 先 await publish 完成再取值；并去掉 click 回调里对 snapshot 的重复全量扫描。</p>
-  </div>
+  <h3>🔴 Rủi ro cao (nên ưu tiên xử lý)</h3>
 
   <div class="issue high">
-    <h3><span class="tag high">高危</span>#2 审批风险矩阵完全没落地（安全闭环缺失）</h3>
-    <div class="field"><b>位置：</b>ApprovalPolicyEngine.decide()（L94）、BrowserMcpTools.TOOLS（risk 字段无人消费）</div>
-    <p>设计文档 §4 承诺 snapshot/screenshot/current_url 等 LOW 免审、open MEDIUM 需审、click HIGH、evaluate/cookies_get CRITICAL+二级确认。实际 <code>HarnessTool.MCP → 一律 ApprovalDecision(true, "high")</code>：ASSISTED/REQUEST 模式下<b>所有</b> MCP 工具（含只读的 snapshot）都要人工审批；反过来 FULL_ACCESS 下 evaluate（页内 JS 注入）、cookies_get 也全部自动放行。另外 <code>browser.evaluate</code> 没有检查 <code>BrowserPreferences.allowEvalJs</code>（默认 false）开关。</p>
-    <p><b>影响：</b>要么模型每读一次页面都被打断（体验崩），要么用户干脆开 FULL_ACCESS 全放行（evaluate/写 cookie 无拦）。安全设计形同虚设。</p>
-    <p><b>建议：</b>在 decide() 里解析 rawToolName + args 反查工具 risk 表，按 risk 档位决定放行/审批/二级确认；evaluate 必须尊重 allowEvalJs。</p>
+    <h3><span class="tag high">Rủi ro cao</span>#1 browser.snapshot trả kết quả bị trễ / lần đầu rỗng (tranh chấp thời điểm)</h3>
+    <div class="field"><b>Vị trí:</b> AndroidInAppBrowserEngine.snapshot() (L63-68), SnapshotBuilder.refresh() (L37-67)</div>
+    <p><code>SnapshotBuilder.refresh()</code> trong đó <code>scope.launch { eventBus.publish(SnapshotUpdated) }</code> được công bố <b>bất đồng bộ</b>; trong khi <code>engine.snapshot()</code> sau khi refresh() trả về sẽ <b>ngay lập tức</b> đọc <code>eventBus.snapshot.value</code>. Lời gọi snapshot chạy trên luồng CIO (không phải luồng chính), Main.immediate sẽ gửi bất đồng bộ → khi refresh trả về, snapshot chưa được ghi vào bus → kết quả trả về là snapshot <b>trước đó</b>; lần gọi đầu tiên trả về giá trị rỗng <code>PageSnapshot("...","empty",{})</code>. Lần publish đồng bộ trong onPageFinished che khuất vấn đề ở phần lớn tình huống, nhưng nội dung vẫn có thể không khớp lượt quét hiện tại khi trang động/chạy đồng thời.</p>
+    <p><b>Ảnh hưởng:</b> Lần snapshot đầu tiên mô hình không nhận được refs; mọi thao tác click/type tham chiếu ref không tồn tại đều thất bại, đây là điểm nghẽn trực tiếp nhất của luồng điều khiển.</p>
+    <p><b>Đề xuất:</b> Để refresh() trả trực tiếp PageSnapshot; hoặc snapshot() await đến khi publish xong rồi mới đọc; đồng thời bỏ việc quét lại toàn bộ snapshot trong callback click.</p>
   </div>
 
   <div class="issue high">
-    <h3><span class="tag high">高危</span>#3 SecretRedactingInterceptor 定义了但没接线</h3>
-    <div class="field"><b>位置：</b>runtime/browser/.../secret/SecretRedactingInterceptor.kt（无调用点）；BrowserMcpTools.cookies_get；NetworkInterceptor.onRequestStart（L31 原样存请求头）</div>
-    <p><code>cookies_get</code> 直接返回 <code>document.cookie</code>；page_source 原样返回 HTML；CapturedRequest 把含 Authorization/Cookie 的 requestHeaders 原样存内存。唯一兜底是 ToolExecutor 最外层对 output 的 <code>SecretRedactor.redact()</code>，但那是面向 Linux 环境 secrets 的通用规则，不可靠。设计承诺的"Cookie/Authorization 默认脱敏"浏览器侧没实现。</p>
-    <p><b>影响：</b>用户的会话 Cookie / Authorization 头 / 页面敏感值可能直接回灌给 LLM。</p>
-    <p><b>建议：</b>在 cookies_get / page_source / console / network_list 出口统一过 SecretRedactingInterceptor.apply()。</p>
+    <h3><span class="tag high">Rủi ro cao</span>#2 Ma trận rủi ro phê duyệt chưa được triển khai (thiếu cơ chế bảo mật khép kín)</h3>
+    <div class="field"><b>Vị trí:</b> ApprovalPolicyEngine.decide() (L94), BrowserMcpTools.TOOLS (trường risk chưa được sử dụng)</div>
+    <p>Tài liệu thiết kế §4 cam kết snapshot/screenshot/current_url ở mức LOW được miễn duyệt, open ở MEDIUM cần duyệt, click ở HIGH, evaluate/cookies_get ở CRITICAL kèm xác nhận cấp hai. Thực tế <code>HarnessTool.MCP → luôn dùng ApprovalDecision(true, "high")</code>: trong chế độ ASSISTED/REQUEST, <b>tất cả</b> công cụ MCP (kể cả snapshot chỉ đọc) đều cần người phê duyệt; ngược lại, ở FULL_ACCESS, evaluate (chèn JS vào trang) và cookies_get cũng được tự động cho phép. Ngoài ra, <code>browser.evaluate</code> không kiểm tra tùy chọn <code>BrowserPreferences.allowEvalJs</code> (mặc định false).</p>
+    <p><b>Ảnh hưởng:</b> Hoặc người dùng bị gián đoạn mỗi lần mô hình đọc trang (trải nghiệm kém), hoặc bật FULL_ACCESS để cho phép mọi thứ (evaluate/ghi cookie không bị chặn). Thiết kế bảo mật gần như vô hiệu.</p>
+    <p><b>Đề xuất:</b> Phân tích rawToolName + args trong decide() để tra bảng rủi ro theo công cụ, rồi quyết định cho phép/phê duyệt/xác nhận cấp hai theo mức rủi ro; evaluate phải tuân theo allowEvalJs.</p>
   </div>
 
   <div class="issue high">
-    <h3><span class="tag high">高危</span>#4 "外接桌面 AI"能力是死代码（未接线）</h3>
-    <div class="field"><b>位置：</b>BrowserMcpBootstrap.bootstrap()（L58 写死 loopbackOnly=true, token=null）；builtInConfig()（无调用方）；BuiltinMcpPresets（L163-173 写死 127.0.0.1:8787）</div>
-    <p>设计文档承诺允许 <code>0.0.0.0:8787</code> + Bearer Token 供桌面 Claude/Cursor 通过 adb reverse 接入。实际 bootstrap 不读 <code>allowRemoteConnect</code> 偏好、不生成 token，<code>builtInConfig(allowRemote=...)</code> 定义了但从无调用方，与 presets 里写死的 127.0.0.1 配置重复。</p>
-    <p><b>影响：</b>外接功能从未生效；两处配置未来可能漂移。</p>
-    <p><b>建议：</b>bootstrap 按 prefs 决定绑定 host + 生成 token；删除 builtInConfig 死代码，配置统一以 BuiltinMcpPresets 为唯一来源。</p>
+    <h3><span class="tag high">Rủi ro cao</span>#3 SecretRedactingInterceptor đã được định nghĩa nhưng chưa kết nối</h3>
+    <div class="field"><b>Vị trí:</b> runtime/browser/.../secret/SecretRedactingInterceptor.kt (không có điểm gọi); BrowserMcpTools.cookies_get; NetworkInterceptor.onRequestStart (L31 lưu nguyên header yêu cầu)</div>
+    <p><code>cookies_get</code> trả trực tiếp <code>document.cookie</code>; page_source trả nguyên HTML; CapturedRequest lưu requestHeaders chứa Authorization/Cookie nguyên dạng trong bộ nhớ. Cơ chế dự phòng duy nhất là ToolExecutor áp dụng ở lớp ngoài cùng cho đầu ra: <code>SecretRedactor.redact()</code>, nhưng đó là quy tắc tổng quát dành cho dữ liệu bí mật trong môi trường Linux nên không đáng tin cậy. Cam kết thiết kế “Cookie/Authorization được khử dữ liệu nhạy cảm mặc định” chưa được triển khai ở phía trình duyệt.</p>
+    <p><b>Ảnh hưởng:</b> Cookie phiên, header Authorization và dữ liệu nhạy cảm trên trang của người dùng có thể được gửi thẳng lại cho LLM.</p>
+    <p><b>Đề xuất:</b> Áp dụng thống nhất SecretRedactingInterceptor.apply() ở đầu ra cookies_get / page_source / console / network_list.</p>
   </div>
 
-  <h3>🟠 中危（多 tab / 并发 / 性能）</h3>
-
-  <div class="issue">
-    <h3><span class="tag mid">中危</span>#5 BrowserEventBus 全局单值 → 多 tab 串扰</h3>
-    <div class="field"><b>位置：</b>BrowserEventBus（url/title/snapshot 为全局 StateFlow）；BrowserMcpTools.current_url/title；engine 的 storage 类工具用 activeTab()</div>
-    <p>url / title / snapshot 不分 tab，任何 tab 导航都会覆盖全局值。<code>browser.current_url</code> / <code>title</code> 不看 tab 参数；<code>browser.snapshot(tab=t1)</code> 可能返回全局里 t2 的最新快照；cookies/local/session 系列全部操作 <code>activeTab()</code> 而非传入 tab。</p>
-    <p><b>建议：</b>eventBus 状态按 tabId 分片（Map&lt;tabId, State&gt;），工具按 tab 参数取；storage 工具改用 tokenOf(args, engine)。</p>
+  <div class="issue high">
+    <h3><span class="tag high">Rủi ro cao</span>#4 Tính năng “kết nối AI trên máy tính bên ngoài” là mã chết (chưa kết nối)</h3>
+    <div class="field"><b>Vị trí:</b> BrowserMcpBootstrap.bootstrap() (L58 viết cứng loopbackOnly=true, token=[REDACTED], viết cứng 127.0.0.1:8787)</div>
+    <p>Tài liệu thiết kế cam kết cho phép <code>0.0.0.0:8787</code> + Bearer [REDACTED] để Claude/Cursor trên máy tính kết nối qua adb reverse. Thực tế bootstrap không đọc tùy chọn <code>allowRemoteConnect</code>, không tạo token; <code>builtInConfig(allowRemote=...)</code> được định nghĩa nhưng không có bên gọi; trùng lặp cấu hình 127.0.0.1 viết cứng trong presets.</p>
+    <p><b>Ảnh hưởng:</b> Tính năng kết nối bên ngoài chưa từng hoạt động; hai cấu hình có thể sai khác về sau.</p>
+    <p><b>Đề xuất:</b> Để bootstrap quyết định host bind và tạo token theo tùy chọn; xóa mã chết builtInConfig, thống nhất dùng BuiltinMcpPresets làm nguồn cấu hình duy nhất.</p>
   </div>
 
-  <div class="issue">
-    <h3><span class="tag mid">中危</span>#6 click/type/press 嵌套 runBlocking + 每次全量重扫 DOM</h3>
-    <div class="field"><b>位置：</b>BrowserMcpTools.handleWithRef / handleType / handlePress（L106-134）；click 回调（L117-118）</div>
-    <p>在已经 runBlocking 的 CIO handler 里再次 runBlocking 包 suspend 调用（阻塞线程）；且 ref→selector 的回调每次都重新执行 <code>engine.snapshot()</code> 全量注入扫描脚本（又触发 #1 竞态），而不是从 RefResolver 缓存读。selector 依赖 DOM 里残留的 <code>data-tianxuan-ref</code> 属性，SPA 重渲染后失效。</p>
-    <p><b>建议：</b>invoke 全程纯 suspend（去掉内层 runBlocking）；selector 从 SnapshotBuilder 缓存表读取，不要每次重扫。</p>
-  </div>
+  <h3>🟠 Rủi ro trung bình (đa tab / đồng thời / hiệu năng)</h3>
 
   <div class="issue">
-    <h3><span class="tag mid">中危</span>#7 refMap 非线程安全</h3>
-    <div class="field"><b>位置：</b>SnapshotBuilder.ResolverRegistry（L102-109，普通 HashMap，跨协程写）</div>
-    <p>evaluateJavascript 返回后代码继续在 CIO 线程执行，多个 tab/并发 snapshot 会在不同线程同时 put 同一个 HashMap → 数据竞争（扩容可能损坏/死循环）。</p>
-    <p><b>建议：</b>换 ConcurrentHashMap，或把写操作集中到主线程/加锁。</p>
+    <h3><span class="tag mid">Rủi ro trung bình</span>#5 BrowserEventBus dùng một giá trị toàn cục → trạng thái lẫn giữa nhiều tab</h3>
+    <div class="field"><b>Vị trí:</b> BrowserEventBus (url/title/snapshot là StateFlow toàn cục); BrowserMcpTools.current_url/title; các công cụ storage của engine dùng activeTab()</div>
+    <p>url / title / snapshot không phân biệt tab; điều hướng ở tab bất kỳ sẽ ghi đè giá trị toàn cục. <code>browser.current_url</code> / <code>title</code> không xét tham số tab; <code>browser.snapshot(tab=t1)</code> có thể trả về snapshot mới nhất của t2 trong trạng thái toàn cục; toàn bộ cookies/local/session thao tác trên <code>activeTab()</code> thay vì tab được truyền vào.</p>
+    <p><b>Đề xuất:</b> Chia trạng thái eventBus theo tabId (Map&lt;tabId, State&gt;), công cụ lấy theo tham số tab; storage chuyển sang dùng tokenOf(args, engine).</p>
   </div>
 
   <div class="issue">
-    <h3><span class="tag mid">中危</span>#8 快照文本 Unicode 反转义不完整</h3>
-    <div class="field"><b>位置：</b>SnapshotBuilder.unwrap()（L69-77）</div>
-    <p>只处理 <code>\" \n \\</code>，不处理 evaluateJavascript 返回的 <code>\uXXXX</code>。中文 / emoji / 特殊字符的按钮文案会以 <code>\u767b\u5f55</code> 这种转义字面量呈现给模型，影响可读性和判断。</p>
-    <p><b>建议：</b>直接用 <code>Json.parseToJsonElement</code> 解析返回值，或用 <code>java.net.URLDecoder</code> / 正则解码 \uXXXX。</p>
+    <h3><span class="tag mid">Rủi ro trung bình</span>#6 click/type/press lồng runBlocking + quét lại toàn bộ DOM mỗi lần</h3>
+    <div class="field"><b>Vị trí:</b> BrowserMcpTools.handleWithRef / handleType / handlePress (L106-134); callback click (L117-118)</div>
+    <p>Trong handler CIO đã dùng runBlocking lại bọc lời gọi suspend bằng runBlocking (gây chặn luồng); callback ref→selector cũng chạy lại <code>engine.snapshot()</code> để chèn script quét toàn bộ (lại gây lỗi cạnh tranh #1), thay vì đọc bộ nhớ đệm RefResolver. selector phụ thuộc vào thuộc tính <code>data-tianxuan-ref</code> còn sót trong DOM và mất hiệu lực sau khi SPA dựng lại giao diện.</p>
+    <p><b>Đề xuất:</b> Dùng suspend thuần trong toàn bộ invoke (bỏ runBlocking bên trong); đọc selector từ bộ nhớ đệm SnapshotBuilder, không quét lại mỗi lần.</p>
   </div>
 
   <div class="issue">
-    <h3><span class="tag mid">中危</span>#9 离屏 tab 截图可能空白</h3>
-    <div class="field"><b>位置：</b>ScreenshotRecorder.capture()（L42-54）；feature/browser/BrowserScreen 只 embed 当前 active tab</div>
-    <p><code>view.draw(canvas)</code> 软渲依赖 WebView 已 layout 且有尺寸。harness 打开的非 UI 显示 tab（无父容器、宽高 0 → fallback 1080×1920 硬画）大概率渲染空白或异常。</p>
-    <p><b>建议：</b>截图前确保 view 有尺寸（临时 attach / measure），或截图瞬间把目标 tab 设为 active 并等一帧；v1.1 换 PixelCopy（需宿主 Window）。</p>
+    <h3><span class="tag mid">Rủi ro trung bình</span>#7 refMap không an toàn luồng</h3>
+    <div class="field"><b>Vị trí:</b> SnapshotBuilder.ResolverRegistry (L102-109, HashMap thông thường, được ghi từ nhiều coroutine)</div>
+    <p>Sau khi evaluateJavascript trả về, mã tiếp tục chạy trên luồng CIO; nhiều tab/lượt snapshot đồng thời có thể ghi cùng HashMap từ các luồng khác nhau → tranh chấp dữ liệu (có thể hỏng khi mở rộng hoặc lặp vô hạn).</p>
+    <p><b>Đề xuất:</b> Đổi sang ConcurrentHashMap hoặc tập trung thao tác ghi trên luồng chính/có khóa.</p>
   </div>
 
-  <h3>🟡 低危（行为瑕疵 / 清理项）</h3>
+  <div class="issue">
+    <h3><span class="tag mid">Rủi ro trung bình</span>#8 Giải mã Unicode trong văn bản snapshot chưa đầy đủ</h3>
+    <div class="field"><b>Vị trí:</b> SnapshotBuilder.unwrap() (L69-77)</div>
+    <p>Chỉ xử lý <code>\" \n \\</code>, chưa xử lý giá trị evaluateJavascript trả về dạng <code>\uXXXX</code>. Nhãn nút tiếng Trung/emoji/ký tự đặc biệt sẽ hiển thị thành <code>\u767b\u5f55</code> là chuỗi escape nguyên văn gửi cho mô hình, làm giảm khả năng đọc và phán đoán.</p>
+    <p><b>Đề xuất:</b> Dùng trực tiếp <code>Json.parseToJsonElement</code> để phân tích kết quả, hoặc dùng <code>java.net.URLDecoder</code> / biểu thức chính quy để giải mã \uXXXX.</p>
+  </div>
+
+  <div class="issue">
+    <h3><span class="tag mid">Rủi ro trung bình</span>#9 Ảnh chụp tab ngoài màn hình có thể bị trắng</h3>
+    <div class="field"><b>Vị trí:</b> ScreenshotRecorder.capture() (L42-54); feature/browser/BrowserScreen chỉ nhúng tab đang hoạt động</div>
+    <p><code>view.draw(canvas)</code>: kết xuất bằng phần mềm cần WebView đã được bố trí và có kích thước. Tab do harness mở nhưng không hiển thị giao diện (không có thành phần hiển thị cha, rộng/cao bằng 0 → dùng kích thước vẽ dự phòng cố định 1080×1920) nhiều khả năng sẽ trắng hoặc bất thường.</p>
+    <p><b>Đề xuất:</b> Trước khi chụp, bảo đảm view có kích thước (gắn tạm / measure), hoặc đặt tab đích thành tab đang hoạt động và đợi một khung hình; ở v1.1 có thể chuyển sang PixelCopy (cần Window chủ).</p>
+  </div>
+
+  <h3>🟡 Rủi ro thấp (lỗi hành vi / việc cần dọn dẹp)</h3>
 
   <div class="issue low">
-    <h3><span class="tag low">低危</span>#10-#16 其余问题</h3>
+    <h3><span class="tag low">Rủi ro thấp</span>#10-#16 Các vấn đề còn lại</h3>
     <ul>
-      <li><b>#10</b> <code>browser.console_clear</code> 空实现（L77）：返回 ok 但不清 eventBus 的 console。</li>
-      <li><b>#11</b> <code>domFingerprint = UUID.randomUUID()</code>（SnapshotBuilder L63）：每次随机，模型端无法据此判断"页面是否变化"。</li>
-      <li><b>#12</b> <code>postMain</code> / <code>JsEvaluator</code> 超时后副作用仍会执行（engine L239-245、JsEvaluator L17-34）：2s/5s 放弃等待但主线程 block 稍后照常执行，状态不确定；evaluateJavascript 死循环无取消机制。</li>
-      <li><b>#13</b> WebView cleartext 未配置（AndroidWebViewFactory）：跟随 app 全局 networkSecurityConfig，http:// 页面可能打不开（设计承诺的 localhost/白名单域 cleartext 未实现）。</li>
-      <li><b>#14</b> McpServerModule 里 <code>prefs = BrowserPreferences.DEFAULT</code> 写死：用户的 homeUrl / allowEvalJs / allowRemote / desktopUA 偏好不会传导到工具层。</li>
-      <li><b>#15</b> <code>builtInConfig()</code> 死代码：与 BuiltinMcpPresets 配置重复，未来易漂移（同 #4）。</li>
-      <li><b>#16</b> McpServerRuntime：<s>runBlocking 包整个 JSON-RPC（CIO 线程被阻塞，并发受限）</s> —— <i>该条不成立：POST /mcp handler 为 suspend 直接 await，未使用 runBlocking（复核确认，本条降为“小瑕疵”档）</i>；<code>notifications/initialized</code> 返回 method-not-found（客户端忽略，但会留脏日志）；bootstrap 幂等不校验"运行中的 server 是不是浏览器 server"。</li>
+      <li><b>#10</b> <code>browser.console_clear</code> hàm rỗng (L77): trả về ok nhưng không xóa console của eventBus.</li>
+      <li><b>#11</b> <code>domFingerprint = UUID.randomUUID()</code> (SnapshotBuilder L63): ngẫu nhiên mỗi lần, khiến mô hình không thể xác định “trang có thay đổi hay không”.</li>
+      <li><b>#12</b> <code>postMain</code> / <code>JsEvaluator</code>: tác động phụ vẫn xảy ra sau khi hết thời gian chờ (engine L239-245, JsEvaluator L17-34): sau 2 giây/5 giây ngừng chờ nhưng khối lệnh trên luồng chính vẫn chạy sau đó, trạng thái không xác định; evaluateJavascript không có cơ chế hủy vòng lặp vô hạn.</li>
+      <li><b>#13</b> WebView chưa cấu hình cleartext (AndroidWebViewFactory): kế thừa networkSecurityConfig toàn cục của ứng dụng, trang http:// có thể không mở được (chưa triển khai cleartext cho localhost/tên miền được cho phép như thiết kế cam kết).</li>
+      <li><b>#14</b> McpServerModule có <code>prefs = BrowserPreferences.DEFAULT</code> viết cứng: tùy chọn homeUrl / allowEvalJs / allowRemote / desktopUA của người dùng không được truyền tới lớp công cụ.</li>
+      <li><b>#15</b> <code>builtInConfig()</code>: mã chết: trùng lặp cấu hình BuiltinMcpPresets, có thể sai khác về sau (như #4).</li>
+      <li><b>#16</b> McpServerRuntime: <s>runBlocking bọc toàn bộ JSON-RPC (chặn luồng CIO, hạn chế xử lý đồng thời)</s> —— <i>Nhận định này không đúng: handler POST /mcp await trực tiếp theo suspend, không dùng runBlocking (đã kiểm tra lại; hạ mục này xuống mức “lỗi nhỏ”)</i>; <code>notifications/initialized</code> trả về method-not-found (máy khách bỏ qua nhưng để lại nhật ký nhiễu); bootstrap không kiểm tra tính lũy đẳng: “máy chủ đang chạy có phải máy chủ trình duyệt hay không”.</li>
     </ul>
   </div>
 
-  <h2>四、验证情况</h2>
+  <h2>4. Kết quả xác minh</h2>
   <div class="card">
     <table>
-      <tr><th>验证项</th><th>命令</th><th>结果</th></tr>
-      <tr><td>core/browser 单元测试（纯 JVM）</td><td>gradlew :core:browser:test</td><td style="color:var(--green);">✔ BUILD SUCCESSFUL</td></tr>
-      <tr><td>harness 模块 Kotlin 编译（含 runtime/browser）</td><td>gradlew :harness:compileDebugKotlin</td><td style="color:var(--green);">✔ BUILD SUCCESSFUL（118 tasks）</td></tr>
+      <tr><th>Hạng mục xác minh</th><th>Lệnh</th><th>Kết quả</th></tr>
+      <tr><td>Kiểm thử đơn vị core/browser (JVM thuần)</td><td>gradlew :core:browser:test</td><td style="color:var(--green);">✔ BUILD SUCCESSFUL</td></tr>
+      <tr><td>Biên dịch Kotlin module harness (bao gồm runtime/browser)</td><td>gradlew :harness:compileDebugKotlin</td><td style="color:var(--green);">✔ BUILD SUCCESSFUL (118 tác vụ)</td></tr>
     </table>
-    <p style="color:var(--secondary);font-size:12px;">说明：本次为静态代码审查 + 模块编译验证；WebView 渲染/截图/竞态等行为为基于代码路径的推断，未做真机/模拟器端到端验证（建议补 adb + 手工 case）。</p>
+    <p style="color:var(--secondary);font-size:12px;">Ghi chú: lần này gồm rà soát mã tĩnh và xác minh biên dịch module; nhận định về kết xuất/chụp ảnh/tranh chấp thời điểm của WebView được suy ra từ luồng mã, chưa kiểm thử đầu-cuối trên thiết bị thật hoặc trình mô phỏng (nên bổ sung ca kiểm thử thủ công qua adb).</p>
   </div>
 
-  <h2>五、建议修复优先级</h2>
+  <h2>5. Ưu tiên khắc phục đề xuất</h2>
   <div class="card">
     <ul>
-      <li><b>P0：</b>#1 snapshot 竞态（先让模型第一次就能拿到 refs，否则整条链路不可用）。</li>
-      <li><b>P0：</b>#3 脱敏接线（cookies/headers 是敏感数据）。</li>
-      <li><b>P1：</b>#2 审批风险矩阵落地（按工具名分档 + evaluate 尊重 allowEvalJs）。</li>
-      <li><b>P1：</b>#5 多 tab 状态分片（当前单 tab 可用，多 tab 会错乱）。</li>
-      <li><b>P2：</b>#6/#7/#9（性能与并发）、#4（外接能力按需接或删）、其余低危项清理。</li>
+      <li><b>P0: </b> #1 Lỗi cạnh tranh snapshot (đảm bảo mô hình nhận được refs ngay lần đầu, nếu không toàn bộ luồng không thể dùng).</li>
+      <li><b>P0: </b> #3 Kết nối khử dữ liệu nhạy cảm (cookie/header là dữ liệu nhạy cảm).</li>
+      <li><b>P1: </b> #2 Triển khai ma trận rủi ro phê duyệt (phân mức theo tên công cụ + evaluate tuân theo allowEvalJs).</li>
+      <li><b>P1: </b> #5 Chia trạng thái theo tab (hiện dùng được một tab; nhiều tab sẽ lẫn).</li>
+      <li><b>P2: </b> #6/#7/#9 (hiệu năng và đồng thời), #4 (kết nối tính năng bên ngoài khi cần hoặc xóa), và dọn các mục rủi ro thấp còn lại.</li>
     </ul>
   </div>
 
-  <h2>六、修复记录（2026-09-02）</h2>
+  <h2>6. Nhật ký khắc phục (2026-09-02)</h2>
   <div class="card">
     <table>
-      <tr><th>问题</th><th>状态</th><th>改动要点</th></tr>
-      <tr><td>#1 snapshot 竞态（P0）</td><td style="color:var(--green);">✔ 已修</td><td>SnapshotBuilder.refresh() 同步 publish 并直接返回 PageSnapshot；engine.snapshot() 不再读全局 eventBus 值</td></tr>
-      <tr><td>#3 脱敏未接线（P0）</td><td style="color:var(--green);">✔ 已修</td><td>McpToolDispatcher.dispatch() 对所有工具输出统一过 SecretRedactingInterceptor.apply()（含 headers 字典重载）</td></tr>
-      <tr><td>#2 审批矩阵未落地（P1）</td><td style="color:var(--green);">✔ 已修</td><td>ApprovalPolicyEngine.decide() 新增 rawToolName 参数，按工具名映射 LOW/MEDIUM/HIGH/CRITICAL：LOW 免审、HIGH/CRITICAL 按档提示，ToolExecutor 已传 rawToolName</td></tr>
-      <tr><td>#5 多 tab 串扰（P1）</td><td style="color:var(--green);">✔ 已修</td><td>BrowserEventBus 按 tabId 分片（tabUrls/tabTitles/tabSnapshots），全局 StateFlow 只反映活跃 tab；新增 urlOf/titleOf/snapshotOf；storage 工具按 tokenOf 取 tab</td></tr>
-      <tr><td>#6 click/type/press（P1）</td><td style="color:var(--green);">✔ 已修</td><td>去掉嵌套 runBlocking（全 suspend）；ref→selector 直接映射 data-tianxuan-ref，不再每次全量重扫 DOM</td></tr>
-      <tr><td>#7 refMap 线程安全</td><td style="color:var(--green);">✔ 已修</td><td>ResolverRegistry 改用 ConcurrentHashMap&lt;String, ConcurrentHashMap&gt;</td></tr>
-      <tr><td>#8 Unicode 反转义</td><td style="color:var(--green);">✔ 已修</td><td>unwrap() 改用 Json.parseToJsonElement 解码（带旧逻辑 fallback）</td></tr>
-      <tr><td>#9 离屏截图空白</td><td style="color:var(--green);">✔ 已修</td><td>ScreenshotRecorder 对未 layout 的 view 先 measure+layout 再 draw</td></tr>
-      <tr><td>#10 console_clear</td><td style="color:var(--green);">✔ 已修</td><td>调用 engine.eventBus.clearConsole()</td></tr>
-      <tr><td>#11 domFingerprint 随机</td><td style="color:var(--green);">✔ 已修</td><td>改为对 refs 内容做 SHA-256 稳定指纹</td></tr>
-      <tr><td>#14 prefs 写死（低危）</td><td style="color:var(--orange);">△ 部分</td><td>本轮保留 DEFAULT 快照并加 TODO 注释，未引入构造期 DataStore 阻塞；留待后续动态注入</td></tr>
-      <tr><td>#16 runBlocking（原低危）</td><td style="color:var(--green);">✔ 复核</td><td>确认 McpServerRuntime 无 runBlocking，该子项不成立；notifications/initialized 脏日志、bootstrap 幂等未校验两点保留为小瑕疵</td></tr>
-      <tr><td>#4/#15 外接能力（低危）</td><td style="color:var(--green);">✔ 已修</td><td>bootstrap 按 allowRemoteConnect 偏好决定 0.0.0.0 绑定并生成 Bearer Token（McpAuthFilter 强制校验）；desktopUserAgent 偏好接入引擎；删除 builtInConfig() 死代码</td></tr>
-      <tr><td>#12 超时后副作用（低危）</td><td style="color:var(--green);">✔ 已修</td><td>postMain/JsEvaluator 超时语义注释 + 日志：明确副作用不可取消、结果已丢弃，提示勿重试同参数操作</td></tr>
-      <tr><td>#13 cleartext（低危）</td><td style="color:var(--green);">✔ 复核</td><td>全局 networkSecurityConfig cleartextTrafficPermitted=true 已允许，http:// 页面可加载，无需改码</td></tr>
-      <tr><td>#14 prefs 写死（低危）</td><td style="color:var(--green);">✔ 已修</td><td>McpServerModule 注入 datastore.BrowserPreferences，启动时读真实偏好映射为工具层快照（失败兜底 DEFAULT）</td></tr>
+      <tr><th>Vấn đề</th><th>Trạng thái</th><th>Điểm thay đổi</th></tr>
+      <tr><td>#1 Lỗi cạnh tranh snapshot (P0)</td><td style="color:var(--green);">✔ Đã sửa</td><td>SnapshotBuilder.refresh() publish đồng bộ và trả trực tiếp PageSnapshot; engine.snapshot() không còn đọc giá trị eventBus toàn cục</td></tr>
+      <tr><td>#3 Chưa kết nối khử dữ liệu nhạy cảm (P0)</td><td style="color:var(--green);">✔ Đã sửa</td><td>McpToolDispatcher.dispatch() áp dụng thống nhất SecretRedactingInterceptor.apply() cho đầu ra mọi công cụ (bao gồm biến thể nạp chồng nhận từ điển headers)</td></tr>
+      <tr><td>#2 Chưa triển khai ma trận phê duyệt (P1)</td><td style="color:var(--green);">✔ Đã sửa</td><td>ApprovalPolicyEngine.decide() thêm tham số rawToolName, ánh xạ tên công cụ sang LOW/MEDIUM/HIGH/CRITICAL: LOW miễn duyệt, HIGH/CRITICAL nhắc theo cấp; ToolExecutor đã truyền rawToolName</td></tr>
+      <tr><td>#5 Trạng thái lẫn giữa nhiều tab (P1)</td><td style="color:var(--green);">✔ Đã sửa</td><td>BrowserEventBus chia theo tabId (tabUrls/tabTitles/tabSnapshots); StateFlow toàn cục chỉ phản ánh tab đang hoạt động; thêm urlOf/titleOf/snapshotOf; storage lấy tab bằng tokenOf</td></tr>
+      <tr><td>#6 click/type/press (P1)</td><td style="color:var(--green);">✔ Đã sửa</td><td>Bỏ runBlocking lồng nhau (toàn bộ dùng suspend); ánh xạ trực tiếp ref→selector qua data-tianxuan-ref, không quét lại toàn bộ DOM mỗi lần</td></tr>
+      <tr><td>#7 refMap an toàn luồng</td><td style="color:var(--green);">✔ Đã sửa</td><td>ResolverRegistry chuyển sang dùng ConcurrentHashMap&lt;String, ConcurrentHashMap&gt;</td></tr>
+      <tr><td>#8 Giải mã Unicode</td><td style="color:var(--green);">✔ Đã sửa</td><td>unwrap() dùng Json.parseToJsonElement để giải mã (kèm cơ chế dự phòng cho logic cũ)</td></tr>
+      <tr><td>#9 Ảnh chụp ngoài màn hình bị trắng</td><td style="color:var(--green);">✔ Đã sửa</td><td>ScreenshotRecorder đo và bố trí thành phần hiển thị chưa được bố trí trước khi vẽ</td></tr>
+      <tr><td>#10 console_clear</td><td style="color:var(--green);">✔ Đã sửa</td><td>Gọi engine.eventBus.clearConsole()</td></tr>
+      <tr><td>#11 domFingerprint ngẫu nhiên</td><td style="color:var(--green);">✔ Đã sửa</td><td>Đổi sang dấu vân tay SHA-256 ổn định dựa trên nội dung refs</td></tr>
+      <tr><td>#14 prefs viết cứng (rủi ro thấp)</td><td style="color:var(--orange);">△ Một phần</td><td>Lần này giữ snapshot DEFAULT và thêm TODO; chưa đưa thao tác chặn DataStore vào lúc khởi tạo, để lại cho bước tiêm động sau này</td></tr>
+      <tr><td>#16 runBlocking (ban đầu là rủi ro thấp)</td><td style="color:var(--green);">✔ Đã rà soát</td><td>Xác nhận McpServerRuntime không dùng runBlocking nên mục này không đúng; hai điểm log nhiễu notifications/initialized và bootstrap chưa kiểm tra tính lũy đẳng được giữ là lỗi nhỏ</td></tr>
+      <tr><td>#4/#15 Kết nối bên ngoài (rủi ro thấp)</td><td style="color:var(--green);">✔ Đã sửa</td><td>bootstrap quyết định bind 0.0.0.0 theo tùy chọn allowRemoteConnect và tạo Bearer [REDACTED] (McpAuthFilter bắt buộc xác minh); tùy chọn desktopUserAgent được nối vào engine; xóa mã chết builtInConfig()</td></tr>
+      <tr><td>#12 Tác động phụ sau khi hết thời gian chờ (rủi ro thấp)</td><td style="color:var(--green);">✔ Đã sửa</td><td>postMain/JsEvaluator bổ sung chú thích về ngữ nghĩa thời gian chờ và nhật ký: ghi rõ tác động phụ không thể hủy, kết quả đã bị loại bỏ và cảnh báo không thử lại thao tác với cùng tham số</td></tr>
+      <tr><td>#13 cleartext (rủi ro thấp)</td><td style="color:var(--green);">✔ Đã rà soát</td><td>networkSecurityConfig toàn cục có cleartextTrafficPermitted=true nên trang http:// có thể tải mà không cần sửa mã</td></tr>
+      <tr><td>#14 prefs viết cứng (rủi ro thấp)</td><td style="color:var(--green);">✔ Đã sửa</td><td>McpServerModule tiêm datastore.BrowserPreferences, đọc tùy chọn thực khi khởi động và ánh xạ thành snapshot cho lớp công cụ (lỗi thì dùng DEFAULT)</td></tr>
     </table>
-    <p style="color:var(--secondary);font-size:12px;">验证：<code>gradlew :harness:compileDebugKotlin :core:browser:test</code> 与 <code>:app:compileDebugKotlin</code> BUILD SUCCESSFUL（含 Koin 装配图）。两轮修复 commit 随附。</p>
+    <p style="color:var(--secondary);font-size:12px;">Xác minh:<code>gradlew :harness:compileDebugKotlin :core:browser:test</code> và <code>:app:compileDebugKotlin</code> BUILD SUCCESSFUL (bao gồm đồ thị lắp ghép Koin). Kèm theo hai commit khắc phục.</p>
   </div>
 
   <div class="foot">
-    审查依据：docs/BROWSER_DESIGN.md · runtime/browser · harness/browser + harness/mcp · core/browser · feature/browser（均已在 2026-09-02 的 HEAD 编译通过）。<br>
-    生成时间：2026-09-02 · 天玄 (TianXuan) 代码审查产物。
+    Cơ sở rà soát: docs/BROWSER_DESIGN.md · runtime/browser · harness/browser + harness/mcp · core/browser · feature/browser (đều biên dịch thành công ở HEAD ngày 2026-09-02).<br>
+    Thời điểm tạo: 2026-09-02 · Báo cáo rà soát mã nguồn CTHarness.
   </div>
 </div>
 </body>

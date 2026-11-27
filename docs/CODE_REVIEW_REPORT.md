@@ -1,27 +1,27 @@
-# 天玄 (TianXuan) 项目全局代码审查报告
+# Báo cáo rà soát mã toàn dự án CTHarness
 
-> 审查时间：2026-08-31
-> 审查范围：全模块（app / core / runtime / tools / harness / feature）
-> 代码规模：约 330+ Kotlin 源文件 + JNI C 代码
+> Thời gian rà soát: 2026-08-31
+> Phạm vi rà soát: toàn bộ mô-đun (app / core / runtime / tools / harness / feature)
+> Quy mô mã: khoảng 330+ tệp nguồn Kotlin + mã JNI C
 
 ---
 
-## 摘要
+## Tóm tắt
 
-| 严重程度 | 数量 | 说明 |
+| Mức độ nghiêm trọng | Số lượng | Giải thích |
 | :--- | :---: | :--- |
-| 🔴 严重 (Critical) | 2 | 数据丢失风险、安全边界突破 |
-| 🟠 高 (High) | 5 | 死锁、并发崩溃、资源泄漏 |
-| 🟡 中 (Medium) | 7 | 功能缺陷、性能、健壮性 |
-| 🟢 低 (Low) | 6 | 代码质量、可维护性 |
+| 🔴 Nghiêm trọng | 2 | Nguy cơ mất dữ liệu, vượt ranh giới bảo mật |
+| 🟠 Cao | 5 | Bế tắc, văng ứng dụng do truy cập đồng thời, rò rỉ tài nguyên |
+| 🟡 Trung bình | 7 | Lỗi chức năng, hiệu năng, độ bền |
+| 🟢 Thấp | 6 | Chất lượng mã, khả năng bảo trì |
 
 ---
 
-### C2. HostBridge 路径穿越：沙箱可访问宿主任意文件路径
+### C2. Lỗ hổng duyệt đường dẫn trong HostBridge: môi trường cách ly có thể truy cập tùy ý đường dẫn tệp trên máy chủ
 
-**位置**：`runtime/src/main/java/top/wkbin/tianxuan/runtime/bridge/HostBridge.kt:305-315`
+**Vị trí**: `runtime/src/main/java/top/wkbin/tianxuan/runtime/bridge/HostBridge.kt:305-315`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 private fun resolveSandboxPath(sandboxPath: String): String {
     return when {
@@ -33,16 +33,16 @@ private fun resolveSandboxPath(sandboxPath: String): String {
 }
 ```
 
-`handleInstallApk` 接收沙箱传入的路径，`resolveSandboxPath` 对非标准前缀的路径**原样返回**。这意味着沙箱内进程可以传入：
-- `/data/data/top.wkbin.tianxuan/databases/tianxuan.db`（应用私有数据库）
-- `/data/app/.../base.apk`（其他应用的 APK）
-- `/system/...`（系统分区）
+`handleInstallApk` nhận đường dẫn do môi trường cách ly truyền vào, và `resolveSandboxPath` **trả nguyên vẹn** các đường dẫn không có tiền tố chuẩn. Điều này có nghĩa là tiến trình trong môi trường cách ly có thể truyền vào:
+- `/data/data/top.wkbin.tianxuan/databases/tianxuan.db` (cơ sở dữ liệu riêng của ứng dụng)
+- `/data/app/.../base.apk` (APK của ứng dụng khác)
+- `/system/...` (phân vùng hệ thống)
 
-虽然有 Bearer Token 认证，但 token 写入 `/opt/tianxuan/.bridge-key`，沙箱内 root 用户可直接读取。
+Dù có xác thực Bearer [REDACTED], nhưng mã xác thực được ghi vào `/opt/tianxuan/.bridge-key`, người dùng root trong môi trường cách ly có thể đọc trực tiếp.
 
-**影响**：沙箱逃逸，可读取/安装宿主任意路径的 APK 文件。
+**Tác động**: Thoát môi trường cách ly, có thể đọc/cài APK ở bất kỳ đường dẫn nào trên máy chủ.
 
-**修复建议**：
+**Gợi ý sửa**:
 ```kotlin
 private fun resolveSandboxPath(sandboxPath: String): String? {
     return when {
@@ -52,17 +52,17 @@ private fun resolveSandboxPath(sandboxPath: String): String? {
     }
 }
 ```
-在 `handleInstallApk` 中对 null 返回 400 错误。同时考虑将 token 改为每次启动生成且不写入沙箱可读取位置。
+Trong `handleInstallApk`, trả lỗi 400 khi kết quả là null. Đồng thời nên đổi mã xác thực để mỗi lần khởi tạo tạo ra mã mới và không ghi vào vị trí môi trường cách ly đọc được.
 
 ---
 
-## 🟠 高优先级问题 (High)
+## 🟠 Vấn đề ưu tiên cao
 
-### H1. `runBlocking` 在 suspend 函数中可能导致死锁
+### H1. `runBlocking` trong hàm suspend có thể gây bế tắc
 
-**位置**：`runtime/src/main/java/top/wkbin/tianxuan/runtime/LinuxRuntimeImpl.kt:783`
+**Vị trí**: `runtime/src/main/java/top/wkbin/tianxuan/runtime/LinuxRuntimeImpl.kt:783`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 private fun configureRootfs(distroId: String = "ubuntu") {
     // ...
@@ -74,40 +74,40 @@ private fun configureRootfs(distroId: String = "ubuntu") {
 }
 ```
 
-`configureRootfs` 被 `initialize()`、`installDistro()`、`resetSandbox()` 等 suspend 函数调用，这些函数运行在 `Dispatchers.IO` 上下文中。`runBlocking` 会阻塞当前线程，如果 `syncAssetsToDistro` 需要切换到被阻塞的同一线程池（如 `Dispatchers.IO` 线程耗尽时），会导致**死锁**。
+`configureRootfs` được gọi từ các hàm suspend như `initialize()`, `installDistro()`, `resetSandbox()`, vốn chạy trong ngữ cảnh `Dispatchers.IO`. `runBlocking` sẽ chặn luồng hiện tại; nếu `syncAssetsToDistro` cần chuyển sang chính nhóm luồng đang bị chặn đó (ví dụ khi `Dispatchers.IO` cạn luồng), sẽ dẫn đến **bế tắc**.
 
-**修复建议**：将 `configureRootfs` 改为 suspend 函数，直接调用 `assetSynchronizer.syncAssetsToDistro(distroId)`，去掉 `runBlocking`。
+**Gợi ý sửa**: Đổi `configureRootfs` thành hàm suspend, gọi trực tiếp `assetSynchronizer.syncAssetsToDistro(distroId)` và bỏ `runBlocking`.
 
 ---
 
-### H2. `ProcessRegistry` 并发访问 `LinkedHashMap` 导致崩溃
+### H2. `ProcessRegistry` truy cập `LinkedHashMap` đồng thời gây văng ứng dụng
 
-**位置**：`runtime/src/main/java/top/wkbin/tianxuan/runtime/shell/ProcessRegistry.kt:159`
+**Vị trí**: `runtime/src/main/java/top/wkbin/tianxuan/runtime/shell/ProcessRegistry.kt:159`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 private val processes = LinkedHashMap<String, ManagedProcess>()  // 非线程安全
 
 override fun list(): List<ManagedProcess> = processes.values.toList()  // ← 无锁访问
 ```
 
-`start()`、`stop()`、`stopAll()`、`cleanupDeadProcesses()` 都在 `mutex.withLock` 中修改 `processes`，但 `list()` 直接无锁读取。在多线程环境下（UI 线程调用 `listBackground()`，IO 线程调用 `stopAll()`），可能抛出 `ConcurrentModificationException`。
+`start()`, `stop()`, `stopAll()`, `cleanupDeadProcesses()` đều sửa `processes` trong `mutex.withLock`, nhưng `list()` lại đọc trực tiếp không có khóa. Trong môi trường đa luồng (luồng giao diện gọi `listBackground()`, luồng vào/ra gọi `stopAll()`), có thể ném `ConcurrentModificationException`.
 
-**修复建议**：
+**Gợi ý sửa**:
 ```kotlin
 override fun list(): List<ManagedProcess> = synchronized(processes) {
     processes.values.toList()
 }
 ```
-或改用 `ConcurrentHashMap`（但需注意有序性需求）。
+Hoặc đổi sang `ConcurrentHashMap` (nhưng cần lưu ý yêu cầu về thứ tự).
 
 ---
 
-### H3. `ProcessRegistry` 空 catch 块吞掉所有异常
+### H3. `ProcessRegistry` có khối bắt ngoại lệ rỗng, nuốt tất cả ngoại lệ
 
-**位置**：`runtime/src/main/java/top/wkbin/tianxuan/runtime/shell/ProcessRegistry.kt:122`
+**Vị trí**: `runtime/src/main/java/top/wkbin/tianxuan/runtime/shell/ProcessRegistry.kt:122`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 scope.launch {
     try {
@@ -117,12 +117,12 @@ scope.launch {
 }
 ```
 
-捕获 `Exception` 后什么都不做，包括：
-- `OutOfMemoryError`（继承 Error，不被 Exception 捕获，但其他严重错误如 `IOException` 被吞）
-- 协程取消异常（`CancellationException` 应重新抛出）
-- 日志收集器崩溃，导致后续日志无法收集但无任何告警
+Bắt `Exception` rồi không làm gì cả, bao gồm:
+- `OutOfMemoryError` (kế thừa Error, không bị Exception bắt, nhưng các lỗi nghiêm trọng khác như `IOException` bị nuốt)
+- Ngoại lệ hủy coroutine (`CancellationException` phải ném lại)
+- Bộ thu thập nhật ký bị lỗi, khiến các nhật ký sau không thu thập được mà không có bất kỳ cảnh báo nào
 
-**修复建议**：
+**Gợi ý sửa**:
 ```kotlin
 } catch (cancellation: CancellationException) {
     throw cancellation
@@ -133,11 +133,11 @@ scope.launch {
 
 ---
 
-### H4. `NativePtySession.close()` 存在竞态条件
+### H4. `NativePtySession.close()` có lỗi tranh chấp
 
-**位置**：`runtime/src/main/java/top/wkbin/tianxuan/runtime/pty/NativePtySession.kt:106-119`
+**Vị trí**: `runtime/src/main/java/top/wkbin/tianxuan/runtime/pty/NativePtySession.kt:106-119`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 override suspend fun close() = withContext(Dispatchers.IO) {
     if (closed.compareAndSet(false, true)) {
@@ -152,9 +152,9 @@ override suspend fun close() = withContext(Dispatchers.IO) {
 }
 ```
 
-`readerJob.cancel()` 后没有 `join()`，reader 协程可能仍在 `NativePty.readFd(masterFd)` 中阻塞。此时 `closeFd(masterFd)` 关闭文件描述符，如果另一个线程/协程打开新文件复用了该 fd 编号，reader 会读到错误数据或写入已关闭的 channel。
+Sau `readerJob.cancel()` không có `join()`, coroutine đọc có thể vẫn đang bị chặn trong `NativePty.readFd(masterFd)`. Lúc này `closeFd(masterFd)` đóng bộ mô tả tệp; nếu luồng/coroutine khác mở tệp mới và dùng lại số fd đó, bộ đọc sẽ đọc dữ liệu sai hoặc ghi vào kênh đã đóng.
 
-**修复建议**：
+**Gợi ý sửa**:
 ```kotlin
 readerJob.cancel()
 readerJob.join()  // 等待 reader 退出
@@ -163,11 +163,11 @@ NativePty.closeFd(masterFd)
 
 ---
 
-### H5. `WorkspaceFileAccess` 写入时 TOCTOU 符号链接攻击
+### H5. `WorkspaceFileAccess` bị tấn công TOCTOU qua liên kết tượng trưng khi ghi
 
-**位置**：`harness/src/main/java/top/wkbin/tianxuan/harness/WorkspaceFileAccess.kt:80-99`
+**Vị trí**: `harness/src/main/java/top/wkbin/tianxuan/harness/WorkspaceFileAccess.kt:80-99`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 suspend fun write(path: String, content: String): AppResult<Unit> {
     val file = resolveWritable(path)  // ① 检查路径在工作区内
@@ -181,19 +181,19 @@ suspend fun write(path: String, content: String): AppResult<Unit> {
 }
 ```
 
-`resolveWritable` 检查 canonical path 在工作区内，但在 `renameTo`/`copyTo` 之前，如果攻击者（或沙箱内进程）将目标文件替换为指向工作区外的符号链接，`copyTo(file, overwrite = true)` 会**跟随符号链接**写入任意文件。
+`resolveWritable` kiểm tra đường dẫn chuẩn hóa nằm trong không gian làm việc, nhưng trước khi `renameTo`/`copyTo`, nếu kẻ tấn công (hoặc tiến trình trong môi trường cách ly) thay thế tệp đích bằng liên kết tượng trưng trỏ ra ngoài không gian làm việc, thì `copyTo(file, overwrite = true)` sẽ **đi theo liên kết tượng trưng** và ghi vào bất kỳ tệp nào.
 
-**修复建议**：写入前重新检查 `file.canonicalFile` 是否仍在工作区内；或使用 `O_NOFOLLOW` 语义（Java NIO `LinkOption.NOFOLLOW_LINKS`）。
+**Gợi ý sửa**: Kiểm tra lại `file.canonicalFile` trước khi ghi để đảm bảo vẫn nằm trong không gian làm việc; hoặc dùng ngữ nghĩa `O_NOFOLLOW` (Java NIO `LinkOption.NOFOLLOW_LINKS`).
 
 ---
 
-## 🟡 中优先级问题 (Medium)
+## 🟡 Vấn đề ưu tiên trung bình
 
-### M1. `SecretManager.decrypt()` 返回类型语义不一致
+### M1. `SecretManager.decrypt()` có ngữ nghĩa kiểu trả về không nhất quán
 
-**位置**：`core/security/src/main/java/top/wkbin/tianxuan/core/security/SecretManager.kt:25-33`
+**Vị trí**: `core/security/src/main/java/top/wkbin/tianxuan/core/security/SecretManager.kt:25-33`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 fun decrypt(value: String): String? = runCatching {
     if (value.isEmpty()) return ""  // ← 空串返回 "" 而非 null
@@ -201,64 +201,64 @@ fun decrypt(value: String): String? = runCatching {
 }.getOrNull()  // ← 失败返回 null
 ```
 
-函数声明返回 `String?`，但空字符串输入返回 `""`（非 null），解密失败返回 `null`。调用方无法区分"输入为空"和"解密成功且结果为空串"。`SettingsDataStore.workshopKeystores` 中 `WorkshopKeystoreCodec.decode(secretManager.decrypt(ciphertext))` 收到 null 时可能 NPE。
+Hàm khai báo trả về `String?`, nhưng chuỗi rỗng đầu vào trả về `""` (không phải null), còn giải mã thất bại trả về `null`. Bên gọi không phân biệt được "đầu vào rỗng" và "giải mã thành công ra chuỗi rỗng". Trong `SettingsDataStore.workshopKeystores`, `WorkshopKeystoreCodec.decode(secretManager.decrypt(ciphertext))` có thể NPE khi nhận null.
 
-**修复建议**：统一语义——空串返回 `null`，或改为返回 `Result<String>`。
-
----
-
-### M2. `HostBridge` HTTP 请求解析缺少长度限制
-
-**位置**：`runtime/src/main/java/top/wkbin/tianxuan/runtime/bridge/HostBridge.kt:140-174`
-
-**问题**：
-- `reader.readLine()` 读取请求行和 header 行无长度限制
-- 恶意客户端可发送 100MB 的单行请求头，导致 OOM
-- `Content-Length` 上限 4MB，但 header 本身无限制
-
-**修复建议**：使用 `readLine()` 时累计已读字节数，超过 8KB 即断开连接。
+**Gợi ý sửa**: Thống nhất ngữ nghĩa — chuỗi rỗng trả về `null`, hoặc đổi sang trả về `Result<String>`.
 
 ---
 
-### M3. MCP 工具发现超时过短，沙箱冷启动时频繁失败
+### M2. `HostBridge` phân tích yêu cầu HTTP thiếu giới hạn độ dài
 
-**位置**：`harness/src/main/java/top/wkbin/tianxuan/harness/mcp/McpManager.kt:136`
+**Vị trí**: `runtime/src/main/java/top/wkbin/tianxuan/runtime/bridge/HostBridge.kt:140-174`
 
-**问题**：
+**Vấn đề**:
+- `reader.readLine()` đọc dòng yêu cầu và các dòng tiêu đề không có giới hạn độ dài
+- Máy khách độc hại có thể gửi một dòng tiêu đề dài 100MB gây cạn bộ nhớ
+- `Content-Length` bị giới hạn 4MB, nhưng bản thân phần tiêu đề thì không bị giới hạn
+
+**Gợi ý sửa**: Khi dùng `readLine()`, cộng dồn số byte đã đọc, vượt quá 8KB thì ngắt kết nối.
+
+---
+
+### M3. Thời gian chờ phát hiện công cụ MCP quá ngắn, thường xuyên thất bại khi môi trường cách ly khởi động nguội
+
+**Vị trí**: `harness/src/main/java/top/wkbin/tianxuan/harness/mcp/McpManager.kt:136`
+
+**Vấn đề**:
 ```kotlin
 const val DISCOVERY_TIMEOUT_MS = 4_000L  // 4 秒
 ```
 
-MCP STDIO 传输需要在沙箱内启动进程（可能涉及 PRoot 启动、Python 解释器加载、依赖导入），4 秒在低端设备上经常不够。超时后该轮对话不注入 MCP 工具，用户体验为"工具时有时无"。
+Kênh truyền STDIO của MCP cần khởi động tiến trình trong môi trường cách ly (có thể liên quan đến khởi động PRoot, nạp trình thông dịch Python, nhập các thư viện phụ thuộc); 4 giây thường không đủ trên thiết bị yếu. Khi hết thời gian chờ, lượt hội thoại đó không được bổ sung công cụ MCP, trải nghiệm người dùng là "công cụ lúc có lúc không".
 
-**修复建议**：
-- 首次发现延长到 15-30 秒
-- 缓存发现结果（已有 cache 机制），后续轮次用缓存
-- 后台异步刷新缓存，不阻塞对话
+**Gợi ý sửa**:
+- Kéo dài lần phát hiện đầu tiên lên 15–30 giây
+- Lưu kết quả phát hiện vào bộ nhớ đệm (đã có cơ chế này), các lượt sau dùng bộ nhớ đệm
+- Làm mới bộ nhớ đệm bất đồng bộ trong nền, không chặn hội thoại
 
 ---
 
-### M4. `ToolExecutor` 使用字段注入，初始化顺序不安全
+### M4. `ToolExecutor` dùng cơ chế tiêm phụ thuộc qua trường, thứ tự khởi tạo không an toàn
 
-**位置**：`harness/src/main/java/top/wkbin/tianxuan/harness/ToolExecutor.kt:65-66`
+**Vị trí**: `harness/src/main/java/top/wkbin/tianxuan/harness/ToolExecutor.kt:65-66`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 @Inject
 lateinit var settingsDataStore: AgentPreferences
 ```
 
-构造函数有 18 个可选参数（大多为 `? = null`），但 `settingsDataStore` 用字段注入。如果在构造函数执行期间（或某个可选参数的初始化 lambda 中）访问 `settingsDataStore`，会抛出 `UninitializedPropertyAccessException`。
+Hàm khởi tạo có 18 tham số tùy chọn (đa số là `? = null`), nhưng `settingsDataStore` lại dùng cơ chế tiêm phụ thuộc qua trường. Nếu truy cập `settingsDataStore` trong lúc hàm khởi tạo đang chạy (hoặc trong lambda khởi tạo của một tham số tùy chọn), sẽ ném `UninitializedPropertyAccessException`.
 
-**修复建议**：将 `settingsDataStore` 移到构造函数参数中，统一使用构造函数注入。
+**Gợi ý sửa**: Chuyển `settingsDataStore` vào tham số hàm khởi tạo, dùng thống nhất cơ chế tiêm phụ thuộc qua hàm khởi tạo.
 
 ---
 
-### M5. `HttpClientProvider` 缺少连接池和拦截器配置
+### M5. `HttpClientProvider` thiếu cấu hình nhóm kết nối và bộ chặn
 
-**位置**：`core/network/src/main/java/top/wkbin/tianxuan/core/network/HttpClientProvider.kt:13-17`
+**Vị trí**: `core/network/src/main/java/top/wkbin/tianxuan/core/network/HttpClientProvider.kt:13-17`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 fun create(): OkHttpClient = OkHttpClient.Builder()
     .connectTimeout(30, TimeUnit.SECONDS)
@@ -267,178 +267,178 @@ fun create(): OkHttpClient = OkHttpClient.Builder()
     .build()
 ```
 
-- 未配置连接池（默认 5 个空闲连接，5 分钟存活，对高并发场景可能不足）
-- 未添加 HTTP 日志拦截器（调试困难）
-- 未配置重试策略（`retryOnConnectionFailure` 默认为 true，但无自定义退避）
-- 单一 client 同时用于 LLM API（长连接流式）和文件下载（大流量），互相影响
+- Không cấu hình nhóm kết nối (mặc định 5 kết nối nhàn rỗi, sống 5 phút, có thể không đủ cho kịch bản đồng thời cao)
+- Không thêm bộ chặn ghi nhật ký HTTP (khó gỡ lỗi)
+- Không cấu hình chiến lược thử lại (`retryOnConnectionFailure` mặc định là true nhưng không có khoảng chờ tăng dần tùy chỉnh)
+- Một máy khách duy nhất dùng cho cả API LLM (truyền dữ liệu liên tục qua kết nối dài) lẫn tải tệp (lưu lượng lớn), hai bên ảnh hưởng lẫn nhau
 
-**修复建议**：为 LLM API 和文件下载分别配置独立的 OkHttpClient 实例；添加 `ConnectionPool` 调优。
+**Gợi ý sửa**: Cấu hình đối tượng OkHttpClient riêng cho API LLM và cho tải tệp; thêm tinh chỉnh `ConnectionPool`.
 
 ---
 
-### M6. `ProotCommandBuilder.build()` 有副作用（创建目录）
+### M6. `ProotCommandBuilder.build()` có tác dụng phụ (tạo thư mục)
 
-**位置**：`runtime/src/main/java/top/wkbin/tianxuan/runtime/proot/ProotCommandBuilder.kt:62`
+**Vị trí**: `runtime/src/main/java/top/wkbin/tianxuan/runtime/proot/ProotCommandBuilder.kt:62`
 
-**问题**：
+**Vấn đề**:
 ```kotlin
 attachmentsDir.mkdirs()  // ← 在"构建命令"的纯函数中创建目录
 ```
 
-`build()` 和 `buildInteractive()` 被设计为纯命令构建函数，但内部调用 `mkdirs()` 产生副作用。在单元测试中调用 `build()` 会意外创建目录；在高频调用场景下重复 `mkdirs()` 有性能开销。
+`build()` và `buildInteractive()` được thiết kế là hàm thuần để dựng lệnh, nhưng bên trong lại gọi `mkdirs()` tạo tác dụng phụ. Gọi `build()` trong kiểm thử đơn vị sẽ vô tình tạo thư mục; trong kịch bản gọi tần suất cao, việc gọi `mkdirs()` lặp lại gây tốn hiệu năng.
 
-**修复建议**：移除 `mkdirs()`，由调用方（`LinuxRuntimeImpl.initialize()`）在初始化时一次性创建目录。
-
----
-
-### M7. `ChatViewModel` 重复 import 和未使用的 import
-
-**位置**：`feature/chat/src/main/java/top/wkbin/tianxuan/ui/chat/ChatViewModel.kt:46,53,55,61`
-
-**问题**：
-- 第 46 行和第 53 行重复 `import kotlinx.coroutines.flow.asStateFlow`
-- 第 55 行和第 61 行重复 `import kotlinx.coroutines.flow.distinctUntilChanged`
-- `android.util.Log` 导入但可能未使用
-- `android.widget.Toast` 导入但可能未使用
-
-**影响**：代码整洁度，不影响运行，但说明缺乏 lint 检查。
-
-**修复建议**：运行 `./gradlew lint` 清理所有未使用和重复 import。
+**Gợi ý sửa**: Bỏ `mkdirs()`, để bên gọi (`LinuxRuntimeImpl.initialize()`) tạo thư mục một lần lúc khởi tạo.
 
 ---
 
-## 🟢 低优先级问题 (Low)
+### M7. `ChatViewModel` có khai báo nhập trùng và không dùng
 
-### L1. 硬编码 DNS 服务器，国内访问可能缓慢
+**Vị trí**: `feature/chat/src/main/java/top/wkbin/tianxuan/ui/chat/ChatViewModel.kt:46,53,55,61`
 
-**位置**：`runtime/.../LinuxRuntimeImpl.kt:1056`
+**Vấn đề**:
+- Dòng 46 và 53 khai báo nhập trùng `import kotlinx.coroutines.flow.asStateFlow`
+- Dòng 55 và 61 khai báo nhập trùng `import kotlinx.coroutines.flow.distinctUntilChanged`
+- `android.util.Log` được nhập nhưng có thể không dùng
+- `android.widget.Toast` được nhập nhưng có thể không dùng
+
+**Tác động**: Ảnh hưởng độ gọn của mã, không ảnh hưởng chạy, nhưng cho thấy thiếu kiểm tra lint.
+
+**Gợi ý sửa**: Chạy `./gradlew lint` để dọn toàn bộ khai báo nhập không dùng và trùng lặp.
+
+---
+
+## 🟢 Vấn đề ưu tiên thấp
+
+### L1. Máy chủ DNS được cấu hình cố định, truy cập mạng tại Trung Quốc có thể chậm
+
+**Vị trí**: `runtime/.../LinuxRuntimeImpl.kt:1056`
 ```kotlin
 resolvConf.writeText("nameserver 1.1.1.1\nnameserver 8.8.8.8\n")
 ```
-Cloudflare (1.1.1.1) 和 Google (8.8.8.8) 在国内网络环境下可能不稳定或被污染。建议根据用户网络环境智能选择，或提供国内 DNS（223.5.5.5 / 119.29.29.29）选项。
+Cloudflare (1.1.1.1) và Google (8.8.8.8) trong môi trường mạng nội địa có thể không ổn định hoặc bị nhiễu. Nên chọn theo môi trường mạng của người dùng, hoặc cung cấp tùy chọn DNS nội địa (223.5.5.5 / 119.29.29.29).
 
 ---
 
-### L2. `HostBridge` 错误响应泄露内部路径
+### L2. `HostBridge` trả lỗi làm lộ đường dẫn nội bộ
 
-**位置**：`runtime/.../HostBridge.kt:235`
+**Vị trí**: `runtime/.../HostBridge.kt:235`
 ```kotlin
 return HttpResponse(404, errorJson("APK file not found: $apkPath (resolved: $hostPath)"))
 ```
-错误信息中包含 `resolved: $hostPath`，向调用方暴露了宿主文件系统路径结构。建议仅返回沙箱路径，内部路径记日志即可。
+Thông báo lỗi chứa `resolved: $hostPath`, làm lộ cấu trúc đường dẫn hệ thống tệp máy chủ cho bên gọi. Nên chỉ trả đường dẫn môi trường cách ly, đường dẫn nội bộ chỉ ghi nhật ký.
 
 ---
 
-### L3. `stripSetuidBits` 遍历整个 rootfs，性能差且可能阻塞
+### L3. `stripSetuidBits` duyệt toàn bộ hệ thống tệp gốc, hiệu năng kém và có thể chặn luồng
 
-**位置**：`runtime/.../LinuxRuntimeImpl.kt:979-997`
+**Vị trí**: `runtime/.../LinuxRuntimeImpl.kt:979-997`
 
-每次 `configureRootfs` 都遍历整个 rootfs（可能数万文件），在初始化时阻塞数秒到数十秒。建议：
-- 首次初始化时执行一次
-- 后续通过 `dpkg` hook（已有 `99tianxuan-strip-setuid`）增量处理
-- 或在后台异步执行，不阻塞初始化流程
-
----
-
-### L4. 缺少全局异常处理器和 ANR 防护
-
-**位置**：`app/src/main/java/top/wkbin/tianxuan/TianXuanApplication.kt`
-
-项目有 `CrashReporter`（`core/common/.../CrashReporter.kt`），但未确认是否在 Application 中注册 `Thread.setDefaultUncaughtExceptionHandler`。前台服务中运行的 Agent 循环如果抛出未捕获异常，可能导致进程崩溃而无日志。
-
-**修复建议**：确认 `TianXuanApplication.onCreate()` 中初始化了 `CrashReporter`，并为前台服务添加独立的异常处理。
+Mỗi lần `configureRootfs` đều duyệt toàn bộ hệ thống tệp gốc (có thể hàng chục nghìn tệp), chặn vài giây đến vài chục giây lúc khởi tạo. Gợi ý:
+- Chạy một lần khi khởi tạo đầu tiên
+- Về sau xử lý phần thay đổi qua điểm móc `dpkg` (đã có `99tianxuan-strip-setuid`)
+- Hoặc chạy bất đồng bộ trong nền, không chặn luồng khởi tạo
 
 ---
 
-### L5. `architectureCheck` 任务检查范围不完整
+### L4. Thiếu bộ xử lý ngoại lệ toàn cục và bảo vệ ANR
 
-**位置**：`build.gradle.kts:13-67`
+**Vị trí**: `app/src/main/java/top/wkbin/tianxuan/TianXuanApplication.kt`
 
-`architectureCheck` 检查了：
-- model 层平台依赖
-- feature 横向依赖
-- DAO 直接导入
+Dự án có `CrashReporter` (`core/common/.../CrashReporter.kt`), nhưng chưa xác nhận có đăng ký `Thread.setDefaultUncaughtExceptionHandler` trong Application hay không. Vòng lặp tác tử chạy trong dịch vụ tiền cảnh nếu ném ngoại lệ không bắt được có thể làm tiến trình dừng đột ngột mà không có nhật ký.
 
-但未检查：
-- `core:common` 是否依赖了 `core:database`（循环依赖风险）
-- `runtime` / `harness` 是否依赖了 `feature`（反向依赖）
-- `:core:model` 是否间接通过 `api` 暴露了 Android 依赖
-
-建议扩展检查规则，或引入 `module-graph-assert` 插件做更严格的模块依赖校验。
+**Gợi ý sửa**: Xác nhận `TianXuanApplication.onCreate()` đã khởi tạo `CrashReporter`, đồng thời thêm xử lý ngoại lệ riêng cho dịch vụ tiền cảnh.
 
 ---
 
-### L6. 测试覆盖不足
+### L5. Phạm vi kiểm tra của tác vụ `architectureCheck` chưa đầy đủ
 
-根据 `KNOWN_ISSUES.md` 和代码扫描：
-- `feature/*` 各屏幕基本无单元测试
-- `HostBridge`（安全关键路径）无测试
-- `SecretManager` 仅有 `SecretRedactorTest`，无加解密 round-trip 测试
-- `NativePtySession` 无 JVM 层测试（JNI 部分需 instrumented test）
+**Vị trí**: `build.gradle.kts:13-67`
 
-建议优先为安全关键路径（HostBridge、WorkspaceFileAccess、SecretManager）补充测试。
+`architectureCheck` kiểm tra:
+- Phụ thuộc nền tảng của tầng mô hình
+- Phụ thuộc ngang giữa các mô-đun tính năng
+- Khai báo nhập trực tiếp DAO
+
+Nhưng chưa kiểm tra:
+- `core:common` có phụ thuộc `core:database` không (nguy cơ phụ thuộc vòng)
+- `runtime` / `harness` có phụ thuộc `feature` không (phụ thuộc ngược)
+- `:core:model` có vô tình làm lộ phụ thuộc Android qua `api` không
+
+Gợi ý mở rộng quy tắc kiểm tra, hoặc đưa plugin `module-graph-assert` vào để kiểm tra phụ thuộc mô-đun nghiêm ngặt hơn.
 
 ---
 
-## 优化建议（非 Bug）
+### L6. Độ phủ kiểm thử chưa đủ
 
-### O1. 引入统一的 `AppCoroutineScope` 注入
+Theo `KNOWN_ISSUES.md` và quét mã:
+- Các màn hình `feature/*` về cơ bản không có kiểm thử đơn vị
+- `HostBridge` (đường dẫn trọng yếu về bảo mật) không có kiểm thử
+- `SecretManager` chỉ có `SecretRedactorTest`, không có kiểm thử vòng mã hóa rồi giải mã
+- `NativePtySession` không có kiểm thử tầng JVM (phần JNI cần kiểm thử trên thiết bị)
 
-项目中多个单例各自创建 `CoroutineScope(SupervisorJob() + Dispatchers.IO)`：
+Gợi ý ưu tiên bổ sung kiểm thử cho các đường dẫn trọng yếu về bảo mật (HostBridge, WorkspaceFileAccess, SecretManager).
+
+---
+
+## Gợi ý tối ưu (không phải lỗi)
+
+### O1. Đưa vào `AppCoroutineScope` dùng chung qua cơ chế tiêm phụ thuộc
+
+Nhiều đối tượng đơn nhất trong dự án tự tạo `CoroutineScope(SupervisorJob() + Dispatchers.IO)`:
 - `ProcessRegistryImpl.scope`
 - `TerminalSessionManager.scope`
 - `McpManager.scope`
 - `HostBridge.bridgeScope`
 - `HarnessLoop.loopScope`
 
-建议通过 Koin 提供一个全局的 `CoroutineScope`，统一管理生命周期，便于在 App 退出时统一取消。
+Gợi ý cung cấp một `CoroutineScope` toàn cục qua Koin, quản lý vòng đời tập trung, tiện hủy cùng lúc khi ứng dụng thoát.
 
 ---
 
-### O2. `StateFlow` 热流泄漏风险
+### O2. Nguy cơ rò rỉ luồng dữ liệu nóng `StateFlow`
 
-`TerminalSessionManager.activeHandle` 使用 `stateIn(scope, SharingStarted.Eagerly, null)`，`Eagerly` 模式下即使无收集者也保持活跃，可能导致 `combine` 上游持续运行。建议改用 `SharingStarted.WhileSubscribed(5_000)`。
-
----
-
-### O3. 日志系统可优化
-
-`AppLogger` 目前是自定义实现，建议：
-- 接入 `Timber` 或 `Napier` 等成熟库
-- 支持日志分级输出（release 版自动关闭 Debug 日志）
-- 敏感信息脱敏应在 Logger 层统一处理，而非各调用点手动 `secretRedactor.redact()`
+`TerminalSessionManager.activeHandle` dùng `stateIn(scope, SharingStarted.Eagerly, null)`; chế độ `Eagerly` vẫn giữ hoạt động ngay cả khi không có bên thu thập, có thể khiến phép `combine` ở thượng nguồn chạy liên tục. Gợi ý đổi sang `SharingStarted.WhileSubscribed(5_000)`.
 
 ---
 
-## 修复优先级建议
+### O3. Hệ thống nhật ký có thể tối ưu
 
-| 优先级 | 问题 | 预计工作量 |
+`AppLogger` hiện là tự triển khai, gợi ý:
+- Tích hợp thư viện trưởng thành như `Timber` hoặc `Napier`
+- Hỗ trợ xuất nhật ký theo cấp (bản phát hành tự động tắt nhật ký gỡ lỗi)
+- Che giấu thông tin nhạy cảm nên xử lý tập trung tại lớp ghi nhật ký, thay vì từng điểm gọi tự làm `secretRedactor.redact()`
+
+---
+
+## Gợi ý thứ tự ưu tiên sửa
+
+| Ưu tiên | Vấn đề | Ước lượng công việc |
 | :--- | :--- | :--- |
-| **立即修复** | C1 数据库迁移链断裂 | 2-4 小时（需确认 schema 变更） |
-| **立即修复** | C2 HostBridge 路径穿越 | 30 分钟 |
-| **本周修复** | H1 runBlocking 死锁 | 1 小时 |
-| **本周修复** | H2 ProcessRegistry 并发 | 30 分钟 |
-| **本周修复** | H3 空 catch 块 | 15 分钟 |
-| **本周修复** | H4 PTY close 竞态 | 1 小时 |
-| **本周修复** | H5 符号链接 TOCTOU | 2 小时 |
-| **迭代优化** | M1-M7 中优先级 | 各 30 分钟-2 小时 |
-| **长期改进** | L1-L6 + O1-O3 | 持续 |
+| **Sửa ngay** | C1 Chuỗi di chuyển cơ sở dữ liệu đứt gãy | 2–4 giờ (cần xác nhận thay đổi lược đồ) |
+| **Sửa ngay** | C2 Lỗ hổng duyệt đường dẫn HostBridge | 30 phút |
+| **Sửa trong tuần** | H1 Bế tắc do runBlocking | 1 giờ |
+| **Sửa trong tuần** | H2 Truy cập đồng thời ProcessRegistry | 30 phút |
+| **Sửa trong tuần** | H3 Khối bắt ngoại lệ rỗng | 15 phút |
+| **Sửa trong tuần** | H4 Tranh chấp khi đóng PTY | 1 giờ |
+| **Sửa trong tuần** | H5 TOCTOU qua liên kết tượng trưng | 2 giờ |
+| **Tối ưu trong đợt phát triển** | M1–M7 mức trung bình | Mỗi mục 30 phút–2 giờ |
+| **Cải tiến dài hạn** | L1–L6 + O1–O3 | Liên tục |
 
 ---
 
-## 审查方法说明
+## Giải thích phương pháp rà soát
 
-本次审查采用以下方法：
-1. **文档先行**：完整阅读 `AI_NAVIGATION.md`、`ARCHITECTURE.md`、`ARCHITECTURE_RULES.md`、`FILE_INDEX.md`、`KNOWN_ISSUES.md`
-2. **模式扫描**：使用 Grep 扫描 `!!`、空 catch、`GlobalScope`、`runBlocking`、`Thread.sleep`、`TODO/FIXME` 等常见问题模式
-3. **关键文件精读**：深入阅读 `LinuxRuntimeImpl`、`ProcessRegistry`、`HostBridge`、`HarnessLoop`、`ProviderClient`、`ToolExecutor`、`WorkspaceFileAccess`、`NativePtySession`、`AppModule`、`DatabaseMigrations` 等核心文件
-4. **架构合规校验**：对照 `ARCHITECTURE_RULES.md` 中的铁律逐项验证
+Lần rà soát này dùng các phương pháp sau:
+1. **Tài liệu trước**: Đọc trọn vẹn `AI_NAVIGATION.md`, `ARCHITECTURE.md`, `ARCHITECTURE_RULES.md`, `FILE_INDEX.md`, `KNOWN_ISSUES.md`
+2. **Quét mẫu**: Dùng Grep quét các mẫu thường gặp như `!!`, khối bắt ngoại lệ rỗng, `GlobalScope`, `runBlocking`, `Thread.sleep`, `TODO/FIXME`
+3. **Đọc kỹ tệp trọng yếu**: Đọc sâu `LinuxRuntimeImpl`, `ProcessRegistry`, `HostBridge`, `HarnessLoop`, `ProviderClient`, `ToolExecutor`, `WorkspaceFileAccess`, `NativePtySession`, `AppModule`, `DatabaseMigrations` và các tệp lõi khác
+4. **Kiểm tra tuân thủ kiến trúc**: Đối chiếu từng mục với các nguyên tắc cốt lõi trong `ARCHITECTURE_RULES.md`
 
-**未覆盖范围**：
-- 未运行编译/静态分析工具（`./gradlew lint`、`detekt`）
-- 未执行单元测试
-- 未在真机上验证运行时行为
-- 未审查 `feature/*` 下所有 UI 代码的细节（仅抽样）
-- 未审查 `tools/` 模块下所有安装器实现
+**Phạm vi chưa bao phủ**:
+- Chưa chạy công cụ biên dịch/phân tích tĩnh (`./gradlew lint`, `detekt`)
+- Chưa chạy kiểm thử đơn vị
+- Chưa xác minh hành vi khi chạy trên thiết bị thật
+- Chưa rà soát chi tiết toàn bộ mã giao diện dưới `feature/*` (chỉ lấy mẫu)
+- Chưa rà soát toàn bộ triển khai trình cài đặt dưới mô-đun `tools/`
 
-建议后续运行 `./gradlew lint detekt` 补充静态分析结果。
+Gợi ý chạy thêm `./gradlew lint detekt` để bổ sung kết quả phân tích tĩnh.

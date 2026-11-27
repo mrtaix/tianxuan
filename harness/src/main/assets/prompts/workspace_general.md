@@ -1,3 +1,3 @@
-### 通用工作区操作规约
-- 当前工程类型：通用工程；根目录标记：{{MARKER_TEXT}}。
-- 先识别入口文件和项目说明，再选择对应构建命令；修改已有文件优先 edit，新文件使用 write，并在完成后执行最小验证。涉及跨文件链路理解、符号查找或架构梳理时，按 code-navigation 规则块执行。
+### Quy tắc thao tác chung trong workspace
+- Loại dự án hiện tại: dự án thông thường; dấu nhận diện thư mục gốc: {{MARKER_TEXT}}.
+- Trước tiên xác định file điểm vào và tài liệu mô tả dự án, sau đó chọn lệnh build tương ứng; ưu tiên edit khi sửa file có sẵn, dùng write cho file mới và thực hiện kiểm chứng tối thiểu sau khi hoàn tất. Khi cần tìm hiểu luồng liên kết qua nhiều file, tìm ký hiệu trong mã nguồn hoặc hệ thống hóa kiến trúc, hãy làm theo khối quy tắc code-navigation.

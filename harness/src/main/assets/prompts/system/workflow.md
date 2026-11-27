@@ -1,41 +1,41 @@
-﻿# Workflow：多步骤任务规划与进度推进
+# Workflow: Lập kế hoạch nhiệm vụ nhiều bước và cập nhật tiến độ
 
-## 何时必须建 plan
+## Khi nào bắt buộc tạo plan
 
-当任务满足以下任一条件时，第一轮工具调用必须先执行 `plan(action="replace_active", goal=..., steps=[{"id":"1","title":"...","status":"in_progress"}, ...])`：
+Khi nhiệm vụ thỏa mãn bất kỳ điều kiện nào dưới đây, ngay vòng gọi công cụ đầu tiên phải thực thi `plan(action="replace_active", goal=..., steps=[{"id":"1","title":"...","status":"in_progress"}, ...])`:
 
-1. **复杂开发与实现**：实现新功能、编写爬虫、模块重写、系统集成；
-2. **多步骤或跨文件操作**：预计需要 3 次以上工具调用或修改 2 个以上文件；
-3. **排错与构建排查**：编译失败排查、运行时崩溃分析、逆向分析；
-4. **服务安装与环境配置**：涉及多阶段命令执行与验证；
-5. **宿主自动化链路**：打开应用 → 等待前台 → 屏幕感知/点击 → 发广播/改设置等多步 Android 操作（优先复用可视化工作流或 `host` 工具，并在 plan 中标明特权前置条件）。
+1. **Phát triển và triển khai phức tạp**: hiện thực chức năng mới, viết crawler, viết lại module, tích hợp hệ thống;
+2. **Thao tác nhiều bước hoặc xuyên tệp**: dự kiến cần hơn 3 lần gọi công cụ hoặc sửa hơn 2 tệp;
+3. **Gỡ lỗi và kiểm tra build**: điều tra lỗi biên dịch, phân tích crash runtime, phân tích dịch ngược;
+4. **Cài dịch vụ và cấu hình môi trường**: cần thực thi lệnh qua nhiều giai đoạn và xác minh;
+5. **Chuỗi tự động hóa host**: mở ứng dụng → chờ foreground → nhận biết màn hình/nhấn → gửi broadcast/đổi cài đặt và các thao tác Android nhiều bước khác (ưu tiên tái sử dụng workflow trực quan hoặc công cụ `host`, đồng thời ghi rõ điều kiện quyền trong plan).
 
-*注意：简单单步或双步查询（如“读取文件查看版本号”、“执行单条查看命令”）无需建 plan。*
+*Lưu ý: truy vấn đơn giản một hoặc hai bước (như “đọc tệp xem phiên bản”, “chạy một lệnh kiểm tra”) không cần tạo plan.*
 
-## 规划看板的标准生命周期
+## Vòng đời chuẩn của bảng nhiệm vụ
 
 ```text
-[开始] ──► plan(replace_active) ──► 渲染 UI 任务卡片
+[Bắt đầu] ──► plan(replace_active) ──► Hiển thị thẻ nhiệm vụ UI
                │
                ▼
-[执行] ──► 调用具体工具 (read/write/base/mcp/host/subagent)
+[Thực thi] ──► Gọi công cụ cụ thể (read/write/base/mcp/host/subagent)
                │
-               ├─► 当前步骤完成 ──► plan(advance, steps=[...])
-               ├─► 路线调整/新增步骤 ──► plan(replace_active, steps=[...])
-               └─► 遇到阻碍 ──► 停下反思，更新 plan 探索分支
+               ├─► Bước hiện tại hoàn tất ──► plan(advance, steps=[...])
+               ├─► Đổi hướng/thêm bước ──► plan(replace_active, steps=[...])
+               └─► Gặp trở ngại ──► Dừng phân tích, cập nhật nhánh điều tra trong plan
                │
                ▼
-[收尾] ──► 实际验证结果 ──► plan(clear_active) ──► 总结交付
+[Kết thúc] ──► Xác minh kết quả thực tế ──► plan(clear_active) ──► Tổng kết bàn giao
 ```
 
-## 宿主能力提示（Shizuku / Root）
+## Lưu ý về năng lực host (Shizuku / Root)
 
-- 打开应用、发广播、改系统设置、GUI 点击滑动等，优先 `host(action=...)`；需要编排复用时引导用户使用可视化工作流 `HOST_ACTION` / `CONDITION_BRANCH`。
-- 特权动作前先 `host(action="status")` 确认模式；未授权时停止并说明，不要盲目重试。
-- 破坏性操作（清数据、冻结、改安全设置）必须先说明风险，必要时让用户确认。
+- Mở ứng dụng, gửi broadcast, đổi cài đặt hệ thống, nhấn/vuốt GUI... ưu tiên `host(action=...)`; khi cần tái sử dụng chuỗi điều phối, hướng dẫn người dùng dùng workflow trực quan `HOST_ACTION` / `CONDITION_BRANCH`.
+- Trước thao tác đặc quyền, dùng `host(action="status")` xác nhận chế độ; nếu chưa được cấp quyền thì dừng và giải thích, không thử lại mù quáng.
+- Thao tác có tính phá hủy (xóa dữ liệu, đóng băng, đổi cài đặt bảo mật) phải giải thích rủi ro trước, khi cần phải xin người dùng xác nhận.
 
-## 严禁行为
+## Hành vi nghiêm cấm
 
-- 严禁在无规划状态下对复杂任务盲目无序地试错调用工具；
-- 严禁在步骤完成后不同步更新看板进度；
-- 遇到错误时，严禁忽略 plan 盲目发起原样重试。
+- Không thử sai công cụ một cách mù quáng, thiếu trật tự với nhiệm vụ phức tạp khi chưa có kế hoạch;
+- Không bỏ qua việc đồng bộ tiến độ bảng nhiệm vụ sau khi hoàn tất một bước;
+- Khi gặp lỗi, không bỏ qua plan rồi gọi lại nguyên trạng một cách mù quáng.

@@ -1,27 +1,27 @@
-# 天玄 · 基础设施交接
+# CTHarness · Bàn giao hạ tầng
 
-本文件记录天玄（TaiXuan）的代码托管、发布链路与离线资源分发。
-**首要约束：不破坏服务器上任何既有服务。**
+Tài liệu này ghi lại việc lưu trữ mã nguồn, quy trình phát hành và phân phối tài nguyên ngoại tuyến của CTHarness.
+**Ràng buộc hàng đầu: không làm ảnh hưởng đến bất kỳ dịch vụ hiện có nào trên máy chủ.**
 
 ---
 
-## 一、GitHub
+## 1. GitHub
 
-| 项 | 值 |
+| Mục | Giá trị |
 |---|---|
-| 仓库 | `xiaozhe7772222/tianxuan` |
-| 可见性 | PRIVATE |
-| 默认分支 | `main` |
+| Kho mã | `xiaozhe7772222/tianxuan` |
+| Chế độ hiển thị | PRIVATE |
+| Nhánh mặc định | `main` |
 
-克隆：
+Sao chép kho mã:
 
 ```bash
 git clone https://github.com/xiaozhe7772222/tianxuan.git
 ```
 
-### 更新源是配置项，不是硬编码
+### Nguồn cập nhật là một mục cấu hình, không được mã hóa cứng
 
-应用内「检查更新」与「关于」页的仓库坐标读 `app/src/main/assets/update_source.properties`：
+Tọa độ kho mã dùng cho chức năng «Kiểm tra cập nhật» và trang «Giới thiệu» trong ứng dụng được đọc từ `app/src/main/assets/update_source.properties`:
 
 ```properties
 update.repo=xiaozhe7772222/tianxuan
@@ -33,60 +33,60 @@ update.versionsUrl=https://124.222.37.253/tx-update/versions
 update.repoUrl=https://github.com/xiaozhe7772222/tianxuan
 ```
 
-改这几行即可换发布源，无需改 Kotlin 代码。
-读取逻辑在 `core/network/.../UpdateSourceConfig.kt`（76 行），
-清单解析与版本比对在同包 `UpdateManifestParser.kt`（88 行，18 项单测覆盖），
-缺失或格式非法时逐项回落到 `UpdateSourceConfig` 的 `DEFAULT_*` 常量。
+Chỉ cần sửa các dòng này để đổi nguồn phát hành, không cần sửa mã Kotlin.
+Logic đọc nằm trong `core/network/.../UpdateSourceConfig.kt` (76 dòng),
+logic phân tích manifest và so sánh phiên bản nằm trong `UpdateManifestParser.kt` cùng gói (88 dòng, được kiểm thử bằng 18 ca kiểm thử đơn vị).
+Khi một mục bị thiếu hoặc sai định dạng, mục đó sẽ dùng giá trị dự phòng từ các hằng `DEFAULT_*` của `UpdateSourceConfig`.
 
-> 例外：`feature/custom_iteration` 刻意不依赖 `core:network`（避免破坏架构依赖白名单），
-> 其 `TIANXUAN_OFFICIAL_REPO` 为本地常量。换仓库时这两处需同步。
+> Ngoại lệ: `feature/custom_iteration` cố ý không phụ thuộc vào `core:network` (để không vi phạm danh sách cho phép về phụ thuộc kiến trúc),
+> nên `TIANXUAN_OFFICIAL_REPO` của mô-đun này là hằng cục bộ. Khi đổi kho mã, cần đồng bộ cả hai nơi.
 
-> **为什么更新源是自建接口而不是 GitHub Releases API**：
-> 仓库为 PRIVATE，未认证的 Releases API 请求返回 404（已实测），
-> 而 APK 需要公开可下载。因此在自有服务器上实现了一个与 GitHub Releases
-> 完全同构的清单服务（字段名一致：`tag_name`/`name`/`body`/`html_url`/
-> `published_at`/`assets[].name`/`assets[].size`/`assets[].browser_download_url`），
-> 客户端解析逻辑无需为自建源特殊化。GitHub API 作为兜底候选保留在候选列表末位。
+> **Vì sao nguồn cập nhật là API tự triển khai thay vì GitHub Releases API**:
+> Kho mã ở chế độ PRIVATE; yêu cầu tới Releases API không có xác thực sẽ trả về 404 (đã kiểm chứng),
+> trong khi APK cần được tải xuống công khai. Vì vậy, máy chủ riêng triển khai một dịch vụ manifest
+> có cấu trúc hoàn toàn tương thích với GitHub Releases (cùng tên trường: `tag_name`/`name`/`body`/`html_url`/
+> `published_at`/`assets[].name`/`assets[].size`/`assets[].browser_download_url`),
+> giúp logic phân tích phía máy khách không cần xử lý riêng cho nguồn tự triển khai. GitHub API vẫn được giữ ở cuối danh sách nguồn dự phòng.
 
 ---
 
-## 二、发布链路
+## 2. Quy trình phát hành
 
 ```bash
 ./release.sh <版本号> [--apk] [--publish]
 ```
 
-| 参数 | 作用 |
+| Tham số | Tác dụng |
 |---|---|
-| 无 | 构建 + 打 tag + 推送 + 创建 Release |
-| `--apk` | 额外构建 APK 并附到 Release |
-| `--publish` | 额外同步到分发服务器 |
+| Không có | Biên dịch + gắn thẻ + đẩy mã + tạo bản phát hành |
+| `--apk` | Biên dịch thêm APK và đính kèm vào bản phát hành |
+| `--publish` | Đồng bộ thêm lên máy chủ phân phối |
 
-流程固定为：**环境检查 → `architectureCheck` + `AstronomyTest` → 构建 → 提交打 tag →
-推送 → 创建 Release →（可选）同步服务器**。
+Quy trình cố định: **Kiểm tra môi trường → `architectureCheck` + `AstronomyTest` → Biên dịch → Tạo commit và gắn thẻ →
+Đẩy mã → Tạo bản phát hành → (Tùy chọn) Đồng bộ máy chủ**.
 
-前两步任一失败即中止发布，不允许带病出包。
+Nếu một trong hai bước đầu thất bại, quá trình phát hành sẽ dừng ngay; không được tạo gói khi vẫn còn lỗi.
 
-前置环境：
+Chuẩn bị môi trường:
 
 ```bash
-source ./setup-env.sh   # JDK 25 daemon / SDK / JDK 17 toolchain
+source ./setup-env.sh   # Daemon JDK 25 / SDK / bộ công cụ JDK 17
 ```
 
-### 架构棘轮
+### Cơ chế siết chặt dần giới hạn kiến trúc
 
-`architecture-policy.json` 的 `global.maxFileLines=400`，基线在 `.architecture-baseline.json`。
-**基线只许下调，不许上调。** 改动文件使其超限时，先把该文件拆小，而不是抬高基线。
+`architecture-policy.json` đặt `global.maxFileLines=400`, với đường cơ sở trong `.architecture-baseline.json`.
+**Đường cơ sở chỉ được hạ xuống, không được nâng lên.** Nếu một thay đổi khiến tệp vượt giới hạn, hãy chia nhỏ tệp trước, thay vì nâng đường cơ sở.
 
 ---
 
-## 三、腾讯云服务器（124.222.37.253）
+## 3. Máy chủ Tencent Cloud (124.222.37.253)
 
-### 既有服务（不得触碰）
+### Các dịch vụ hiện có (không được can thiệp)
 
-`fusion-gateway`（new-api 网关）、`logview`、`st-auth`、`st-rotator`、`nginx` —— 全部由 systemd 管理。
+`fusion-gateway` (cổng new-api), `logview`, `st-auth`, `st-rotator`, `nginx` — tất cả đều do systemd quản lý.
 
-任何操作前后都应核对：
+Cần kiểm tra trước và sau mọi thao tác:
 
 ```bash
 for s in fusion-gateway logview st-rotator st-auth nginx; do
@@ -94,39 +94,39 @@ for s in fusion-gateway logview st-rotator st-auth nginx; do
 done
 ```
 
-### 新增路径（与既有目录隔离）
+### Các đường dẫn bổ sung (tách biệt với thư mục hiện có)
 
-| 路径 | 用途 |
+| Đường dẫn | Mục đích |
 |---|---|
-| `/opt/tianxuan-offline` | 6.44 GiB 离线插件包落盘 |
-| `/opt/tianxuan-dist` | 对外分发目录，含 `0.20.0/`、`plugins/` |
-| `/usr/local/share/tianxuan/tianxuan_dist.py` | 自建更新/分发服务 |
-| `/usr/local/share/tianxuan/apkmanifest.py` | 纯标准库 AXML 解析（读 APK 版本号/包名） |
-| `/usr/local/bin/tianxuan-fetch.sh` | 离线包下载器 |
-| `/usr/local/bin/sync-tianxuan-plugins.sh` | 把已下载完成的包软链进 `dist/plugins` |
-| `/usr/local/bin/gen-tianxuan-manifest.sh` | 扫描 dist 生成 `manifest.json` |
-| `/etc/systemd/system/tianxuan-fetch.service` | 下载服务单元 |
-| `/etc/systemd/system/tianxuan-dist.service` | 分发服务单元 |
-| `/var/log/tianxuan-fetch.log` | 下载日志 |
+| `/opt/tianxuan-offline` | Lưu 6.44 GiB gói plugin ngoại tuyến trên đĩa |
+| `/opt/tianxuan-dist` | Thư mục phân phối công khai, chứa `0.20.0/`, `plugins/` |
+| `/usr/local/share/tianxuan/tianxuan_dist.py` | Dịch vụ cập nhật/phân phối tự triển khai |
+| `/usr/local/share/tianxuan/apkmanifest.py` | Phân tích AXML chỉ bằng thư viện chuẩn (đọc phiên bản/tên gói APK) |
+| `/usr/local/bin/tianxuan-fetch.sh` | Trình tải gói ngoại tuyến |
+| `/usr/local/bin/sync-tianxuan-plugins.sh` | Tạo liên kết mềm cho các gói đã tải xong vào `dist/plugins` |
+| `/usr/local/bin/gen-tianxuan-manifest.sh` | Quét dist để tạo `manifest.json` |
+| `/etc/systemd/system/tianxuan-fetch.service` | Đơn vị dịch vụ tải xuống |
+| `/etc/systemd/system/tianxuan-dist.service` | Đơn vị dịch vụ phân phối |
+| `/var/log/tianxuan-fetch.log` | Nhật ký tải xuống |
 
-### nginx 改动（唯一的既有配置改动）
+### Thay đổi nginx (thay đổi duy nhất đối với cấu hình hiện có)
 
-只在 `/etc/nginx/sites-enabled/fusion-gateway` **新增一个 location**，
-未修改任何既有 location：
+Chỉ **thêm một location** vào `/etc/nginx/sites-enabled/fusion-gateway`,
+không sửa bất kỳ location hiện có nào:
 
 ```nginx
 location ^~ /tx-update/ {
-    # 末尾的 / 让 nginx 剥掉 /tx-update 前缀
+    # Dấu / ở cuối để nginx bỏ tiền tố /tx-update
     proxy_pass http://127.0.0.1:8443/;
     proxy_http_version 1.1;
     proxy_set_header Connection "";
-    proxy_buffering off;          # 大文件直发，不落 nginx 缓冲
+    proxy_buffering off;          # Truyền thẳng tệp lớn, không lưu vào bộ đệm nginx
     proxy_request_buffering off;
     proxy_cache off;
     proxy_read_timeout 600s;
     proxy_send_timeout 600s;
     proxy_set_header Host $host;
-    proxy_set_header Range $http_range;      # Range 透传，断点续传必需
+    proxy_set_header Range $http_range;      # Chuyển tiếp Range, cần thiết để tiếp tục tải dở
     proxy_set_header If-Range $http_if_range;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -135,13 +135,13 @@ location ^~ /tx-update/ {
 }
 ```
 
-8443 端口未在腾讯云安全组放行，仅监听回环，不对外暴露。
-备份统一放 `/root/nginx-backups/`（**不可放 `sites-enabled/`**，
-否则会被 nginx 扫到并触发 `duplicate default server`）。
+Cổng 8443 không được mở trong nhóm bảo mật của Tencent Cloud, chỉ lắng nghe trên loopback và không được công khai.
+Các bản sao lưu đều đặt trong `/root/nginx-backups/` (**không được đặt trong `sites-enabled/`**,
+nếu không nginx sẽ quét chúng và báo `duplicate default server`).
 
-### 不干扰既有服务的措施
+### Biện pháp tránh ảnh hưởng đến dịch vụ hiện có
 
-`tianxuan-fetch.service` 的隔离配置：
+Cấu hình cách ly của `tianxuan-fetch.service`:
 
 ```ini
 Nice=19
@@ -151,28 +151,28 @@ IOWeight=10
 MemoryMax=256M
 ```
 
-`tianxuan-dist.service` 额外加 `ProtectSystem=strict` + `NoNewPrivileges=yes`
-+ `ReadWritePaths` 限定只能写日志目录。
+`tianxuan-dist.service` bổ sung `ProtectSystem=strict` + `NoNewPrivileges=yes`
++ `ReadWritePaths` để giới hạn quyền ghi chỉ trong thư mục nhật ký.
 
-叠加脚本内 `wget --limit-rate=8M` 限速。实测 6.44 GiB 全量下载与分发期间
-`fusion-gateway`/`logview`/`st-rotator`/`st-auth`/`nginx` 保持 active，
-负载峰值 0.08，可用内存 2912M。
+Đồng thời, script giới hạn tốc độ bằng `wget --limit-rate=8M`. Kết quả kiểm chứng trong suốt quá trình tải và phân phối toàn bộ 6.44 GiB:
+`fusion-gateway`/`logview`/`st-rotator`/`st-auth`/`nginx` vẫn ở trạng thái active,
+tải hệ thống cao nhất là 0.08, bộ nhớ khả dụng là 2912M.
 
-### 运维命令
+### Lệnh vận hành
 
 ```bash
 systemctl status  tianxuan-fetch tianxuan-dist
-systemctl restart tianxuan-fetch     # 断点续传，重跑安全
-sync-tianxuan-plugins# 补齐软链，幂等
-gen-tianxuan-manifest                # 刷新 manifest.json，幂等
-python3 /usr/local/share/tianxuan/apkmanifest_test.py   # AXML 解析器自测（7 项）
-python3 /usr/local/share/tianxuan/gen_manifest_test.py  # 清单生成自测（6 组）
+systemctl restart tianxuan-fetch     # Tiếp tục tải dở, có thể chạy lại an toàn
+sync-tianxuan-plugins# Bổ sung liên kết mềm, có tính lũy đẳng
+gen-tianxuan-manifest                # Làm mới manifest.json, có tính lũy đẳng
+python3 /usr/local/share/tianxuan/apkmanifest_test.py   # Tự kiểm thử trình phân tích AXML (7 ca)
+python3 /usr/local/share/tianxuan/gen_manifest_test.py  # Tự kiểm thử tạo manifest (6 nhóm)
 tail -f /var/log/tianxuan-fetch.log
 grep -E 'DONE|FAIL|ALL DONE' /var/log/tianxuan-fetch.log
 journalctl -u tianxuan-dist -f
 ```
 
-发布前另有一道**产物洁净度守卫自测**，在仓库里跑（需要 Android SDK）：
+Trước khi phát hành còn có **bài tự kiểm thử bộ kiểm soát độ sạch của sản phẩm**, chạy trong kho mã (cần Android SDK):
 
 ```bash
 python3 ops/release_guard_test.py
@@ -180,56 +180,56 @@ python3 ops/release_guard_test.py
 #                      dex 含类的包被拦、release.sh 守卫模式逐分支核对通过）
 ```
 
-它覆盖三件事：① 用 `aapt2 link` 真编出一个含 LeakCanary 组件的 APK，
-确认 release.sh 的守卫会拦下它；② 不含组件的干净包必须放行（守卫若「一律拦下」
-等于没有守卫）；③ 从 `release.sh` 里**抠出那个真正被 grep 执行的模式**，
-逐分支核对——注释行会被先剥掉，所以「把模式拼错一个字」「删掉某个分支」
-「把整行注释掉」三类退化都会让它变红。无 SDK 时报 `SKIP` 并以 0 退出，
-不误报失败。
+Bài kiểm thử bao phủ ba việc: ① Dùng `aapt2 link` để thực sự biên dịch một APK chứa thành phần LeakCanary,
+xác nhận bộ kiểm soát của release.sh chặn gói đó; ② Gói sạch không chứa thành phần phải được cho qua (bộ kiểm soát «chặn tất cả»
+chẳng khác gì không có bộ kiểm soát); ③ **Trích đúng biểu thức thực sự được grep thực thi** từ `release.sh`,
+kiểm tra từng nhánh — các dòng chú thích được loại bỏ trước, nên cả ba kiểu sai lệch «gõ sai một ký tự trong biểu thức», «xóa một nhánh»
+và «biến cả dòng thành chú thích» đều khiến bài kiểm thử thất bại. Khi không có SDK, bài kiểm thử báo `SKIP` và thoát với mã 0,
+không báo lỗi giả.
 
-### APK 版本号读取（apkmanifest.py）
+### Đọc số phiên bản APK (apkmanifest.py)
 
-服务器没有 aapt，也不该为读一个版本号去装整个 Android SDK，
-因此用 `struct` + `zipfile` 直接解析二进制 AXML。三个已踩过的坑：
+Máy chủ không có aapt, cũng không nên cài toàn bộ Android SDK chỉ để đọc một số phiên bản,
+nên dùng `struct` + `zipfile` để phân tích trực tiếp AXML nhị phân. Ba lỗi đã từng gặp:
 
-1. **UTF-8 标志位在 flags 的 bit 8（0x100）**。aapt2 生成的清单通常是
-   UTF-16（`flags=0x0`），按 UTF-8 解会整张字符串表错位。
-2. **chunk 之间要按 header 里的 `size` 整块跳过**，不能只跳 `headerSize`。
-   字符串池与首个元素之间还有 `RES_XML_RESOURCE_MAP_TYPE(0x0180)`。
-3. **`attributeStart` 相对 attrExt 起点（即 `off + headerSize`）**，
-   不是相对 attrExt 末尾 —— 叠加 attrExt 长度会跳过首个属性，
-   表现为 `versionCode` 恰好读不到而 `versionName` 正常。
+1. **Cờ UTF-8 nằm ở bit 8 (0x100) của flags**. Manifest do aapt2 tạo thường dùng
+   UTF-16 (`flags=0x0`); giải mã theo UTF-8 sẽ làm lệch toàn bộ bảng chuỗi.
+2. **Phải bỏ qua toàn bộ từng chunk theo `size` trong header**, không được chỉ bỏ qua `headerSize`.
+   Giữa vùng chứa chuỗi và phần tử đầu tiên còn có `RES_XML_RESOURCE_MAP_TYPE(0x0180)`.
+3. **`attributeStart` tính từ đầu attrExt (tức `off + headerSize`)**,
+   không phải từ cuối attrExt — cộng thêm độ dài attrExt sẽ bỏ qua thuộc tính đầu tiên,
+   dẫn đến việc không đọc được `versionCode` trong khi `versionName` vẫn bình thường.
 
-属性名在字符串池里是**裸名**（`versionCode`），命名空间信息存在属性项的
-`ns` 字段里，所以按短名比对是对的，不要去前缀。
+Tên thuộc tính trong vùng chứa chuỗi là **tên thuần** (`versionCode`); thông tin không gian tên được lưu ở trường
+`ns` của mục thuộc tính, nên so sánh theo tên ngắn là đúng, không cần loại bỏ tiền tố.
 
-版本号与包名一律以 APK 实际内容为准，**不从目录名反推** ——
-此前 `versionCode` 曾用 `版本号×10` 拼出200这种假值，与 APK 真实的 29 不符。
-读不到时留 0，不臆造。
+Số phiên bản và tên gói luôn phải căn cứ vào nội dung thực tế của APK, **không suy ngược từ tên thư mục** —
+trước đây từng dùng `số phiên bản×10` để tạo giá trị giả như 200 cho `versionCode`, không khớp với giá trị thực 29 trong APK.
+Nếu không đọc được thì để 0, không tự suy đoán.
 
 ```bash
 python3 /usr/local/share/tianxuan/apkmanifest.py <apk>
 # package=top.wkbin.tianxuan.debug versionName=0.20.0-debug versionCode=29
 ```
 
-输出与 `aapt2 dump badging` 逐字段一致（非APK / 截断 / 损坏文件均返回空值不抛异常）。
+Kết quả đầu ra khớp từng trường với `aapt2 dump badging` (tệp không phải APK / bị cắt cụt / bị hỏng đều trả về giá trị rỗng, không phát sinh ngoại lệ).
 
 ---
 
-## 四、自建更新服务（对外端点）
+## 4. Dịch vụ cập nhật tự triển khai (các điểm cuối công khai)
 
-基址 `https://124.222.37.253/tx-update`，与 GitHub Releases 字段同构。
+Địa chỉ gốc là `https://124.222.37.253/tx-update`, với cấu trúc trường tương thích GitHub Releases.
 
-| 端点 | 用途 |
+| Điểm cuối | Mục đích |
 |---|---|
-| `GET /tx-update/healthz` | 存活检查 |
-| `GET /tx-update/latest` | 最新版清单（含 `assets[]`，GitHub 同构） |
-| `GET /tx-update/versions` | 历史版本列表 |
-| `GET /tx-update/apk/<version>` | APK 下载，支持 Range |
-| `GET /tx-update/plugins` | 离线插件清单 |
-| `GET /tx-update/plugin/<name>` | 插件下载，支持 Range |
+| `GET /tx-update/healthz` | Kiểm tra dịch vụ còn hoạt động |
+| `GET /tx-update/latest` | Manifest phiên bản mới nhất (có `assets[]`, cùng cấu trúc với GitHub) |
+| `GET /tx-update/versions` | Danh sách các phiên bản trước |
+| `GET /tx-update/apk/<version>` | Tải APK, hỗ trợ Range |
+| `GET /tx-update/plugins` | Danh sách plugin ngoại tuyến |
+| `GET /tx-update/plugin/<name>` | Tải plugin, hỗ trợ Range |
 
-已验证（`nginx -s reload` 回归后复测，2026-10-07）：
+Đã xác minh (kiểm tra hồi quy lại sau `nginx -s reload`, ngày 2026-10-07):
 
 ```
 /healthz  → {"status":"ok","service":"tianxuan-dist"}
@@ -241,31 +241,31 @@ python3 /usr/local/share/tianxuan/apkmanifest.py <apk>
 /plugin/<11 个中文包名> → 全部 206 + 1024 字节
 ```
 
-> `/latest` 返回的是**单个版本对象**（与 GitHub 的 `/releases/latest` 一致），
-> `versions` 数组在 `/versions` 端点。
+> `/latest` trả về **một đối tượng phiên bản duy nhất** (giống `/releases/latest` của GitHub),
+> còn mảng `versions` nằm ở điểm cuối `/versions`.
 
-插件名覆盖了中文、`+`、`·`(U+00B7)、`、`(U+3001) 等极端字符，
-11 个 URL 全部可下载 —— 说明百分号编码与 `Content-Disposition` 链路正确。
+Tên plugin bao gồm các ký tự đặc biệt như chữ Trung Quốc, `+`, `·`(U+00B7), `、`(U+3001).
+Cả 11 URL đều tải được — cho thấy toàn bộ luồng mã hóa phần trăm và `Content-Disposition` hoạt động đúng.
 
-**路径安全**：`_within_dist()` 用 `abspath` 而非 `realpath`
-（`realpath` 会把软链解到 `dist` 外从而误判越界），
-显式拒绝绝对路径与 `..`，并要求 `.txplugin` 后缀。
-已回归验证 `..`、绝对路径、非 `.txplugin` 三类输入均被拦截。
+**An toàn đường dẫn**: `_within_dist()` dùng `abspath` thay vì `realpath`
+(vì `realpath` phân giải liên kết mềm ra ngoài `dist`, dẫn đến nhận định sai rằng đường dẫn vượt giới hạn),
+từ chối rõ ràng đường dẫn tuyệt đối và `..`, đồng thời yêu cầu hậu tố `.txplugin`.
+Kiểm thử hồi quy đã xác nhận cả ba loại đầu vào `..`, đường dẫn tuyệt đối và tệp không có hậu tố `.txplugin` đều bị chặn.
 
-**代理前缀感知**：服务从 `X-Forwarded-Proto` / `X-Forwarded-Prefix` 推导
-对外基址，systemd 单元里设 `TIANXUAN_BASE_PATH=/tx-update`、
-`TIANXUAN_BASE_PROTO=https`，保证下发的 `browser_download_url` 是
-带前缀的 https 绝对地址，可直接被客户端使用。
+**Nhận biết tiền tố proxy**: Dịch vụ suy ra địa chỉ gốc công khai từ `X-Forwarded-Proto` / `X-Forwarded-Prefix`.
+Đơn vị systemd đặt `TIANXUAN_BASE_PATH=/tx-update`,
+`TIANXUAN_BASE_PROTO=https`, bảo đảm `browser_download_url` trả về là
+địa chỉ https tuyệt đối có tiền tố, để máy khách sử dụng trực tiếp.
 
 ---
 
-## 五、6.44 GiB 离线插件包
+## 5. Gói plugin ngoại tuyến 6.44 GiB
 
-**状态：11/11 已下载完成，`failures=0`，字节数与 QQ 清单逐项精确一致。**
+**Trạng thái: đã tải xong 11/11 gói, `failures=0`, số byte khớp chính xác từng mục với danh sách QQ.**
 
-11 个 `.txplugin`，合计 `6911578380` 字节（6.44 GiB），arm64。
+11 gói `.txplugin`, tổng cộng `6911578380` byte (6.44 GiB), arm64.
 
-| 包 | 字节 |
+| Gói | Số byte |
 |---|---|
 | Rust系统与Android-JNI交叉编译链-1.0.0 | 530441917 |
 | 现代包管理器-yarn-1.0.0 | 49901704 |
@@ -279,14 +279,14 @@ python3 /usr/local/share/tianxuan/apkmanifest.py <apk>
 | Android逆向分析与代码审计-1.0.0 | 162991149 |
 | Android核心基础环境-1.0.0 | 1108029878 |
 
-规格清单：`ops/offline-packages.json`（含 `name` / `size`，**已入库**，总字节 `total_bytes`）。
-含直链的完整清单**不入库** —— 直链带 QQ 闪传的 `rkey` 会话凭证且14 天过期，
-由 `ops/.gitignore` 排除，按下节「取链过程」重新生成即可。
+Danh sách thông số: `ops/offline-packages.json` (chứa `name` / `size`, **đã được đưa vào kho mã**, tổng số byte là `total_bytes`).
+Danh sách đầy đủ chứa liên kết tải trực tiếp **không được đưa vào kho mã** — các liên kết này chứa thông tin xác thực phiên `rkey` của QQ Flash Transfer và hết hạn sau 14 ngày.
+Danh sách được loại trừ bằng `ops/.gitignore`; chỉ cần tạo lại theo «Quy trình lấy liên kết» ở phần tiếp theo.
 
-### 完整性校验
+### Kiểm tra tính toàn vẹn
 
-下载器按字节数逐个比对，任一不符即重试（最多 5 轮，`wget -c` 断点续传）。
-事后可再核一遍：
+Trình tải đối chiếu số byte từng gói; nếu có bất kỳ gói nào không khớp thì thử lại (tối đa 5 lượt, dùng `wget -c` để tiếp tục tải dở).
+Có thể kiểm tra lại sau đó:
 
 ```bash
 cd /opt/tianxuan-offline
@@ -295,8 +295,8 @@ while IFS=$'\t' read -r size name url; do
 done < /tmp/tianxuan-manifest.tsv
 ```
 
-### 直链来源与时效
+### Nguồn và thời hạn của liên kết tải trực tiếp
 
-直链来自 QQ 闪传分享页 `https://qfile.qq.com/q/x4LyndiNna`，鉴权靠 URL 内的 `rkey`。
-**该分享 14 天后过期**，过期后需重新取链。重取步骤见 `天玄改造台账.md` 第三节。
-直链支持 `Range`，中断后可续传。
+Liên kết tải trực tiếp lấy từ trang chia sẻ QQ Flash Transfer `https://qfile.qq.com/q/x4LyndiNna`, xác thực bằng `rkey` trong URL.
+**Liên kết chia sẻ này hết hạn sau 14 ngày**; khi hết hạn phải lấy lại liên kết. Các bước lấy lại nằm ở phần 3 của `天玄改造台账.md`.
+Liên kết tải trực tiếp hỗ trợ `Range`, nên có thể tiếp tục tải sau khi bị gián đoạn.

@@ -1,67 +1,67 @@
-# Baseline Profile 启动优化指南
+# Hướng dẫn tối ưu khởi động bằng Baseline Profile
 
-> 天玄冷启动优化第二阶段：安装时预编译（AOT）热点方法，消除首次启动 JIT 现场编译开销。
+> Giai đoạn hai tối ưu khởi động nguội của CTHarness: biên dịch trước (AOT) các phương thức được dùng nhiều ngay khi cài đặt, loại bỏ chi phí JIT biên dịch tại chỗ trong lần khởi động đầu tiên.
 
-## 原理
+## Nguyên lý
 
-APK 内嵌 `assets/dexopt/baseline.prof`（由 `app/src/release/generated/baselineProfiles/` 编译打包）。
-首次安装后 `androidx.profileinstaller` 在后台把它提交给 ART 预编译，覆盖：
+APK nhúng `assets/dexopt/baseline.prof` (được biên dịch và đóng gói từ `app/src/release/generated/baselineProfiles/`).
+Sau lần cài đặt đầu tiên, `androidx.profileinstaller` gửi hồ sơ này cho ART biên dịch trước trong nền, bao phủ:
 
-- `Application.onCreate` → Koin 图构建 → 首屏 Compose 组合的完整启动路径
-- 首帧 LazyColumn 滚动路径
+- Toàn bộ đường khởi động từ `Application.onCreate` → dựng đồ thị Koin → tạo cây giao diện Compose của màn hình đầu tiên
+- Đường thực thi cuộn LazyColumn ở khung hình đầu tiên
 
-## 模块结构
+## Cấu trúc mô-đun
 
-| 路径 | 职责 |
+| Đường dẫn | Trách nhiệm |
 | :--- | :--- |
-| `baselineprofile/` | 生成者模块（`com.android.test` + macrobenchmark），含采集用例 |
-| `baselineprofile/.../StartupBaselineProfile.kt` | 采集场景：冷启动 + 首页轻滑动 |
-| `app/src/release/generated/baselineProfiles/` | 产物，**随版本库提交** |
-| `app/build.gradle.kts` | 消费者接线：插件 + `baselineProfile(project(":baselineprofile"))` |
+| `baselineprofile/` | Mô-đun tạo hồ sơ (`com.android.test` + macrobenchmark), chứa các ca thu thập |
+| `baselineprofile/.../StartupBaselineProfile.kt` | Kịch bản thu thập: khởi động nguội + vuốt nhẹ màn hình chính |
+| `app/src/release/generated/baselineProfiles/` | Sản phẩm đầu ra, **được đưa vào cùng kho mã nguồn** |
+| `app/build.gradle.kts` | Cấu hình bên sử dụng: plugin + `baselineProfile(project(":baselineprofile"))` |
 
-## 重新采集（App UI 或启动链路大改后）
+## Thu thập lại (sau thay đổi lớn ở giao diện ứng dụng hoặc luồng khởi động)
 
-前置：一台已连接、已解锁的设备/模拟器（真机或 AVD 均可）。
+Điều kiện tiên quyết: một thiết bị/trình giả lập đã kết nối và mở khóa (thiết bị thật hoặc AVD đều được).
 
 ```powershell
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat :app:generateBaselineProfile --console=plain
 ```
 
-成功标志：`app/src/release/generated/baselineProfiles/*.txt` 更新，测试 `1/1 completed (0 failed)`。
+Dấu hiệu thành công: `app/src/release/generated/baselineProfiles/*.txt` được cập nhật, kiểm thử báo `1/1 completed (0 failed)`.
 
-### 多设备并存时锁定目标
+### Chỉ định đích khi có nhiều thiết bị
 
 ```powershell
-$env:ANDROID_SERIAL = "emulator-5554"   # 或具体设备序列号
+$env:ANDROID_SERIAL = "emulator-5554"   # Hoặc số sê-ri thiết bị cụ thể
 ```
 
-### 本机无设备时：手动起一个无头 AVD
+### Khi máy cục bộ không có thiết bị: tự khởi động một AVD không có giao diện
 
 ```powershell
-# 一次性创建（本仓库已有 android-37.1 google_apis_playstore x86_64 镜像时可直接用）
+# Tạo một lần (có thể dùng trực tiếp khi repository này đã có image android-37.1 google_apis_playstore x86_64)
 powershell -NoProfile -Command "Start-Process -FilePath \"$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe\" -ArgumentList '@<avd名>','-no-window','-no-audio','-no-boot-anim'"
 adb -s emulator-5554 shell settings put secure user_setup_complete 1
 adb -s emulator-5554 shell settings put global device_provisioned 1
 ```
 
-x86_64 模拟器可以运行 arm64-only 应用（模拟器 37+ 自动二进制翻译），天玄仅 arm64-v8a 不受影响。
+Trình giả lập x86_64 có thể chạy ứng dụng chỉ hỗ trợ arm64 (trình giả lập 37+ tự động dịch nhị phân), nên việc CTHarness chỉ hỗ trợ arm64-v8a không bị ảnh hưởng.
 
-## 已知坑位
+## Các bẫy đã biết
 
-1. **vivo 等国产 ROM 的 USB 安全加固**会以 `Calling from not trusted UID!` 拦截仪器化注入，
-   表现为 `Failed to install split APK(s)` 或 instrumentation 进程秒死——这类设备无法用于采集，换模拟器。
-2. 采集用的是 nonMinified 变体；若 release 主线程抛错（如 R8 后才暴露的正则问题），
-   采集阶段就会以 `Process crashed` 失败。先修崩溃再采集。
-3. 强杀 Gradle daemon 可能留下损坏的 KSP 缓存（报 `NoSuchFileException ... kspCaches\...\*_Factory.java`），
-   删除对应模块的 `build/kspCaches` 重跑即可。
+1. **Cơ chế tăng cường bảo mật USB của các ROM Trung Quốc như vivo** có thể chặn cơ chế kiểm thử instrumentation bằng lỗi `Calling from not trusted UID!`,
+   biểu hiện là `Failed to install split APK(s)` hoặc tiến trình kiểm thử chết ngay — không thể dùng loại thiết bị này để thu thập, hãy chuyển sang trình giả lập.
+2. Quá trình thu thập dùng biến thể nonMinified; nếu luồng chính của bản phát hành ném lỗi (chẳng hạn lỗi biểu thức chính quy chỉ lộ ra sau R8),
+   giai đoạn thu thập sẽ thất bại với `Process crashed`. Hãy sửa lỗi văng ứng dụng trước rồi mới thu thập.
+3. Buộc dừng tiến trình nền Gradle có thể để lại bộ nhớ đệm KSP hỏng (báo `NoSuchFileException ... kspCaches\...\*_Factory.java`),
+   chỉ cần xóa `build/kspCaches` của mô-đun tương ứng rồi chạy lại.
 
-## 收益验证
+## Xác minh hiệu quả
 
 ```powershell
 adb install -r app/build/outputs/apk/release/tianxuan-v0.6.0-release.apk
-adb shell am start -W top.wkbin.tianxuan/.MainActivity   # 对比 TotalTime
-adb logcat -s TianXuanStartup                            # splash dismissed 耗时
+adb shell am start -W top.wkbin.tianxuan/.MainActivity   # So sánh TotalTime
+adb logcat -s TianXuanStartup                            # Thời gian splash dismissed
 ```
 
-Koin 迁移已移除旧 DI 生成类的 profile 条目；完整的新启动热点需按本文流程在 ARM64 设备上重新采集，不能仅替换类名。
+Việc chuyển sang Koin đã loại bỏ các mục trong hồ sơ của lớp tiêm phụ thuộc (DI) được sinh trước đây; cần thu thập lại đầy đủ các điểm nóng khởi động mới trên thiết bị ARM64 theo quy trình này, không thể chỉ thay tên lớp.

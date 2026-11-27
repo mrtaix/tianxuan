@@ -1,10 +1,13 @@
 name: Build CTHarnessDev APK
 
 on:
+  push:
+    branches:
+      - feat/ctharness-vi
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Optional Release Tag (e.g. v0.2.1-dev)'
+        description: 'Thẻ phát hành tuỳ chọn (ví dụ v0.2.1-dev)'
         required: false
         default: ''
 
@@ -30,8 +33,8 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # Gradle 9.7 daemon requests Java 25 via gradle-daemon-jvm.properties;
-      # app modules still compile against the Java 17 toolchain.
+      # Gradle 9.7 daemon yêu cầu Java 25 qua gradle-daemon-jvm.properties;
+      # các module ứng dụng vẫn biên dịch bằng toolchain Java 17.
       - name: Set up JDK 25 for the Gradle daemon
         uses: actions/setup-java@v4
         with:
@@ -41,8 +44,8 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          # 'tools' 包已于 2026-09 被 Google 下线，不能再用默认值（tools platform-tools）
-          # 参考 https://github.com/android-actions/setup-android/issues/537
+          # Gói 'tools' đã bị Google ngừng cung cấp từ 2026-09, không thể dùng giá trị mặc định (tools platform-tools) nữa
+          # Tham khảo https://github.com/android-actions/setup-android/issues/537
           packages: 'platform-tools'
 
       - name: Grant Execute Permission for Gradlew
@@ -71,7 +74,7 @@ jobs:
       - name: Upload CTHarnessDev APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tianxuandev-apk
+          name: ctharness-apk
           path: output/*
           retention-days: 7
 

@@ -242,6 +242,10 @@ interface HarnessRuntimeDao {
     @Query("DELETE FROM harness_operations WHERE id = :operationId")
     suspend fun deleteOperation(operationId: String)
 
+    // Bảo toàn cả NEXT_RUN đã lưu bởi phiên bản cũ, trước khi dọn queue của operation.
+    @Query("UPDATE harness_queue_items SET operationId = NULL WHERE operationId = :operationId AND queueType = 'next_run'")
+    suspend fun detachNextRunQueue(operationId: String)
+
     @Query("DELETE FROM harness_queue_items WHERE operationId = :operationId")
     suspend fun deleteOperationQueue(operationId: String)
 
@@ -299,6 +303,7 @@ interface HarnessRuntimeDao {
 
     @Transaction
     suspend fun finishOperation(result: HarnessLaneResultEntity, lane: HarnessLaneEntity) {
+        detachNextRunQueue(result.operationId)
         deleteOperationQueue(result.operationId)
         deleteOperation(result.operationId)
         upsertLaneResult(result)

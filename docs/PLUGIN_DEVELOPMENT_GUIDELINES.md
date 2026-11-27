@@ -1,17 +1,17 @@
-# TianXuan 插件开发准则
+# Hướng dẫn phát triển plugin CTHarness
 
-本文档描述当前 TianXuan 插件导入器、Registry、安装器和 PRoot 运行环境的真实行为。除明确标记为“建议”的内容外，示例均以当前实现为准。
+Tài liệu này mô tả hành vi thực tế của trình nhập plugin, Registry, trình cài đặt và môi trường chạy PRoot hiện tại của CTHarness. Ngoài những nội dung được đánh dấu rõ là "khuyến nghị", các ví dụ đều dựa trên cách triển khai hiện tại.
 
-## 1. 插件来源
+## 1. Nguồn plugin
 
-TianXuan 将插件分为两类：
+CTHarness chia plugin thành hai loại:
 
-| 来源 | `source` | 安装方式 | 资源位置 |
+| Nguồn | `source` | Cách cài | Vị trí tài nguyên |
 | --- | --- | --- | --- |
-| 在线插件 | `REMOTE` | 通常为 `SCRIPT` | 内置或签名 Registry |
-| 本地插件 | `LOCAL` | `LOCAL_PACKAGE` | 用户导入的 `.txplugin` |
+| Plugin trực tuyến | `REMOTE` | Thường là `SCRIPT` | Registry tích hợp hoặc đã ký |
+| Plugin cục bộ | `LOCAL` | `LOCAL_PACKAGE` | `.txplugin` do người dùng nhập |
 
-本地包导入时，应用会强制改写为：
+Khi nhập gói cục bộ, ứng dụng sẽ ép ghi đè thành:
 
 ```json
 {
@@ -21,31 +21,31 @@ TianXuan 将插件分为两类：
 }
 ```
 
-本地插件与在线 Registry 使用相同 `id` 时，本地插件优先显示。`permissions` 当前用于清单校验和界面展示，**不是安装脚本的权限沙箱**；安装脚本仍在 PRoot 内以当前 Linux 用户权限执行。
+Khi plugin cục bộ và plugin trực tuyến dùng cùng `id`, plugin cục bộ được ưu tiên hiển thị. `permissions` hiện chỉ dùng để kiểm tra manifest và hiển thị giao diện, **không phải sandbox phân quyền cho tập lệnh cài đặt**; tập lệnh cài đặt vẫn chạy trong PRoot với quyền của người dùng Linux hiện tại.
 
-## 2. `.txplugin` 包格式
+## 2. Định dạng gói `.txplugin`
 
-本地插件使用 ZIP 容器，扩展名为 `.txplugin`：
+Plugin cục bộ dùng gói chứa ZIP với phần mở rộng `.txplugin`:
 
 ```text
 my-plugin.txplugin
 ├── manifest.json
 └── payload/
-    ├── archives/       # SDK、Gradle、Flutter、NDK 等归档
-    ├── scripts/        # 安装、验证和卸载脚本
-    ├── config/         # 配置模板
-    └── bin/            # 可直接部署的 ARM64 文件
+    ├── archives/       # Tệp nén SDK, Gradle, Flutter, NDK và các công cụ khác
+    ├── scripts/        # Tập lệnh cài đặt, xác minh và gỡ cài đặt
+    ├── config/         # Mẫu cấu hình
+    └── bin/            # Tệp ARM64 có thể triển khai trực tiếp
 ```
 
-硬性限制：
+Giới hạn cứng:
 
-- ZIP 根目录只允许 `manifest.json` 和 `payload/`。
-- 条目不得使用绝对路径、反斜杠逃逸或 `..`。
-- `manifest.json` 最大 1 MiB。
-- 所有解包条目的累计数据最大 8 GiB。
-- 大包导入需要同时容纳应用私有插件副本、发行版内的 payload 副本、解压 staging 和最终安装目录；预留空间应明显大于 `.txplugin` 文件本身。
+- Thư mục gốc của ZIP chỉ cho phép `manifest.json` và `payload/`.
+- Mục không được dùng đường dẫn tuyệt đối, thoát bằng dấu gạch chéo ngược hoặc `..`.
+- `manifest.json` tối đa 1 MiB.
+- Tổng dữ liệu của tất cả mục giải nén tối đa 8 GiB.
+- Khi nhập gói lớn, cần chứa đồng thời bản sao plugin riêng của ứng dụng, bản sao dữ liệu gói trong bản phân phối Linux, vùng giải nén tạm và thư mục cài đặt cuối cùng; dung lượng dự phòng nên lớn hơn rõ rệt so với bản thân tệp `.txplugin`.
 
-导入后，包会解压到应用私有的版本目录；安装前，`payload/` 会复制到当前发行版：
+Sau khi nhập, gói được giải nén vào thư mục phiên bản riêng của ứng dụng; trước khi cài, `payload/` được sao chép vào bản phân phối hiện tại:
 
 ```text
 /opt/tianxuan/imports/<id>
@@ -53,7 +53,7 @@ my-plugin.txplugin
 
 ## 3. `manifest.json`
 
-最小本地插件清单：
+Manifest tối thiểu của plugin cục bộ:
 
 ```json
 {
@@ -83,61 +83,61 @@ my-plugin.txplugin
 }
 ```
 
-字段约束：
+Ràng buộc trường:
 
-| 字段 | 当前约束 |
+| Trường | Ràng buộc hiện tại |
 | --- | --- |
-| `schemaVersion` | 当前必须为 `1`。 |
-| `id` | 正则为 `[a-z0-9][a-z0-9-]{1,63}`，长度 2～64。 |
-| `version` | 必须非空；建议使用规范 `x.y.z`。 |
-| `architectures` | 必须包含 `ARM64`，不区分大小写。 |
-| `launchType` | `one_shot`、`command`、`pty`、`web` 或 `service`。 |
-| `permissions` | 只接受 `NETWORK`、`WORKSPACE_READ`、`WORKSPACE_WRITE`、`LOCAL_WEB`。 |
-| `updateStrategy` | `REINSTALL` 或 `IN_PLACE`。 |
-| `homepage` | 如提供，必须使用 HTTPS。 |
-| `servicePort` | 如提供，必须为 1～65535，且启动类型必须为 `web/service`。 |
-| `servicePath` | 必须以 `/` 开头且不能包含 `..`。 |
+| `schemaVersion` | Hiện phải là `1`. |
+| `id` | Biểu thức chính quy là `[a-z0-9][a-z0-9-]{1,63}`, độ dài 2–64. |
+| `version` | Phải không rỗng; nên dùng dạng chuẩn `x.y.z`. |
+| `architectures` | Phải chứa `ARM64`, không phân biệt chữ hoa/thường. |
+| `launchType` | `one_shot`、`command`、`pty`、`web` hoặc `service`. |
+| `permissions` | Chỉ chấp nhận `NETWORK`、`WORKSPACE_READ`、`WORKSPACE_WRITE`、`LOCAL_WEB`. |
+| `updateStrategy` | `REINSTALL` hoặc `IN_PLACE`. |
+| `homepage` | Nếu có, phải dùng HTTPS. |
+| `servicePort` | Nếu có, phải từ 1–65535 và kiểu khởi chạy phải là `web/service`. |
+| `servicePath` | Phải bắt đầu bằng `/` và không chứa `..`. |
 
-在线插件应使用 `source=REMOTE` 和 `installMethod=SCRIPT`。当前 Validator 尚未强制 REMOTE 与 SCRIPT 的组合，Registry 发布者仍必须遵循该约定。
+Plugin trực tuyến nên dùng `source=REMOTE` và `installMethod=SCRIPT`. Bộ kiểm tra hiện chưa bắt buộc tổ hợp `REMOTE` + `SCRIPT`, nhưng người phát hành Registry vẫn phải tuân theo quy ước này.
 
-## 4. 安装器提供的环境变量
+## 4. Biến môi trường do trình cài đặt cung cấp
 
 ```text
-$TIANXUAN_TOOL_ID         当前插件 ID
+$TIANXUAN_TOOL_ID         ID plugin hiện tại
 $TIANXUAN_TOOL_DIR        /opt/tianxuan/tools/<id>
 $TIANXUAN_TOOL_DATA       /opt/tianxuan/data/<id>
-$TIANXUAN_PLUGIN_PAYLOAD  /opt/tianxuan/imports/<id>（仅本地插件）
+$TIANXUAN_PLUGIN_PAYLOAD  /opt/tianxuan/imports/<id> (chỉ plugin cục bộ)
 ```
 
-程序文件放在 `$TIANXUAN_TOOL_DIR`；用户配置、缓存、模型或项目数据放在 `$TIANXUAN_TOOL_DATA`。后者在普通卸载时默认保留。
+Tệp chương trình đặt trong `$TIANXUAN_TOOL_DIR`; cấu hình, bộ nhớ đệm, mô hình hoặc dữ liệu dự án của người dùng đặt trong `$TIANXUAN_TOOL_DATA`. Thư mục sau mặc định được giữ lại khi gỡ cài đặt thông thường.
 
-`commandLinks` 中的每个名称默认指向：
+Mỗi tên trong `commandLinks` mặc định trỏ tới:
 
 ```text
 $TIANXUAN_TOOL_DIR/bin/<command>
 ```
 
-因此脚本必须创建对应文件并恢复可执行权限。
+Vì vậy tập lệnh phải tạo tệp tương ứng và khôi phục quyền thực thi.
 
-## 5. 精简 RootFS 兼容规则
+## 5. Quy tắc tương thích với RootFS tối giản
 
-插件只能默认依赖 `/bin/sh` 和实际 RootFS 已提供的基础命令。不要假设下列可选工具存在：
+Plugin chỉ được mặc định phụ thuộc vào `/bin/sh` và các lệnh cơ bản mà RootFS thực tế cung cấp. Đừng giả định các công cụ tùy chọn sau tồn tại:
 
 ```text
 unzip  xz  file  readelf  jq  python  node
 ```
 
-具体规则：
+Quy tắc cụ thể:
 
-- 独立脚本以 `#!/bin/sh` 开头，使用 POSIX Shell 语法和 LF 换行。
-- 清单中使用绝对 `/bin/sh`，不要依赖 `PATH` 中的 `sh`。
-- 优先发布 `.tar.gz`；使用 `.tar.xz` 时必须随包提供兼容解压器，不能假设系统有 `xz`。
-- ZIP 不保证保留 Unix 执行位；解压后必须显式 `chmod`。
-- 不要用 `find -type f` 查找可能为符号链接的工具；使用 `\( -type f -o -type l \)`。
-- 不要把通配符直接作为单个 `test -x` 参数；先用 `find ... -print -quit` 得到明确路径。
-- 不要依赖 `file` 或 `readelf` 检查架构，可直接读取 ELF 头。
+- Tập lệnh độc lập bắt đầu bằng `#!/bin/sh`, dùng cú pháp POSIX Shell và xuống dòng LF.
+- Trong manifest dùng `/bin/sh` tuyệt đối, đừng phụ thuộc vào `sh` trong `PATH`.
+- Ưu tiên phát hành `.tar.gz`; khi dùng `.tar.xz` phải đóng kèm trình giải nén tương thích, không được giả định hệ thống có `xz`.
+- ZIP không đảm bảo bảo lưu bit thực thi Unix; sau khi giải nén phải `chmod` rõ ràng.
+- Đừng dùng `find -type f` để tìm công cụ có thể là liên kết tượng trưng; dùng `\( -type f -o -type l \)`.
+- Đừng truyền ký tự đại diện trực tiếp làm đối số đơn cho `test -x`; trước tiên dùng `find ... -print -quit` để lấy đường dẫn xác định.
+- Đừng phụ thuộc vào `file` hay `readelf` để kiểm tra kiến trúc; có thể đọc trực tiếp phần đầu ELF.
 
-POSIX ELF64 AArch64 检查示例：
+Ví dụ kiểm tra ELF64 AArch64 theo POSIX:
 
 ```sh
 elf_bytes() { od -An -t x1 "$@" 2>/dev/null | tr -d ' \n'; }
@@ -145,11 +145,11 @@ is_elf() { test "$(elf_bytes -N 4 "$1")" = "7f454c46"; }
 is_aarch64_elf() { test "$(elf_bytes -j 18 -N 2 "$1")" = "b700"; }
 ```
 
-`e_machine` 位于 ELF 头偏移 18；AArch64 为 183，即小端字节 `b7 00`。
+`e_machine` nằm tại độ lệch 18 trong phần đầu ELF; AArch64 là 183, tức các byte theo thứ tự đầu nhỏ `b7 00`.
 
-## 6. Hello 插件
+## 6. Plugin Hello
 
-目录：
+Cấu trúc thư mục:
 
 ```text
 hello-arm64/
@@ -159,14 +159,14 @@ hello-arm64/
         └── hello
 ```
 
-`payload/bin/hello`：
+`payload/bin/hello`:
 
 ```sh
 #!/bin/sh
 echo "hello from TianXuan"
 ```
 
-清单中的安装步骤：
+Các bước cài đặt trong manifest:
 
 ```json
 {
@@ -185,9 +185,9 @@ echo "hello from TianXuan"
 }
 ```
 
-## 7. 大型离线依赖
+## 7. Gói phụ thuộc ngoại tuyến dung lượng lớn
 
-大型资源放入 `payload/archives/`，脚本先校验摘要，再解压到 staging，验证后提交：
+Tài nguyên lớn đặt trong `payload/archives/`; tập lệnh trước tiên kiểm tra giá trị băm, rồi giải nén vào vùng tạm, sau khi xác minh mới chuyển vào vị trí cuối cùng:
 
 ```sh
 #!/bin/sh
@@ -208,42 +208,42 @@ rm -rf /opt/flutter
 mv /opt/flutter.staging/flutter /opt/flutter
 ```
 
-要求：
+Yêu cầu:
 
-- `offlineOnly=true` 会跳过 Node/Python/Curl 等 Runtime 依赖获取，但不会阻止脚本主动联网；离线插件自身不得调用网络或包管理器。
-- 主机工具必须能在 Linux ARM64 PRoot 中运行。Android ARM64/Bionic 程序与 Linux ARM64/glibc 程序也不能仅凭架构相同就混用。
-- 所有大型归档必须固定 SHA-256。
-- staging 必须位于同一文件系统，验证完成后再 `mv` 到最终目录。
-- 安装脚本默认超时 15 分钟；单次 `verifyCommand` 默认超时 60 秒。
+- `offlineOnly=true` sẽ bỏ qua việc lấy các thành phần phụ thuộc khi chạy như Node/Python/Curl, nhưng không ngăn tập lệnh tự kết nối mạng; bản thân plugin ngoại tuyến không được gọi mạng hay trình quản lý gói.
+- Công cụ chạy phía chủ phải chạy được trong Linux ARM64 PRoot. Chương trình Android ARM64/Bionic và chương trình Linux ARM64/glibc không được trộn lẫn chỉ vì cùng kiến trúc.
+- Mọi tệp nén lớn đều phải cố định SHA-256.
+- Vùng tạm phải nằm trên cùng hệ thống tệp, sau khi xác minh xong mới `mv` vào thư mục cuối cùng.
+- Tập lệnh cài đặt có thời gian chờ mặc định 15 phút; mỗi lần `verifyCommand` có thời gian chờ mặc định 60 giây.
 
-## 8. 实时进度与日志
+## 8. Tiến độ thời gian thực và nhật ký
 
-安装器会记录阶段事件、标准输出和标准错误。插件脚本可以输出结构化相对进度：
+Trình cài đặt ghi lại sự kiện giai đoạn, đầu ra chuẩn và đầu ra lỗi chuẩn. Tập lệnh plugin có thể xuất tiến độ tương đối có cấu trúc:
 
 ```text
 [TIANXUAN_PROGRESS:47] [EXTRACT] 正在解压 Android NDK r29
 ```
 
-格式：
+Định dạng:
 
 ```text
 [TIANXUAN_PROGRESS:<0..100>] <用户可读消息>
 ```
 
-进度必须单调递增。推荐消息标签：
+Tiến độ phải tăng đơn điệu. Nhãn thông điệp khuyến nghị:
 
-- `[COPY]`：复制资源。
-- `[EXTRACT]`：解压归档。
-- `[COMMAND]`：执行明确、已脱敏的命令或配置步骤。
-- `[VERIFY]`：摘要、架构和最终状态验证。
+- `[COPY]`: sao chép tài nguyên.
+- `[EXTRACT]`: giải nén tệp nén.
+- `[COMMAND]`: thực thi lệnh hoặc bước cấu hình rõ ràng, đã che thông tin nhạy cảm.
+- `[VERIFY]`: kiểm tra giá trị băm, kiến trúc và trạng thái cuối cùng.
 
-不要使用 `set -x` 生成安装日志，它可能输出 Token、代理地址或其他环境变量。结构化进度是安装配方内部的相对进度，应用会映射到完整安装进度条。
+Đừng dùng `set -x` để tạo nhật ký cài đặt, vì nó có thể in ra mã truy cập, địa chỉ máy chủ ủy nhiệm hoặc biến môi trường khác. Tiến độ có cấu trúc là tiến độ tương đối bên trong công thức cài đặt; ứng dụng sẽ ánh xạ sang thanh tiến độ cài đặt đầy đủ.
 
-## 9. 打包、版本与导入
+## 9. Đóng gói, phiên bản và nhập gói
 
-### 小型插件
+### Plugin nhỏ
 
-Windows PowerShell：
+Windows PowerShell:
 
 ```powershell
 Compress-Archive `
@@ -253,29 +253,29 @@ Compress-Archive `
 Move-Item .\hello-arm64.zip .\hello-arm64.txplugin
 ```
 
-Linux/macOS：
+Linux/macOS:
 
 ```sh
 cd hello-arm64
 zip -r ../hello-arm64.txplugin manifest.json payload
 ```
 
-大型插件应使用支持 Zip64 的工具。已经是 `.zip`、`.tar.gz`、`.deb` 等压缩归档的条目建议使用 ZIP Store/NoCompression，避免无效的二次压缩。
+Plugin lớn nên dùng công cụ hỗ trợ Zip64. Các mục vốn đã là tệp nén như `.zip`, `.tar.gz`, `.deb` nên dùng chế độ ZIP Store/NoCompression để tránh nén lại mà không có lợi.
 
-### 快速更新包内脚本
+### Cập nhật nhanh tập lệnh trong gói
 
-`.txplugin` 是 ZIP。只修改 `manifest.json` 或脚本时，可以复制原包并更新少量 ZIP 条目；不需要解压、重压缩所有大型归档。只有替换归档或改变其压缩格式时，才需要处理对应大文件。
+`.txplugin` là ZIP. Khi chỉ đổi `manifest.json` hoặc tập lệnh, có thể sao chép gói cũ rồi cập nhật vài mục ZIP; không cần giải nén rồi nén lại toàn bộ tệp nén lớn. Chỉ khi thay tệp nén hoặc đổi định dạng nén thì mới cần xử lý tệp lớn tương ứng.
 
-### 版本行为
+### Hành vi phiên bản
 
-- 相同 `id + version` 已导入时会直接提示，不重复解包或安装。
-- 相同 `id` 的不同版本目前会在应用私有目录中共存，不会删除旧版本。
-- 当前版本选择按版本目录名做字符串排序，而不是完整 SemVer 比较。修复前应保持版本段宽度可比较，避免同时使用 `1.0.9` 与 `1.0.10` 这类字符串顺序不同的版本。
-- 选择新版本并确认后，当前 UI 会连续完成导入和安装，不需要再点击第二次“安装”。
+- Nếu `id + version` đã được nhập, ứng dụng sẽ thông báo ngay, không giải nén hay cài đặt lại.
+- Các phiên bản khác nhau của cùng `id` hiện cùng tồn tại trong thư mục riêng của ứng dụng, không xóa bản cũ.
+- Lựa chọn phiên bản hiện sắp xếp theo chuỗi tên thư mục phiên bản, không so sánh SemVer đầy đủ. Trước khi sửa cơ chế này, hãy giữ độ rộng của các đoạn phiên bản có thể so sánh được, tránh dùng đồng thời các phiên bản có thứ tự chuỗi khác nhau như `1.0.9` và `1.0.10`.
+- Sau khi chọn phiên bản mới và xác nhận, giao diện hiện sẽ nhập và cài đặt liên tục, không cần bấm "Cài đặt" lần thứ hai.
 
-## 10. Web/Service 插件
+## 10. Plugin Web/Service
 
-Web 服务应显式声明端口和路径：
+Dịch vụ web nên khai báo rõ cổng và đường dẫn:
 
 ```json
 {
@@ -287,68 +287,68 @@ Web 服务应显式声明端口和路径：
 }
 ```
 
-当前 Validator 只在 `servicePort` 存在时校验端口，并未强制所有 `web/service` 清单提供端口。插件作者仍应声明端口；除非确有局域网访问需求，服务优先监听 `127.0.0.1`。
+Bộ kiểm tra hiện chỉ kiểm tra cổng khi có `servicePort`, chưa bắt buộc mọi manifest `web/service` phải có cổng. Người viết plugin vẫn nên khai báo cổng; trừ khi thực sự cần truy cập LAN, dịch vụ ưu tiên lắng nghe `127.0.0.1`.
 
-## 11. 验证、事务与卸载
+## 11. Xác minh, giao dịch và gỡ cài đặt
 
-`verifyCommand` 应返回 0，并实际执行核心二进制。当前安装器为兼容旧插件，在验证失败但发现任意命令入口可执行时可能保留成功状态；插件不得依赖该兜底行为。
+`verifyCommand` nên trả về 0 và thực sự chạy tệp nhị phân cốt lõi. Để tương thích plugin cũ, trình cài đặt hiện có thể giữ trạng thái thành công ngay cả khi xác minh thất bại nhưng phát hiện bất kỳ điểm vào lệnh nào thực thi được; plugin không được dựa vào hành vi dự phòng này.
 
-安装事务只快照和恢复：
+Giao dịch cài đặt chỉ chụp trạng thái và khôi phục:
 
 ```text
 /opt/tianxuan/tools/<id>
 ```
 
-插件写入的 `/opt/android-sdk`、`/opt/flutter`、`/root/.gradle` 或其他全局目录不在框架事务快照中。因此：
+Các thư mục toàn cục mà plugin ghi như `/opt/android-sdk`, `/opt/flutter`, `/root/.gradle` hay nơi khác không nằm trong bản chụp trạng thái giao dịch của bộ khung. Vì vậy:
 
-- 全局资源必须自行使用 staging、校验和提交。
-- 失败时脚本应通过 `trap` 清理 staging。
-- 日志出现 `ROLLED_BACK` 不代表插件创建的所有全局文件都已恢复。
-- `uninstallSteps` 必须删除插件拥有的全局程序文件，但默认保留 `$TIANXUAN_TOOL_DATA`。
+- Tài nguyên toàn cục phải tự dùng vùng tạm, kiểm tra và chuyển vào vị trí cuối cùng.
+- Khi thất bại, tập lệnh nên dọn vùng tạm qua `trap`.
+- Nhật ký hiện `ROLLED_BACK` không có nghĩa là mọi tệp toàn cục mà plugin tạo đều đã được khôi phục.
+- `uninstallSteps` phải xóa tệp chương trình toàn cục thuộc về plugin, nhưng mặc định giữ lại `$TIANXUAN_TOOL_DATA`.
 
-## 12. 发布前检查
+## 12. Kiểm tra trước khi phát hành
 
 ```text
-[ ] ZIP 根目录只有 manifest.json 与 payload/
-[ ] manifest.json 小于 1 MiB，解包总量小于 8 GiB
-[ ] id、version、ARM64、launchType、来源和权限字段正确
-[ ] 所有大文件均有固定 SHA-256
-[ ] 不依赖未声明的 unzip、xz、file、readelf 等可选命令
-[ ] ELF、符号链接和 ZIP 可执行位处理正确
-[ ] 断网可完成导入、安装、验证和启动
-[ ] 全新安装、同版本重复导入、新版本升级和卸载均测试过
-[ ] verifyCommand、命令链接、PTY/Web 服务均成功
-[ ] 结构化进度单调递增，日志不包含密钥或敏感环境变量
-[ ] 失败时 staging 可清理，且不误称全局目录已完整回滚
-[ ] 已核算插件副本、沙盒副本、staging 与最终目录所需空间
+[ ] Thư mục gốc ZIP chỉ có manifest.json và payload/
+[ ] manifest.json nhỏ hơn 1 MiB, tổng dung lượng giải nén nhỏ hơn 8 GiB
+[ ] Các trường id, version, ARM64, launchType, nguồn và quyền đều đúng
+[ ] Mọi tệp lớn đều có SHA-256 cố định
+[ ] Không phụ thuộc lệnh tùy chọn chưa khai báo như unzip, xz, file, readelf
+[ ] Xử lý đúng ELF, liên kết tượng trưng và bit thực thi trong ZIP
+[ ] Có thể nhập, cài đặt, xác minh và khởi chạy khi mất mạng
+[ ] Đã thử cài mới, nhập lại cùng phiên bản, nâng cấp phiên bản mới và gỡ cài đặt
+[ ] verifyCommand, liên kết lệnh và dịch vụ PTY/Web đều hoạt động
+[ ] Tiến độ có cấu trúc tăng đơn điệu, nhật ký không chứa khóa hoặc biến môi trường nhạy cảm
+[ ] Khi thất bại có thể dọn vùng tạm, không báo nhầm đã hoàn tác toàn bộ thư mục toàn cục
+[ ] Đã tính dung lượng cho bản sao plugin, bản sao sandbox, vùng tạm và thư mục cuối cùng
 ```
 
-## 13. 常见错误
+## 13. Lỗi thường gặp
 
-### 导入后列表没有插件
+### Sau khi nhập, danh sách không có plugin
 
-检查 ZIP 根目录、JSON、`id`、`architectures` 和包大小限制。
+Kiểm tra thư mục gốc ZIP, JSON, `id`, `architectures` và giới hạn kích thước gói.
 
-### 相同包无法再次导入
+### Không nhập lại được cùng một gói
 
-相同 `id + version` 会被拒绝。修改内容后必须递增 `version`。
+`id + version` trùng sẽ bị từ chối. Sau khi sửa nội dung phải tăng `version`.
 
 ### `cannot create .../bin/...`
 
-确保安装前创建 `$TIANXUAN_TOOL_DIR/bin`。当前通用安装器也会提前创建该目录。
+Đảm bảo tạo `$TIANXUAN_TOOL_DIR/bin` trước khi cài. Trình cài đặt dùng chung hiện cũng tạo sẵn thư mục này.
 
 ### `xz: Cannot exec`
 
-RootFS 没有 `xz`。改用 `.tar.gz`，或随插件提供可运行的 ARM64 解压器。
+RootFS không có `xz`. Đổi sang `.tar.gz`, hoặc đóng kèm trình giải nén ARM64 chạy được.
 
 ### `unexpected operator`
 
-通常是 `/bin/sh` 的 `test` 收到通配符展开后的多个参数。先用 `find ... -print -quit` 得到单一路径并加双引号。
+Thường là `test` của `/bin/sh` nhận nhiều đối số sau khi ký tự đại diện được mở rộng. Dùng `find ... -print -quit` để lấy một đường dẫn duy nhất rồi đặt trong dấu ngoặc kép.
 
-### ARM64 程序仍无法启动
+### Chương trình ARM64 vẫn không chạy được
 
-除 ELF `e_machine` 外，还要检查解释器和 ABI。Android/Bionic ARM64 与 Linux/glibc ARM64 并不自动兼容。
+Ngoài ELF `e_machine`, hãy kiểm tra trình thông dịch và ABI. Android ARM64/Bionic và Linux ARM64/glibc không tự động tương thích.
 
-### 日志显示回滚但全局文件仍存在
+### Nhật ký hiện đã hoàn tác nhưng tệp toàn cục vẫn còn
 
-框架事务仅覆盖 `$TIANXUAN_TOOL_DIR`。插件拥有的全局路径必须由插件脚本自行清理。
+Giao dịch của bộ khung chỉ bao phủ `$TIANXUAN_TOOL_DIR`. Các đường dẫn toàn cục thuộc plugin phải do chính tập lệnh plugin dọn dẹp.

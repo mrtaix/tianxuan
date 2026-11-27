@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="app/src/main/res/drawable/tianxuan_logo.webp" width="96" alt="TianXuan Logo" />
+  <img src="app/src/main/res/drawable/tianxuan_logo.webp" width="96" alt="Logo CTHarness" />
 </p>
 
-<h1 align="center">TianXuan · 天玄</h1>
+<h1 align="center">CTHarness</h1>
 
-<p align="center"><strong>The Myriad Manifestations in the Great Void.</strong></p>
+<p align="center"><strong>Muôn hiện tượng trong Khoảng Không Lớn.</strong></p>
 
 <p align="center">
-  Android No-Root Linux Runtime · Native Agent Harness · PTY Terminal · Mobile Dev Workspace · Wireless ADB Diagnostics
+  Linux Runtime không cần Root trên Android · Bộ khung Agent bản địa · Terminal PTY · Không gian phát triển di động · Chẩn đoán ADB không dây
 </p>
 
 <p align="center">
@@ -15,134 +15,133 @@
 </p>
 
 <p align="center">
-  <a href="README.md">简体中文</a> · <strong>English</strong>
+  <a href="README.md">Tiếng Việt</a> · <strong>English</strong>
 </p>
 
 ---
 
-## 🌌 Prologue: What is TianXuan
+## 🌌 Mở đầu: CTHarness là gì
 
-In *Liezi: Questions of Tang*, it is written:
+Trong *Liệt tử · Vấn Đường*, có câu:
 
-> To the east of the Bohai Sea... there is a vast ravine, indeed a bottomless valley. Its depths are unfathomable, and it is called GuiXu (The Return to the Void). The waters of the eight horizons and nine heavens, the flow of the celestial river, all pour into it, yet it neither increases nor diminishes.
+> Về phía đông của biển Bột Hải... có một hẻm núi lớn, đúng là một thung lũng không đáy. Sâu thẳm không thể dò tới đáy, người ta gọi nó là GuiXu (Trở về Khoảng Không). Nước của tám phương và chín tầng trời, dòng chảy của sông trên trời, đổ vào đó mà nó chẳng tăng cũng chẳng giảm.
 
-**TianXuan (天玄)** borrows its name and spirit from this: within the strictly sandboxed boundaries of Android, it builds a **runnable, observable, self-healing, and continuously evolving** Linux world.
+**CTHarness** mượn tên và tinh thần từ đó: ngay trong những ranh giới sandbox nghiêm ngặt của Android, nó dựng lên một thế giới Linux **có thể chạy, quan sát, tự phục hồi và không ngừng tiến hóa**.
 
-It is neither a superficial chat wrapper nor a toy terminal emulator. It allows LLMs, MCP tools, the Linux user space, native PTY terminals, and project workspaces to share an isomorphic execution context and causality chain—turning natural language intent into verifiable files, living processes, validated code, and deliverable Android / Flutter build artifacts.
+Đây không phải một lớp vỏ chat hời hợt hay một trình giả lập terminal đồ chơi. Nó cho phép LLM, công cụ MCP, user-space Linux, terminal PTY bản địa và workspace dự án chia sẻ một ngữ cảnh thực thi và chuỗi nhân quả đẳng cấu — biến ý định ngôn ngữ tự nhiên thành tệp có thể kiểm chứng, tiến trình đang sống, mã đã được xác thực và sản phẩm bản dựng Android / Flutter có thể bàn giao.
 
-> Establish the pole in the Great Void; create the world within an inch.
+> Dựng cọc cực trong Khoảng Không Lớn; tạo thế giới trong một tấc đất.
 
 ```text
-Human Intent ─→ Task Decomposition (TaskPlan) ─→ Tools / MCP / Linux / Browser ─→ Verification
+Ý định con người ─→ Phân rã tác vụ (TaskPlan) ─→ Công cụ / MCP / Linux / Trình duyệt ─→ Kiểm chứng
                            ↑                                                            ↓
-                           └────────────────── Continue if unfinished ──────────────────┘
+                           └────────────────── Tiếp tục nếu chưa xong ──────────────────┘
 ```
 
 ---
 
-## ⚡ Full Capabilities Matrix
+## ⚡ Bảng năng lực đầy đủ
 
-| Domain | Core Capabilities & Technical Highlights |
+| Lĩnh vực | Năng lực cốt lõi và điểm nhấn kỹ thuật |
 | :--- | :--- |
-| **Linux Sandbox** | Runs 10 ARM64 Linux distributions (Ubuntu 24.04, Debian 12, Kali, Arch, Fedora, Alpine, etc.) in user space via **PRoot**; OCI Registry layer pulling & SHA-256 verification; two-phase commit rollback, persistent bindings, and Android shared storage mounting. |
-| **Agent Harness** | Compatible with **OpenAI standards** and **Anthropic Messages API**; SSE streaming, chain-of-thought (`reasoning_content` / DeepSeek / Claude), task plan progress cards (TaskPlanCard), and multi-tier tool approval workflows. |
-| **Dialogue Rewind & Checkpoints** | One-click **Dialogue Rewind** based on **SessionFork tree branching**; automatic disk-persisted **file snapshots (Checkpoints)** before each conversational turn for instant rollback of risky refactoring. |
-| **Semantic Memory & Subagents** | Semantic memory model (conflict resolution, revisions, pinned items, recency scoring); multi-subagent coordination with **write-lease wave scheduling**, structured facts pack aggregation, and pagination spill-over protection. |
-| **Native PTY Terminal** | Low-level JNI `openpty`/`forkpty` bridge (`libtianxuan_pty.so`) with real process lifecycles, control terminals, ANSI/VT100 state machines, haptic keybars, and multi-session persistence; fallback to `script` PTY if needed. |
-| **In-App Browser & CDP DevTools** | Integrated WebView multi-tab pool and in-process Browser MCP; script-based **injection Hook engine**, **CDP breakpoints**, **Worker-level Fetch interception**, and visual Network Timeline inspector. |
-| **Wireless ADB & Diagnostics** | Dedicated first-tier **Wireless ADB Workbench**; **notification bar pairing code input** without leaving current screen, mDNS local discovery, unified PRoot / Android logcat streaming, and one-click hardware health checks. |
-| **Workspaces & Build Engine** | Empty project creation, ZIP import (with Zip Slip security validation), and **GitHub repo import with live clone progress**; code browsing, line-level visual Diff, background Gradle / Flutter compilation, and APK signing. |
-| **Tool Ecosystem & MCP** | Offline plugin package imports, built-in/signed Registry, recipe transaction manager, and dependency resolution; built-in **Open-WebSearch**, CodeGraph knowledge graph, and full Stdio / SSE / Streamable HTTP MCP support. |
-| **End-Side Collaboration & Floating UI** | **Global desktop floating window** for cross-app multitasking, local LAN WebChat, built-in FTP file server, offline `llama.cpp` GGUF execution, and FGS wake/Wi-Fi lock background persistence. |
+| **Linux Sandbox** | Chạy 10 bản phân phối Linux ARM64 (Ubuntu 24.04, Debian 12, Kali, Arch, Fedora, Alpine, v.v.) ở user-space nhờ **PRoot**; kéo tầng từ OCI Registry và xác minh SHA-256; rollback giao dịch hai pha, gắn thư mục bền bỉ và mount bộ nhớ dùng chung của Android. |
+| **Bộ khung Agent** | Tương thích **chuẩn OpenAI** và **Anthropic Messages API**; SSE streaming, chain-of-thought (`reasoning_content` / DeepSeek / Claude), thẻ tiến độ kế hoạch tác vụ (TaskPlanCard) và luồng phê duyệt công cụ nhiều cấp. |
+| **Quay lại hội thoại & Checkpoint** | **Dialogue Rewind** một chạm dựa trên **cây phân nhánh SessionFork**; tự động chụp **file snapshot (Checkpoint)** xuống đĩa trước mỗi lượt hội thoại để hoàn tác ngay các refactor rủi ro. |
+| **Bộ nhớ ngữ nghĩa & Subagent** | Mô hình bộ nhớ ngữ nghĩa (giải quyết xung đột, bản sửa, mục ghim, chấm điểm theo thời gian gần đây); điều phối nhiều subagent với **write-lease wave scheduling**, gom kết quả facts có cấu trúc và bảo vệ tràn bằng phân trang. |
+| **Terminal PTY bản địa** | Cầu nối JNI `openpty`/`forkpty` (`libtianxuan_pty.so`) với vòng đời tiến trình thật, terminal điều khiển, máy trạng thái ANSI/VT100, thanh phím rung và lưu bền đa phiên; fallback sang PTY `script` khi cần. |
+| **Trình duyệt trong ứng dụng & CDP DevTools** | Pool WebView đa tab tích hợp và Browser MCP ngay trong tiến trình; **engine Hook** chèn bằng script, **breakpoint CDP**, **chặn Fetch cấp Worker** và bảng Timeline mạng trực quan. |
+| **ADB không dây & Chẩn đoán** | **Bàn làm việc ADB không dây** chuyên biệt cấp một; **nhập mã ghép đôi trên thanh thông báo** mà không rời màn hình hiện tại, khám phá mDNS cục bộ, stream log PRoot / Android thống nhất và kiểm tra sức khỏe phần cứng một chạm. |
+| **Workspace & Engine bản dựng** | Tạo dự án rỗng, nhập ZIP (có kiểm tra bảo mật Zip Slip) và **nhập kho GitHub với tiến độ clone trực tiếp**; duyệt mã, Diff trực quan theo dòng, biên dịch Gradle / Flutter nền và ký APK. |
+| **Hệ sinh thái công cụ & MCP** | Nhập gói plugin offline, Registry tích hợp/ký số, trình quản lý giao dịch recipe và giải quyết phụ thuộc; **Open-WebSearch** tích hợp sẵn, đồ thị tri thức CodeGraph và hỗ trợ đầy đủ Stdio / SSE / Streamable HTTP cho MCP. |
+| **Cộng tác đầu thiết bị & UI nổi** | **Cửa sổ nổi toàn màn hình** cho đa nhiệm xuyên ứng dụng, WebChat trong LAN, máy chủ tệp FTP tích hợp, chạy GGUF `llama.cpp` offline và giữ nền với FGS wake / Wi-Fi lock. |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Bắt đầu nhanh
 
-1. **Install & Launch**: Download and install the [Latest Release APK](https://github.com/wkbin/tianxuan/releases) on an ARM64 Android 10+ device (Android 12+ recommended).
-2. **Initialize Sandbox**: Follow the Onboarding Wizard to select a distribution (e.g., Ubuntu 24.04) and complete the initial RootFS setup over network.
-3. **Configure Model**: Add your LLM API Key (DeepSeek, Claude, OpenAI, SiliconFlow, etc.) in Settings, or run local GGUF models via `llama.cpp` in the sandbox.
-4. **Open Workspace**: Create a project in the Workshop or import an existing repository from GitHub / local ZIP.
-5. **Intent-Driven Engineering**: Describe your goal to the Agent; it will autonomously plan steps, invoke Linux/MCP tools, edit code, run builds, and verify outcomes.
+1. **Cài đặt & Khởi chạy**: tải và cài [APK Release mới nhất](https://github.com/wkbin/tianxuan/releases) trên thiết bị ARM64 Android 10+ (khuyến nghị Android 12+).
+2. **Khởi tạo sandbox**: làm theo Trình hướng dẫn để chọn bản phân phối (ví dụ Ubuntu 24.04) và hoàn tất thiết lập RootFS ban đầu qua mạng.
+3. **Cấu hình mô hình**: thêm API Key LLM (DeepSeek, Claude, OpenAI, SiliconFlow, v.v.) trong Cài đặt, hoặc chạy mô hình GGUF cục bộ qua `llama.cpp` trong sandbox.
+4. **Mở workspace**: tạo dự án trong Xưởng hoặc nhập kho có sẵn từ GitHub / ZIP địa phương.
+5. **Kỹ thuật theo ý định**: mô tả mục tiêu cho Agent; nó sẽ tự lập kế hoạch, gọi công cụ Linux/MCP, sửa mã, chạy bản dựng và kiểm chứng kết quả.
 
 ---
 
-## 🛠️ Build from Source
+## 🛠️ Xây dựng từ mã nguồn
 
-### Requirements
+### Yêu cầu
 
-- **JDK**: Java 17 or Java 21 (Android Studio JBR recommended)
+- **JDK**: Java 17 hoặc Java 21 (khuyến nghị JBR của Android Studio)
 - **Android SDK**: compileSdk 37 / targetSdk 37 / minSdk 29
 - **Android NDK**: `30.0.15729638`
 - **CMake**: `3.22.1`
-- **Build System**: Gradle 9.7.0 / AGP 9.3.1 / Kotlin 2.4.10
+- **Hệ thống build**: Gradle 9.7.0 / AGP 9.3.1 / Kotlin 2.4.10
 
-### Build Commands
+### Lệnh build
 
 ```powershell
-# 1. Prepare PRoot ARM64 native runtime binaries
+# 1. Chuẩn bị file nhị phân native ARM64 của runtime PRoot
 .\tools\prepare-proot-runtime.ps1
 
-# 2. Set JAVA_HOME and run architecture compliance check & unit tests
+# 2. Đặt JAVA_HOME rồi chạy kiểm tra tuân thủ kiến trúc & unit test
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat architectureCheck --console=plain
 .\gradlew.bat testDebugUnitTest --console=plain
 
-# 3. Assemble Debug APK
+# 3. Lắp ráp Debug APK
 .\gradlew.bat assembleDebug --console=plain
 ```
 
-Debug APK output: `app/build/outputs/apk/debug/tianxuan-v0.36.0-debug.apk`
+Sản phẩm Debug APK: `app/build/outputs/apk/debug/tianxuan-v0.36.0-debug.apk`
 
-> 📦 **TianXuanDev Dual-Package Build**: Set `$env:TIANXUAN_DEV_BUILD="1"` in CI or local environment to build the preview APK `top.wkbin.tianxuan.dev`, which can be installed side-by-side with the release package.
+> 📦 **Bản dựng song gói TianXuanDev**: đặt `$env:TIANXUAN_DEV_BUILD="1"` trong CI hoặc môi trường cục bộ để dựng preview APK `top.wkbin.tianxuan.dev`, có thể cài cạnh gói chính thức.
 
 ---
 
-## 📐 Architecture Topology
+## 📐 Cấu trúc kiến trúc
 
 ```text
-TianXuan/
-├── app/                  # Host application: MainActivity, Koin DI, JNI C code, Foreground Service
+CTHarness/
+├── app/                  # Ứng dụng host: MainActivity, Koin DI, mã JNI C, Foreground Service
 ├── core/
-│   ├── model/           # Pure Kotlin data models (Strictly decoupled from Android SDK)
-│   ├── common/          # Coroutine dispatchers, logging, Global Navigation Bus
-│   ├── database/        # Room Database: Sessions, message streams, Checkpoints, tool history
-│   ├── datastore/       # Jetpack DataStore: Preferences, mounts, themes, onboarding state
-│   ├── network/         # OkHttp client, SSE streaming parser, security policies
-│   └── security/        # API Key secure encryption storage
-├── runtime/              # Linux sandbox core: PRoot bindings, process registry, PTY sessions, build engine
-│   └── browser/         # In-App Browser: WebView pool, Hook engine, CDP breakpoints, Browser MCP
-├── project-template/     # Project template manifest parser, dynamic variable forms & materializer
-├── harness/              # Agent engine: Agent loop, streaming inference, tool dispatcher, subagents, MCP, rewind
-├── tools/                # Ecosystem: Plugin Registry, Recipe transaction manager, Provider repositories
-└── feature/              # Jetpack Compose UI modules
-    ├── components/      # Material 3 Expressive design system, Lucide icons, Spotlight Guide overlays
-    ├── theme/           # Theme palettes & wallpaper background support
-    ├── home/            # Runtime dashboard, system resource monitors & hardware health check
-    ├── chat/            # Agent conversation UI: Task decomposition cards, Diff view, floating window
-    ├── terminal/        # Native terminal UI, haptic keybars & multi-session management
-    ├── workspace/       # Workshop project manager, code tree browser, build logs & APK installer
-    ├── settings/        # Settings center: Model profiles, ADB workbench, plugin manager
-    ├── developer/       # Developer sandbox & low-level diagnostic panels
-    └── onboarding/      # First-launch onboarding wizard & RootFS setup flow
+│   ├── model/           # Mô hình dữ liệu thuần Kotlin (tách rời hoàn toàn khỏi Android SDK)
+│   ├── common/          # Dispatcher coroutine, log, Global Navigation Bus
+│   ├── database/        # Room: hội thoại, luồng tin nhắn, Checkpoint, lịch sử công cụ
+│   ├── datastore/       # Jetpack DataStore: tùy chọn, mount, chủ đề, trạng thái hướng dẫn
+│   ├── network/         # Client OkHttp, parser SSE streaming, chính sách bảo mật
+│   └── security/        # Lưu trữ mã hóa an toàn cho API Key
+├── runtime/              # Lõi sandbox Linux: binding PRoot, registry tiến trình, phiên PTY, engine build
+│   └── browser/         # Trình duyệt trong ứng dụng: pool WebView, engine Hook, breakpoint CDP, Browser MCP
+├── project-template/     # Parser manifest template, biểu mẫu biến động & engine vật chất hóa
+├── harness/              # Engine Agent: vòng lặp, inference streaming, dispatcher công cụ, subagent, MCP, rewind
+├── tools/                # Hệ sinh thái: Plugin Registry, trình quản lý giao dịch Recipe, kho Provider
+└── feature/              # Module UI Jetpack Compose
+    ├── components/      # Hệ thống thiết kế Material 3 Expressive, icon Lucide, overlay Spotlight Guide
+    ├── theme/           # Bảng màu chủ đề & hỗ trợ hình nền
+    ├── home/            # Bảng điều khiển runtime, giám sát tài nguyên & kiểm tra sức khỏe phần cứng
+    ├── chat/            # UI hội thoại Agent: thẻ phân rã tác vụ, view Diff, cửa sổ nổi
+    ├── terminal/        # UI terminal bản địa, thanh phím rung & quản lý đa phiên
+    ├── workspace/       # Quản lý dự án Xưởng, duyệt cây mã, log build & trình cài APK
+    ├── settings/        # Trung tâm cài đặt: cấu hình mô hình, bàn ADB, quản lý plugin
+    ├── developer/       # Sandbox nhà phát triển & bảng chẩn đoán cấp thấp
+    └── onboarding/      # Trình hướng dẫn lần đầu & luồng thiết lập RootFS
 ```
 
 ---
 
-## ⚠️ Boundaries & Known Limitations
+## ⚠️ Ranh giới & giới hạn đã biết
 
-- **Architecture**: Officially supports `arm64-v8a` only. Other ABIs will halt during initialization.
-- **User-Space PRoot**: PRoot intercepts system calls via `ptrace`. It is not hardware virtualization or a KVM instance and does not provide Root privileges or custom kernel modules.
-- **Compatibility**: Complex TUIs and heavy compilation tasks depend on device RAM and CPU performance.
-- **Security**: Remote APIs and download endpoints require HTTPS; never commit sensitive API keys or credentials to public repositories.
+- **Kiến trúc**: chỉ hỗ trợ chính thức `arm64-v8a`. Các ABI khác sẽ dừng trong quá trình khởi tạo.
+- **PRoot ở user-space**: PRoot chặn syscall qua `ptrace`. Đây không phải ảo hóa phần cứng hay máy KVM, và không cung cấp quyền Root hay module kernel tùy biến.
+- **Khả năng tương thích**: TUI phức tạp và tác vụ biên dịch nặng phụ thuộc vào RAM và hiệu năng CPU của thiết bị.
+- **Bảo mật**: API từ xa và endpoint tải xuống đều yêu cầu HTTPS; không bao giờ commit khóa API hay thông tin xác thực nhạy cảm vào kho công khai.
 
 ---
 
-## 📜 Philosophical Footnote
+## 📜 Lời bạt triết học
 
-> Mount Sumeru is contained within a mustard seed; the Great Void is contained within the palm.
+> Núi Tu Di được chứa trong hạt cải; Khoảng Không Lớn được chứa trong lòng bàn tay.
 
-Constraints never truly disappear; but the freedom that engineering provides often comes from understanding boundaries, establishing laws within them, and possessing the ability to construct our own world.
+Giới hạn không bao giờ thực sự biến mất; nhưng tự do mà kỹ thuật mang lại thường đến từ việc hiểu ranh giới, lập luật trong đó và có năng lực dựng lên thế giới của riêng mình.
 
-Welcome to submit Issues, Pull Requests, or share your real-device experiences!
-
+Rất hoan nghênh gửi Issue, Pull Request hoặc chia sẻ trải nghiệm sử dụng trên thiết bị thật!

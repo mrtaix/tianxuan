@@ -1,8 +1,8 @@
-# 移动端构建第四阶段
+# Giai đoạn 4 của bản dựng di động
 
-第四阶段把第三阶段的“环境可执行”推进到“项目和产物可证明”。
+Giai đoạn 4 nâng giai đoạn 3 từ mức "môi trường chạy được" lên mức "có thể kiểm chứng dự án và sản phẩm đầu ra".
 
-## 新能力
+## Năng lực mới
 
 ```sh
 tianxuan-build analyze /workspace/project
@@ -11,32 +11,32 @@ tianxuan-build android /workspace/project assembleDebug --offline
 tianxuan-build flutter /workspace/project apk --debug --offline
 ```
 
-`analyze` 是只读检查，报告：
+`analyze` là kiểm tra chỉ đọc, báo cáo:
 
-- Android/Flutter 项目类型；
-- `compileSdk` 是否超过内置 Platform 34；
-- Gradle Wrapper 是否偏离 8.14.2；
-- 是否声明 `x86`/`x86_64` ABI；
-- 离线模式下 Gradle/Pub 缓存是否存在。
+- loại dự án Android/Flutter;
+- `compileSdk` có vượt quá gói nền tảng 34 tích hợp sẵn hay không;
+- Gradle Wrapper có lệch khỏi 8.14.2 hay không;
+- có khai báo ABI `x86`/`x86_64` hay không;
+- trong chế độ ngoại tuyến, bộ nhớ đệm Gradle/Pub có tồn tại hay không.
 
-分析器不会修改第三方项目。`mobile_project_align` Skill 必须先展示当前值、目标值、修改文件和风险，得到用户确认后才允许对齐。
+Trình phân tích sẽ không sửa đổi dự án của bên thứ ba. Kỹ năng `mobile_project_align` trước tiên phải trình bày giá trị hiện tại, giá trị mục tiêu, các tệp sẽ sửa và rủi ro, chỉ được căn chỉnh sau khi có xác nhận của người dùng.
 
-## 离线策略
+## Chiến lược ngoại tuyến
 
-`--offline` 会贯穿 Gradle 和 Flutter：
+`--offline` được áp dụng xuyên suốt Gradle và Flutter:
 
-- Gradle 使用 `--offline`；
-- Flutter Pub 使用 `pub get --offline`；
-- Flutter 构建使用 `build ... --offline`；
-- 缓存不存在时在构建启动前失败，不静默联网。
+- Gradle dùng `--offline`;
+- Flutter Pub dùng `pub get --offline`;
+- bản dựng Flutter dùng `build ... --offline`;
+- nếu bộ nhớ đệm không tồn tại thì báo lỗi trước khi bắt đầu dựng, không lặng lẽ kết nối mạng.
 
-## 产物闸门
+## Bước kiểm tra sản phẩm đầu ra
 
-构建成功后，控制台入口和工作区宿主都会扫描 APK ZIP：
+Sau khi dựng thành công, cả điểm vào bảng điều khiển và phía máy chủ quản lý không gian làm việc đều quét tệp ZIP của APK:
 
-- 允许 `lib/arm64-v8a/`；
-- 拒绝 `lib/x86/` 和 `lib/x86_64/`；
-- 拒绝任何其他原生 ABI；
-- 失败时不导出、不安装。
+- cho phép `lib/arm64-v8a/`;
+- từ chối `lib/x86/` và `lib/x86_64/`;
+- từ chối bất kỳ ABI mã máy nào khác;
+- khi thất bại thì không xuất và không cài đặt.
 
-QEMU 只解决 x86_64 Linux 主机工具的执行问题，不改变最终 APK ABI。
+QEMU chỉ giải quyết vấn đề thực thi của các công cụ máy chủ Linux x86_64, không làm thay đổi ABI của APK cuối cùng.

@@ -1,39 +1,30 @@
-# 竞态缺陷台账（v0.21.2 审计批次）
+# Sổ cái lỗi race condition (đợt audit v0.21.2)
 
-本文件记录在**阅读源码**（而非依赖既有台账）过程中发现并修复的并发/逻辑缺陷。
-每条都给出：现象 → 精确触发条件 → 根因 → 修法 → **反向验证**（把修复回退后
-测试必须变红）。
+Tệp này ghi lại các lỗi đồng thời/logic được phát hiện và sửa trong quá trình **đọc mã nguồn** (chứ không phải dựa vào sổ cái có sẵn).
+Mỗi mục đều trình bày: hiện tượng → điều kiện kích hoạt chính xác → nguyên nhân gốc → cách sửa → **reverse verification** (hoàn tác bản sửa thì test phải chuyển sang đỏ).
 
-原则：只记录能在源码里指出具体交错时序的缺陷。凡是“看着可疑但构造不出
-失败序列”的猜测一律不收录，这类条目只会稀释台账的可信度。
+Nguyên tắc: chỉ ghi lại những lỗi có thể chỉ ra được một trình tự xen kẽ cụ thể trong mã nguồn. Mọi phán đoán kiểu "trông có vẻ đáng ngờ nhưng không dựng được chuỗi dẫn đến lỗi" đều không được thu nhận; những mục như vậy chỉ làm loãng độ tin cậy của sổ cái.
 
 ---
 
-## D-01　作用域锁回收把同一工作区拆成两把锁
+## D-01　Khóa thu hồi theo scope tách một workspace thành hai khóa
 
-**位置** `harness/.../ToolRoundDispatcher.kt`（`acquireLock` / `releaseLock`）
+**Vị trí** `harness/.../ToolRoundDispatcher.kt` (`acquireLock` / `releaseLock`)
 
-**现象** 同一工作区的变更类工具本应互斥，但在“最后一名持有者退出”与“新持有者
-入场”首尾相接时，两者会各自持有一把**不同的** `Mutex`，互斥静默失效。后果是
-同一工作区内的文件写入/命令执行可以并发踩踏——正是分片互斥要防的事。
+**Hiện tượng** Các công cụ thuộc nhóm thay đổi trong cùng một workspace lẽ ra phải loại trừ lẫn nhau, nhưng khi "holder cuối cùng thoát" diễn ra nối tiếp với "holder mới vào", hai bên lại mỗi bên giữ một `Mutex` **khác nhau**, và việc loại trừ lặng lẽ vô hiệu. Hậu quả là các thao tác ghi tệp/chạy lệnh trong cùng workspace có thể chèn ép nhau đồng thời — chính là điều mà cơ chế khóa phân mảnh muốn ngăn chặn.
 
-**触发时序**（原实现用 `ConcurrentHashMap` + 两次独立的分段锁操作）
+**Trình tự kích hoạt** (implement cũ dùng `ConcurrentHashMap` + hai thao tác khóa phân đoạn độc lập)
 
-1. T1 是最后一名持有者，在 `synchronized(slot)` 内把 `holders` 减到 0，判定 `last`，退出该临界区；
-2. 调度切走。T2 调 `acquireLock`，`mutationMutexes.compute(key)` 拿到**同一把** slot
-   （此时它还在表里），`holders` 回到 1，并随即对 `slot.mutex` 发起 `withLock`；
-3. 切回 T1，执行 `mutationMutexes.remove(key, slot)`——键仍指向这把 slot，
-   于是 compare-and-remove **成功删除**；
-4. T3 再入场，`compute` 查不到条目，**新建 slot2**，对 `slot2.mutex` 发起 `withLock`。
+1. T1 là holder cuối cùng, trong `synchronized(slot)` giảm `holders` xuống 0, xác định `last`, rồi thoát khỏi vùng tới hạn đó;
+2. Bị chuyển sang luồng khác. T2 gọi `acquireLock`, `mutationMutexes.compute(key)` lấy được **cùng** slot đó (vì lúc này nó vẫn còn trong bảng), `holders` về lại 1, rồi ngay lập tức `withLock` trên `slot.mutex`;
+3. Chuyển về T1, thực hiện `mutationMutexes.remove(key, slot)` — key vẫn trỏ tới slot này, nên compare-and-remove **xóa thành công**;
+4. T3 vào sau, `compute` không tìm thấy mục, **tạo slot2 mới**, rồi `withLock` trên `slot2.mutex`.
 
-此刻 T2 持 `slot.mutex`、T3 持 `slot2.mutex`，同一 key 对应两把锁。
+Lúc này T2 giữ `slot.mutex`, T3 giữ `slot2.mutex`; một key cùng ứng với hai khóa.
 
-**根因** “判定计数归零”与“移除表项”分别落在 `synchronized(slot)` 与
-`ConcurrentHashMap` 的分段锁下，**是两把不同的锁，无法拼成一个原子区间**。
-`remove(key, slot)` 的 compare-and-remove 只能保证“不误删别人新建的 slot”，
-挡不住“键仍指向自己、但自己已被别人重新引用”的情形。
+**Nguyên nhân gốc** Việc "xác định đếm về không" và "xóa mục khỏi bảng" nằm dưới hai khóa khác nhau: `synchronized(slot)` và khóa phân đoạn của `ConcurrentHashMap`, **không ghép được thành một vùng nguyên tử**. `remove(key, slot)` với compare-and-remove chỉ đảm bảo "không xóa nhầm slot mới do người khác tạo", không chặn được trường hợp "key vẫn trỏ vào mình nhưng mình đã được bên khác tham chiếu lại".
 
-**修法** 放弃分段锁，改用**一把显式对象锁**覆盖“建表 / 计数增减 / 回收”的全部读改写：
+**Cách sửa** Bỏ khóa phân đoạn, dùng **một khóa đối tượng tường minh duy nhất** bao phủ toàn bộ các thao tác đọc-ghi-sửa trên bảng "tạo mục / tăng-giảm đếm / thu hồi":
 
 ```kotlin
 private val mutationMutexes = HashMap<String, LockSlot>()
@@ -57,49 +48,39 @@ private fun releaseLock(scopeKey: String, slot: LockSlot) {
 }
 ```
 
-由此得到一条可断言的结构性不变量：
+Từ đây có một bất biến cấu trúc có thể khẳng định được:
 
-> **计数 == 0 ⇔ 不在表内**
+> **đếm == 0 ⇔ không nằm trong bảng**
 
-任何并发入场者要么把计数加在归零判定**之前**（归零不成立，不移除），要么在移除
-**之后**看到键已消失并新建一把锁（而前一名持有者已彻底离场）。两种次序都只对应
-一个持有者集合，**不存在需要事后撤销的孤儿槽位**。
+Bất kỳ người vào đồng thời nào cũng sẽ hoặc tăng đếm **trước khi** xác định về không (vậy không về không, không xóa), hoặc thấy key đã biến mất **sau khi** bị xóa rồi tạo khóa mới (mà holder trước đã rời đi hoàn toàn). Cả hai trình tự đều chỉ tương ứng với một tập holder, **không tồn tại slot mồ côi cần hoàn tác về sau**.
 
-**代价与边界** 跨工作区的取锁/放锁会短暂串行，但那只是几次哈希表操作（纳秒级）。
-真正的互斥等待仍发生在各自的 `LockSlot.mutex` 上，因此不会让一个工作区的长构建
-（BASE 超时上限 1 小时）挡住其他工作区的普通写入——分片互斥要保住的性质完好。
+**Chi phí và ranh giới** Việc lấy/thả khóa qua các workspace bị nối tiếp trong thời gian ngắn, nhưng đó chỉ là vài thao tác bảng băm (cấp nanogiây). Việc chờ loại trừ thật sự vẫn diễn ra trên `LockSlot.mutex` riêng của từng workspace, nên một build dài ở workspace này (BASE timeout tối đa 1 giờ) không chặn các thao tác ghi thông thường ở workspace khác — tính chất mà khóa phân mảnh cần bảo vệ vẫn nguyên vẹn.
 
-**反向验证** `harness/.../ToolRoundDispatcherRegistryInvariantTest.kt`
+**Reverse verification** `harness/.../ToolRoundDispatcherRegistryInvariantTest.kt`
 
-| 用例 | 断言 |
+| Ca test | Khẳng định |
 |---|---|
-| `a scope is present in the table exactly while it has holders` | 表项存在性严格跟随计数 |
-| `queued holders keep the scope registered and release it only at the end` | 排队者登记但进不去；表项仍只有一条 |
-| `mutual exclusion holds under heavy recycling pressure` | 500 轮高频进出无临界区重叠 |
-| `cold scope with many simultaneous first arrivals serializes to one lock` | 冷启动 64 路并发无重叠 |
-| `handover never splits one scope into two locks` | 交替交接中**同一 key 从不出现两条表项** |
-| `distinct scopes never serialize each other` | 反向：不同工作区必须能同时进入 |
+| `a scope is present in the table exactly while it has holders` | Sự tồn tại của mục trong bảng đi sát theo đếm |
+| `queued holders keep the scope registered and release it only at the end` | Người xếp hàng được đăng ký nhưng không vào được; bảng vẫn chỉ có một mục |
+| `mutual exclusion holds under heavy recycling pressure` | 500 vòng vào/ra tần suất cao không có vùng tới hạn chồng nhau |
+| `cold scope with many simultaneous first arrivals serializes to one lock` | 64 luồng đến cùng lúc lúc khởi động nguội không chồng nhau |
+| `handover never splits one scope into two locks` | Trong bàn giao xen kẽ, **một key không bao giờ xuất hiện hai mục** |
+| `distinct scopes never serialize each other` | Chiều ngược lại: các workspace khác nhau phải vào đồng thời được |
 
-把 `releaseLock` 回退为“判定与移除分离”的写法后，
-`handover never splits one scope into two locks` **必然失败**（实测：21 个用例中
-1 个失败，精确命中该判据）。修复恢复后全绿。
+Hoàn tác `releaseLock` về dạng "tách riêng xác định và xóa" thì `handover never splits one scope into two locks` **chắc chắn thất bại** (thực đo: 1 trong 21 ca fail, trúng đúng tiêu chí). Khôi phục bản sửa thì toàn xanh.
 
 ---
 
-## D-02　保活租约同名持有者互相踩踏，WakeLock 提前释放
+## D-02　Holder cùng tên của lease giữ nhịp đạp lên nhau, WakeLock bị giải phóng sớm
 
-**位置** `app/.../lifecycle/RuntimeLifecycleSupervisor.kt`
+**Vị trí** `app/.../lifecycle/RuntimeLifecycleSupervisor.kt`
 
-**现象** Agent 推理或 PRoot 构建在息屏后被系统冻结，因为进程级唯一的 WakeLock /
-WifiLock 被提前释放了——而释放它的那次 `close()` 并非最后一个持有者。
+**Hiện tượng** Agent đang suy luận hoặc build PRoot bị hệ thống đóng băng sau khi tắt màn hình, vì WakeLock / WifiLock duy nhất ở cấp tiến trình bị giải phóng sớm — trong khi lần `close()` đó lại không phải holder cuối cùng.
 
-**触发路径（非假设，是真实代码路径）**
-`AgentForegroundService` 在两处调用 `acquireLease()`：`onStartCommand` 里一次
-（第 96 行），运行态轮询 `collectLatest` 里又一次（第 108 行）。而
-`acquireLease()` 自身有 `if (powerLease != null) return` 守卫，只记得住**最后一个**
-句柄；早先那个句柄已经无人引用，却仍然在 supervisor 里登记着一次持有。
+**Đường kích hoạt (không phải giả định mà là đường mã thật)**
+`AgentForegroundService` gọi `acquireLease()` ở hai chỗ: một lần trong `onStartCommand` (dòng 96), và một lần nữa trong vòng poll trạng thái chạy `collectLatest` (dòng 108). Trong khi `acquireLease()` có guard `if (powerLease != null) return`, chỉ nhớ được **handle cuối cùng**; handle trước đó đã không còn ai reference nhưng vẫn được đăng ký một lần giữ trong supervisor.
 
-原实现把调用方传入的 `holderId` 直接放进 `MutableSet<String>`：
+Implement cũ đưa `holderId` do bên gọi truyền thẳng vào `MutableSet<String>`:
 
 ```kotlin
 private val holders = mutableSetOf<String>()
@@ -108,16 +89,13 @@ holders.add(holderId)          // acquire
 holders.remove(holderId)       // close —— 按裸 id 去重！
 ```
 
-于是同一个 `"agent"` 的两次 acquire 在集合里**只占一个元素**，却返回两个句柄。
-第二个句柄 `close()` 时 `holders` 变空 → 立即 `releaseLocks()` → WakeLock 与
-WifiLock 被释放 → CPU 可被冻结 → 推理与 PRoot 进程中断。
+Vì vậy hai lần acquire của cùng một `"agent"` **chỉ chiếm một phần tử** trong set, nhưng lại trả về hai handle. Khi handle thứ hai `close()`, `holders` trở nên rỗng → `releaseLocks()` ngay lập tức → WakeLock và WifiLock bị giải phóng → CPU có thể bị freeze → suy luận và tiến trình PRoot bị gián đoạn.
 
-这正是本类注释开头声称要消除的那类竞态，只是换了个入口进来。
+Đây chính là loại race condition mà comment đầu lớp này tuyên bố muốn loại bỏ, chỉ khác cổng vào.
 
-**根因** `holderId` 是**申请方标识**（用于日志与诊断），却被当成了**持有实例标识**
-（用于去重）。两者不是一回事：同一个申请方可以同时持有多次。
+**Nguyên nhân gốc** `holderId` là **định danh bên yêu cầu** (dùng cho log và chẩn đoán), nhưng lại bị dùng làm **định danh phiên bản giữ** (dùng để khử trùng). Hai thứ không giống nhau: cùng một bên yêu cầu có thể đồng thời giữ nhiều lần.
 
-**修法** 每次 acquire 生成唯一持有键，集合改为映射以保住诊断价值：
+**Cách sửa** Mỗi lần acquire sinh một khóa giữ duy nhất, đổi set thành map để giữ giá trị chẩn đoán:
 
 ```kotlin
 private val holders = mutableMapOf<String, String>()   // holderKey -> holderId
@@ -129,68 +107,57 @@ holders[holderKey] = holderId
 holders.remove(holderKey)   // 只释放自己那一次持有
 ```
 
-`holderSnapshot()` 改为 `holders.values.toSet()`，同名持有会重复出现——这是**正确**
-的语义（“有几个在途持有、分别是谁申请的”），不是回归。
+`holderSnapshot()` đổi thành `holders.values.toSet()`; các giữ cùng tên sẽ lặp lại — đó là **đúng** về ngữ nghĩa ("có bao nhiêu lần giữ đang trong-flight và ai yêu cầu"), không phải hồi quy.
 
-**反向验证** `app/src/test/.../RuntimeLifecycleSupervisorTest.kt`
+**Reverse verification** `app/src/test/.../RuntimeLifecycleSupervisorTest.kt`
 
-| 用例 | 断言 |
+| Ca test | Khẳng định |
 |---|---|
-| `leaseLifecycle_sameHolderIdDoesNotCollide` | 三次同名 acquire → 计数 3；逐个 close 不会连带释放他人 |
-| `leaseLifecycle_mixedSameAndDistinctHolders` | 同名 + 异名混用时计数逐一对应 |
-| `leaseLifecycle_repeatedCloseOfOneHandleIsIdempotent` | 重复 close 不多扣持有 |
+| `leaseLifecycle_sameHolderIdDoesNotCollide` | Ba lần acquire cùng tên → đếm 3; close lần lượt không giải phóng nhầm của người khác |
+| `leaseLifecycle_mixedSameAndDistinctHolders` | Dùng lẫn cùng tên/tên khác, đếm tương ứng từng cái |
+| `leaseLifecycle_repeatedCloseOfOneHandleIsIdempotent` | Close lặp handle không trừ thừa lần giữ |
 
-把实现回退为 `MutableSet<String>` + 裸 `holderId` 后，上述**三个用例全部失败**
-（实测：6 个用例中 3 个失败）。修复恢复后全绿。
+Hoàn tác implement về `MutableSet<String>` + `holderId` trần thì **cả ba ca trên đều fail** (thực đo: 3 trong 6 ca fail). Khôi phục bản sửa thì toàn xanh.
 
 ---
 
-## D-03a　星象距度文档与代码/测试算错（算术自相矛盾）
+## D-03a　Tài liệu khoảng cách các cung sao tính sai so với mã/test (mâu thuẫn số học)
 
-**位置**
+**Vị trí**
 - `harness/src/main/assets/prompts/system/astronomy.md:81`
 - `core/common/.../astronomy/Mansion.kt:9`、`:35`
 - `core/common/src/test/.../AstronomyTest.kt:33`、`:45`
 - `README.md:41`
 
-**现象** 文档写「四象合计 365 度，加箕宿所带四分一，得 365¼ 度」，而其给出的
-加法式 `75 + 98 + 80 + 112 = 365` 与“得 365¼”自相矛盾：75+98+80+112 确实
-等于 365，但要得到 365¼，东方那一路必须是 75¼。
+**Hiện tượng** Tài liệu ghi "bốn tượng cộng lại 365 độ, cộng thêm một phần tư độ do cung Kỳ mang theo, được 365¼ độ", nhưng phép cộng được đưa ra `75 + 98 + 80 + 112 = 365` lại mâu thuẫn với "được 365¼": 75+98+80+112 đúng bằng 365, muốn được 365¼ thì nhánh phương Đông phải là 75¼.
 
-`Mansion.kt` 里 `JIAO12 + KANG9 + DI15 + FANG5 + XIN5 + WEI18 + JI11.25 = 75.25`，
-`TOTAL_DEGREES` 实测 365.25；`AstronomyTest.degreesSumToOneFullCircle` 也精确断言
-`75.25 / 98 / 80 / 112 / 365.25`。**代码与测试是对的，只有文档与注释算错了。**
+Trong `Mansion.kt`, `JIAO12 + KANG9 + DI15 + FANG5 + XIN5 + WEI18 + JI11.25 = 75.25`, `TOTAL_DEGREES` đo được 365.25; `AstronomyTest.degreesSumToOneFullCircle` cũng khẳng định chính xác `75.25 / 98 / 80 / 112 / 365.25`. **Mã và test đúng, chỉ tài liệu và comment tính sai.**
 
-**根因** 早先“箕宿补四分之一”的修正只改了代码与断言，漏改了说明文字，
-遗留了修正前口径的“365”。这类漂移尤其危险：`astronomy.md` 是**注入给模型的
-系统提示词**，错的口径会被模型当事实引用，且不会触发任何编译或测试失败。
+**Nguyên nhân gốc** Lần sửa trước đó "cung Kỳ bù thêm một phần tư" chỉ đổi mã và assertion, sót không đổi văn bản giải thích, để lại mốc "365" của trước khi sửa. Loại drift này đặc biệt nguy hiểm: `astronomy.md` là **system prompt được tiêm cho model**, mốc sai sẽ bị model trích dẫn như sự thật, mà không gây lỗi biên dịch hay test nào.
 
-**修法** 统一为「东方 75¼（含箕宿所带四分一）、北方 98、西方 80、南方 112，
-四象合计 365¼，不再另加」，并说明四分之一已含在 75¼ 之内而非额外追加。
+**Cách sửa** Thống nhất thành "phương Đông 75¼ (đã gồm phần tư của cung Kỳ), phương Bắc 98, phương Tây 80, phương Nam 112, bốn tượng cộng lại 365¼, không cộng thêm nữa", đồng thời nói rõ phần tư đã nằm trong 75¼ chứ không phải cộng thêm.
 
-**验证** 用脚本从 `astronomy.md` 的表格里正则抽出 28 宿距度求和，
-得 **365.25**，与 `Mansion.TOTAL_DEGREES` 及 `AstronomyTest` 断言一致。
+**Verification** Dùng script trích bằng regex 28 cung từ bảng trong `astronomy.md` rồi cộng lại, được **365.25**, khớp với `Mansion.TOTAL_DEGREES` và assertion của `AstronomyTest`.
 
 ---
 
-## D-03b　RTK 包装脚本内联命令文本，含引号的命令一律失败
+## D-03b　Script bọc RTK nhúng nguyên văn lệnh, mọi lệnh có dấu nháy đều thất bại
 
-**位置** `harness/.../RtkCommandOptimizer.kt`（`wrapWithFallback`）
+**Vị trí** `harness/.../RtkCommandOptimizer.kt` (`wrapWithFallback`)
 
-**现象** 凡是参数里带引号的 Agent 命令，在启用命令输出压缩后**根本无法执行**，
-以 shell 语法错误退出码 2 结束。受影响的是**回退路径**——本该最稳的那条。
+**Hiện tượng** Mọi lệnh Agent có dấu nháy trong tham số, sau khi bật tính năng nén output lệnh, **hoàn toàn không chạy được**, kết thúc bằng exit code 2 lỗi cú pháp shell. Bị ảnh hưởng là **đường fallback** — lẽ ra phải là đường ổn định nhất.
 
-**实测**（原实现生成的脚本，`RTK_BINARY` 指向不存在的路径以强制走回退分支）
+**Đo thực tế** (script do implement cũ sinh ra, `RTK_BINARY` trỏ đường dẫn không tồn tại để ép đi nhánh fallback)
 
-| 命令 | 原实现 | 修复后 |
+| Lệnh | Implement cũ | Sau khi sửa |
 |---|---|---|
-| `echo it's fine` | `exit=2` 语法错误 | eval 的**真实**引号错误（结构不再被破坏） |
-| `rg -n "TODO" src` | `exit=2` 语法错误，`fi` 配对错位，`rg` 从未执行 | 正常执行到 `rg` 本体 |
-| `find . -name "*.kt"` | `exit=2` 语法错误 | 正常 |
-| `ls -la "my dir"` | `exit=2` 语法错误 | 正常 |
-| `git commit -m 'fix: it's done'` | `exit=2` 语法错误 | 正常 |
+| `echo it's fine` | `exit=2` lỗi cú pháp | Lỗi nháy **thật** của eval (cấu trúc không còn bị phá vỡ) |
+| `rg -n "TODO" src` | `exit=2` lỗi cú pháp, `fi` ghép sai, `rg` không bao giờ chạy | Chạy bình thường tới bản thân `rg` |
+| `find . -name "*.kt"` | `exit=2` lỗi cú pháp | Bình thường |
+| `ls -la "my dir"` | `exit=2` lỗi cú pháp | Bình thường |
+| `git commit -m 'fix: it's done'` | `exit=2` lỗi cú pháp | Bình thường |
 
-**根因** `$command` 未经引号地内联进两个分支：
+**Nguyên nhân gốc** `$command` được nhúng không có nháy vào cả hai nhánh:
 
 ```bash
     if [ "$_s" -eq 0 ]; then eval "$_r"; else $command; fi
@@ -199,24 +166,17 @@ holders.remove(holderKey)   // 只释放自己那一次持有
   fi
 ```
 
-原始命令只是「文本」。它自带的引号会与包装脚本的语法互相干扰：
+Lệnh gốc chỉ là **văn bản**. Dấu nháy vốn có của nó sẽ nhiễu với cú pháp script bọc:
 
-- **成对双引号**（`rg -n "TODO" src`）在 `else ...; fi` 里开启一个字符串，
-  把紧随其后的 `; fi` 吞进字符串，`if`/`fi` 配对错位 → 整条命令语法错误；
-- **未配对单引号**（`it's`）直接让 shell 读到引号外的 `fi` → 同样是语法错误；
-- 更隐蔽的是它还会污染**上游**解析：`echo it's fine` 的 `'` 让 shell 把它之后
-  的内容读成新字符串，落进 else 被**无引号裸执行**——`echo A; echo B`
-  于是输出字面量 `A; echo B`。
+- **Cặp nháy kép** (`rg -n "TODO" src`) mở một chuỗi trong `else ...; fi`, nuốt luôn `; fi` ngay sau vào trong chuỗi, `if`/`fi` ghép sai → toàn bộ lệnh lỗi cú pháp;
+- **Nháy đơn không cặp** (`it's`) khiến shell đọc `fi` nằm ngoài nháy → cũng lỗi cú pháp;
+- Kín đáo hơn, nó còn ô nhiễm cả việc phân tích **thượng nguồn**: dấu `'` trong `echo it's fine` khiến shell đọc nội dung sau nó thành chuỗi mới, rơi vào else và bị **thực thi trần không nháy** — `echo A; echo B` vì thế in ra literal `A; echo B`.
 
-注意 `isEligible` 的 `unsupportedShellSyntax` 只挡 `& | ; \n \r < > \` $`，
-**不挡引号**——也不该挡：commit message、grep 模式、带空格的路径都离不开引号，
-把引号加进黑名单等于让这几类命令永远享受不到改写（那是退让，不是修复）。
+Lưu ý `unsupportedShellSyntax` của `isEligible` chỉ chặn `& | ; \n \r < > \` $`, **không chặn nháy** — và cũng không nên chặn: commit message, pattern grep, đường dẫn có dấu cách đều không thể thiếu nháy; đưa nháy vào blacklist tức là khiến mấy loại lệnh đó vĩnh viễn không được tối ưu (đó là lùi bước, không phải sửa).
 
-顺带指出原回退分支还有一处不等价：`$command` 是**单次分词后直接执行**，
-不再做引号/转义处理，本来就不等价于用户写的命令。
+Ngoài ra nhánh fallback cũ còn một điểm không tương đương: `$command` là **tách từ một lần rồi thực thi thẳng**, không xử lý nháy/escape nữa, vốn đã không tương đương với lệnh người dùng viết.
 
-**修法** 让脚本文本与命令内容彻底解耦：命令经环境变量下发，
-脚本里只出现 `"$TIANXUAN_AGENT_COMMAND"`。
+**Cách sửa** Tách bạch hoàn toàn văn bản script và nội dung lệnh: lệnh được đưa qua biến môi trường, trong script chỉ xuất hiện `"$TIANXUAN_AGENT_COMMAND"`.
 
 ```kotlin
 if [ -x "$RTK_BINARY" ]; then
@@ -229,41 +189,33 @@ else
 fi
 ```
 
-命令文本从此**不是脚本语法的一部分**，无论含什么字符都不改变脚本结构。
-两个执行分支补上 `eval`，与用户直接敲命令的语义一致。
+Từ đây văn bản lệnh **không còn là một phần của cú pháp script**, chứa ký tự gì cũng không đổi cấu trúc script. Cả hai nhánh thực thi đều thêm `eval`, khớp với ngữ nghĩa người dùng gõ trực tiếp.
 
-用环境变量而非位置参数，是因为 `ShellCommand` 只接受 (commandLine, environment)
-二元组，没有 argv 通道；`ProotCommandBuilder.shellCommand()` 会把 provider 的
-环境条目拼成 `export KEY='...'`（带正确的单引号转义），因此命令文本在那一层
-才被安全地包进引号。`provider` 在 `EnvironmentResolver.merge` 中最后合入，
-不会被 base/manifest 覆盖。
+Dùng biến môi trường thay vì tham số vị trí vì `ShellCommand` chỉ nhận cặp (commandLine, environment), không có kênh argv; `ProotCommandBuilder.shellCommand()` sẽ ghép các mục environment của provider thành `export KEY='...'` (với escape nháy đơn đúng), nên chính ở tầng đó văn bản lệnh mới được bọc nháy an toàn. `provider` được merge cuối trong `EnvironmentResolver.merge`, không bị base/manifest ghi đè.
 
-**反向验证** `harness/src/test/.../RtkCommandOptimizerTest.kt`
+**Reverse verification** `harness/src/test/.../RtkCommandOptimizerTest.kt`
 
-| 用例 | 断言 |
+| Ca test | Khẳng định |
 |---|---|
-| `generated script never embeds the raw command text` | 6 条含引号的**可改写**命令都不得内联；必须原样进环境变量 |
-| `commands with quotes are still optimized rather than excluded` | 含引号的命令仍走改写（防止有人把引号塞进黑名单了事） |
-| `eligible git command is wrapped with a same-shell fallback` | 包装形状 + 环境变量携带命令 |
-| `find with a quoted name pattern is optimized` | 引号与通配符都不再阻止改写 |
-| `long listing keeps using RTK because -l is not a machine readable flag for ls` | `ls -la src` 照常改写 |
+| `generated script never embeds the raw command text` | 6 lệnh **đủ điều kiện viết lại** chứa nháy đều không được nhúng; phải đi nguyên văn vào biến môi trường |
+| `commands with quotes are still optimized rather than excluded` | Lệnh có nháy vẫn được viết lại (phòng người ta cho nháy vào blacklist cho xong chuyện) |
+| `eligible git command is wrapped with a same-shell fallback` | Hình dáng bọc + biến môi trường mang lệnh |
+| `find with a quoted name pattern is optimized` | Nháy và wildcard đều không còn chặn việc viết lại |
+| `long listing keeps using RTK because -l is not a machine readable flag for ls` | `ls -la src` vẫn được viết lại như thường |
 
-把 `wrapWithFallback` 回退为内联 `$command` 后，上述**5 个用例失败**
-（实测：10 个用例中 5 个失败）。修复恢复后全绿。
+Hoàn tác `wrapWithFallback` về dạng nhúng `$command` thì **5 ca trên fail** (thực đo: 5 trong 10 ca fail). Khôi phục bản sửa thì toàn xanh.
 
 ---
 
-## D-04　只读用户轮让 checkpoint 轮号互相撞号，撤回漏掉整轮文件改动
+## D-04　Lượt người dùng chỉ đọc làm số lượt checkpoint đụng nhau, thu lại sót toàn bộ thay đổi tệp của một lượt
 
-**位置** `harness/.../checkpoint/CheckpointStore.kt`（`beginTurn` / `closeTurn`）
+**Vị trí** `harness/.../checkpoint/CheckpointStore.kt` (`beginTurn` / `closeTurn`)
 
-**现象** 会话里出现过"只读轮"（用户问一句、模型只回文本、没有任何 `write`/`edit`）
-之后，按轮撤回会把**本应撤销的那一轮文件改动留在磁盘上**。不报错、不提示，
-用户只看到"文件没有回到那一步"。
+**Hiện tượng** Sau khi trong hội thoại xuất hiện "lượt chỉ đọc" (người dùng hỏi một câu, model chỉ trả text, không có `write`/`edit` nào), thao tác thu theo lượt sẽ **để lại trên đĩa chính thay đổi tệp lẽ ra phải hoàn tác**. Không báo lỗi, không nhắc, người dùng chỉ thấy "tệp không về được bước đó".
 
-**触发条件** 任意一次只读用户轮紧跟在有写入的轮之后。
+**Điều kiện kích hoạt** Bất kỳ một lượt người dùng chỉ đọc nào ngay sau một lượt có ghi.
 
-**根因** 轮号只在"关轮且该轮有写入"时才提交：
+**Nguyên nhân gốc** Số lượt chỉ được commit khi "đóng lượt và lượt đó có ghi":
 
 ```kotlin
 fun beginTurn(...) {
@@ -281,33 +233,27 @@ private fun closeTurn(sessionId: String, state: SessionState) {
 }
 ```
 
-`closeTurn` 对空轮直接返回、`lastTurn` 不动，于是 `beginTurn` 用同一个 `lastTurn + 1`
-把**同一个轮号分配给两个不同的用户轮**。实测（镜像逻辑复现 + 真实单测）：
+`closeTurn` trả thẳng với lượt rỗng, `lastTurn` không đổi, nên `beginTurn` dùng cùng một `lastTurn + 1` để **gán cùng một số lượt cho hai lượt người dùng khác nhau**. Thực đo (mô phỏng logic + unit test thật):
 
-| 用户轮 | 行为 | 分配到的轮号 |
+| Lượt người dùng | Hành vi | Số lượt được gán |
 |---|---|---|
-| 0 | 写 a.txt | 0 |
-| 1 | 只读 | 1 |
-| 2 | 写 b.txt | **1（撞号）** |
-| 3 | 只读 | 2 |
-| 4 | 写 c.txt | **2（撞号）** |
+| 0 | Ghi a.txt | 0 |
+| 1 | Chỉ đọc | 1 |
+| 2 | Ghi b.txt | **1 (đụng số)** |
+| 3 | Chỉ đọc | 2 |
+| 4 | Ghi c.txt | **2 (đụng số)** |
 
-`checkpoints` 的轮号序列实测为 `[0, 1, 2]`，而正确序列应是 `[0, 2, 4]`。
+Chuỗi số lượt của `checkpoints` đo được `[0, 1, 2]`, trong khi chuỗi đúng phải là `[0, 2, 4]`.
 
-**为什么后果是"漏撤"而不是"误删"** 三处口径互相错位：
+**Vì sao hậu quả là "sót thu" chứ không phải "xóa nhầm"** Ba nơi dùng mốc không khớp với nhau:
 
-- UI 侧 `ChatViewModel.rewindToMessage` 用 `anchorMessageId`（消息 id，**准确**）
-  定位到目标 `CheckpointMeta`，然后把 `target.turn` 交给 `prepareRewind`；
-- `CheckpointStore.planCodeRewind(sessionId, turn)` 用 `checkpoint.turn >= turn`
-  比较（**用的是撞了号的轮号**）；
-- `SessionForkConversationRewinder` 用 `anchorMessageIdOf(sessionId, turn)`
-  取锚点（同样按轮号）。
+- Phía UI, `ChatViewModel.rewindToMessage` dùng `anchorMessageId` (id tin nhắn, **chính xác**) để định vị `CheckpointMeta` đích, rồi đưa `target.turn` cho `prepareRewind`;
+- `CheckpointStore.planCodeRewind(sessionId, turn)` so sánh `checkpoint.turn >= turn` (**dùng số lượt đã bị đụng**);
+- `SessionForkConversationRewinder` lấy anchor qua `anchorMessageIdOf(sessionId, turn)` (cũng theo số lượt).
 
-锚点定位到的是轮 2，但它的 `turn` 已经因为撞号变成了 1，`planCodeRewind(s, 1)`
-于是把轮 0 的快照也算进"不早于轮 1"的范围——**把更早的轮初内容当成目标轮初内容**，
-目标轮自己的改动因比较方向落在范围外而被跳过。方向恒为少撤，故不会误删现存文件。
+Anchor định vị tới lượt 2, nhưng `turn` của nó đã thành 1 do đụng số, nên `planCodeRewind(s, 1)` tính cả snapshot của lượt 0 vào phạm vi "không sớm hơn lượt 1" — **lấy nội dung đầu lượt cũ hơn làm nội dung đầu lượt đích**. Thay đổi của chính lượt đích lại rơi ngoài phạm vi do chiều so sánh, vì thế bị bỏ qua. Chiều luôn là thu thiếu, nên không xóa nhầm tệp hiện có.
 
-**修法** 轮号在**开轮时**分配并立刻提交，空轮同样占用一个轮号：
+**Cách sửa** Cấp số lượt **ngay lúc mở lượt** và commit luôn, lượt rỗng cũng chiếm một số:
 
 ```kotlin
 fun beginTurn(sessionId: String, prompt: String, anchorMessageId: String? = null) {
@@ -320,82 +266,64 @@ fun beginTurn(sessionId: String, prompt: String, anchorMessageId: String? = null
 }
 ```
 
-`closeTurn` 中原来的 `if (checkpoint.turn > state.lastTurn) state.lastTurn = checkpoint.turn`
-随之删除：轮号已提交，再回写既冗余，又会在空轮时把"已分配但无 checkpoint"的
-轮号从单调序列里抹掉。`stateOf` 的磁盘恢复路径仍保留
-`restored.maxOfOrNull { it.turn }?.let { if (it > state.lastTurn) state.lastTurn = it }`，
-方向正确（取最大值），不会把 `lastTurn` 回退。
+Dòng cũ `if (checkpoint.turn > state.lastTurn) state.lastTurn = checkpoint.turn` trong `closeTurn` được xóa: số lượt đã commit, ghi lại nữa vừa thừa vừa sẽ xóa khỏi chuỗi đơn điệu những số "đã cấp nhưng không có checkpoint" ở lượt rỗng. Đường khôi phục từ đĩa của `stateOf` vẫn giữ
+`restored.maxOfOrNull { it.turn }?.let { if (it > state.lastTurn) state.lastTurn = it }`,
+chiều đúng (lấy max), không làm `lastTurn` lùi lại.
 
-**语义澄清** 空轮仍然**不产生 checkpoint**（无写入就没有 pre-image 可存），
-这一点是既有约定、且有测试固定；修的只是"轮号必须与对话轮一一对应"这条
-被破坏的不变量。
+**Làm rõ ngữ nghĩa** Lượt rỗng vẫn **không tạo checkpoint** (không có ghi thì không có pre-image để lưu) — đó là quy ước cũ và có test cố định; cái được sửa chỉ là bất biến "số lượt phải khớp một-một với lượt hội thoại" bị phá vỡ.
 
-**反向验证** `harness/src/test/.../checkpoint/CheckpointStoreTest.kt`
+**Reverse verification** `harness/src/test/.../checkpoint/CheckpointStoreTest.kt`
 
-| 用例 | 断言 |
+| Ca test | Khẳng định |
 |---|---|
-| `turn numbers stay monotonic across read-only turns` | 轮号序列必须是 `[0, 2, 4]`（只读轮占号但不落 checkpoint） |
-| `rewind after read-only turns still reverts the intended turn` | 撤回轮 2 必须同时还原 `a.txt` 与 `b.txt` 到该轮轮初内容 |
-| `anchor lookup works for read-only turns` | `anchorMessageIdOf` 在撞号修复后能取到轮 2 的锚点 |
+| `turn numbers stay monotonic across read-only turns` | Chuỗi số lượt phải là `[0, 2, 4]` (lượt chỉ đọc chiếm số nhưng không sinh checkpoint) |
+| `rewind after read-only turns still reverts the intended turn` | Thu lượt 2 phải đưa cả `a.txt` lẫn `b.txt` về nội dung đầu lượt đó |
+| `anchor lookup works for read-only turns` | Sau khi sửa đụng số, `anchorMessageIdOf` lấy được anchor của lượt 2 |
 
-把 `beginTurn` 中新增的 `state.lastTurn = state.activeTurn` 删掉、并恢复
-`closeTurn` 里的旧回写后，上述**3 个用例失败**（实测：10 个用例中 3 个失败）。
-修复恢复后 11 个用例全绿。
+Xóa dòng `state.lastTurn = state.activeTurn` vừa thêm trong `beginTurn` và khôi phục dòng ghi cũ trong `closeTurn` thì **3 ca trên fail** (thực đo: 3 trong 10 ca fail). Khôi phục bản sửa thì 11 ca toàn xanh.
 
 ---
 
-## 复核结论：既有台账中已被证伪的条目
+## Kết luận rà soát: các mục trong sổ cái cũ đã bị bác bỏ
 
-以下条目来自既有“天玄改造台账”。**实际读代码后确认其结论有误**，特意记录以免
-后续重复投入：
+Các mục dưới đây lấy từ "sổ cái cải tạo CTHarness" cũ. **Sau khi thực đọc mã xác nhận kết luận của chúng sai**, ghi lại có chủ đích để sau này khỏi đầu tư lại:
 
-### A-11「`SubagentOrchestrator` 的 `base` 未被写入租约覆盖」——不是缺陷
+### A-11 "`base` của `SubagentOrchestrator` không nằm trong phạm vi write lease" — không phải lỗi
 
-`SubagentOrchestrator.kt` 第 423、438 行附近的注释**如实披露**了这一设计：
-`writePaths` 为空即只读，`["*"]` 即整工作区独占，而 `base` 路径走的是另一条
-不参与租约仲裁的路径。这是**经过声明的取舍**，不是遗漏。按现行实现，
-把它硬塞进租约体系反而会与 `SubagentConcurrencyGate` 的并发上限冲突。
-**结论：保持现状，注释即为文档。**
+Comment gần dòng 423, 438 của `SubagentOrchestrator.kt` **đã công khai trung thực** thiết kế này: `writePaths` rỗng nghĩa là chỉ đọc, `["*"]` nghĩa là độc quyền toàn workspace, còn đường dẫn `base` đi theo một luồng khác không tham gia phân xử lease. Đây là **đánh đổi đã được tuyên bố**, không phải sót. Theo implement hiện tại, cố nhét nó vào hệ lease lại xung đột với giới hạn đồng thời của `SubagentConcurrencyGate`.
+**Kết luận: giữ nguyên, comment chính là tài liệu.**
 
 ---
 
-## 方法说明：为什么不做越过不变量的“构造式”测试
+## Giải thích phương pháp: vì sao không làm test "dựng tình huống" vượt qua bất biến
 
-早期版本的反向验证测试曾用反射在 `registrationLock` **之外**直接从表里摘除条目，
-以制造“误删”交错。那条路是错的：
+Phiên bản đầu của test reverse verification từng dùng reflection để gỡ trực tiếp một mục khỏi bảng **ngoài `registrationLock`**, nhằm tạo giao thức "xóa nhầm". Đường đó sai:
 
-- 它在实现的不变量**之外**改动状态，测出来的失败是**测量伪影**，
-  而不是被测量对象的性质；
-- 更糟的是它会把实现推向“事后撤销”这类更脆弱的补偿逻辑——撤销与删除之间
-  又有新窗口，竞态只是被推给下一轮。
+- Nó thay đổi trạng thái **ngoài bất biến của implement**, nên lỗi đo được là **hiện tượng giả do phép đo tạo ra**, không phải tính chất của đối tượng bị đo;
+- Tệ hơn, nó đẩy implement về phía các logic bù trừ kiểu "hoàn tác hồi tố" vốn dễ vỡ hơn — giữa hoàn tác và xóa lại có cửa sổ mới, race condition chỉ bị đẩy sang vòng sau.
 
-正确做法是**把不变量本身钉死**（“计数 0 ⇔ 不在表内”、
-“同一 key 从不出现两条表项”），让任何未来的实现都必须在同一把锁下
-完成判定与回收，而不是靠补偿去掩盖窗口。
+Cách đúng là **đóng đinh bản thân bất biến** ("đếm 0 ⇔ không nằm trong bảng", "một key không bao giờ có hai mục"), để mọi implement tương lai đều phải hoàn tất xác định và thu hồi dưới cùng một khóa, thay vì dùng bù trừ để che cửa sổ.
 
 ---
 
-## 复核批次二：程序化穷举证伪（2026-10-07）
+## Đợt rà soát hai: phủ định bằng liệt kê chương trình (2026-10-07)
 
-第一版台账的记录方式是“人工读到可疑点就写条目”。这一轮改为**先程序化穷举、
-再逐条证伪**：扫描全仓 865 个 Kotlin 源文件，对并发 / 阻塞 / 资源回收 /
-穷尽性四个高风险面做模式匹配，得到候选集后**逐条回到源码核实**。
+Cách ghi của sổ cái đời đầu là "đọc thấy chỗ đáng ngờ thì viết mục". Vòng này đổi sang **liệt kê chương trình trước, rồi từng mục phủ định**: quét 865 tệp nguồn Kotlin toàn repo, đối sánh mẫu trên bốn mặt rủi ro cao đồng thời / chặn / thu hồi tài nguyên / tính đầy đủ, có tập ứng viên rồi **lần lượt về mã nguồn kiểm chứng**.
 
-统计基线：
+Baseline thống kê:
 
-| 指标 | 数量 |
+| Chỉ số | Số lượng |
 |---|---|
-| Kotlin 源文件（排除 `build/`、`generated/`） | 865 |
-| 生产代码 `TODO/FIXME/HACK` | **2**（均为有意留档） |
-| 生产代码 `GlobalScope` / 裸 `CoroutineScope().launch` 泄漏 | **0** |
-| 生产代码空 `catch {}` | **0** |
+| Tệp nguồn Kotlin (trừ `build/`, `generated/`) | 865 |
+| `TODO/FIXME/HACK` trong mã production | **2** (đều có chủ đích lưu lại) |
+| Rò rỉ `GlobalScope` / `CoroutineScope().launch` trần trong production | **0** |
+| `catch {}` rỗng trong production | **0** |
 
-### F-01「`SessionTreeStore.laneLocks` 永不回收」——证伪
+### F-01 "`SessionTreeStore.laneLocks` không bao giờ được thu hồi" — bị phủ định
 
-**候选理由**：`deleteSession` 只清 `decodedBranches`，不清 `laneLocks`，
-看起来每对 (session × lane) 会永久泄漏一个 `LaneLock` + `Mutex`。
+**Lý do ứng viên**: `deleteSession` chỉ dọn `decodedBranches`, không dọn `laneLocks`, trông như mỗi cặp (session × lane) rò rỉ vĩnh viễn một `LaneLock` + `Mutex`.
 
-**实际源码**（`SessionTreeStore.kt:45-59`）：
+**Mã nguồn thực tế** (`SessionTreeStore.kt:45-59`):
 
 ```kotlin
 laneLocks.compute(key) { _, current ->
@@ -403,150 +331,120 @@ laneLocks.compute(key) { _, current ->
 }
 ```
 
-**证伪依据**：`ConcurrentHashMap.compute` 的语义是——回调返回 `null` 即**移除该键**
-（这正是 `compute` 区别于 `computeIfPresent` 之处）。计数归零时
-`takeIf` 返回 `null`，键被移除。`current !== holder` 分支保留新持有者，
-正确处理了“老等待者尚在排队时不得换锁”的 ABA 场景。
-**该实现同时满足不泄漏与不换锁两个约束，是正确写法。**
+**Căn cứ phủ định**: Ngữ nghĩa của `ConcurrentHashMap.compute` là — callback trả `null` thì **xóa key đó** (đây chính là điểm khác giữa `compute` và `computeIfPresent`). Khi đếm về 0, `takeIf` trả `null`, key bị xóa. Nhánh `current !== holder` giữ lại holder mới, xử lý đúng tình huống ABA "không được đổi khóa khi người chờ cũ còn xếp hàng".
+**Implement này thỏa cả hai ràng buộc không rò rỉ và không đổi khóa, là cách viết đúng.**
 
-### F-02「`AgentContextExecutor` pinned 预算把列表当字符串」——证伪
+### F-02 "'`AgentContextExecutor` pinned budget co list thành chuỗi'" — bị phủ định
 
-**候选理由**：`sumOf { it.value.length }` 的 lambda **未声明参数名**，
-而链上前一步 `.filter { it.id != existing?.id }` 用的是实体语义，怀疑 `it` 被
-推断为 `List` 本身。
+**Lý do ứng viên**: lambda `sumOf { it.value.length }` **không khai báo tên tham số**, trong khi bước trước đó trong chuỗi `.filter { it.id != existing?.id }` dùng ngữ nghĩa entity, nghi ngờ `it` bị suy thành chính `List`.
 
-**证伪依据**：逐字节打印该表达式，实为
-`getPinnedMemories(...).filter { it.id != existing?.id }.sumOf { it.value.length }`。
-`sumOf` 是 `Iterable<T>.sumOf(selector: (T) -> Int)`，`it` 绑定 `AgentMemoryEntity`，
-`it.value.length` 取的是实体 `value` 字段长度。**语义正确**，
-且 `:harness:compileDebugKotlin` 通过与之互证。
+**Căn cứ phủ định**: In nguyên văn biểu thức theo từng byte, thực tế là
+`getPinnedMemories(...).filter { it.id != existing?.id }.sumOf { it.value.length }`.
+`sumOf` là `Iterable<T>.sumOf(selector: (T) -> Int)`, `it` gắn với `AgentMemoryEntity`, `it.value.length` lấy độ dài trường `value` của entity. **Ngữ nghĩa đúng**, và `:harness:compileDebugKotlin` qua được cũng là bằng chứng chéo.
 
-### F-03「`HarnessLoop` 非挂起函数中调用 `join()`」——证伪
+### F-03 "'`HarnessLoop` gọi `join()` trong hàm không suspend'" — bị phủ định
 
-**候选理由**：`HarnessLoop.kt:1498` / `:1627` 的
-`sessionJobs[sessId]?.takeIf { it.isActive }?.join()` 位于
-`fun resolveApproval` / `fun resolveQuestion` 中，而两者签名都不是 `suspend`。
+**Lý do ứng viên**: `sessionJobs[sessId]?.takeIf { it.isActive }?.join()` ở `HarnessLoop.kt:1498` / `:1627` nằm trong `fun resolveApproval` / `fun resolveQuestion`, mà cả hai không có chữ ký `suspend`.
 
-**证伪依据**：该调用位于 `loopScope.launch { ... }` **内部**
-（`resolveApproval` 的 `launch` 起于 L1483，`join()` 在 L1498）。
-lambda 的接收者是 `CoroutineScope`，其中 `join()` 合法。
-行级扫描器看不到作用域嵌套，**这是扫描器的假阳性，不是代码缺陷**。
+**Căn cứ phủ định**: Lời gọi đó nằm **bên trong** `loopScope.launch { ... }` (`launch` của `resolveApproval` bắt đầu ở L1483, `join()` ở L1498). Receiver của lambda là `CoroutineScope`, nơi `join()` hợp lệ.
+Scanner theo dòng không thấy được sự lồng nhau của scope, **đây là false positive của scanner, không phải lỗi mã**.
 
-### F-04「`CountDownLatch` 阻塞协程线程」——证伪
+### F-04 "'`CountDownLatch` chặn thread coroutine'" — bị phủ định
 
-**候选位置**：`HostGuiController.clipboardSet`、`HostGuiToolkit.writeClipboard`、
-`VirtualScreenToolkit.writeClipboard` 三处 `CountDownLatch(1)`。
+**Vị trí ứng viên**: ba chỗ `CountDownLatch(1)` trong `HostGuiController.clipboardSet`, `HostGuiToolkit.writeClipboard`, `VirtualScreenToolkit.writeClipboard`.
 
-**证伪依据**：这三个都是**同步 API**，等待的是跨进程（`ClipboardManager` /
-虚拟屏注入）写入回调完成。调用方是 Android binder / 主线程，**不是协程**；
-若改成挂起反而会把同步契约破坏掉。**有意为之，非缺陷。**
+**Căn cứ phủ định**: Cả ba đều là **API đồng bộ**, chờ callback ghi xuyên tiến trình (`ClipboardManager` / injection màn hình ảo) hoàn tất. Bên gọi là binder Android / main thread, **không phải coroutine**; đổi sang suspend lại phá vỡ khế ước đồng bộ. **Cố ý, không phải lỗi.**
 
-### F-05「`ApprovalPolicyEngine.decide` 尾部 `when` 漏 `COMPRESS`」——证伪（列为卫生项）
+### F-05 "'`when` ở cuối `ApprovalPolicyEngine.decide` sót `COMPRESS`'" — bị phủ định (xếp vào mục vệ sinh)
 
-**候选理由**：程序化穷举给出 `enum members: 20 / covered: 19 / MISSING: ['COMPRESS']`。
+**Lý do ứng viên**: Liệt kê chương trình cho `enum members: 20 / covered: 19 / MISSING: ['COMPRESS']`.
 
-**证伪依据**：`COMPRESS` 在 `ApprovalPolicyEngine.kt:93-94` 的只读白名单里
-**先行无条件返回**，`when` 分支不可达；且该 `when` **带 `else` 分支**，
-所以既不报编译错也无行为差异。`:harness:compileDebugKotlin` EXIT=0 互证。
+**Căn cứ phủ định**: `COMPRESS` được **trả về vô điều kiện từ sớm** trong whitelist chỉ đọc ở `ApprovalPolicyEngine.kt:93-94`, nhánh `when` không bao giờ tới được; lại thêm `when` này **có nhánh `else`**, nên vừa không lỗi biên dịch vừa không khác biệt hành vi. `:harness:compileDebugKotlin` EXIT=0 chéo xác nhận.
 
-**处置**：不计为缺陷，但记入卫生待办——`when` 表达式带 `else` 会**掩盖**
-未来新增枚举成员的策略遗漏。修法是给 `COMPRESS` 补显式分支、并让 `else`
-分支改为显式失败而非静默放行（下批次实施）。
+**Xử lý**: Không tính là lỗi, nhưng ghi vào todo vệ sinh — `when` có `else` sẽ **che giấu** việc sót chiến lược khi sau này thêm enum member. Cách sửa là thêm nhánh tường minh cho `COMPRESS` và đổi `else` sang fail rõ ràng thay vì âm thầm cho qua (sẽ làm ở đợt sau).
 
-### 本批次方法论教训
+### Bài học phương pháp của đợt này
 
-三个假阳性（F-03、F-04 及此前的 `COMPRESS` 计数）都源自同一类错误：
-**用行级正则去推断块级语义**。`join()` 合不合法取决于它套在哪个 lambda 里；
-`it` 绑到谁取决于链上前一个接收者类型；枚举覆盖数取决于注解是否与成员同行。
-后续候选集一律**必须回到源码精确确认后才能写进台账**，
-扫描器只负责“把候选面缩小”，不负责下结论。
+Ba false positive (F-03, F-04 và lần đếm `COMPRESS` trước đó) đều bắt nguồn từ cùng một loại sai:
+**dùng regex theo dòng để suy ngữ nghĩa theo khối**. `join()` hợp lệ hay không phụ thuộc vào nó nằm trong lambda nào; `it` gắn vào ai phụ thuộc vào kiểu receiver trước đó trong chuỗi; số enum được phủ phụ thuộc vào annotation có cùng dòng với member hay không.
+Từ nay tập ứng viên **phải về mã nguồn xác nhận chính xác rồi mới được ghi vào sổ cái**; scanner chỉ có nhiệm vụ "thu hẹp mặt ứng viên", không có nhiệm vụ kết luận.
 
 ---
 
-## 复核批次三：`McpHttpTransport` 会话互斥表（2026-10-07）
+## Đợt rà soát ba: bảng mutex session của `McpHttpTransport` (2026-10-07)
 
-### F-06「`sessionMutexes` 无回收路径」——确认存在，判定为**卫生项而非缺陷**
+### F-06 "'`sessionMutexes` không có đường thu hồi'" — xác nhận tồn tại, xếp vào **mục vệ sinh chứ không phải lỗi**
 
-**证据链**（程序化核实，非推测）：
+**Chuỗi bằng chứng** (kiểm chứng bằng chương trình, không suy đoán):
 
-| 项 | 结果 |
+| Mục | Kết quả |
 |---|---|
-| `sessionMutexes` 全部出现 | 3 处：L63 声明、L166 `getOrPut`、L227 `getOrPut` |
-| `sessionMutexes.remove` / `.compute` / `.clear` / `.keys` | **全部不存在** |
-| `sessions` 回收路径 | ✅ `dropSession`(L234) + `closeSession`(L229) |
-| `downUntil` 回收路径 | ✅ `closeSession`(L228) + 成功路径(L208) |
-| `sessionMutexes` 回收路径 | ❌ 无 |
+| Tất cả lần xuất hiện của `sessionMutexes` | 3 chỗ: L63 khai báo, L166 `getOrPut`, L227 `getOrPut` |
+| `sessionMutexes.remove` / `.compute` / `.clear` / `.keys` | **đều không tồn tại** |
+| Đường thu hồi của `sessions` | ✅ `dropSession`(L234) + `closeSession`(L229) |
+| Đường thu hồi của `downUntil` | ✅ `closeSession`(L228) + nhánh thành công(L208) |
+| Đường thu hồi của `sessionMutexes` | ❌ không có |
 
-**为何不是缺陷**：键是 `server.id`，其取值空间受**用户配置的 MCP server 数量**
-约束（个位数到几十），不是无界增长。所以没有"长会话越跑越胖"的泄漏，
-最坏情况是删掉 server 后残留一个永不再用的 `Mutex` 对象。
+**Vì sao không phải lỗi**: key là `server.id`, miền giá trị bị **số lượng MCP server do người dùng cấu hình** giới hạn (hàng chục, không phải vô hạn). Vì vậy không có dạng rò rỉ "chạy lâu càng phình"; trường hợp xấu nhất là sau khi xóa server còn sót một đối tượng `Mutex` không bao giờ dùng lại.
 
-**为何不立即修**：安全回收必须满足"仅在该键无人持有/无人等待时摘除"。
-若直接在 `closeSession` 里 `remove`，并发的 `ensureSession` 会拿到**不同的 Mutex**，
-互斥失效——这与 `SessionTreeStore` 里已经正确处理的 ABA 场景是同一个坑。
-引入 ABA 竞态去消除一个内存卫生问题，会**降低**正确性。
+**Vì sao không sửa ngay**: thu hồi an toàn phải thỏa "chỉ gỡ key khi không ai giữ và không ai chờ". Nếu `remove` thẳng trong `closeSession`, `ensureSession` đồng thời sẽ lấy **Mutex khác**, mutex vô hiệu — chính là cái bẫy ABA đã xử lý đúng trong `SessionTreeStore`. Đưa race condition ABA vào để xóa một vấn đề vệ sinh bộ nhớ sẽ **làm giảm** tính đúng đắn.
 
-**处置**：记入卫生待办。若将来要修，应照抄 `SessionTreeStore.withRetainedLaneLock`
-的引用计数 + `compute` 归零移除范式（该实现已在 F-01 中确认为正确）。
-**当前不动。**
+**Xử lý**: Ghi vào todo vệ sinh. Nếu sau này sửa, nên copy nguyên mẫu đếm tham chiếu + `compute` xóa khi về 0 của `SessionTreeStore.withRetainedLaneLock` (implement đó đã được xác nhận đúng ở F-01).
+**Hiện không động.**
 
-### 与 F-01 的区别（为什么一个证伪一个确认）
+### Khác biệt với F-01 (vì sao một cái bị phủ định, một cái được xác nhận)
 
-两者表面都是"表项不回收"，但机制不同，必须分开判：
+Cả hai bề ngoài đều là "mục trong bảng không được thu hồi", nhưng cơ chế khác nhau, phải phán đoán riêng:
 
-- `SessionTreeStore.laneLocks` 用 `compute`，回调返回 `null` ⇒ 键被移除。
-  **回收已实现**，只是不在 `deleteSession` 里而在每次 `finally` 里。→ 证伪。
-- `McpHttpTransport.sessionMutexes` 用 `getOrPut`，**没有**任何归零语义。
-  **回收确实缺失**。→ 确认存在，但影响面受键空间约束，降级为卫生项。
+- `SessionTreeStore.laneLocks` dùng `compute`, callback trả `null` ⇒ key bị xóa.
+  **Thu hồi đã được hiện thực**, chỉ là không nằm trong `deleteSession` mà nằm ở mỗi `finally`. → Bị phủ định.
+- `McpHttpTransport.sessionMutexes` dùng `getOrPut`, **không có** ngữ nghĩa về 0 nào cả.
+  **Thu hồi quả thực thiếu**. → Xác nhận tồn tại, nhưng phạm vi bị giới hạn bởi miền key nên hạ xuống mục vệ sinh.
 
-教训：**"不回收"必须以"表用了哪个 API"为准来判定**。
-`compute` / `computeIfPresent` / `getOrPut` 三者的键生命周期语义完全不同，
-只看"某处没有 remove 调用"会误判。
+Bài học: **"không thu hồi" phải căn cứ vào API mà bảng dùng để phán đoán**.
+Ba API `compute` / `computeIfPresent` / `getOrPut` có ngữ nghĩa vòng đời key hoàn toàn khác nhau; chỉ nhìn "chỗ này không có lời gọi remove" sẽ phán đoán sai.
 
 ---
 
-## 复核批次四：未审模块（runtime / core / tools / app / feature，502 个非测试文件）
+## Đợt rà soát bốn: module chưa audit (runtime / core / tools / app / feature, 502 tệp không phải test)
 
-### F-07「`runBlocking` 阻塞线程」——证伪（两处均为历史修复留档）
+### F-07 "'`runBlocking` chặn thread'" — bị phủ định (cả hai chỗ đều là lưu lại của lần sửa cũ)
 
-第二轮扫描覆盖此前未审的 502 个非测试 Kotlin 文件，`runBlocking` 全局仅 **2** 处命中：
+Vòng quét hai phủ 502 tệp Kotlin không phải test chưa từng audit; trên toàn repo `runBlocking` chỉ trúng **2** chỗ:
 
-| 位置 | 实际内容 | 判定 |
+| Vị trí | Nội dung thực tế | Phán đoán |
 |---|---|---|
-| `ScreenshotRecorder.kt:152` | 注释「挂起等待压缩完成：**不再** runBlocking 阻塞 MCP 工作线程」 | 已在 `suspend fun writePngAsync` 中改为 `done.await()` |
-| `DistroConfigurator.kt:16` | KDoc「**唯一行为变化**：[configureRootfs] 由同步 runBlocking 改为 suspend」 | 已是 `suspend fun configureRootfs` |
+| `ScreenshotRecorder.kt:152` | Comment "chờ suspend cho đến khi nén xong: **không còn** runBlocking chặn thread worker MCP" | Đã đổi thành `done.await()` trong `suspend fun writePngAsync` |
+| `DistroConfigurator.kt:16` | KDoc "**thay đổi hành vi duy nhất**: [configureRootfs] từ đồng bộ runBlocking sang suspend" | Đã là `suspend fun configureRootfs` |
 
-**两者都是描述"过去曾用 runBlocking、现已改掉"的说明性文字**，不是活跃调用。
+**Cả hai đều là văn bản giải thích kiểu "trước đây từng dùng runBlocking, nay đã bỏ", không phải lời gọi đang hoạt động.**
 
-### 给后续审计的警告：注释会污染正则审计
+### Cảnh báo cho audit về sau: comment ô nhiễm audit regex
 
-这是本轮第二次踩到同一类坑（第一次是 F-03/F-04 的行级作用域误判）。
-**`runBlocking` / `GlobalScope` / `Thread.sleep` 这类关键字一旦被写进"我们不再用 X"的
-注释里，任何基于文本匹配的审计都会把它当成违规重现。** 本次 2 处全部是这种情况。
+Đây là lần hai trong vòng này dẫm phải cùng một loại bẫy (lần đầu là F-03/F-04 hiểu sai scope theo dòng).
+**Một khi các từ khóa như `runBlocking` / `GlobalScope` / `Thread.sleep` được viết vào comment kiểu "chúng tôi không dùng X nữa", mọi audit dựa trên khớp văn bản sẽ coi đó là vi phạm tái diễn.** Cả 2 chỗ lần này đều thuộc dạng đó.
 
-结论：**正则审计只能用来缩小候选面，绝不能直接下结论。**
-任何候选必须回到源码确认其**是否处于可执行路径**，再判定。
-凡涉及并发/阻塞的候选，还需确认**所在函数是不是 suspend、被谁调用**。
+Kết luận: **audit regex chỉ được dùng để thu hẹp ứng viên, tuyệt đối không được kết luận trực tiếp.**
+Mọi ứng viên phải về mã nguồn xác nhận **có nằm trên đường thực thi hay không** rồi mới phán đoán. Với ứng viên liên quan đến đồng thời/chặn, còn phải xác nhận **hàm chứa nó có phải suspend không và ai gọi nó**.
 
-### 本批次其余扫描面的信噪比结论
+### Kết luận tỉ lệ tín/nhiễu của các mặt quét còn lại trong đợt này
 
-| 扫描面 | 命中 | 结论 |
+| Mặt quét | Số trúng | Kết luận |
 |---|---|---|
-| `runBlocking` | 2 | 全部证伪（见上） |
-| `SHARED_MUTABLE_STATIC`（`val x = mutableListOf()`） | 101 | **信噪比过低**——Kotlin 里绝大多数是函数内局部变量，非共享状态。不予采信。 |
-| `DISPOSABLE_NOT_CLOSED`（资源构造） | 90 | **信噪比过低**——`File(...)` 等非资源对象大量误匹配。不予采信。 |
+| `runBlocking` | 2 | Đều bị phủ định (xem trên) |
+| `SHARED_MUTABLE_STATIC` (`val x = mutableListOf()`) | 101 | **Tỉ lệ tín/nhiễu quá thấp** — trong Kotlin đại đa số là biến cục bộ trong hàm, không phải trạng thái chia sẻ. Không chấp nhận. |
+| `DISPOSABLE_NOT_CLOSED` (khởi tạo tài nguyên) | 90 | **Tỉ lệ tín/nhiễu quá thấp** — `File(...)` và các đối tượng không phải tài nguyên khớp nhầm rất nhiều. Không chấp nhận. |
 
-后两项说明：**静态文本模式在 Kotlin 上对"共享可变状态"和"资源未关闭"几乎没有判别力**，
-这两类问题必须靠**逐函数阅读 + 现有单测覆盖情况**来发现，不能靠 grep。
-后续不再对这两个面做模式扫描，以免用低质量候选稀释台账。
+Hai mục sau cho thấy: **mẫu văn bản tĩnh trên Kotlin gần như không có sức phân biệt cho "trạng thái chia sẻ có thể thay đổi" và "tài nguyên không đóng"**; hai loại này phải phát hiện bằng **đọc từng hàm + tình trạng phủ unit test hiện có**, không thể dùng grep.
+Sau này không quét mẫu hai mặt đó nữa, để tránh dùng ứng viên chất lượng thấp làm loãng sổ cái.
 
 ---
 
-## 复核批次五：`SettingsDataStore` 凭据路径（2026-10-07）
+## Đợt rà soát năm: đường dẫn credential của `SettingsDataStore` (2026-10-07)
 
-### F-08「`decodeProtectedValue` 丢弃明文兼容值」——**已撤回**（我的提取器出错）
+### F-08 "'`decodeProtectedValue` bỏ giá trị tương thích plaintext'" — **đã rút lại** (lỗi ở extractor của tôi)
 
-**我曾误判为真实缺陷**，理由是我提取到的函数体是：
+**Tôi từng nhầm là lỗi thật**, lý do là thân hàm tôi trích được là:
 
 ```kotlin
 private fun decodeProtectedValue(value: String): String? =
@@ -556,9 +454,9 @@ private fun decodeProtectedValue(value: String): String? =
     // ← 提取结果里 else 分支不见了
 ```
 
-并据此断言「明文老数据会被 `orEmpty()` 变成空串」。
+và khẳng định dựa trên đó rằng "dữ liệu plaintext cũ sẽ bị `orEmpty()` biến thành chuỗi rỗng".
 
-**实际源码**（括号感知提取器复核）：
+**Mã nguồn thực tế** (kiểm chứng bằng extractor nhận biết ngoặc):
 
 ```kotlin
 private fun decodeProtectedValue(value: String): String? =
@@ -569,358 +467,263 @@ private fun decodeProtectedValue(value: String): String? =
     }
 ```
 
-**实现完全正确**，KDoc 与实际行为一致。**缺陷不存在。**
+**Implement hoàn toàn đúng**, KDoc khớp với hành vi thực tế. **Lỗi không tồn tại.**
 
-### 根因：提取脚本在 `fun x() = if(...){...} else {...}` 上崩解
+### Nguyên nhân gốc: Script trích bị hỏng với `fun x() = if(...){...} else {...}`
 
-我用的提取逻辑是 `index('{')` + 花括号计数。对**表达式体**函数，
-第一个 `{` 属于 `if` 而不属于函数体，配对在 `if` 块结束时就归零了，
-**`else` 分支被整段截断**。于是"函数看起来少了 else"。
+Script trích dùng `index('{')` + đếm ngoặc nhọn. Với hàm **expression-body**, `{` đầu tiên thuộc về `if` chứ không phải thân hàm, cặp ngoặc về 0 ngay khi kết thúc block `if`, nên **toàn bộ nhánh `else` bị cụt mất**. Thế là "hàm trông như thiếu else".
 
-这类形状在本仓大量存在（`decodeProtectedValue`、`planBlock` 的多个分支、
-`HarnessTool` 的穷尽 `when` 等），**每一次都可能被我误判**。
+Dạng này tồn tại rất nhiều trong repo (`decodeProtectedValue`, nhiều nhánh của `planBlock`, `when` đầy đủ của `HarnessTool`...), **mỗi lần đều có thể bị tôi phán đoán sai**.
 
-### 已固化的修复：`/tmp/extract.py` → 建议纳入 `scripts/`
+### Bản sửa đã được cố hóa: `/tmp/extract.py` → đề xuất đưa vào `scripts/`
 
-新提取器做三件事：
-1. 从 `fun` 关键字起，**先扫描到签名结束**，只在遇到顶层 `=`（表达式体）
-   或 `{`（块体）时才决定提取策略；
-2. 表达式体：按**缩进层级**消费续行，不靠花括号配对；
-3. 块体：配对时**跳过字符串字面量与转义**（`instr` 状态机），
-   避免 `"{"` 这类内容污染计数。
+Extractor mới làm ba việc:
+1. Từ keyword `fun`, **quét tới khi kết thúc chữ ký**, rồi mới quyết chiến lược trích khi gặp `=` ở cấp ngoài cùng (expression-body) hoặc `{` (block-body);
+2. Expression-body: tiêu thụ các dòng tiếp theo theo **cấp thụt đầu dòng**, không dựa vào cặp ngoặc;
+3. Block-body: khi ghép cặp thì **bỏ qua string literal và escape** (máy trạng thái `instr`), tránh nội dung như `"{"` làm ô nhiễm bộ đếm.
 
-### 本轮方法论总账（三次同类错误的共同根源）
+### Tổng kết phương pháp của đợt này (nguồn gốc chung của ba lần sai cùng loại)
 
-| 批次 | 误判 | 真正的根因 |
+| Đợt | Phán đoán sai | Nguyên nhân gốc thật sự |
 |---|---|---|
-| 二 | `COMPRESS` 缺分支（计数 19/20） | 正则没跳过与成员**同行**的 `@SerialName` 注解 |
-| 二 | `join()` 在非 suspend 函数中 | 正则看不到 `launch { }` 的**作用域嵌套** |
-| 五 | `decodeProtectedValue` 丢 else | 花括号配对没识别**表达式体** |
+| Hai | `COMPRESS` thiếu nhánh (đếm 19/20) | Regex không bỏ qua annotation `@SerialName` **nằm cùng dòng** với member |
+| Hai | `join()` trong hàm không suspend | Regex không thấy được **sự lồng scope** của `launch { }` |
+| Năm | `decodeProtectedValue` mất else | Ghép ngoặc không nhận ra **expression-body** |
 
-**三次都不是代码的问题，是"用文本推断结构"的问题。**
+**Cả ba lần đều không phải lỗi của mã, mà là lỗi của việc "dùng văn bản để suy cấu trúc".**
 
-因此今后在本仓的所有审计，**必须遵守**：
-1. 判定"某分支是否存在"→ 用括号/字符串感知的提取（`extract.py`），
-   或直接 `Read` 完整函数，**不得用 grep/正则的局部输出**；
-2. 判定"某调用是否合法"→ 必须确认它**所在的 lambda/函数作用域**；
-3. 判定"枚举是否穷尽"→ 用 Kotlin 编译器本身（给枚举注入探针成员，
-   看 `must be exhaustive` 报错），**这比任何正则都权威**。
+Vì vậy từ nay, mọi audit trong repo này **phải tuân thủ**:
+1. Phán đoán "một nhánh có tồn tại hay không" → dùng extract nhận biết ngoặc/chuỗi (`extract.py`), hoặc `Read` trọn vẹn hàm, **không được dùng đầu ra cục bộ của grep/regex**;
+2. Phán đoán "một lời gọi có hợp lệ hay không" → phải xác nhận **scope lambda/hàm chứa nó**;
+3. Phán đoán "enum có đầy đủ hay không" → dùng chính compiler Kotlin (tiêm member probe vào enum, xem lỗi `must be exhaustive`), **có thẩm quyền hơn bất kỳ regex nào**.
 
-第 3 条已在 F-05 中验证：注入 `__PROBE__` 一次就精确列出了全部 4 处穷尽约束点。
+Điều 3 đã được kiểm chứng ở F-05: tiêm `__PROBE__` một lần đã liệt kê chính xác cả 4 điểm ràng buộc đầy đủ.
 
 ---
 
-## 复核批次六：ToolManager.installJobs 跨线程无同步共享表（2026-10-07）
+## Đợt rà soát sáu: `ToolManager.installJobs` dùng bảng chia sẻ xuyên thread không đồng bộ (2026-10-07)
 
-### D-08 `ToolManager.installJobs` 用 `mutableMapOf` 承载跨线程共享状态
+### D-08 `ToolManager.installJobs` dùng `mutableMapOf` chứa trạng thái chia sẻ xuyên thread
 
-**现象**
-安装/更新任务的登记表 `installJobs` 被两类线程同时访问，且只有一侧加锁。
-单看代码不会报错，症状是低频、不可复现的：
+**Hiện tượng**
+Bảng đăng ký tác vụ cài đặt/cập nhật `installJobs` bị hai loại thread truy cập đồng thời, và chỉ một bên có khóa. Nhìn mã thì không báo lỗi; triệu chứng là tần suất thấp, không tái hiện được:
 
-- 两个工具（或同一工具连点两次安装）偶发**并发解包到同一目录**，文件互相覆盖，
-  最终版本内容混杂；
-- 极端情况下 UI 线程**卡死占满一个核**（CPU 100%，无堆栈可读）；
-- `syncRegistry()` 偶发抛 `ConcurrentModificationException`，被上层 catch 吞掉后
-  表现为"工具列表偶尔刷不出来"。
+- Hai công cụ (hoặc cùng một công cụ bấm cài đặt hai lần liên tiếp) thỉnh thoảng **giải nén đồng thời vào cùng một thư mục**, tệp đè nhau, nội dung phiên bản cuối bị trộn;
+- Trường hợp cực đoan, UI thread **treo chiếm trọn một core** (CPU 100%, không có stack để đọc);
+- `syncRegistry()` thỉnh thoảng ném `ConcurrentModificationException`, bị tầng trên catch nuốt nên biểu hiện là "danh sách công cụ thỉnh thoảng không load được".
 
-**触发条件**
-| 访问点 | 线程 | 是否加锁 |
+**Điều kiện kích hoạt**
+| Điểm truy cập | Thread | Có khóa không |
 |---|---|---|
-| `startInstall` / `startUpdate` 读表判活跃 | 主线程（ViewModel 直调） | **无** |
-| `cancelInstall` 读表取 Job | 主线程 | **无** |
-| `syncRegistry` 迭代 `installJobs.keys` | 主线程 / IO | **无** |
-| `installInternal` 登记 `installJobs[id] = job` | IO（managerScope） | `installMutex` |
-| `installInternal` finally 注销 | IO | `installMutex` |
+| `startInstall` / `startUpdate` đọc bảng xét active | Main thread (ViewModel gọi trực tiếp) | **Không** |
+| `cancelInstall` đọc bảng lấy Job | Main thread | **Không** |
+| `syncRegistry` lặp `installJobs.keys` | Main thread / IO | **Không** |
+| `installInternal` đăng ký `installJobs[id] = job` | IO (managerScope) | `installMutex` |
+| `installInternal` finally hủy đăng ký | IO | `installMutex` |
 
-写侧持有 `installMutex`，读侧完全无锁 —— **两侧不共享任何同步原语，
-无法建立 happens-before**。
+Bên ghi giữ `installMutex`, bên đọc hoàn toàn không khóa — **hai bên không chia sẻ bất kỳ nguyên thủy đồng bộ nào, không thiết lập được happens-before**.
 
-**根因（三个独立缺陷叠加在同一个字段上）**
+**Nguyên nhân gốc (ba lỗi độc lập chồng lên cùng một field)**
 
-1. **非原子「先读后写」**：`val existing = installJobs[toolId]; if (existing?.isActive == true) return existing`
-   与随后的登记之间没有原子性。两个并发 `startInstall` 会同时读到空表、
-   各自 `launch` 一路装配流，对同一工具并发解包。
+1. **"Đọc rồi ghi" không nguyên tử**: `val existing = installJobs[toolId]; if (existing?.isActive == true) return existing` và lần đăng ký sau đó không có tính nguyên tử. Hai `startInstall` đồng thời cùng đọc thấy bảng rỗng, mỗi bên `launch` một luồng lắp ráp, giải nén đồng thời cùng một công cụ.
+2. **"Kiểm tra rồi xóa" không nguyên tử**: giữa `if (installJobs[toolId] === currentJob) installJobs.remove(toolId)` có thể có tác vụ mới thay key đó bằng Job của nó; tác vụ cũ khi kết thúc sẽ xóa **người kế nhiệm** này, tác vụ mới thành orphan không tìm thấy trong bảng, `cancelInstall` không bao giờ tìm được nữa (người dùng bấm hủy không có phản ứng).
+3. **Bản thân container không an toàn**: `mutableMapOf()` là `LinkedHashMap`, đọc/ghi xuyên thread không đồng bộ dẫm vào hai bẫy không phục hồi — khi đọc trúng lúc resize, danh sách bucket có thể thành vòng khiến thread đọc **chạy vô hạn**; lặp `keys` mà có ghi đồng thời thì ném `ConcurrentModificationException`.
 
-2. **非原子「先查后删」**：`if (installJobs[toolId] === currentJob) installJobs.remove(toolId)`
-   两条语句之间，新任务可能已把同一个 key 换成自己的 Job；旧任务收尾时
-   会把这个**接任者**删掉，新任务随之成为表里查不到的孤儿，
-   `cancelInstall` 再也找不到它（用户点取消无反应）。
+**Cách sửa**
+- Đổi container sang `ConcurrentHashMap` (xóa điều 3: visibility, lặp an toàn, không thành vòng);
+- Đăng ký đổi sang `putIfAbsent`, **đăng ký và "dùng lại tác vụ có sẵn" trong một bước** (xóa điều 1);
+- Hủy đăng ký đổi sang `remove(key, value)` hai tham số (xóa điều 2);
+- Gộp `startInstall`/`startUpdate` thành `launchInstall`, dùng `CoroutineStart.LAZY` + `putIfAbsent` để đạt "**đăng ký thành công mới khởi động**": nếu bảng đã có tác vụ active, hủy Job LAZY vừa tạo rồi trả Job cũ, đảm bảo tại mọi thời điểm một công cụ chỉ có một lần lắp ráp active.
 
-3. **容器本身不安全**：`mutableMapOf()` 背后是 `LinkedHashMap`，
-   跨线程无同步读写会踩两类不可恢复的坑 ——
-   读取时若正逢扩容（resize），桶链表可能成环导致读线程**死循环**；
-   迭代 `keys` 时并发写入抛 `ConcurrentModificationException`。
+**Một lỗi tôi tự đưa ra rồi tự sửa trong lúc sửa (ghi lại để không lặp)**
+Sau khi đổi `LinkedHashMap` sang `ConcurrentHashMap`, dòng `check(toolId !in installJobs)` **bị compiler cảnh báo về ngữ nghĩa `contains`**:
+`ConcurrentHashMap` override `contains` để tương đương `containsValue` (di sản lịch sử), nên toán tử `in` sẽ so sánh **toàn bộ giá trị Job**, luôn đúng — cổng "đang cài thì cấm gỡ" **vô hiệu lặng lẽ**.
+Đã đổi sang `containsKey` tường minh.
+Chỉ có kiểm tra `-Xmap-contains` của compiler mới bắt được điều này, review thủ công rất dễ bỏ qua.
 
-**修法**
-- 容器换成 `ConcurrentHashMap`（消除第 3 条：可见性、迭代安全、无成环）；
-- 登记改为 `putIfAbsent`，**登记与「复用已有任务」一步完成**（消除第 1 条）；
-- 注销改为两参 `remove(key, value)`（消除第 2 条）；
-- `startInstall`/`startUpdate` 合并为 `launchInstall`，用 `CoroutineStart.LAZY` +
-  `putIfAbsent` 实现「**登记成功才启动**」：若表内已有活跃任务，把刚创建的这个
-  LAZY Job 取消并返回既有 Job，保证任一时刻同一工具只有一个活跃装配。
+**Reverse verification**
+`tools/src/test/java/.../ToolManagerInstallJobsConcurrencyTest.kt` (4 mục, toàn xanh):
 
-**修法过程中自己引入又纠正的一处错误（记录以免重犯）**
-把 `LinkedHashMap` 换成 `ConcurrentHashMap` 后，
-`check(toolId !in installJobs)` 这一行**编译器报了 `contains` 语义警告**：
-`ConcurrentHashMap` 覆写了 `contains` 使其等价于 `containsValue`（历史遗留），
-于是 `in` 运算符会去比对**全部 Job 值**，永远为真 ——
-「安装中禁止卸载」这道闸门会**静默失效**。
-已改为显式 `containsKey`。
-这条只有编译器的 `-Xmap-contains` 类检查能抓到，人工 review 极易放过。
-
-**反向验证**
-`tools/src/test/java/.../ToolManagerInstallJobsConcurrencyTest.kt`（4 项，全绿）：
-
-| 用例 | 断言 |
+| Ca test | Khẳng định |
 |---|---|
-| `legacy check-then-act registry fails under concurrency` | **旧协议在同一压测下必然出现违规（>0）** |
-| `atomic registry never hands out two instances for one key` | 新协议违规数恒为 0 |
-| `legacy check-then-remove can evict a successor` | 旧写法确实会误删接任者；两参 `remove` 不会 |
-| `lazy start with putIfAbsent reuses the same job instance` | LAZY + putIfAbsent 复用同一实例 |
+| `legacy check-then-act registry fails under concurrency` | **Giao thức cũ dưới cùng một bài stress chắc chắn có vi phạm (>0)** |
+| `atomic registry never hands out two instances for one key` | Giao thức mới số vi phạm luôn bằng 0 |
+| `legacy check-then-remove can evict a successor` | Cách cũ quả thực xóa nhầm người kế nhiệm; `remove` hai tham số thì không |
+| `lazy start with putIfAbsent reuses the same job instance` | LAZY + putIfAbsent dùng lại cùng một instance |
 
-第一项是**测试有效性守卫**：若压测强度不足、复现不出窗口，它会失败，
-从而防止"测试永远是绿的但其实什么都没测"。
+Ca đầu là **guard hiệu lực của test**: nếu stress không đủ mạnh, không tái hiện được cửa sổ, ca này sẽ fail, nhờ đó tránh tình trạng "test xanh mãi nhưng thực ra chẳng test gì".
 
-**限度（必须如实标注）**
-这是**协议级**回归测试，不是对 `ToolManager` 整体的行为测试。
-生产类需要 17 个真实依赖才能构造，且 `tools` 模块只有 `junit` + `okhttp-mockwebserver`
-（无 MockK/Mockito），故测试用与生产**同构**的协议复刻来锁定语义。
-它能防止"有人把这三处改回非原子写法"，但**不能**替代对 `installInternal`
-状态机本身的审查。真正的反向验证（改坏生产代码→测试转红）在此路径上不成立，
-不应宣称做过。
+**Giới hạn (phải ghi trung thực)**
+Đây là test hồi quy **cấp giao thức**, không phải test hành vi tổng thể của `ToolManager`.
+Lớp production cần 17 dependency thật mới khởi tạo được, và module `tools` chỉ có `junit` + `okhttp-mockwebserver` (không có MockK/Mockito), nên test dùng bản sao giao thức **đồng cấu** với production để khóa ngữ nghĩa.
+Nó ngăn được "có người đổi ba chỗ đó lại thành dạng không nguyên tử", nhưng **không thay thế** được việc rà soát chính state machine `installInternal`. Reverse verification đúng nghĩa (sửa hỏng mã production → test đỏ) trên đường này không áp dụng được, không nên tuyên bố đã làm.
 
-**行数棘轮**
-`ToolManager.kt` 在 `.architecture-baseline.json` 中额度 **1131**（只许下调）。
-本次同时把四处重复的「回滚 + 落库 + 释放引用」善后逻辑抽成局部
-`suspend fun settleFailure(cancelledByUser: Boolean)`，净减 9 行 → **1122**。
-既满足棘轮，又消除了四处重复逻辑各自漂移的风险（原先三处传 `cancelled=true`
-只有一处传 `false`，任何一处漏改都会造成状态落库不一致）。
+**Ratchet số dòng**
+`ToolManager.kt` trong `.architecture-baseline.json` có hạn mức **1131** (chỉ được giảm).
+Lần này đồng thời gom bốn chỗ lặp logic dọn dẹp "rollback + lưu DB + nhả reference" thành một `suspend fun settleFailure(cancelledByUser: Boolean)` cục bộ, giảm ròng 9 dòng → **1122**.
+Vừa thỏa ratchet, vừa xóa nguy cơ bốn bản logic trôi riêng (trước đó ba chỗ truyền `cancelled=true`, chỉ một chỗ truyền `false`, sót một chỗ là DB lưu trạng thái không nhất quán).
 
 ---
 
-# 复核批次七：发布链路（release.sh / ops / .github/workflows）
+# Đợt rà soát bảy: chuỗi phát hành (release.sh / ops / .github/workflows)
 
-发布链路是**唯一能把缺陷直接送到用户设备上**的通道，故单独成批逐文件精读。
-本批覆盖 15 个文件，其中 4 个为自测脚本。总原则沿用「守卫查产物不查配置」：
-配置会被人改错，产物不会说谎。
+Chuỗi phát hành là **kênh duy nhất đưa lỗi thẳng tới thiết bị người dùng**, nên tách riêng một đợt, đọc kỹ từng tệp. Đợt này phủ 15 tệp, trong đó 4 là script tự test. Nguyên tắc chung vẫn là "**guard kiểm tra sản phẩm, không kiểm tra cấu hình**": cấu hình có thể bị người sửa sai, sản phẩm thì không nói dối.
 
-## 逐文件结论
+## Kết luận từng tệp
 
-| 文件 | 行数 | 结论 |
+| Tệp | Số dòng | Kết luận |
 |---|---|---|
-| `release.sh` | 352 | 无缺陷。三处 APK 命名对齐已交叉核对（见下） |
-| `ops/apkmanifest.py` | 188 | 无缺陷。模糊测试 0/200 崩溃 + 60 次截断 0 崩溃 |
-| `ops/apkmanifest_test.py` | 186 | 无缺陷。7 项用例覆盖 UTF-16/UTF-8 池、非 manifest 根、整型、坏输入 |
-| `ops/gen-manifest.sh` | 125 | 无缺陷。版本排序实测 `0.21.10 > 0.21.3 > 0.21 > 0.20.0 > 0.9.0` |
-| `ops/gen_manifest_test.py` | 257 | 无缺陷。6 组用例含幂等与软链去重 |
-| `ops/tianxuan_dist.py` | 344 | 无缺陷。目录穿越 11 向量全部拦截 |
-| `ops/tianxuan-fetch.sh` | 42 | 无缺陷。见「窄口子」一节 |
-| `ops/sync-tianxuan-plugins.sh` | 34 | **D-09**（已修复，见下） |
-| `ops/release_guard_test.py` | 171→414 | **D-10**（已修复，见下） |
-| `ops/offline-packages.json` | 55 | 无缺陷。`total_bytes` 与逐项求和精确相等（6,911,578,380 = 6.44 GiB） |
-| `ops/README.md` | 285→301 | 补充守卫自测的跑法 |
-| `ops/DEPLOY.md` | 96 | 无缺陷。见「窄口子」一节 |
-| `ops/.gitignore` | 6 | 无缺陷。相对目录解析的坑有注记 |
-| 两个 `.service` | 41 / 22 | 无缺陷。`ProtectSystem=strict` + `ReadWritePaths` 已收口 |
-| 三个 `.yml` | 267 / 76 / 39 | 代码无缺陷；失败均为环境条件（见下） |
+| `release.sh` | 352 | Không lỗi. Ba chỗ căn chỉnh tên APK đã đối chiếu chéo (xem dưới) |
+| `ops/apkmanifest.py` | 188 | Không lỗi. Fuzz 0/200 crash + 60 lần cụt 0 crash |
+| `ops/apkmanifest_test.py` | 186 | Không lỗi. 7 ca phủ pool UTF-16/UTF-8, root không phải manifest, số nguyên, input hỏng |
+| `ops/gen-manifest.sh` | 125 | Không lỗi. Sắp xếp phiên bản đo thực `0.21.10 > 0.21.3 > 0.21 > 0.20.0 > 0.9.0` |
+| `ops/gen_manifest_test.py` | 257 | Không lỗi. 6 nhóm ca gồm idempotent và khử trùng soft link |
+| `ops/tianxuan_dist.py` | 344 | Không lỗi. 11 vector path traversal đều bị chặn |
+| `ops/tianxuan-fetch.sh` | 42 | Không lỗi. Xem mục "Cửa hẹp" |
+| `ops/sync-tianxuan-plugins.sh` | 34 | **D-09** (đã sửa, xem dưới) |
+| `ops/release_guard_test.py` | 171→414 | **D-10** (đã sửa, xem dưới) |
+| `ops/offline-packages.json` | 55 | Không lỗi. `total_bytes` khớp chính xác tổng từng mục (6,911,578,380 = 6.44 GiB) |
+| `ops/README.md` | 285→301 | Bổ sung cách chạy self-test của guard |
+| `ops/DEPLOY.md` | 96 | Không lỗi. Xem mục "Cửa hẹp" |
+| `ops/.gitignore` | 6 | Không lỗi. Có chú thích về bẫy phân giải đường dẫn tương đối |
+| Hai tệp `.service` | 41 / 22 | Không lỗi. `ProtectSystem=strict` + `ReadWritePaths` đã thu hẹp |
+| Ba tệp `.yml` | 267 / 76 / 39 | Mã không lỗi; các lần thất bại đều do điều kiện môi trường (xem dưới) |
 
-## D-09：`sync-tianxuan-plugins.sh` 在悬空软链上以失败收场
+## D-09: `sync-tianxuan-plugins.sh` kết thúc trong thất bại trên soft link treo
 
-`ops` 目录下 `plugins/` 存的是软链，指向离线包实体。离线包被清理或下载失败时
-会有链接悬空。原脚本对**全部** `*.txplugin` 链接调 `os.path.getsize`，
-悬空项抛 `FileNotFoundError`；脚本是 `set -euo pipefail`，于是
-「补软链」这件**已经成功**的事会以 exit 1 收场，误导排障者去查一个不存在的错误。
+Trong thư mục `ops`, `plugins/` chứa các soft link trỏ tới tệp gói offline thực. Khi gói offline bị dọn hoặc tải về thất bại sẽ có link bị treo. Script cũ gọi `os.path.getsize` cho **toàn bộ** link `*.txplugin`; mục treo ném `FileNotFoundError`; script dùng `set -euo pipefail`, nên việc "bù soft link" **đã thành công** lại kết thúc bằng exit 1, lừa người troubleshooting đi tìm một lỗi không tồn tại.
 
-修法两步：
-1. `find` 加 `-xtype f`（跟随软链后仍是普通文件），排除悬空链接。
-   `-type l` 会把悬空项也算成插件，报出的数量比实际可下载的多。
-2. 统计字节数时用 `os.path.isfile` 过滤。这与 `tianxuan_dist.py` 的
-   `_serve_plugins`（同样用 `os.path.isfile`）保持一致——**两处口径必须一致**，
-   否则运维看到的数字与端点返回的数字对不上。
+Sửa gồm hai bước:
+1. `find` thêm `-xtype f` (theo soft link rồi vẫn là tệp thường), loại link treo.
+   Dùng `-type l` sẽ tính cả mục treo thành plugin, số báo ra nhiều hơn số thực sự tải được.
+2. Khi đếm byte dùng `os.path.isfile` để lọc. Cách này khớp với `_serve_plugins` của `tianxuan_dist.py` (cũng dùng `os.path.isfile`) — **hai nơi phải cùng một mốc**, nếu không số vận hành thấy không khớp với số endpoint trả về.
 
-**反向验证**：同一输入下，旧写法 exit 1 且日志含 `FileNotFoundError`，
-新写法 exit 0 且计数正确。三种场景（全悬空 / 混合 / 全正常）均验证。
+**Reverse verification**: Với cùng một input, cách cũ exit 1 và log chứa `FileNotFoundError`, cách mới exit 0 và đếm đúng. Ba tình huống (toàn treo / hỗn hợp / toàn bình thường) đều đã kiểm chứng.
 
-**影响面**：面向运维的工具（`ops/README.md` 列为手动步骤），不在 systemd 路径上，
-故不影响自动发布。
+**Phạm vi ảnh hưởng**: Công cụ hướng tới vận hành (`ops/README.md` liệt kê là bước thủ công), không nằm trên đường systemd, nên không ảnh hưởng phát hành tự động.
 
-## D-10：`release_guard_test.py` 的 manifest 分支从未被执行
+## D-10: Nhánh manifest của `release_guard_test.py` không bao giờ được thực thi
 
-`release.sh` 的产物洁净度守卫要查两处：APK 的 manifest 与 dex。
-而旧自测**只覆盖 dex 分支**——manifest 分支的代码写了，却从未跑过，
-源码自己承认这点：第 142-146 行 `del dirty_manifest`，
-注释写「真实包无法在单测内造」。
+Guard độ sạch sản phẩm của `release.sh` cần kiểm tra hai chỗ: manifest của APK và dex. Nhưng self-test cũ **chỉ phủ nhánh dex** — code nhánh manifest được viết ra nhưng chưa từng chạy, chính mã nguồn thừa nhận: dòng 142-146 `del dirty_manifest`, comment viết "gói thật không tạo được trong unit test".
 
-**缺口是可利用的**，已实测：把 `release.sh` 里守卫的 grep 交替
-`LeakLauncherActivity` 改成 `LeakLauncherActvty`（少一个字母），
-守卫就此漏掉这个组件，而旧自测**照样打印 OK 并 exit 0**。
-原因有两层：
-1. `assert_release_sh_still_has_guard` 做的是**子串检查**，
-   而正确拼写同时出现在第 152 行注释与第 163-179 行的报错文案里，
-   于是拼错模式之后，正则串本身成了唯一被改坏的地方，子串断言查不到。
-2. manifest 分支压根没跑，模式坏没坏都看不出。
+**Khoảng trống có thể bị khai thác**, đã đo thực: đổi luân phiên pattern grep trong guard của `release.sh` từ `LeakLauncherActivity` thành `LeakLauncherActvty` (thiếu một chữ), guard bỏ sót component đó, trong khi self-test cũ **vẫn in OK và exit 0**.
+Lý do có hai tầng:
+1. `assert_release_sh_still_has_guard` làm **kiểm tra substring**, trong khi chuỗi viết đúng còn xuất hiện ở comment dòng 152 và văn bản báo lỗi dòng 163-179. Vì vậy sau khi sửa sai pattern, chính chuỗi regex là nơi duy nhất bị hỏng, substring assertion không tìm ra.
+2. Nhánh manifest không chạy nên pattern hỏng hay không cũng không thấy.
 
-后果的严重性：v0.21.0 与 v0.21.1 两个内测包实测带了 LeakCanary，
-桌面多出「Leaks」小鸟图标，且它在进程启动阶段自动初始化，是「打开即闪退」
-的高概率来源。守卫若已静默失效，同类包会**再次被放行**。
+Mức độ nghiêm trọng: hai gói beta v0.21.0 và v0.21.1 đo thực có mang LeakCanary, desktop thừa icon chim "Leaks", và nó tự khởi tạo trong giai đoạn khởi động tiến trình, là nguồn xác suất cao của "mở là crash". Guard đã vô hiệu lặng lẽ thì gói cùng loại sẽ **lại được cho qua**.
 
-**修法**（三条，缺一不可）：
+**Cách sửa** (ba điều, thiếu một cũng không được):
 
-1. **真造含组件的 APK**，让 manifest 分支真正被执行。
-   此前认为做不到，是因为手写二进制 AXML 太脆；但这条路是通的：
-   `aapt2 link` 能把一份纯文本 `AndroidManifest.xml` 编成**真·二进制 AXML**，
-   放进 zip 就是一个 `aapt2 dump xmltree` 能读的真包。造出的包复刻了真实事故
-   包的形态：`LeakLauncherActivity` 带 LAUNCHER intent-filter，
-   `PlumberInstaller` / `MainProcessAppWatcherInstaller` / `LeakCanaryFileProvider`
-   作为 ContentProvider。实测 dump 出 4 个组件，守卫如实拦下。
-2. **抠模式而非搜关键词**。从 `release.sh` 里用正则取出那个**真正被 grep 执行**
-   的模式串，逐分支核对。并且必须**先剥掉注释行**——整段守卫最省事的停用办法
-   就是在关键行前加个 `#`，那一行的模式串照样躺在文件里；
-   若不剥注释去搜「第一个 `grep -oE`」，被注释掉的那行会被当成「守卫还在」，
-   自测又退化回子串断言。
-3. **保留「干净包必须放行」的负向用例**。守卫若「一律拦下」，
-   发布链路直接不可用，等于没有守卫。
+1. **Tạo thật APK chứa component** để nhánh manifest thực sự chạy.
+   Trước đây nghĩ làm không được vì viết tay AXML nhị phân quá giòn; nhưng đường này thông:
+   `aapt2 link` biên dịch một `AndroidManifest.xml` thuần text thành **AXML nhị phân thật**, bỏ vào zip là thành gói thật mà `aapt2 dump xmltree` đọc được. Gói tạo ra mô phỏng đúng hình dạng gói sự cố: `LeakLauncherActivity` kèm LAUNCHER intent-filter, `PlumberInstaller` / `MainProcessAppWatcherInstaller` / `LeakCanaryFileProvider` làm ContentProvider. Đo thực dump ra 4 component, guard chặn đúng.
+2. **Trích pattern chứ không tìm keyword**. Dùng regex lấy từ `release.sh` chuỗi pattern **thực sự được grep thi hành**, đối chiếu từng nhánh. Và phải **lọc bỏ dòng comment trước** — cách tắt guard đơn giản nhất là thêm `#` trước dòng then chốt, khi đó chuỗi pattern vẫn nằm trong tệp; nếu không lọc comment mà tìm "cụm `grep -oE` đầu tiên", dòng bị comment sẽ được coi là "guard còn đó", self-test lại thoái hóa về substring assertion.
+3. **Giữ ca âm tính "gói sạch phải được cho qua"**. Guard mà "chặn hết" thì chuỗi phát hành không dùng được, bằng như không có guard.
 
-**反向验证（6 组场景，全部符合预期）**
+**Reverse verification (6 tình huống, đều đúng kỳ vọng)**
 
-| 场景 | 期望 | 旧自测 | 新自测 |
+| Tình huống | Kỳ vọng | Self-test cũ | Self-test mới |
 |---|---|---|---|
-| 基线（未改动） | 放行 | PASS | **PASS** |
-| 模式拼错 `LeakLauncherActvty` | 拦住 | **PASS（漏报）** | **BLOCK** |
-| 模式里删掉 `PlumberInstaller` | 拦住 | PASS（漏报） | **BLOCK** |
-| 注释掉守卫的 `grep -oE` 行 | 拦住 | PASS（漏报） | **BLOCK** |
-| 整段删除 `LEAK_COMPONENTS` | 拦住 | PASS（漏报） | **BLOCK** |
-| 删掉 `leakcanary.` 兜底分支 | 拦住 | PASS（漏报） | **BLOCK** |
+| Baseline (không đổi) | Cho qua | PASS | **PASS** |
+| Sai pattern `LeakLauncherActvty` | Chặn | **PASS (sót)** | **BLOCK** |
+| Xóa `PlumberInstaller` khỏi pattern | Chặn | PASS (sót) | **BLOCK** |
+| Comment dòng `grep -oE` của guard | Chặn | PASS (sót) | **BLOCK** |
+| Xóa toàn đoạn `LEAK_COMPONENTS` | Chặn | PASS (sót) | **BLOCK** |
+| Xóa nhánh dự phòng `leakcanary.` | Chặn | PASS (sót) | **BLOCK** |
 
-第 2 行是全批最硬的一条证据：**同一棵被改坏的树，旧自测 exit 0，新自测 exit 1**。
+Dòng 2 là bằng chứng cứng nhất của cả đợt: **cùng một cây bị sửa hỏng, self-test cũ exit 0, self-test mới exit 1**.
 
-**限度（必须如实标注）**
-- 新自测造的是**结构同构**的包，不是真实构建产物。它能证明「守卫认得这些组件名」，
-  不能证明「真实 48 MB 包的 manifest 解析路径完全相同」——后者要靠
-  `release.sh` 在真实发布时执行守卫来兜底。
-- 无 aapt2 时（如未装 SDK 的机器）报 `SKIP` 并以 0 退出，不误报失败。
-  代价是：那种环境下 manifest 分支未被覆盖，`SKIP` 行必须被看见而非被当作通过。
+**Giới hạn (phải ghi trung thực)**
+- Self-test mới tạo gói **đồng cấu về cấu trúc**, không phải sản phẩm build thật. Nó chứng minh "guard nhận diện được các tên component này", không chứng minh "đường parse manifest của gói thật 48 MB hoàn toàn giống nhau" — cái sau phải nhờ `release.sh` chạy guard lúc phát hành thật mới đảm bảo.
+- Khi không có aapt2 (máy chưa cài SDK) thì báo `SKIP` và exit 0, không báo lỗi giả. Cái giá là trong môi trường đó nhánh manifest không được phủ; dòng `SKIP` phải được nhìn thấy chứ không được coi là đã pass.
 
-## release.sh 三处 APK 命名对齐（交叉核对）
+## Ba chỗ căn chỉnh tên APK trong release.sh (đối chiếu chéo)
 
-命名不一致会导致「构建产出的文件名」与「release.sh 期望的文件名」对不上，
-发布时才会以「文件不存在」暴露。三处已核对一致：
+Tên không nhất quán sẽ khiến "tên tệp build ra" và "tên tệp release.sh kỳ vọng" không khớp, chỉ bộc lộ lúc phát hành dưới dạng "tệp không tồn tại". Ba chỗ đã đối chiếu khớp nhau:
 
-| 位置 | 表达式 | 值 |
+| Vị trí | Biểu thức | Giá trị |
 |---|---|---|
 | `app/build.gradle.kts` | `buildAppName = "tianxuan-v${appVersionName}-${variant.name}.apk"` | `tianxuan-v0.21.3-debug.apk` |
-| `release.sh` L119 | `tianxuan-v${VERSION}-${BUILD_VARIANT}.apk` | 同上 |
-| workflow 校验 | 从 `gradle.properties` 读 `versionName` 再拼 | 同上 |
+| `release.sh` L119 | `tianxuan-v${VERSION}-${BUILD_VARIANT}.apk` | Như trên |
+| Workflow kiểm tra | Đọc `versionName` từ `gradle.properties` rồi ghép | Như trên |
 
-## 窄口子（记录为上界，非缺陷）
+## Cửa hẹp (ghi lại như thượng giới, không phải lỗi)
 
-审查中确认两处**理论存在、当前不触发**的窄口子，如实记录而不夸大为缺陷：
+Rà soát xác nhận hai cửa hẹp **tồn tại trên lý thuyết, hiện không kích hoạt**, ghi trung thực mà không phóng đại thành lỗi:
 
-1. **`/tmp/tianxuan-manifest.tsv` 以 TAB 分列**，`tianxuan-fetch.sh` 用
-   `IFS=$'\t' read -r size name url` 读取。若**文件名或 URL 含 TAB**，
-   字段会错位：name 被截断、落盘文件名错误，且字节数校验失败，
-   重试 5 次后 FAIL 并计入 `failures`。实测 `offline-packages.json` 里
-   11 个包名**均不含 TAB 或空格**，且 QQ 闪传直链不含 TAB，故当前不触发。
-   提防的是将来换用别的 CDN 或包名带 TAB——那时会以「下载失败」而非
-   「解析失败」的形式暴露，排障方向会偏。留此记录以缩短下次定位时间。
-2. **`tianxuan-fetch.sh` 的成功判据是「rc==0 且字节数相等」，不是校验和。**
-   字节数相同而内容不同，理论上可被放行。这与 APK 侧形成不对称：
-   `gen-manifest.sh` 为每个 APK 记录 `sha256`（L94），APK 下载链路有校验和；
-   离线插件包这条链路只有字节数。影响面为零（插件包来自可信直链、走 HTTPS），
-   且插件的 `sha256` 未记录在 `offline-packages.json` 中，无法在不重取链的情况下
-   补上校验和。记录为已知的**非对称**，不擅自改协议。
+1. **`/tmp/tianxuan-manifest.tsv` tách cột bằng TAB**, `tianxuan-fetch.sh` đọc bằng `IFS=$'\t' read -r size name url`. Nếu **tên tệp hoặc URL chứa TAB**, field bị lệch: name bị cụt, tên tệp lưu đĩa sai, kiểm byte thất bại, retry 5 lần rồi FAIL và tính vào `failures`. Đo thực `offline-packages.json` có 11 tên gói **đều không chứa TAB hay dấu cách**, và link trực tiếp QQ truyền tệp nhanh cũng không có TAB, nên hiện không kích hoạt. Cần đề phòng sau này đổi CDN khác hoặc tên gói có TAB — lúc đó biểu hiện sẽ là "tải thất bại" chứ không phải "parse thất bại", hướng troubleshooting bị lệch. Ghi lại để rút ngắn thời gian định vị lần sau.
+2. **Tiêu chí thành công của `tianxuan-fetch.sh` là "rc==0 và số byte bằng nhau", không phải checksum.** Byte bằng nhau mà nội dung khác thì trên lý thuyết vẫn được cho qua. Điều này tạo ra sự bất đối xứng với phía APK: `gen-manifest.sh` ghi `sha256` cho mỗi APK (L94), đường tải APK có checksum; đường gói plugin offline chỉ có số byte. Phạm vi ảnh hưởng bằng không (gói plugin tới từ link tin cậy, đi HTTPS), và `sha256` của plugin không được ghi trong `offline-packages.json`, không thể bổ sung checksum nếu không lấy lại link. Ghi lại như một **bất đối xứng đã biết**, không tự ý đổi giao thức.
 
-## CI 失败：环境条件，非代码缺陷
+## CI thất bại: điều kiện môi trường, không phải lỗi mã
 
-如实归因，避免被误当成代码问题反复排查：
+Ghi nhận nguyên nhân trung thực để khỏi bị coi là lỗi mã mà truy tìm lặp lại:
 
-| 工作流 | 失败点 | 性质 |
+| Workflow | Điểm thất bại | Tính chất |
 |---|---|---|
-| `release.yml` | `Restore Release Keystore`：`SIGNING_KEYSTORE_BASE64 is not configured` | 仓库 secret 未配置 |
-| `pages.yml` | `Create Pages site failed: Resource not accessible by integration` | 仓库未启用 Pages |
+| `release.yml` | `Restore Release Keystore`: `SIGNING_KEYSTORE_BASE64 is not configured` | Secret của repo chưa cấu hình |
+| `pages.yml` | `Create Pages site failed: Resource not accessible by integration` | Repo chưa bật Pages |
 
-`release.yml` 自 v0.20.0 起**每个 tag 推送都以同一原因失败**（v0.21.0/0.21.1/0.21.2/0.21.3 一致）。
-其设计是**失败即停**（fail-safe）：keystore 缺失时不产出未签名包，这是正确行为。
-但副作用值得记录：**每次推 tag 都会在 Actions 面板留下一条红色记录**，
-长期会让人对红色告警脱敏。要么配置 secret，要么在 secret 缺失时改为
-显式 `skip` 而非 fail，二者取一，不应放任红色堆积。
+`release.yml` kể từ v0.20.0 **mỗi lần push tag đều thất bại với cùng lý do** (v0.21.0/0.21.1/0.21.2/0.21.3 đều giống nhau).
+Thiết kế của nó là **fail-safe**: thiếu keystore thì không tạo gói chưa ký, đó là hành vi đúng.
+Nhưng tác dụng phụ đáng ghi lại: **mỗi lần push tag để lại một dòng đỏ trên bảng Actions**, về lâu dài khiến người ta chai với cảnh báo đỏ. Hoặc cấu hình secret, hoặc đổi sang `skip` tường minh khi thiếu secret; chọn một trong hai, không nên để đỏ chồng chất.
 
-## 行数棘轮
+## Ratchet số dòng
 
-`ops/release_guard_test.py` 171 → 414 行（+243）。`ops/` 不在
-`architecture-policy.json` 的 31 个受管模块内（该策略管 Kotlin 模块），
-故不触碰 400 行上限与 `.architecture-baseline.json`。
-`ops/README.md` 285 → 301 行，同理。
+`ops/release_guard_test.py` 171 → 414 dòng (+243). `ops/` không nằm trong 31 module được quản lý của `architecture-policy.json` (policy đó quản module Kotlin), nên không đụng tới giới hạn 400 dòng và `.architecture-baseline.json`.
+`ops/README.md` 285 → 301 dòng, tương tự.
 
 ---
 
-# 复核批次八：runtime 模块（逐文件精读，起点 WorkspaceManager.kt）
+# Đợt rà soát tám: module runtime (đọc kỹ từng tệp, bắt đầu từ WorkspaceManager.kt)
 
-## D-11：APK 解包的防膨胀闸完全缺失（已修复，已反向验证）
+## D-11: Cổng chống phình hoàn toàn thiếu khi giải nén APK (đã sửa, đã reverse verify)
 
-`WorkspaceManager.kt` 里有**两条**归档解包路径，口径不一致：
+Trong `WorkspaceManager.kt` có **hai** đường giải nén archive, hai mốc không nhất quán:
 
-| 路径 | 输入来源 | 条目数闸 | 单文件闸 | 总体积闸 | 路径穿越闸 |
+| Đường | Nguồn input | Cổng số mục | Cổng một tệp | Cổng tổng dung lượng | Cổng path traversal |
 |---|---|---|---|---|---|
-| `extractProjectArchive` | 用户导入的 **ZIP 项目包** | ✅ | ✅ | ✅ | ✅ |
-| `unpackApk` | 用户导入的 **APK** | ❌ | ❌ | ❌ | ✅ |
+| `extractProjectArchive` | **Gói dự án ZIP** do người dùng import | ✅ | ✅ | ✅ | ✅ |
+| `unpackApk` | **APK** do người dùng import | ❌ | ❌ | ❌ | ✅ |
 
-`unpackApk` 只防了 zip-slip。而 APK 是用户从系统文件选择器挑的**任意文件**，
-可以声明任意大的解压体积。实测构造：一个 **128 KiB** 的包声明 128 MiB 全零数据
-（DEFLATE 膨胀 **1027×**）即可；把规模放大到 4 GiB 只需几 MB 的包。
-后果是解包一路写到磁盘满或 OOM —— `unpackApk` 走的是
-`importApkForReverse` → `createProject(APK_REVERSE)` 这条用户可达路径。
+`unpackApk` chỉ chặn zip-slip. Trong khi APK là **tệp bất kỳ** do người dùng chọn từ file picker hệ thống, có thể khai báo dung lượng giải nén lớn tùy ý. Thực đo: một gói **128 KiB** khai 128 MiB dữ liệu toàn số 0 (DEFLATE phình **1027×**) là đủ; phóng tới 4 GiB chỉ cần gói vài MB. Hậu quả là giải nén ghi tới khi đầy đĩa hoặc OOM — `unpackApk` đi theo đường `importApkForReverse` → `createProject(APK_REVERSE)` mà người dùng tới được.
 
-**修法不是给 unpackApk 再抄一遍三道闸**，而是把拷贝循环抽成
-`copyCapped(input, output, entryName)` 由两条路径共用（含单文件闸、返回字节数），
-体积额度由调用方累加——那是**整包**的额度，不能每文件各算。
-这样两条路径不会再次漂移，而这正是缺陷的成因：
-一个规则写两遍，改的时候只改了一处。
+**Cách sửa không phải là copy thêm ba cổng cho unpackApk**, mà là trích vòng lặp copy thành `copyCapped(input, output, entryName)` dùng chung cho cả hai đường (gồm cổng một tệp, trả về số byte), hạn mức dung lượng do bên gọi cộng dồn — đó là hạn mức của **toàn gói**, không được tính riêng từng tệp.
+Hai đường nhờ đó không trôi riêng lần nữa, và chính đó là nguyên nhân gốc của lỗi: một quy tắc viết hai lần, sửa thì chỉ sửa một chỗ.
 
-同时顺手消除同文件里另外两组逐字重复：
-- `observeProjects` 与 `listProjects` 里相同的「剔除父目录」算法 → `dropParentDirectories`；
-- 两处「关联目录不含空段/`.`/`..`」校验 → `requireValidRelativePath`
-  （这两份已开始漂移：一处传 `base.canonicalFile`、一处传 `base`）。
+Đồng thời tiện tay xóa thêm hai nhóm lặp từng chữ trong cùng tệp:
+- Thuật toán "loại bỏ thư mục cha" giống hệt trong `observeProjects` và `listProjects` → `dropParentDirectories`;
+- Hai chỗ kiểm tra "thư mục liên kết không chứa đoạn rỗng/`.`/`..`" → `requireValidRelativePath` (hai bản này đã bắt đầu trôi: một chỗ truyền `base.canonicalFile`, một chỗ truyền `base`).
 
-**反向验证**：把 `unpackApk` 的三道闸临时停掉，新增用例
-`apkUnpackRejectsZipBombByTotalBytes` **转红**（17 项中 1 项失败）；
-恢复后全绿。同时保留负向对照 `apkUnpackAllowsOrdinaryApk`，
-确保「一律拦下」这种假修复也会被抓到。
+**Reverse verification**: Tạm tắt ba cổng của `unpackApk`, ca thêm `apkUnpackRejectsZipBombByTotalBytes` **chuyển đỏ** (1 trong 17 ca fail); khôi phục thì toàn xanh. Đồng thời giữ ca đối chứng âm `apkUnpackAllowsOrdinaryApk`, để cả "sửa kiểu chặn hết" giả cũng bị bắt.
 
-**测试自身的一个坑（已修，值得记下）**
-首版用例的常量写成 `4 * 1024 * 1024 * 1024 + 64 * 1024 * 1024` 且声明为 `Int`，
-Kotlin 按 Int 计算后**溢出成 −134217728**，构造循环一次都不执行，
-"炸弹"是空包，用例以「未失败」告终——看起来像产品代码没设防，实则是测试自己错了。
-已改为 `Long` 字面量，并加了一条**用例有效性守卫**：
-`assertTrue("构造出的炸弹只有 N 字节…", apk.length() > 1024)`，
-让这类错误在构造阶段暴露，而不是伪装成产品缺陷。
+**Một bẫy ngay trong test (đã sửa, đáng ghi)**
+Phiên bản đầu viết hằng số thành `4 * 1024 * 1024 * 1024 + 64 * 1024 * 1024` và khai báo `Int`; Kotlin tính theo Int nên **tràn thành −134217728**, vòng lặp dựng "bom" chạy đúng không lần nào, "quả bom" là gói rỗng, ca test kết thúc bằng "không fail" — trông như mã sản phẩm không phòng bị, thực ra test tự sai.
+Đã đổi sang literal `Long`, và thêm một **guard hiệu lực ca test**:
+`assertTrue("构造出的炸弹只有 N 字节…", apk.length() > 1024)`,
+để loại lỗi này bộc lộ ngay lúc dựng, chứ không ngụy trang thành lỗi sản phẩm.
 
-## 行数棘轮（本次为下调，非放宽）
+## Ratchet số dòng (lần này giảm, không nới)
 
-`WorkspaceManager.kt` 原额度 **1015**。加入修复与合并后一度到 1058，
-`architectureCheck` 如实报红：`增长到 1058 行，超过棘轮基线 1015（基线只许下调，请先缩减该文件）`。
+`WorkspaceManager.kt` có hạn mức gốc **1015**. Sau khi thêm bản sửa và gộp có lúc lên 1058, `architectureCheck` báo đỏ trung thực: `增长到 1058 行，超过棘轮基线 1015（基线只许下调，请先缩减该文件）`.
 
-处理方式是**缩减文件**而非抬基线：
-把 `writeReverseReadme`（87 行的纯文档模板：jadx/apktool 命令、加固壳特征表、
-脱壳方案表）抽到新文件 `ApkReverseReadme.kt`（102 行，未登记，合规 ≤400）。
-该函数只用自身 4 个参数、不碰任何实例状态，属于天然可分离的职责。
+Cách xử lý là **rút gọn tệp** chứ không nâng baseline:
+Chuyển `writeReverseReadme` (87 dòng là template tài liệu thuần: lệnh jadx/apktool, bảng đặc trưng shell bảo vệ, bảng phương án unpack) sang tệp mới `ApkReverseReadme.kt` (102 dòng, chưa đăng ký, hợp lệ ≤400).
+Hàm này chỉ dùng 4 tham số của chính nó, không đụng state instance nào, là trách nhiệm tách ra tự nhiên.
 
-结果：`WorkspaceManager.kt` **1015 → 970**（下调 45 行），
-`.architecture-baseline.json` 中该条目同步下调为 970。
-`architectureCheck: 31 个模块 · 依赖白名单/无环/import 黑名单/尺寸棘轮 全部通过`。
+Kết quả: `WorkspaceManager.kt` **1015 → 970** (giảm 45 dòng), mục tương ứng trong `.architecture-baseline.json` cũng hạ xuống 970.
+`architectureCheck: 31 个模块 · 依赖白名单/无环/import 黑名单/尺寸棘轮 全部通过`.
 
 ---
 
-# 批次九：runtime 鉴权面精读（LinuxRuntimeImpl → gui 组）
+# Đợt chín: đọc kỹ mặt xác thực của runtime (LinuxRuntimeImpl → nhóm gui)
 
-本轮继续按「逐文件精读、不跳读不猜测」推进 runtime 模块。累计读完
-`runtime/src/main/java` 下 **60 个 ≥60 行的源文件全部**（另加若干小文件）。
-下面只记本轮**新发现**的缺陷与判断，其余文件的结论是「未发现缺陷」。
+Vòng này tiếp tục theo nguyên tắc "đọc kỹ từng tệp, không đọc lướt không đoán", đẩy module runtime về phía trước. Đã đọc trọn **60 tệp nguồn ≥60 dòng** dưới `runtime/src/main/java` (cộng thêm vài tệp nhỏ).
+Dưới đây chỉ ghi lỗi và phán đoán **mới phát hiện** trong vòng này; kết luận của các tệp khác là "không phát hiện lỗi".
 
-## 缺陷 #1（已修）：FTP 跨服务凭据复用
+## Lỗi #1 (đã sửa): Dùng lại credential FTP giữa các dịch vụ
 
-`FtpServiceManager.start()` 原为：
+`FtpServiceManager.start()` cũ là:
 
 ```kotlin
 val ftpPassword  = preferences.readPassword(distroId)?.ifBlank { null }
@@ -928,522 +731,496 @@ val sshPassword  = sshPreferences.readPassword(distroId)?.ifBlank { null }
 val password     = ftpPassword ?: sshPassword
 ```
 
-即「FTP 没单独设密码时，自动拿 SSH 密码顶上」。三层危害：
+tức là "FTP không tự đặt mật khẩu thì tự động lấy mật khẩu SSH thay". Ba tầng nguy hại:
 
-1. **跨服务凭据复用**。本实现的 FTP 是明文协议（连 `AUTH`/TLS 都不支持），
-   把 SSH 密码喂给它，等于让一处泄漏同时失守两个服务，而 FTP 的影响面更大。
-2. **界面与行为相反**。`FtpSettingsScreen` 在未单独设密码时显示
-   「未设置密码（免密登录，客户端密码留空或填任意内容即可）」，
-   但用户只要配过 SSH 密码，FTP 实际要求的就是那把 SSH 密码——
-   照界面操作会一直 530，且没有任何可排查线索。
-3. **不可观测**。`FtpPreferences.passwordConfigured` 只看 FTP 键，
-   所以 UI 永远不可能提示「正在使用 SSH 密码」。
+1. **Dùng lại credential giữa các dịch vụ**. FTP trong implement này là giao thức plaintext (không hỗ trợ cả `AUTH`/TLS), đưa mật khẩu SSH vào đó tức là một lần lộ làm mất cả hai dịch vụ, mà phạm vi ảnh hưởng của FTP còn lớn hơn.
+2. **Giao diện ngược với hành vi**. `FtpSettingsScreen` khi chưa tự đặt mật khẩu hiển thị "chưa đặt mật khẩu (đăng nhập không mật khẩu, client để trống hoặc điền bất cứ gì cũng được)", nhưng chỉ cần người dùng từng đặt mật khẩu SSH, FTP thực chất yêu cầu chính mật khẩu SSH đó — làm theo giao diện sẽ liên tục 530 mà không có manh mối để truy.
+3. **Không quan sát được**. `FtpPreferences.passwordConfigured` chỉ nhìn key FTP, nên UI không bao giờ có thể nhắc "đang dùng mật khẩu SSH".
 
-**先证后改**：用沙箱内的 Kotlin 编译器搭了独立探针
-（`/tmp/ftp-auth/AuthLogic.kt` + `Probe.kt`，逐字复刻凭据解析契约、
-遍历真实取值组合），探针退出码 `1` 并打印
-`UI 文案承诺「留空即可」但实际被拒 —— 界面与行为相反`。
-缺陷在动产品代码之前已被独立复现。
+**Chứng minh rồi mới sửa**: Dùng compiler Kotlin trong sandbox dựng probe độc lập (`/tmp/ftp-auth/AuthLogic.kt` + `Probe.kt`, sao chép từng chữ khế ước phân giải credential, duyệt mọi tổ hợp giá trị thật), probe exit `1` và in
+`UI 文案承诺「留空即可」但实际被拒 —— 界面与行为相反`.
+Lỗi đã được tái hiện độc lập trước khi đụng vào mã sản phẩm.
 
-**修法**：FTP 只认 FTP 自己的密码；免密有且只有一个显式入口 `anonymousEnabled`。
-并**移除依赖**而非仅改逻辑——`SshPreferences` 从 `FtpServiceManager`、
-两个 Koin 模块、`FtpSettingsViewModel` / `FtpSettingsUiState` 一并删除，
-使回落无法静默回归。UI 重写为三个真实状态（已配置 / 匿名 / 未设置且不可用）。
+**Cách sửa**: FTP chỉ nhận mật khẩu của chính nó; đăng nhập ẩn danh có đúng một cổng tường minh `anonymousEnabled`.
+Đồng thời **xóa dependency** chứ không chỉ đổi logic — `SshPreferences` bị xóa khỏi `FtpServiceManager`, hai module Koin, `FtpSettingsViewModel` / `FtpSettingsUiState`, khiến fallback không thể lặng lẽ tái diễn. UI viết lại thành ba trạng thái thật (đã cấu hình / ẩn danh / chưa đặt và không dùng được).
 
-涉及文件：`FtpServiceManager.kt`、`runtime/di/runtime/KoinModule.kt`、
-`FtpSettingsScreen.kt`、`FtpSettingsViewModel.kt`、`feature/settings/di/.../KoinModule.kt`。
+Tệp liên quan: `FtpServiceManager.kt`, `runtime/di/runtime/KoinModule.kt`, `FtpSettingsScreen.kt`, `FtpSettingsViewModel.kt`, `feature/settings/di/.../KoinModule.kt`.
 
-## 缺陷 #2（已修）：WebChat 配对码用 `==` 比对
+## Lỗi #2 (đã sửa): WebChat so sánh mã pairing bằng `==`
 
-`WebChatBridgeServer` 的 `isAuthenticated` 与 `SessionBootstrapHandler`
-都以 `token == _status.value.pinCode` 校验 6 位十进制配对码（约 20 bit）。
-Kotlin 字符串 `==` 逐字符比较并在**首个不同字符处提前返回**，
-攻击者按响应耗时逐位收敛，平均 20 次量级即可猜中，而非 10^6 次。
+`isAuthenticated` của `WebChatBridgeServer` và `SessionBootstrapHandler` đều dùng `token == _status.value.pinCode` để kiểm tra mã pairing 6 chữ số thập phân (khoảng 20 bit).
+So sánh chuỗi Kotlin `==` so từng ký tự và **trả sớm ở ký tự khác đầu tiên**, kẻ tấn công dựa vào thời gian phản hồi hội tụ từng bit, trung bình chỉ cần khoảng 20 lần thay vì 10^6 lần.
 
-**可达性已核实**（不是纯理论风险）：服务绑定通配地址 `InetSocketAddress(port)`、
-响应头带 `Access-Control-Allow-Origin: *`、监听期间长期常驻、全程无频率限制；
-两个调用点的 `token` 均由攻击者控制（query param / `Authorization: Bearer`，
-以及 bootstrap 的 JSON body）。
+**Đã kiểm chứng khả năng tiếp cận** (không phải rủi ro thuần lý thuyết): dịch vụ bind địa chỉ wildcard `InetSocketAddress(port)`, response header có `Access-Control-Allow-Origin: *`, tồn tại liên tục trong suốt thời gian lắng nghe, toàn hành trình không có giới hạn tần suất; `token` ở cả hai điểm gọi đều do kẻ tấn công kiểm soát (query param / `Authorization: Bearer`
+và JSON body của bootstrap).
 
-**注意这是项目内部的不一致而非认知缺失**：同项目 `ShellCommandFactory.verifyPin`
-早已用 `MessageDigest.isEqual` 处理同一问题。
+**Lưu ý đây là sự không nhất quán nội bộ chứ không phải thiếu nhận thức**: `ShellCommandFactory.verifyPin` trong cùng dự án từ lâu đã dùng `MessageDigest.isEqual` cho vấn đề y hệt.
 
-**修法**：抽出 `PinVerifier`（`MessageDigest.isEqual` + 空候选/空期望拒绝），
-`isAuthenticated` 与 `SessionBootstrapHandler` 共用同一入口。
-同时把 MIME 表与「是否静态资源」判据合并为 `WebChatAssets.mimeTypeOrNull`
-（原先是两份扩展名清单，新增类型时会错配：按资源取文件却回落 `index.html`）。
+**Cách sửa**: Trích `PinVerifier` (`MessageDigest.isEqual` + từ chối candidate rỗng/expected rỗng), `isAuthenticated` và `SessionBootstrapHandler` dùng chung một cổng.
+Đồng thời gộp bảng MIME và tiêu chí "có phải tài nguyên tĩnh không" thành `WebChatAssets.mimeTypeOrNull` (trước đây là hai danh sách extension, khi thêm kiểu mới sẽ lệch: lấy tệp theo tài nguyên nhưng lại fallback `index.html`).
 
-## 卫生改进 #3（已修）：HostBridge 的 Bearer 密钥比对
+## Cải tiến vệ sinh #3 (đã sửa): So sánh khóa Bearer của HostBridge
 
-`HostBridge.checkAuth` 原为 `return token == bridgeKey`。
+`HostBridge.checkAuth` cũ là `return token == bridgeKey`.
 
-**定性必须与缺陷 #2 分开**：该密钥是 UUID 去横杠后的 **128 bit 随机值**，
-逐字节计时旁路在数学上不可穷举；且服务只监听 `127.0.0.1`，
-能连上的攻击者已经在设备内。**所以这不是可利用漏洞。**
+**Phải định tính tách bạch với lỗi #2**: khóa này là **giá trị ngẫu nhiên 128 bit** sau khi bỏ dấu gạch ngang của UUID, kênh kề thời gian theo byte về mặt toán học không thể liệt kê cạn; và dịch vụ chỉ lắng nghe `127.0.0.1`, kẻ tấn công kết nối được là đã ở trong thiết bị.
+**Vì vậy đây không phải lỗ hổng có thể khai thác.**
 
-仍然改掉的理由是**防止无声退化**：同一行代码今天面对 128 bit 是安全的，
-明天若有人为「方便调试」把 `bridgeKey` 换成 6 位数字，
-`==` 立刻变成可利用的计时旁路，而没有任何编译期或运行期提示。
-改为 `MessageDigest.isEqual`，与 `ShellCommandFactory.verifyPin` / `PinVerifier`
-保持同一写法，退化就不可能静默发生。
+Vẫn đổi lý do là **chống thoái hóa không tiếng**: cùng một dòng mã hôm nay an toàn với 128 bit, ngày mai nếu ai đó đổi `bridgeKey` thành 6 chữ số "cho tiện debug", `==` lập tức thành kênh kề thời gian có thể khai thác, mà không có bất kỳ nhắc lúc biên dịch hay chạy.
+Đổi sang `MessageDigest.isEqual`, giữ cùng cách viết với `ShellCommandFactory.verifyPin` / `PinVerifier`, thoái hóa không thể xảy ra lặng lẽ.
 
-## 行数棘轮（本次均为下调，非放宽）
+## Ratchet số dòng (lần này đều giảm, không nới)
 
-- `WebChatBridgeServer.kt` **672 → 665**（抽出 `PinVerifier` 44 行、`WebChatAssets` 37 行）。
-  中间曾因在文件内压缩走错方向（673 → 674 → 679），
-  用 `diff` 定位到原因是反向验证用的 `/tmp/wc.bak` 备份已含改动、不是 672 行基线。
-- `HostBridge.kt` **451 → 450**。恒定时间比较带 5 行注释（净增），
-  从同文件两处抵回：header 解析的局部变量合并、`writeResponse` 的 `when` 压行。
-- `FtpSettingsScreen.kt` **532 → 527**（三个真实状态的文案比原两条分支更短）。
-- 新增 `PinVerifier.kt`(44)、`WebChatAssets.kt`(37) 登记入 `files`，`fileCount` 113 → 115。
-- `FtpServiceManager.kt` 327 → 336（加 14 行安全注释、删依赖），
-  不在棘轮条目内，受 `maxFileLines=400` 约束，合规。
+- `WebChatBridgeServer.kt` **672 → 665** (trích `PinVerifier` 44 dòng, `WebChatAssets` 37 dòng).
+  Ở giữa từng đi sai hướng khi nén trong tệp (673 → 674 → 679), dùng `diff` xác định nguyên nhân là bản sao `/tmp/wc.bak` dùng cho reverse verification đã chứa sửa đổi, không phải baseline 672 dòng.
+- `HostBridge.kt` **451 → 450**. So sánh hằng thời gian kèm 5 dòng comment (tăng ròng), được triệt tiêu lại từ hai chỗ trong cùng tệp: gộp biến cục bộ khi parse header, nén dòng `when` của `writeResponse`.
+- `FtpSettingsScreen.kt` **532 → 527** (văn bản của ba trạng thái thật ngắn hơn hai nhánh cũ).
+- Thêm `PinVerifier.kt`(44), `WebChatAssets.kt`(37) đăng ký vào `files`, `fileCount` 113 → 115.
+- `FtpServiceManager.kt` 327 → 336 (thêm 14 dòng comment bảo mật, xóa dependency), không nằm trong mục ratchet, chịu `maxFileLines=400`, hợp lệ.
 
-`architectureCheck: 31 个模块 · 依赖白名单/无环/import 黑名单/尺寸棘轮 全部通过`。
+`architectureCheck: 31 个模块 · 依赖白名单/无环/import 黑名单/尺寸棘轮 全部通过`.
 
-## 守卫与反向验证
+## Guard và reverse verification
 
-新增 `ops/ftp_auth_guard_test.py`（6 项检查，与 `release_guard_test.py` 同约定）：
+Thêm `ops/ftp_auth_guard_test.py` (6 kiểm tra, cùng quy ước với `release_guard_test.py`):
 `assert_no_ssh_fallback` / `assert_no_ssh_dependency` / `assert_ui_matches_behaviour` /
 `assert_session_still_rejects_blank_password` / `assert_webchat_pin_compared_in_constant_time` /
-`assert_host_bridge_key_compared_in_constant_time`。
+`assert_host_bridge_key_compared_in_constant_time`.
 
-**守卫自身出过一次错，值得记下**：首版
-`assert_session_still_rejects_blank_password` 只检查表达式里是否出现
-`isNullOrBlank` 子串。反向验证 D1（把 `!config.password.isNullOrBlank() && …`
-改成 `config.password.isNullOrBlank() || …`）**通过了守卫**——
-即守卫抓不住它本就是为了防的那个漏洞。改为按**布尔结构**判定：
-引入 `split_top_level(expr, op)` 按顶层 `||` / `&&` 切分，
-拒绝任何「未取反地测试密码为空」的顶层析取项、拒绝 `pass.isEmpty()` 析取项、
-要求存在 `pass == config.password`、要求存在取反形式的合取项。
-重跑 D1/D2/D3 三种退化形态，均已正确转红。
+**Guard từng tự sai một lần, đáng ghi lại**: Phiên bản đầu của
+`assert_session_still_rejects_blank_password` chỉ kiểm tra trong biểu thức có xuất hiện substring `isNullOrBlank` hay không. Reverse verification D1 (đổi `!config.password.isNullOrBlank() && …` thành `config.password.isNullOrBlank() || …`) **vẫn qua guard** — tức guard không bắt được chính lỗi nó được tạo ra để ngăn. Đổi sang phán đoán theo **cấu trúc boolean**:
+đưa `split_top_level(expr, op)` tách theo `||` / `&&` ở cấp ngoài cùng,
+từ chối mọi nhánh tuyển ở cấp ngoài cùng "kiểm tra mật khẩu rỗng mà không phủ định", từ chối disjunct `pass.isEmpty()`,
+yêu cầu tồn tại `pass == config.password` và tồn tại conjunct dạng phủ định.
+Chạy lại ba dạng thoái hóa D1/D2/D3, đều đã chuyển đỏ đúng.
 
-另执行反向验证 E4：`HostBridge.checkAuth` 退回 `==` → 该项如实转红。
+Ngoài ra thực hiện reverse verification E4: `HostBridge.checkAuth` lùi về `==` → mục đó chuyển đỏ trung thực.
 
-## 本轮判为「未发现缺陷」的文件（含判断依据）
+## Các tệp được đánh giá là "không phát hiện lỗi" trong vòng này (kèm căn cứ)
 
-- **`LinuxRuntimeImpl.kt`(909)**：八个变更入口全走 `initializeMutex.withLock`；
-  `updateRootfs` 的取消/异常/健康检查失败三条路径都调 `rollbackPendingUpdate`；
-  `storageMounts()` 对用户可编辑的 Room 表先 `validationError` 过滤再告警，
-  注释明写「绝不能让非法绑定流入 ProotCommandBuilder」；
-  `MIN_FREE_BYTES = 600L * 1024L * 1024L` 用 `L` 字面量避开 Int 溢出。
-- **`SshServiceManager.kt`(576)**：凭据从不进命令行明文——
-  authorized_keys 与 sshd_config 整体 Base64 后 `printf|base64 -d` 落盘，
-  密码同样经 `base64 -d | chpasswd`；`normalizePassword` 拒绝 `:` 与 ISO 控制字符
-  （不拒 `:` 会截断、不拒 `\n` 可注入额外用户行）；
-  `cleanupStaleSshd` 用 `withTimeoutOrNull` 轮询端口而非无限等。
-- **`DistroConfigurator.kt`(518)**：`configureDns` 用
-  `Files.isSymbolicLink(...) || resolvConf.exists()` 双条件移除悬空链接
-  （注释明写 OCI 镜像里 `/etc/resolv.conf` 常指向 `/run/systemd/resolve/...`，
-  PRoot 无 systemd 导致链接悬空）；`statoverride` 判重用 `endsWith(" $path")`
-  避免 `/usr/bin/su` 误匹配 `/usr/bin/sudo`。
-- **`RuntimePathManager.kt`(278)**：`installedDistroIdsCache` 只缓存非空结果；
-  `needsCopy` 用 `contentEquals` 比内容而非仅比长度
-  （注释明写「equal file length alone does not prove that an old SONAME copy matches」）。
-- **`LinuxEnvironmentManager.kt`(308)**：写 profile 用 `umask 077` + 临时文件 + `mv -f`
-  原子替换；`normalizeKey` 白名单并禁 `TIANXUAN_`/`ANDROID_` 前缀
-  （防用户覆盖桥接用的 `TIANXUAN_BRIDGE_URL`）；切换发行版时先清空三个 StateFlow。
-- **`gui/HostGuiToolkit.kt`(371)**：`trySetFocusedText` 的降级纪律——
-  `ACTION_SET_TEXT` 幂等可重试，而剪贴板/`input text` 是追加式，
-  故「曾被接受但读不回」时主动返回成功而不降级，注释明写
-  「否则会造成文本重复——对发消息这类场景，重复比失败更糟」。
-- **`gui/HostGuiController.kt`(388)**：`selectForDisplay` 先保可交互控件再补文本节点
-  （DFS 先序直接 take 会截掉屏幕底部/右侧的发送、悬浮按钮，
-  「模型看不到就不会去点」）；`observeScreen` 刻意不保留 `rawXml`
-  （注释明写曾致 target footprint OOM）。
-- **`gui/WorkflowGuiHudBridge.kt`(173)**：`screenOpDepth` 引用计数且 `endScreenOp`
-  用 `coerceAtLeast(0)` 防空（否则悬浮窗永不再隐藏）；
-  `stopRequestedFor` 记录**具体 executionId** 而非布尔量，防上次的停止请求取消下次执行。
-- **`gui/AndroidGuiXmlParser.kt`(113)**：`XmlPullParser` 流式解析；
-  解析失败返回已解析部分；`resourceId.substringAfterLast('/')` 去前缀同时
-  确认 `click_text` 命中判断仍按完整 `resourceId` 做 `contains`。
-- **`di/runtime/KoinModule.kt`(318)**：FTP 改动已干净落地，
-  `SshServiceManager` 保留自己的 `preferences`，两者不再共享依赖；依赖无环。
+- **`LinuxRuntimeImpl.kt`(909)**: Tám cổng thay đổi đều đi qua `initializeMutex.withLock`;
+  ba đường hủy/ngoại lệ/thất bại health check của `updateRootfs` đều gọi `rollbackPendingUpdate`;
+  `storageMounts()` lọc bảng Room do người dùng sửa bằng `validationError` rồi mới cảnh báo,
+  comment viết rõ "tuyệt đối không để binding không hợp lệ chảy vào ProotCommandBuilder";
+  `MIN_FREE_BYTES = 600L * 1024L * 1024L` dùng literal `L` để tránh tràn Int.
+- **`SshServiceManager.kt`(576)**: Credential không bao giờ vào command line dạng plaintext —
+  authorized_keys và sshd_config được Base64 toàn bộ rồi `printf|base64 -d` ghi đĩa,
+  mật khẩu cũng đi qua `base64 -d | chpasswd`; `normalizePassword` từ chối `:` và ký tự điều khiển ISO
+  (không chặn `:` sẽ bị cụt, không chặn `\n` có thể inject thêm dòng user);
+  `cleanupStaleSshd` dùng `withTimeoutOrNull` để poll cổng thay vì chờ vô hạn.
+- **`DistroConfigurator.kt`(518)**: `configureDns` dùng điều kiện kép
+  `Files.isSymbolicLink(...) || resolvConf.exists()` để gỡ link treo
+  (comment viết rõ trong image OCI, `/etc/resolv.conf` thường trỏ tới `/run/systemd/resolve/...`,
+  PRoot không có systemd nên link bị treo); `statoverride` khử trùng bằng `endsWith(" $path")`
+  để `/usr/bin/su` không khớp nhầm `/usr/bin/sudo`.
+- **`RuntimePathManager.kt`(278)**: `installedDistroIdsCache` chỉ cache kết quả không rỗng;
+  `needsCopy` so sánh nội dung bằng `contentEquals` chứ không chỉ so độ dài
+  (comment viết rõ "equal file length alone does not prove that an old SONAME copy matches").
+- **`LinuxEnvironmentManager.kt`(308)**: Ghi profile dùng `umask 077` + tệp tạm + `mv -f`
+  thay thế nguyên tử; `normalizeKey` whitelist và cấm prefix `TIANXUAN_`/`ANDROID_`
+  (chặn người dùng ghi đè `TIANXUAN_BRIDGE_URL` dùng cho bridge); khi đổi distro thì xóa ba StateFlow trước.
+- **`gui/HostGuiToolkit.kt`(371)**: Kỷ luật fallback của `trySetFocusedText` —
+  `ACTION_SET_TEXT` có tính đẳng lực, có thể thử lại, trong khi clipboard/`input text` kiểu nối thêm,
+  nên khi "từng được chấp nhận nhưng đọc không lại" chủ động trả thành công mà không hạ cấp, comment viết rõ
+  "nếu không sẽ gây lặp văn bản — với các tình huống như gửi tin nhắn, lặp còn tệ hơn thất bại".
+- **`gui/HostGuiController.kt`(388)**: `selectForDisplay` giữ control tương tác trước rồi mới thêm node text
+  (DFS pre-order lấy thẳng sẽ cụt mất nút gửi/nút nổi ở dưới hoặc bên phải màn hình,
+  "model không thấy thì sẽ không bấm"); `observeScreen` cố ý không giữ `rawXml`
+  (comment viết rõ từng gây OOM target footprint).
+- **`gui/WorkflowGuiHudBridge.kt`(173)**: `screenOpDepth` đếm tham chiếu và `endScreenOp`
+  dùng `coerceAtLeast(0)` chống âm (nếu không cửa sổ nổi không bao giờ ẩn lại);
+  `stopRequestedFor` ghi **executionId cụ thể** chứ không phải boolean, tránh yêu cầu dừng lần trước hủy lần sau.
+- **`gui/AndroidGuiXmlParser.kt`(113)**: Parse stream bằng `XmlPullParser`;
+  parse lỗi thì trả phần đã parse được; `resourceId.substringAfterLast('/')` bỏ prefix nhưng
+  vẫn xác nhận phần đánh giá điều kiện khớp `click_text` dùng `contains` trên `resourceId` đầy đủ.
+- **`di/runtime/KoinModule.kt`(318)**: Thay đổi FTP đã được triển khai gọn gàng,
+  `SshServiceManager` giữ `preferences` riêng, hai bên không chia dependency; đồ thị không vòng.
 
-## 测试
+## Test
 
-`runtime` **131 → 143**（新增 `PinVerifierTest` 7 例 + `WebChatAssetsTest` 5 例），
-全项目 `1450 tests, 0 failures, 0 errors`。
+`runtime` **131 → 143** (thêm `PinVerifierTest` 7 ca + `WebChatAssetsTest` 5 ca),
+toàn dự án `1450 tests, 0 failures, 0 errors`.
 
-## 复核批次七：tools 模块 41 个 main 文件全量精读（2026-10-07）
+## Đợt rà soát bảy: đọc trọn 41 tệp main của module tools (2026-10-07)
 
-精读范围：`tools/src/main` 下全部 **41** 个 `.kt`（`core/tools` 35 + `runtime/tools` 5 + `di/tools` 1），
-逐文件读完，不跳读、不猜测。发现 **3 处真实缺陷**（均已修复并反向验证），
-其余 38 个文件判为「未发现缺陷」。
+Phạm vi đọc kỹ: toàn bộ **41** tệp `.kt` dưới `tools/src/main` (`core/tools` 35 + `runtime/tools` 5 + `di/tools` 1),
+đọc từng tệp, không đọc lướt không đoán. Phát hiện **3 lỗi thật** (đều đã sửa và reverse verify),
+38 tệp còn lại đánh giá là "không phát hiện lỗi".
 
-### 缺陷 #4（已修）：`manifest.version` 未做字符白名单 → 本地插件任意路径写入
+### Lỗi #4 (đã sửa): `manifest.version` không có whitelist ký tự → ghi tùy ý đường dẫn trong plugin local
 
-**位置**：`core/tools/ToolManifestValidator.kt` + `core/tools/ToolRegistry.kt:importLocal`
+**Vị trí**: `core/tools/ToolManifestValidator.kt` + `core/tools/ToolRegistry.kt:importLocal`
 
-**成因**：`validateAll` 对 `manifest.version` 只做 `isNotBlank()`。而
-`ToolRegistry.importLocal` 用它直接拼落盘路径：
+**Nguyên nhân**: `validateAll` với `manifest.version` chỉ làm `isNotBlank()`. Trong khi
+`ToolRegistry.importLocal` dùng nó để ghép thẳng đường dẫn ghi đĩa:
 
 ```kotlin
 val versionDir = File(localRoot, "${manifest.id}/${manifest.version}")
 ```
 
-`id` 有 `idPattern = Regex("[a-z0-9][a-z0-9-]{1,63}")` 全锚定白名单，`version` 没有。
-于是版本号填 `"../../../shared_prefs/x"` 时，`File` 归一化后写到了 `files/plugins` **之外**。
+`id` có whitelist toàn phần `idPattern = Regex("[a-z0-9][a-z0-9-]{1,63}")`, còn `version` thì không.
+Vì vậy khi điền phiên bản `"../../../shared_prefs/x"`, `File` sau chuẩn hóa ghi ra **ngoài** `files/plugins`.
 
-**放大条件**：`importLocal` 的「同版本覆盖」分支会先
-`versionDir.renameTo(legacy)` 把已存在的目标整体搬走，写入后再 `legacy.deleteRecursively()`。
-当 `versionDir` 逃逸到应用私有目录中的敏感路径时，这就从「越权写入」升级为
-**「先搬走、再写入、最后删除原物」的任意覆盖/删除原语**。
+**Điều khuếch đại**: Nhánh "ghi đè cùng phiên bản" của `importLocal` trước tiên
+`versionDir.renameTo(legacy)` dời toàn bộ mục đích đã tồn tại đi, sau khi ghi thì `legacy.deleteRecursively()`.
+Khi `versionDir` thoát tới một đường dẫn nhạy cảm trong thư mục riêng của app, đây không còn là "ghi vượt quyền"
+mà là **primitive ghi đè/xóa tùy ý: dời đi → ghi → xóa bản gốc**.
 
-**修复**（两层，白名单 + 纵深防御）：
+**Cách sửa** (hai tầng, whitelist + phòng thủ chiều sâu):
 
-1. `ToolManifestValidator` 新增 `versionPattern = Regex("[A-Za-z0-9][A-Za-z0-9._+-]{0,63}")`，
-   对 `version` 与 `latestVersion` 做**全锚定**匹配。该白名单覆盖 `1.2.0`、`1.2.0-beta.1`、
-   `v2`、`2025.10.07`、`1.0.0+build.42` 等常见写法，不误伤。
-2. `importLocal` 落盘前再加一次规范化包含性检查：
-   `versionDir.canonicalFile.toPath().startsWith(localRoot.canonicalFile.toPath())`，
-   保证「校验层被绕过时仍有第二道闸」。
+1. `ToolManifestValidator` thêm `versionPattern = Regex("[A-Za-z0-9][A-Za-z0-9._+-]{0,63}")`,
+   khớp **toàn phần** cho cả `version` và `latestVersion`. Whitelist này phủ `1.2.0`、`1.2.0-beta.1`、
+   `v2`、`2025.10.07`、`1.0.0+build.42` và các cách viết thường gặp khác, không làm sót hợp lệ.
+2. `importLocal` trước khi ghi thêm một lần kiểm tra chứa sau chuẩn hóa:
+   `versionDir.canonicalFile.toPath().startsWith(localRoot.canonicalFile.toPath())`,
+   đảm bảo "khi tầng kiểm tra bị vòng qua vẫn còn cổng thứ hai".
 
-### 缺陷 #5（已修）：`maxByOrNull { it.name }` 用字典序挑版本 → 静默取旧 payload
+### Lỗi #5 (đã sửa): `maxByOrNull { it.name }` chọn phiên bản theo thứ tự từ điển → lấy nhầm payload cũ không báo lỗi
 
-**位置**：`core/tools/ToolRegistry.kt:loadLocalManifests`
+**Vị trí**: `core/tools/ToolRegistry.kt:loadLocalManifests`
 
-**成因**：在 `plugins/<id>/<version>/` 的候选目录里用 `it.name` 的 `Comparable` 取最大，
-而 `String` 是**字典序**：
+**Nguyên nhân**: Trong thư mục ứng viên `plugins/<id>/<version>/`, dùng `Comparable` của `it.name` để lấy lớn nhất,
+mà `String` là **thứ tự từ điển**:
 
 ```
 max("1.9.0", "1.10.0") == "1.9.0"     // 错，应为 1.10.0
 max("1.9.0", "1.11.0") == "1.9.0"     // 错，应为 1.11.0
 ```
 
-**后果是静默的**：用户导入并成功安装了 1.10.0，`localPayloadRoot()` 仍指向 1.9.0 的
-payload 目录，装出来的永远是旧内容，**不报任何错误**。这类「没报错所以以为没问题」
-的缺陷只能靠版本比较本身的正反向断言兜住。
+**Hậu quả âm thầm**: Người dùng import và cài đặt thành công 1.10.0, nhưng `localPayloadRoot()` vẫn trỏ tới
+thư mục payload của 1.9.0, cài mãi nội dung cũ, **không báo lỗi gì**.
+Dạng lỗi "không báo lỗi nên tưởng ổn" này chỉ bắt được bằng assertion thuận/ngược ngay trên phép so sánh phiên bản.
 
-**修复**：改为读取每个候选目录的 `manifest.json` 声明版本，用新增的顶层函数
-`compareToolVersions` 做**数值化优先**比较（`\d+(\.\d+){0,3}` 逐段比，段数不足补 0），
-数字段全等即返回 0；仅当任一侧完全提取不到数字时才退化为字典序兜底。
-提取为顶层 `internal` 函数是为了不构造 `ToolRegistry`（需真实 `Context`）即可做单元回归。
+**Cách sửa**: Đổi sang đọc `manifest.json` của từng thư mục ứng viên để lấy phiên bản khai báo,
+dùng hàm cấp ngoài cùng mới `compareToolVersions` so sánh **ưu tiên số** (`\d+(\.\d+){0,3}` so từng đoạn, thiếu đoạn thì bù 0),
+các đoạn số bằng nhau thì trả 0; chỉ khi một bên hoàn toàn trích không ra số mới thoái về từ điển.
+Trích thành hàm `internal` cấp ngoài cùng để unit test không cần khởi tạo `ToolRegistry` (vốn cần `Context` thật).
 
-### 缺陷 #6（已修）：同包两条路径对「重复 manifest.json」判定不一致
+### Lỗi #6 (đã sửa): Hai đường trong cùng gói phán đoán "manifest.json trùng" không nhất quán
 
-**位置**：`core/tools/ToolRegistry.kt:importLocal`
+**Vị trí**: `core/tools/ToolRegistry.kt:importLocal`
 
-**成因**：`inspectSeekableManifest` 有
-`require(manifestEntry == null) { "插件包包含重复的 manifest.json" }`，
-但真正落盘的 `importLocal` **没有**这道检查，而是
-`if (name == "manifest.json") manifestText = target.readText()` ——静默采用**最后一个**。
+**Nguyên nhân**: `inspectSeekableManifest` có
+`require(manifestEntry == null) { "插件包包含重复的 manifest.json" }`,
+nhưng `importLocal` — đường thực sự ghi đĩa — **không có** kiểm tra đó, mà là
+`if (name == "manifest.json") manifestText = target.readText()` — âm thầm lấy **cái cuối cùng**.
 
-**后果**：同一个 ZIP 在「预览」与「导入」两条路径给出不同结论。攻击者可以把
-**通过校验的 manifest 放在前面**充当用户看到的预览，把**真正生效的放在后面**，
-预览所见与最终导入的清单不是同一份。
+**Hậu quả**: Cùng một ZIP cho kết luận khác nhau giữa hai đường "xem trước" và "import".
+Kẻ tấn công có thể đặt **manifest đã qua kiểm tra ở trước** làm preview người dùng thấy,
+còn **manifest thực sự có hiệu lực đặt ở sau**; preview và manifest cuối cùng import không phải một tệp.
 
-**修复**：`importLocal` 增加同一判定——
-`if (name == "manifest.json") { require(manifestText == null) { "插件包包含重复的 manifest.json" } }`，
-两条路径必须同一结论。
+**Cách sửa**: `importLocal` thêm cùng một phán đoán —
+`if (name == "manifest.json") { require(manifestText == null) { "插件包包含重复的 manifest.json" } }`,
+hai đường phải cùng một kết luận.
 
-### 反向验证（守卫自身必须能被证伪）
+### Reverse verification (guard tự nó cũng phải bị phủ định được)
 
-| 测试 | 回退修复后 | 恢复修复后 |
+| Test | Sau khi hoàn tác sửa | Sau khi khôi phục sửa |
 | --- | --- | --- |
-| `ToolManifestVersionPatternTest`（4 例） | **3 红** | 4 绿 |
-| `ToolVersionOrderingTest`（5 例） | **4 红** | 5 绿 |
+| `ToolManifestVersionPatternTest` (4 ca) | **3 đỏ** | 4 xanh |
+| `ToolVersionOrderingTest` (5 ca) | **4 đỏ** | 5 xanh |
 
-回退方式：把 `versionPattern` 两处 `require` 删除、把 `compareToolVersions` 忠实改回
-`left.compareTo(right)`、删掉 `canonicalLocalRoot` 检查。删掉版本白名单后
+Cách hoàn tác: xóa hai `require` của `versionPattern`, đổi trung thực `compareToolVersions` về
+`left.compareTo(right)`, xóa kiểm tra `canonicalLocalRoot`. Sau khi xóa whitelist phiên bản,
 `rejectsPathTraversalVersions` / `rejectsAbsoluteAndSeparatorVersions` /
-`rejectsUnsafeLatestVersion` 三条立即转红；纯字典序下
+`rejectsUnsafeLatestVersion` lập tức đỏ; dưới thứ tự thuần từ điển,
 `numericSegmentsBeatLexicographicOrder` / `picksHighestVersionFromCandidateDirectories` /
-`missingSegmentsCompareAsZero` / `prefixesAndSuffixesDoNotBreakNumericOrdering` 四条立即转红。
+`missingSegmentsCompareAsZero` / `prefixesAndSuffixesDoNotBreakNumericOrdering` lập tức đỏ.
 
-> 教训记录：第一次回退时只删了 `return 0`（保留了数值比较），结果 5 例只红 1 例。
-> 说明「反向验证必须忠实还原修复前实现」，否则守卫的强度会被高估——
-> 数值比较本身才是这次修复的核心，只回退「平局处理」自然证不伪。
+> Bài học ghi lại: Lần đầu hoàn tác chỉ xóa `return 0` (giữ phép so sánh số), nên 5 ca chỉ đỏ 1.
+> Cho thấy "reverse verification phải khôi phục trung thực implement trước khi sửa",
+> nếu không cường độ của guard sẽ bị đánh giá cao quá mức —
+> chính phép so sánh số mới là cốt lõi của lần sửa này, chỉ hoàn tác "xử lý hòa" thì không phủ định được.
 
-### 行数棘轮（上调 ToolRegistry，附理由）
+### Ratchet số dòng (nâng `ToolRegistry`, kèm lý do)
 
-`ToolRegistry.kt` 445 → **504**（基线同步至 504）。
-净增 59 行全部是新增防御与注释：`compareToolVersions` 顶层函数 + 版本目录选择的
-数值化比较 + `canonicalLocalRoot` 纵深防御 + 重复 manifest 一致性检查 + 逐条解释成因的注释。
-本次为**上调**而非下调，理由已在上文逐条说明；`ToolManifestValidator.kt` 92 行，
-低于 400 上限，不进基线。
+`ToolRegistry.kt` 445 → **504** (baseline đồng bộ lên 504).
+Tăng ròng 59 dòng toàn là biện pháp phòng vệ mới và comment: hàm cấp ngoài cùng `compareToolVersions` + so sánh số khi chọn thư mục phiên bản
++ phòng thủ chiều sâu `canonicalLocalRoot` + kiểm tra nhất quán manifest trùng + comment giải thích từng nguyên nhân.
+Lần này là **nâng** chứ không phải giảm, lý do đã trình bày từng mục ở trên; `ToolManifestValidator.kt` 92 dòng,
+dưới giới hạn 400, không vào baseline.
 
-### 其余 38 个文件判为「未发现缺陷」（含判断依据）
+### 38 tệp còn lại đánh giá là "không phát hiện lỗi" (kèm căn cứ)
 
-- **`ToolManager.kt`(1125)**：`installJobs` 为 `ConcurrentHashMap` 且登记用
-  `putIfAbsent`、注销用**两参原子 `remove(key, value)`**（注释明写「写成
-  `if (installJobs[id] === job) remove(id)` 会在两条语句之间被新任务占据同一 key，
-  把新任务从表里抹掉，取消安装将再也找不到它」）；`uninstall` 必须用
-  `containsKey`（注释明写「ConcurrentHashMap 覆写了 contains，使其等价于
-  containsValue，写成 `toolId !in installJobs` 会去比对全部 Job 值，永远为真，
-  这道闸门等于不存在」）；`Completed` 分支**先 commit 再落库**，注释完整论证了
-  反过来会在进程被杀窗口期内造成「磁盘回旧版却永不提示更新、无法自愈」。
-- **`RuntimeManager.kt`(245)**：`installMutex` 串行化全部 apt 事务；装前先
-  `rm -rf /var/lib/dpkg/updates/* /var/lib/dpkg/lock*` + `dpkg --configure -a` 自愈上次
-  被强杀留下的「已解包未配置」状态；`versionSatisfies` 支持 `>=`/`>`/`=` 前缀。
-- **`SkillPackageParser.kt`(339)**：ZIP 与目录两条路径**共享同一组上限**
-  （注释明写「目录来源不受信任程度相同，无上限的 walkTopDown + readBytes 会在超大目录上
-  直接 OOM」）；逐块读取时同时扣减单文件与总配额，到顶后再 `zip.read()` 探一次以区分
-  「刚好到顶」与「超出」（防「恰好等于上限」的合法包被误杀）；`sanitizeSkillId` 拒绝
-  全下划线结果；`sanitizeSkillId(fallbackId)` 失败时回退随机 id 而不阻断解析。
-- **`SkillPackageInspector.kt`(418)**：5 维静态审计（结构 / ELF 与危险扩展名 /
-  Prompt 注入与越狱 / 破坏性命令与反弹 Shell / 敏感文件嗅探），
-  `reportMatches` 每模式限 3 条防刷屏；`OBFUSCATION_HINT_PATTERNS` 明确定性为
-  WARNING 级人工复核（注释：「黑名单无法穷举」）。
-- **`ClawHubClient.kt`(415)**：`lastCatalogUsedOfflineFallback` 用 `@Volatile`；
-  下载用 `BoundedStreamCopy` + `OverflowPolicy.ABORT`；`contentLength()` 超限先拒；
-  离线精选包由内置模板动态生成标准 ZIP。
-- **`LocalPluginPayloadManager.kt`(118)**：`require(target.canonicalFile.toPath()
-  .startsWith(canonicalRoot.toPath()))` 防工具 ID 逃逸；逐文件复制并保证
-  `copiedBytes == totalBytes` 时必报一次进度；`normalizeShellScript` 去 BOM + CRLF→LF +
-  补 shebang（注释：「Windows-created ZIPs commonly carry BOM/CRLF and no executable bit」）。
-- **`RuntimeManager` / `ToolNotificationNotifier.kt`(264)**：`stageApkForInstall` 复制后
-  `check(staged.length() == apk.length())` 校验完整性，并清理 24 小时前的旧暂存；
-  `showBuildSuccess` 先 `cancel` 再 `notify`（注释：「Some Android/OEM notification
-  managers keep the previous ongoing notification row when it is changed in-place to a
-  non-ongoing one」）。
-- **`di/tools/KoinModule.kt`(168)**：`SkillCompatibilityEvaluator(toolRegistry = getOrNull())`
-  用 `getOrNull` 容忍 ToolRegistry 缺失；依赖图无环。
+- **`ToolManager.kt`(1125)**: `installJobs` là `ConcurrentHashMap`, đăng ký dùng
+  `putIfAbsent`, hủy đăng ký dùng **atomic `remove(key, value)` hai tham số** (comment viết rõ "viết thành
+  `if (installJobs[id] === job) remove(id)` sẽ bị tác vụ mới chiếm cùng key giữa hai câu lệnh,
+  xóa tác vụ mới khỏi bảng, hủy cài đặt sẽ không tìm được nó nữa"); `uninstall` phải dùng
+  `containsKey` (comment viết rõ "ConcurrentHashMap override contains thành containsValue,
+  viết `toolId !in installJobs` sẽ so toàn bộ giá trị Job, luôn đúng, cổng này bằng như không có");
+  nhánh `Completed` **commit rồi mới lưu đĩa**, comment giải thích đầy đủ chiều ngược lại sẽ trong cửa sổ tiến trình bị giết
+  gây "đĩa lùi về bản cũ nhưng không bao giờ nhắc cập nhật, không tự hồi được".
+- **`RuntimeManager.kt`(245)**: `installMutex` tuần tự hóa mọi giao dịch apt; trước khi cài
+  `rm -rf /var/lib/dpkg/updates/* /var/lib/dpkg/lock*` + `dpkg --configure -a` tự hồi trạng thái
+  "đã giải nén chưa cấu hình" do bị kill cứng lần trước; `versionSatisfies` hỗ trợ prefix `>=`/`>`/`=`.
+- **`SkillPackageParser.kt`(339)**: ZIP và thư mục dùng **chung một nhóm hạn mức**
+  (comment viết rõ "nguồn thư mục không kém phần đáng ngờ, `walkTopDown` + `readBytes` không hạn mức
+  sẽ OOM ngay trên thư mục quá lớn"); khi đọc từng khối đồng thời trừ quota một tệp và tổng,
+  tới trần lại thử `zip.read()` thêm lần nữa để phân biệt "vừa đúng trần" và "vượt"
+  (chặn trường hợp gói hợp lệ "bằng đúng hạn mức" bị giết nhầm); `sanitizeSkillId` từ chối kết quả toàn gạch dưới;
+  `sanitizeSkillId(fallbackId)` thất bại thì fallback id ngẫu nhiên mà không chặn parse.
+- **`SkillPackageInspector.kt`(418)**: Kiểm toán tĩnh 5 chiều (cấu trúc / ELF và extension nguy hiểm /
+  prompt injection và jailbreak / lệnh phá hoại và reverse shell / dò tệp nhạy cảm),
+  `reportMatches` giới hạn 3 dòng mỗi pattern chống spam; `OBFUSCATION_HINT_PATTERNS` được định tính rõ
+  là WARNING để người rà soát lại (comment: "blacklist không thể liệt kê cạn").
+- **`ClawHubClient.kt`(415)**: `lastCatalogUsedOfflineFallback` dùng `@Volatile`;
+  tải dùng `BoundedStreamCopy` + `OverflowPolicy.ABORT`; `contentLength()` vượt hạn thì từ chối ngay từ đầu;
+  gói tuyển chọn offline được sinh dynamic từ template tích hợp thành ZIP chuẩn.
+- **`LocalPluginPayloadManager.kt`(118)**: `require(target.canonicalFile.toPath()
+  .startsWith(canonicalRoot.toPath()))` chặn tool ID thoát; copy từng tệp và đảm bảo
+  `copiedBytes == totalBytes` thì báo tiến độ ít nhất một lần; `normalizeShellScript` bỏ BOM + CRLF→LF +
+  thêm shebang (comment: "ZIP tạo trên Windows thường mang BOM/CRLF và không có bit thực thi").
+- **`RuntimeManager` / `ToolNotificationNotifier.kt`(264)**: `stageApkForInstall` sau khi copy
+  `check(staged.length() == apk.length())` kiểm tra toàn vẹn, dọn các bản staging cũ hơn 24 giờ;
+  `showBuildSuccess` gọi `cancel` rồi mới `notify` (comment: "một số notification manager Android/OEM giữ lại dòng
+  ongoing trước đó khi đổi in-place sang không ongoing").
+- **`di/tools/KoinModule.kt`(168)**: `SkillCompatibilityEvaluator(toolRegistry = getOrNull())`
+  dùng `getOrNull` chịu thiếu ToolRegistry; đồ thị phụ thuộc không vòng.
 
-### 测试
+### Test
 
-`tools` **+5**（新增 `ToolVersionOrderingTest`）、`app` **+4**
-（新增 `ToolManifestVersionPatternTest`）。全项目 `1089 tests, 0 failures, 0 errors`（`architectureCheck` 绿）。
+`tools` **+5** (thêm `ToolVersionOrderingTest`), `app` **+4**
+(thêm `ToolManifestVersionPatternTest`). Toàn dự án `1089 tests, 0 failures, 0 errors` (`architectureCheck` xanh).
 
 ---
 
-## 复核批次八：feature/settings 起步 + app 服务面（2026-10-07）
+## Đợt rà soát tám: feature/settings khởi động + mặt dịch vụ app (2026-10-07)
 
-### 缺陷 #7（已修）：`CcSwitchCredentials.writeScript` 把口令插值进 shell 双引号 → 命令注入
+### Lỗi #7 (đã sửa): `CcSwitchCredentials.writeScript` nội suy mật khẩu vào nháy kép shell → command injection
 
-**位置**：`feature/settings/.../CcSwitchCredentials.kt`。
+**Vị trí**: `feature/settings/.../CcSwitchCredentials.kt`.
 
-**成因**：`writeScript(password)` 用 Kotlin 字符串模板把口令拼进 shell 串：
+**Nguyên nhân**: `writeScript(password)` dùng string template Kotlin ghép mật khẩu vào chuỗi shell:
 
 ```kotlin
 printf '%s' "$password" > "$DIR/web_password"
 ```
 
-这里 `$password` 是 **Kotlin 侧的值**，不是 shell 变量——模板展开后它成了命令行的字面文本。而
-`commandLine` 最终以 `sh -lc <commandLine>` 交给 guest shell
-（见 `ProotCommandBuilder`：`add(GUEST_SHELL); add("-lc"); add(commandLine)`，
-「commandLine 已由调用方完成 shell 引用」正是把引用责任交给了调用方）。双引号内
-`$(...)`、反引号、`\` 仍会被求值，因此口令里的文本变成了可执行代码。
+Ở đây `$password` là **giá trị phía Kotlin**, không phải biến shell — sau khi khai triển template nó thành văn bản literal trên command line. Mà `commandLine` cuối cùng được giao cho guest shell dạng `sh -lc <commandLine>`
+(xem `ProotCommandBuilder`: `add(GUEST_SHELL); add("-lc"); add(commandLine)`,
+"commandLine đã được bên gọi trích dẫn shell xong" chính là chuyển trách nhiệm trích dẫn cho bên gọi). Bên trong nháy kép,
+`$(...)`、backtick、`\` vẫn được đánh giá, nên văn bản trong mật khẩu biến thành mã thực thi được.
 
-**可达性**：`resetWebPassword` 目前唯一调用者是 `rotateWebPassword()`，其口令来自
-`generatePassword()`，字符集受 `ALPHABET` 白名单约束，**当下不可注入**。但
-`resetWebPassword(newPassword: String)` 本身是公开 API 且已有 UI 提示「重置密码」，
-任何后续接入自定义口令输入框的改动都会立刻使注入可达——这是**必须现在修**的
-默认安全（secure-by-default）问题，不能靠「当前调用者恰好安全」维持。
+**Khả năng tiếp cận**: Đơn vị gọi duy nhất hiện tại của `resetWebPassword` là `rotateWebPassword()`, mật khẩu lấy từ
+`generatePassword()`, tập ký tự bị whitelist `ALPHABET` giới hạn, **hiện không inject được**. Nhưng
+`resetWebPassword(newPassword: String)` là public API và đã có UI nhắc "đặt lại mật khẩu",
+bất kỳ thay đổi nào sau này nối input mật khẩu tùy ý sẽ lập tức làm injection thành sự thật — đây là vấn đề
+**secure-by-default phải sửa ngay**, không thể dựa vào "đơn vị gọi hiện tại tình cờ an toàn".
 
-**实测复现**（`sh -lc` 单参数语义，与 ProotCommandBuilder 一致）：
+**Tái hiện đo thực** (ngữ nghĩa một tham số của `sh -lc`, khớp ProotCommandBuilder):
 
-| 输入口令 | 修复前 | 修复后 |
+| Mật khẩu đầu vào | Trước sửa | Sau sửa |
 |---|---|---|
-| `pa$(touch /tmp/PWNED)ss` | **`/tmp/PWNED` 被创建**，落盘口令被污染成 `pass` | 未创建；落盘 `pa$(touch /tmp/PWNED)ss` |
-| `pa\`id\`ss` | 回显 `uid=0(root)` | 字面量保留 |
-| `p; touch /tmp/X; #` | 分号被引号吞掉，未执行（本例不触达） | 字面量保留 |
+| `pa$(touch /tmp/PWNED)ss` | **`/tmp/PWNED` bị tạo**, mật khẩu ghi đĩa bị nhiễu thành `pass` | Không tạo; ghi đĩa `pa$(touch /tmp/PWNED)ss` |
+| `pa\`id\`ss` | In ra `uid=0(root)` | Giữ literal |
+| `p; touch /tmp/X; #` | Dấu chấm phẩy bị nháy nuốt, không chạy (ca này không tới) | Giữ literal |
 
-注意第一行：注入**不仅执行了命令，还把落盘口令改成了 `$(...)` 的求值结果**——用户会
-拿到一个自己不知道的、被篡改的口令。
+Chú ý dòng đầu: injection **không chỉ chạy lệnh mà còn đổi mật khẩu ghi đĩa thành kết quả đánh giá của `$(...)`** —
+người dùng sẽ nhận một mật khẩu bị giả mạo mà họ không biết.
 
-**修复**：改为参数化。口令经单引号折叠后作为 `printf` 的位置参数传入：
+**Cách sửa**: Đổi sang parameterized. Mật khẩu sau khi gập nháy đơn được truyền làm tham số vị trí của `printf`:
 
 ```kotlin
 internal fun shellQuoteForSingleLine(value: String): String =
     "'" + value.replace("'", "'\\''") + "'"
 ```
 
-单引号内除 `'` 外一切字符都是字面量；`'` 本身用收尾-转义-重开三段式 `'\''` 折叠。
-`buildWriteScript(password)` 与 `shellQuoteForSingleLine` 均提为**顶层 `internal`**，
-因为 `CcSwitchCredentials` 是 `internal object`、私有成员无法从单测触达，而这段拼接
-一旦回退就是命令注入。
+Trong nháy đơn mọi ký tự trừ `'` đều là literal; bản thân `'` được gập bằng cấu trúc ba đoạn "đóng-escape-mở lại" `'\''`.
+`buildWriteScript(password)` và `shellQuoteForSingleLine` đều nâng thành **top-level `internal`**,
+vì `CcSwitchCredentials` là `internal object`, member private không tới được từ unit test, mà đoạn ghép này
+một khi hoàn tác là command injection.
 
-**反向验证**：忠实回退 `buildWriteScript` 到 `printf '%s' "$password"` 后，
-`CcSwitchCredentialsTest` **2/10 红**——恰为
-`write script never embeds the raw password into the command line`（守卫修复本身）与
-`write script executes the password as a literal under a real shell`（端到端），
-其余 8 例保持绿。恢复后 10/10 绿。
+**Reverse verification**: Hoàn tác trung thực `buildWriteScript` về `printf '%s' "$password"` thì
+`CcSwitchCredentialsTest` **2/10 đỏ** — đúng là
+`write script never embeds the raw password into the command line` (guard bản thân bản sửa) và
+`write script executes the password as a literal under a real shell` (end-to-end),
+8 ca còn lại xanh. Khôi phục thì 10/10 xanh.
 
-**守卫自身的两次缺陷（记录在案）**：
+**Hai lần guard tự có lỗi (ghi lại)**:
 
-1. 首版测试只覆盖 `shellQuoteForSingleLine`，**不覆盖 `writeScript` 的调用点**。
-   回退调用点后测试全绿——守卫没钉住要防的东西。补救：把 `buildWriteScript` 提为顶层并直接断言其产物。
-2. 补上后首版断言用 `script.contains(hostile)` 判「裸值是否进入命令行」。但折叠结果
-   `'pa$(id)ss'` **同样包含**子串 `pa$(id)ss`，两种形态都为真，断言恒过。
-   改为**按结构判定**：定位 `printf` 行，取出 ` > ` 之前的实参，与
-   `shellQuoteForSingleLine(hostile)` 逐字符比对，并额外要求实参以单引号首尾包裹。
+1. Test phiên bản đầu chỉ phủ `shellQuoteForSingleLine`, **không phủ điểm gọi của `writeScript`**.
+   Hoàn tác điểm gọi thì test vẫn xanh — guard không đóng đinh đúng thứ cần ngăn. Bổ cứu: nâng `buildWriteScript`
+   lên top-level rồi assert trực tiếp sản phẩm của nó.
+2. Sau khi bổ, assertion đầu dùng `script.contains(hostile)` để đánh giá "giá trị trần có vào command line không".
+   Nhưng kết quả gập `'pa$(id)ss'` **cũng chứa** substring `pa$(id)ss`, cả hai hình dạng đều đúng → assert luôn qua.
+   Đổi sang **phán đoán theo cấu trúc**: định vị dòng `printf`, lấy đối số thực tế trước ` > `, so sánh từng ký tự với
+   `shellQuoteForSingleLine(hostile)`, và yêu cầu thêm rằng đối số thực tế được bọc bởi nháy đơn ở hai đầu.
 
-### 行数棘轮
+### Ratchet số dòng
 
-`CcSwitchCredentials.kt` 128 → 159 行，仍远低于 400，**不入基线、不需同步**。
+`CcSwitchCredentials.kt` 128 → 159 dòng, vẫn xa dưới 400, **không vào baseline, không cần đồng bộ**.
 
-### 其余判定为「未发现缺陷」的文件（含判断依据）
+### Các tệp còn lại đánh giá là "không phát hiện lỗi" (kèm căn cứ)
 
-- **`WebCredentialSection.kt`(105)**：从 `CcSwitchScreen` 抽出（注释：「这块的逻辑
-  （弱口令判定、复制反馈）自成一体，而 CcSwitchScreen 已远超行数棘轮」）；
-  界面只暴露「一键复制」与 `onRotatePassword`，**不暴露任意口令输入框**——这也是缺陷 #7
-  当下不可达的原因；`isKnownWeakPassword` 时显示 error 色但**不自动改**（注释：
-  「存量弱口令必须显式提示，但不能自动改——自动改会让用户当场失去访问权」）。
-- **`CcSwitchViewModel.resetWebPassword`**：`if (newPassword.isBlank()) return` 守卫
-  （注释：「传空下去会把用户锁在门外」）；成功后先 `_webPassword.value = newPassword`
-  再提示；`readWebCredentials` 直接委托 `CcSwitchCredentials.read`。
-- **`CcSwitchCredentials.read`**：拿不到口令时**如实返回空串**而非编造
-  （注释：「编造一个会让用户拿着不存在的口令去登录，并以为服务坏了」）；
-  `READ_SCRIPT` 失败兜底不留下空文件（`printf 'tx'` + `date +%s%s%s%s | md5sum | cut -c1-14`）；
-  所有文件 `chmod 600`；`SecureRandom` 而非 `kotlin.random.Random`
-  （注释：「后者在部分平台上会退化成 java.util.Random（固定种子的线性同余）」）；
-  `write` **刻意不提供默认参数**（注释：「过去 `resetWebPassword(newPassword: String = "admin123")`
-  让界面上那个『重置密码』按钮一键把口令打回弱口令，等于留了一条降级后门」）。
-- **`CcSwitchScreen.kt`**：第 935 行的 `OutlinedTextField` 属**代理版本升级对话框**
-  （`versionInput`，label「目标版本 (如 1.0.0，留空即最新)」），**不是**口令输入框。
-  `grep` 全仓确认 `resetWebPassword` 只有「定义 + rotate 调用」两处。
+- **`WebCredentialSection.kt`(105)**: Tách từ `CcSwitchScreen` (comment: "logic của mảng này
+  (nhận diện mật khẩu yếu, phản hồi copy) tự thành một khối, trong khi CcSwitchScreen đã vượt xa ratchet dòng");
+  UI chỉ phơi "copy một chạm" và `onRotatePassword`, **không phơi input mật khẩu tùy ý** — đó cũng là lý do
+  lỗi #7 hiện không tới được; khi `isKnownWeakPassword` thì hiện màu error nhưng **không tự đổi**
+  (comment: "mật khẩu yếu có sẵn phải nhắc rõ, nhưng không được tự đổi — tự đổi sẽ làm người dùng mất quyền truy cập ngay tại chỗ").
+- **`CcSwitchViewModel.resetWebPassword`**: Guard `if (newPassword.isBlank()) return`
+  (comment: "truyền rỗng xuống sẽ khóa người dùng ra ngoài"); sau thành công gán `_webPassword.value = newPassword`
+  rồi mới nhắc; `readWebCredentials` ủy thẳng cho `CcSwitchCredentials.read`.
+- **`CcSwitchCredentials.read`**: Khi không lấy được mật khẩu thì **trả về chuỗi rỗng như thật** chứ không bịa
+  (comment: "bịa một cái sẽ khiến người dùng cầm mật khẩu không tồn tại đi đăng nhập và tưởng dịch vụ hỏng");
+  fallback thất bại của `READ_SCRIPT` không để lại tệp rỗng (`printf 'tx'` + `date +%s%s%s%s | md5sum | cut -c1-14`);
+  mọi tệp `chmod 600`; dùng `SecureRandom` chứ không `kotlin.random.Random`
+  (comment: "cái sau trên một số nền tảng thoái thành java.util.Random (linear congruential với seed cố định)");
+  `write` **cố ý không cung cấp tham số mặc định** (comment: "trước đây `resetWebPassword(newPassword: String = "admin123")`
+  khiến nút 'đặt lại mật khẩu' trên UI một chạm đẩy mật khẩu về yếu, tức là để lại một cửa hậu hạ cấp").
+- **`CcSwitchScreen.kt`**: `OutlinedTextField` ở dòng 935 thuộc **hộp thoại nâng cấp phiên bản agent**
+  (`versionInput`, label "phiên bản mục tiêu (vd 1.0.0, để trống là mới nhất)"), **không phải** input mật khẩu.
+  `grep` toàn repo xác nhận `resetWebPassword` chỉ có hai chỗ "định nghĩa + lời gọi rotate".
 
-### 测试
+### Test
 
-`feature/settings` **+5**（`CcSwitchCredentialsTest` 5 → 10）。全项目见下节。
+`feature/settings` **+5** (`CcSwitchCredentialsTest` 5 → 10). Toàn dự án xem mục sau.
 
 ---
 
-## 缺陷 #8（已修）：剪贴板复制路径散落 14 处，其中 12 处丢失「剪贴板不可用」兜底
+## Lỗi #8 (đã sửa): Đường copy clipboard rải 14 chỗ, trong đó 12 mất fallback "clipboard không khả dụng"
 
-**位置**：`feature/settings` 模块内 7 个文件。
+**Vị trí**: 7 tệp trong module `feature/settings`.
 
-**成因**：`ClipboardSupport.kt` 的类注释把公共函数的存在理由写得很清楚：
+**Nguyên nhân**: Comment lớp của `ClipboardSupport.kt` viết rất rõ lý do tồn tại hàm công cộng:
 
-> 此前这段在 CcSwitchScreen / FtpSettingsScreen / SshSettingsScreen 各抄了一份，
-> 差别只在剪贴板标签……抄三份的直接代价是：改提示文案或换剪贴板标签时要改三处，
-> 漏一处就出现行为不一致的复制按钮，而这类差异只在用户点击时才发现。
+> Trước đây đoạn này được copy riêng ở CcSwitchScreen / FtpSettingsScreen / SshSettingsScreen,
+> khác nhau chỉ ở nhãn clipboard……cái giá trực tiếp của việc copy ba bản là: đổi văn bản nhắc hoặc đổi nhãn clipboard
+> thì phải sửa ba chỗ, sót một chỗ là có nút copy hành vi không nhất quán, mà kiểu khác biệt này chỉ phát hiện lúc người dùng bấm.
 
-但实际排查发现**仍有 12 处手抄**，且形态全部退化为
-`clipboard?.setPrimaryClip(...)` 之后**无条件**弹「已复制」：
+Nhưng điều tra thực tế phát hiện **vẫn còn 12 chỗ copy tay**, và hình dạng đều thoái thành
+`clipboard?.setPrimaryClip(...)` rồi **vô điều kiện** hiện "đã copy":
 
-| 文件 | 位置 | 复制内容 |
+| Tệp | Vị trí | Nội dung copy |
 |---|---|---|
 | `McpSettingsScreen.kt` | 664 | **`mcp_agent_token`** |
-| `McpSettingsScreen.kt` | 732 / 969 / 995 | Agent 地址 / 命令 / JSON 配置 |
-| `SettingsCommon.kt` | 241 / 263 / 274 | 智枢协作地址 / **PIN 配对码** / 带 token 直连地址 |
-| `ModelProfilesScreen.kt` | 723 | 模型 JSON 配置（含 API Key） |
-| `ToolCenterScreen.kt` | 723 / 783 | 工具日志 / 捆绑安装日志 |
-| `SponsorScreen.kt` | 383 | 赞助邮箱 |
-| `SystemDevSettingsScreen.kt` | 486 | ADB 命令 |
-| `ToolDetailScreen.kt` | 273 / 238 | 带 token 访问链接 / 服务日志（本轮已先修） |
+| `McpSettingsScreen.kt` | 732 / 969 / 995 | Địa chỉ Agent / lệnh / cấu hình JSON |
+| `SettingsCommon.kt` | 241 / 263 / 274 | Địa chỉ hợp tác trung tâm điều khiển / **mã PIN pairing** / địa chỉ kết nối trực kèm token |
+| `ModelProfilesScreen.kt` | 723 | Cấu hình JSON model (chứa API Key) |
+| `ToolCenterScreen.kt` | 723 / 783 | Log công cụ / log cài đặt đi kèm |
+| `SponsorScreen.kt` | 383 | Email tài trợ |
+| `SystemDevSettingsScreen.kt` | 486 | Lệnh ADB |
+| `ToolDetailScreen.kt` | 273 / 238 | Link truy cập kèm token / log dịch vụ (vòng này đã sửa trước) |
 
-两种退化形态都造成用户可见后果：
+Cả hai hình dạng thoái đều gây hậu quả người dùng thấy được:
 
-- **`clipboard?.` 形式**（10 处）：拿不到剪贴板服务时静默跳过写入，却仍然弹出
-  「已复制」。用户在粘贴处找不到内容，只能反复排查——而复制内容里包含
-  **MCP token、PIN 配对码、带 token 的直连 URL**，这类「以为复制了其实没有」
-  会直接卡住配对流程。
-- **`as ClipboardManager` 强转形式**（`SettingsCommon.kt` 三处）：
-  服务为 null 时**抛 NPE 崩溃**，而不是静默失败。
+- **Dạng `clipboard?.`** (10 chỗ): khi không lấy được dịch vụ clipboard thì âm thầm bỏ qua ghi, nhưng vẫn hiện
+  "đã copy". Người dùng ở chỗ dán không tìm thấy nội dung, chỉ có thể truy đi truy lại — mà nội dung copy lại chứa
+  **MCP token、mã PIN pairing、URL kết nối trực kèm token**, kiểu "tưởng copy được thực ra không" này chặn thẳng luồng pairing.
+- **Dạng ép kiểu `as ClipboardManager`** (ba chỗ trong `SettingsCommon.kt`): service là null thì **ném NPE crash**,
+  chứ không phải thất bại lặng lẽ.
 
-**修复**：全部收敛到 `copyToClipboard(context, text, label, toast)`
-（`ClipboardSupport.kt`，内建 null 分支与「系统剪贴板不可用」提示）。
-同时删除 `CommunityLinks.kt` 里一个**与公共函数同名不同签名**的私有重载
-`Context.copyToClipboard(label, text)` —— 同一仓库出现两套同名实现，
-读代码的人无法从调用点判断走的是哪一套。
+**Cách sửa**: Tất cả hội tụ về `copyToClipboard(context, text, label, toast)`
+(`ClipboardSupport.kt`, có sẵn nhánh null và nhắc "hệ thống clipboard không khả dụng").
+Đồng thời xóa trong `CommunityLinks.kt` một overload private **cùng tên nhưng khác chữ ký**
+`Context.copyToClipboard(label, text)` — trong cùng một repo mà có hai bộ implementation cùng tên,
+người đọc mã không thể từ điểm gọi biết đi bộ nào.
 
-**守卫与反向验证**：新增 `ClipboardUnificationTest`（3 例，源码级扫描）：
+**Guard và reverse verification**: Thêm `ClipboardUnificationTest` (3 ca, quét ở cấp mã nguồn):
 
-1. 模块内不得出现绕过公共函数的 `setPrimaryClip` 直呼；
-2. 模块内不得重新定义私有 `copyToClipboard` 重载；
-3. 公共实现自身必须保留 null 分支**且分支内真的有提示**。
+1. Trong module không được có lời gọi trực tiếp `setPrimaryClip` vòng qua hàm công cộng;
+2. Trong module không được định nghĩa lại overload private `copyToClipboard`;
+3. Chính implementation công cộng phải giữ nhánh null **và trong nhánh thật sự có lời nhắc**.
 
-反向验证两轮：
+Hai vòng reverse verification:
 
-| 回退动作 | 变红的守卫 |
+| Hành động hoàn tác | Guard chuyển đỏ |
 |---|---|
-| `SponsorScreen` 恢复直呼 `setPrimaryClip` | 第 1 条 |
-| 公共函数 null 分支退化为 `if (clipboard == null) return` | 第 3 条 |
+| `SponsorScreen` khôi phục gọi trực tiếp `setPrimaryClip` | Điều 1 |
+| Nhánh null của hàm công cộng thoái thành `if (clipboard == null) return` | Điều 3 |
 
-第 2 条两轮均保持绿，证明它测的是独立不变量、未被误伤。
+Điều 2 giữ xanh cả hai vòng, chứng tỏ nó test một bất biến độc lập, không bị thiệt hại lây.
 
-**守卫自身的三次缺陷（记录在案）**：第 3 条守卫的判定方式连续错了两次，
-两次都是**子串判定无法区分「已修复」与「已退化」**：
+**Ba lần guard tự có lỗi (ghi lại)**: Điều 3 của guard liên tục sai hai lần, cả hai đều là
+**substring không phân biệt được "đã sửa" và "đã thoái hóa"**:
 
-1. 首版 `text.contains("clipboard == null")`：退化后的
-   `if (clipboard == null) return` 同样含该子串，两种形态都为真 → 恒过。
-2. 改为截取 `guardIndex` 后 **300 字符**窗口并要求含 `Toast.makeText`：
-   窗口长度经验值，恰好把后续成功路径上的
-   `Toast.makeText(context, toast, ...)` 纳入 → 仍恒过。
-3. 最终改为**按行取该 `if` 的直属分支**，并单独处理
-   「单行 `if (cond) return`」形态（无分支体，直接判失败）。
+1. Phiên bản đầu `text.contains("clipboard == null")`: dạng thoái `if (clipboard == null) return`
+   cũng chứa substring đó, cả hai đều đúng → luôn qua.
+2. Đổi sang lấy cửa sổ **300 ký tự** sau `guardIndex` rồi yêu cầu có `Toast.makeText`:
+   độ dài cửa sổ là giá trị kinh nghiệm, lại vô tình gồm luôn
+   `Toast.makeText(context, toast, ...)` trên đường thành công phía sau → vẫn luôn qua.
+3. Cuối cùng đổi sang **lấy theo dòng nhánh trực tiếp của cái `if` đó**, và xử lý riêng
+   dạng "`if (cond) return` trên một dòng" (không có thân nhánh, đánh giá thất bại trực tiếp).
 
-教训与批次七缺陷 #4 的守卫缺陷同源：**凡是要区分「某结构存在/不存在」的断言，
-必须按语法结构判定，不能做子串匹配，也不能用固定长度窗口。**
+Bài học cùng nguồn với lỗi #4 đợt bảy: **mọi assertion cần phân biệt "một cấu trúc có tồn tại hay không"
+phải phán đoán theo cấu trúc cú pháp, không được substring matching, cũng không được dùng cửa sổ độ dài cố định.**
 
-### 行数棘轮
+### Ratchet số dòng
 
-`ToolDetailScreen.kt` 与 `CommunityLinks.kt` 均为**净减少**（删除重复实现与冗余导入），
-`SponsorScreen.kt` / `McpSettingsScreen.kt` / `SettingsCommon.kt` 等为净减少或持平。
-全部文件 61 个均低于 400（其中 `McpSettingsScreen.kt` 仍远超 400 但**在基线内**，
-本轮只减不增，棘轮不下调要求）。`CcSwitchCredentials.kt` 159 行，不入基线。
+`ToolDetailScreen.kt` và `CommunityLinks.kt` đều **giảm ròng** (xóa implementation trùng và import thừa),
+`SponsorScreen.kt` / `McpSettingsScreen.kt` / `SettingsCommon.kt` v.v. giảm ròng hoặc bằng nhau.
+Tất cả 61 tệp đều dưới 400 (trong đó `McpSettingsScreen.kt` vẫn vượt 400 nhưng **nằm trong baseline**,
+vòng này chỉ giảm không tăng, không yêu cầu hạ ratchet). `CcSwitchCredentials.kt` 159 dòng, không vào baseline.
 
-### 本轮判定为「未发现缺陷」的文件（含判断依据）
+### Các tệp được đánh giá là "không phát hiện lỗi" trong vòng này (kèm căn cứ)
 
-- **`di/feature/settings/KoinModule.kt`(142)**：`SponsorListRepository` 与
-  `StatsRepository` 用 `single`（无状态、可复用），其余全部 `viewModel`；
-  `SettingsViewModel` 对可选依赖用 `getOrNull()`
-  （`skillInstallationManager`、`clawHubClient`）容忍缺失；依赖图无环。
-- **`stats/StatsRepository.kt`(253)**：**关键 OOM 修复已在位**——注释详述原实现
-  `listEntriesInRange` 把区间内全部 `harness_entries`（含完整 `payloadJson`）
-  读进内存再逐条 `parseToJsonElement` 建树，实测库内 15,888 条、单体可达数 MB，
-  选「全部时间」直接打爆 256MB 堆。现改为 SQL 层 `json_extract` + `GROUP BY`
-  聚合，1.5 万行压成几十行小结果。`tzOffsetMs` 与 SQL 日切共用同一偏移
-  （注释：「避免 CAST(createdAt/86400000) 按 UTC 日切、本地午夜错桶」）。
-  `tokenContributionFromAggregate` / `estimateTokensFromChars` 已提为顶层
-  `internal` 可测；热力图用 `groupingBy{}.fold(0)` 单遍聚合，不加载原始条目。
-- **`stats/StatsViewModel.kt`(74)**：`catch (e: CancellationException) { throw e }`
-  保取消语义后才 `catch (Exception)`；错误态给出可重试文案。
-- **`ToolDetailViewModel.kt`(365)**：`pollGatewayStatus` 的 `while(true)` 挂在
-  `viewModelScope` 上，VM 清理即取消；轮询回写前用 `_toolId.value == currentId`
-  判代，避免切换工具后旧轮询覆盖新状态；`toggleAutoStart` 保存失败**上抛 UI**
-  （注释：「保存失败必须上抛 UI，避免 Switch 显示『假成功』」）；
-  `generateToken` 用 `UUID.randomUUID()`（`SecureRandom` 支撑，加密安全）；
-  `applyModel` 对 token/密钥仅在有值时才写入，不覆盖已有配置。
-- **`StorageUsageViewModel.kt`(255)**：六处清理动作共享同一防重入守卫
-  `if (cleaningAction != null || refreshing) return`；每处
-  `if (it is CancellationException) throw it`；`formatSize` 用 `Locale.US`
-  固定小数点（避免阿拉伯语等区域出现 `١٢٣،٤`）。
-- **`ClipboardSupport.kt`(30)**：见缺陷 #8。
+- **`di/feature/settings/KoinModule.kt`(142)**: `SponsorListRepository` và
+  `StatsRepository` dùng `single` (không state, tái dùng được), còn lại toàn `viewModel`;
+  `SettingsViewModel` dùng `getOrNull()` cho dependency tùy chọn
+  (`skillInstallationManager`、`clawHubClient`) chịu thiếu; đồ thị không vòng.
+- **`stats/StatsRepository.kt`(253)**: **Lỗi OOM then chốt đã có bản sửa** — comment kể rõ implement cũ
+  `listEntriesInRange` đọc toàn bộ `harness_entries` trong khoảng (kể cả `payloadJson` đầy đủ)
+  vào bộ nhớ rồi từng cái `parseToJsonElement` dựng cây, đo thực trong DB có 15,888 dòng, một bản có thể tới vài MB,
+  chọn "toàn bộ thời gian" là vỡ ngay heap 256MB. Nay đổi sang `json_extract` + `GROUP BY` ở tầng SQL,
+  1.5 vạn dòng ép thành vài chục dòng kết quả nhỏ. `tzOffsetMs` và SQL chia ngày dùng chung một offset
+  (comment: "tránh CAST(createdAt/86400000) chia theo UTC, đưa local midnight vào sai bucket").
+  `tokenContributionFromAggregate` / `estimateTokensFromChars` đã nâng thành hàm cấp ngoài cùng `internal` để test được;
+  heatmap dùng `groupingBy{}.fold(0)` gộp một lượt, không load bản gốc.
+- **`stats/StatsViewModel.kt`(74)**: `catch (e: CancellationException) { throw e }`
+  giữ ngữ nghĩa hủy rồi mới `catch (Exception)`; trạng thái lỗi đưa văn bản có thể thử lại.
+- **`ToolDetailViewModel.kt`(365)**: `while(true)` của `pollGatewayStatus` gắn trên
+  `viewModelScope`, VM dọn là hủy; trước khi ghi kết quả poll dùng `_toolId.value == currentId`
+  phán thế hệ, tránh poll cũ đè trạng thái mới sau khi đổi công cụ; `toggleAutoStart` lưu thất bại
+  **ném lên UI** (comment: "lưu thất bại phải ném lên UI, tránh Switch hiện 'giả thành công'");
+  `generateToken` dùng `UUID.randomUUID()` (có `SecureRandom` làm nền, an toàn mật mã học);
+  `applyModel` với token/khóa chỉ ghi khi có giá trị, không đè cấu hình hiện có.
+- **`StorageUsageViewModel.kt`(255)**: Sáu hành động dọn dùng chung một guard chống vào lại
+  `if (cleaningAction != null || refreshing) return`; mỗi chỗ
+  `if (it is CancellationException) throw it`; `formatSize` cố định dấu thập phân bằng `Locale.US`
+  (tránh khu vực như tiếng Ả Rập ra `١٢٣،٤`).
+- **`ClipboardSupport.kt`(30)**: Xem lỗi #8.
 
-### 测试
+### Test
 
-`feature/settings` **+3**（新增 `ClipboardUnificationTest`），加上缺陷 #7 的
-`CcSwitchCredentialsTest` 5 → 10。`feature/settings` 由 6 个测试文件增至 7 个。
+`feature/settings` **+3** (thêm `ClipboardUnificationTest`), cộng với `CcSwitchCredentialsTest` 5 → 10 của lỗi #7.
+`feature/settings` từ 6 tệp test tăng lên 7.
 
 ---
 
-## 缺陷 #9：FTP 登录口令使用非常量时间比较，且未设口令时放行任意口令
+## Lỗi #9: FTP dùng so sánh không hằng thời gian cho mật khẩu đăng nhập, và cho qua mọi mật khẩu khi chưa đặt
 
-**位置**：`runtime/src/main/java/top/wkbin/tianxuan/runtime/ftp/AndroidFtpServer.kt`
-`handlePass`（修复前 289–294 行）。
+**Vị trí**: `runtime/src/main/java/top/wkbin/tianxuan/runtime/ftp/AndroidFtpServer.kt`
+`handlePass` (trước khi sửa dòng 289–294).
 
-**提交**：`18b29748`（父 `c0b90dc8`）。
+**Commit**: `18b29748` (cha `c0b90dc8`).
 
-### 两个独立缺陷
+### Hai lỗi độc lập
 
-**其一，计时旁路信道（非常量时间比较）。** 原判定：
+**Thứ nhất, kênh kề thời gian (so sánh không hằng thời gian).** Phán đoán cũ:
 
 ```kotlin
 val passwordMatches = !config.password.isNullOrBlank() && pass == config.password
 ```
 
-Kotlin 字符串 `==` 逐字符比较并在**首个不同字符处提前返回**，比较耗时因此与
-「前导正确字符数」正相关。攻击者按响应耗时逐位收敛，无需枚举整个口令空间。
+So sánh chuỗi Kotlin `==` so từng ký tự và **trả sớm ở ký tự khác đầu tiên**, nên thời gian so sánh tương quan với
+"số ký tự đúng ở đầu". Kẻ tấn công dựa vào thời gian phản hồi hội tụ từng ký tự, không cần liệt kê toàn không gian mật khẩu.
 
-该场景**构成要件与 `webchat/PinVerifier` 逐条一致**：FTP 服务绑定**通配地址**，
-同网段任意主机可访问；服务在监听期间**长期常驻**；`AndroidFtpServer` 对认证请求
-**不做任何频率限制与失败锁定**。因此同样构成稳定的远程计时旁路信道，此前对
-`PinVerifier` 的论证可原样复用，这不是一次「理论上才成立」的加固。
+Tình huống này **đáp ứng từng điều kiện y hệt `webchat/PinVerifier`**: dịch vụ FTP bind **địa chỉ wildcard**,
+mọi host cùng subnet truy cập được; dịch vụ **tồn tại liên tục** trong thời gian lắng nghe;
+`AndroidFtpServer` **không có bất kỳ giới hạn tần suất hay khóa sau thất bại** nào cho yêu cầu xác thực.
+Vì vậy cũng tạo thành kênh kề thời gian từ xa ổn định, lập luận trước đó cho `PinVerifier` dùng nguyên được,
+đây không phải biện pháp gia cố "chỉ đúng trên lý thuyết".
 
-**其二，未设口令即放行（比第一条更严重）。** 注意判定里的 `isNullOrBlank() ||`
-——`config.password` 为 `null` 或空白时，**整个表达式短路为 `true`**，任意口令
-一律通过。也就是说：用户从未设置过 FTP 口令时，服务向同网段**开放了无密码的
-rootfs 读写**。这不是计时问题，而是直接的口令形同虚设。
+**Thứ hai, chưa đặt mật khẩu thì cho qua (nghiêm trọng hơn điều một).** Chú ý `isNullOrBlank() ||` trong phán đoán
+— khi `config.password` là `null` hoặc toàn khoảng trắng, **toàn bộ biểu thức short-circuit thành `true`**,
+mật khẩu nào cũng qua. Nghĩa là: khi người dùng chưa từng đặt mật khẩu FTP, dịch vụ **mở quyền đọc/ghi rootfs không mật khẩu cho cùng subnet**.
+Đây không phải vấn đề thời gian mà là mật khẩu hình như vô dụng trực tiếp.
 
-同一函数里还有第三个问题：`user.equals("root")` 的**后备匹配**——即使用户配置了
-自定义用户名，只要 FTP 客户端发 `USER root` 就能通过用户名校验，配置被绕过。
+Cùng hàm còn có vấn đề thứ ba: **fallback matching** của `user.equals("root")` — dù người dùng đặt tên đăng nhập tùy chỉnh,
+chỉ cần client FTP gửi `USER root` là qua kiểm tra tên, cấu hình bị vòng qua.
 
-### 修复
+### Cách sửa
 
-抽出 `runtime/.../ftp/FtpCredentialVerifier.kt`（`internal object`，45 行）：
+Trích `runtime/.../ftp/FtpCredentialVerifier.kt` (`internal object`, 45 dòng):
 
 ```kotlin
 fun passwordMatches(candidate: String, expected: String?): Boolean {
@@ -1455,10 +1232,10 @@ fun passwordMatches(candidate: String, expected: String?): Boolean {
 }
 ```
 
-`MessageDigest.isEqual` 是 JDK 保证的恒定时间比较，项目内已有先例
-（`ShellCommandFactory.verifyPin`、`webchat/PinVerifier`、`bridge/HostBridge`）。
+`MessageDigest.isEqual` là so sánh hằng thời gian do JDK bảo đảm, trong dự án đã có tiền lệ
+(`ShellCommandFactory.verifyPin`、`webchat/PinVerifier`、`bridge/HostBridge`).
 
-`handlePass` 改为：
+`handlePass` đổi thành:
 
 ```kotlin
 val expectedUser = config.username.ifBlank { "root" }
@@ -1466,88 +1243,89 @@ val userMatches = user.equals(expectedUser, ignoreCase = true)
 val passwordMatches = FtpCredentialVerifier.passwordMatches(pass, config.password)
 ```
 
-三处语义变化：口令为空时**一律拒绝**（免密访问有且只有一个显式入口
-`anonymousEnabled`，该分支在本函数开头单独处理）；用户名校验**只认配置值**，
-删除 `root` 后备；比较改为恒定时间。
+Ba thay đổi ngữ nghĩa: mật khẩu rỗng thì **từ chối hết** (truy cập không mật khẩu có đúng một cổng tường minh
+`anonymousEnabled`, nhánh đó được xử lý riêng ở đầu hàm này); kiểm tra tên **chỉ nhận giá trị cấu hình**,
+xóa fallback `root`; phép so sánh đổi sang hằng thời gian.
 
-### 为什么独立成文件
+### Vì sao tách riêng thành tệp
 
-与 `FtpBounceGuard` 的拆分理由同构，有两条：
+Đồng cấu với lý do tách `FtpBounceGuard`, có hai điều:
 
-1. **可单测**——比对逻辑不依赖 socket 与 FTP 协议栈，可脱离 `Context` 直接断言；
-2. **不与行数棘轮冲突**——防护逻辑不该把主文件顶过上限。事实上这一点立刻兑现了：
-   初次改动让 `AndroidFtpServer.kt` 从 940 涨到 941，`architectureCheck` 直接
-   `BUILD FAILED`。按棘轮纪律**只能下调基线、不得为让检查通过而上调**，因此我把
-   调用处的 5 行注释压成 3 行（论证细节已完整保存在 `FtpCredentialVerifier` 的
-   KDoc 中，主文件只留一行指引），最终 **941 → 939 行**，低于基线。
+1. **Test được** — logic so sánh không phụ thuộc socket hay stack giao thức FTP, có thể assert rời `Context`;
+2. **Không xung đột ratchet dòng** — logic phòng thủ không được đẩy tệp chính quá hạn mức. Thực tế điều này lập tức ứng nghiệm:
+   lần đầu đổi làm `AndroidFtpServer.kt` từ 940 lên 941, `architectureCheck` cho `BUILD FAILED`.
+   Theo kỷ luật ratchet **chỉ được hạ baseline, không được nâng để qua check**, nên tôi nén 5 dòng comment tại điểm gọi
+   thành 3 dòng (chi tiết lập luận đã lưu trọn trong KDoc của `FtpCredentialVerifier`, tệp chính chỉ giữ một dòng dẫn),
+   cuối cùng **941 → 939 dòng**, dưới baseline.
 
-### 测试
+### Test
 
-新增 `runtime/src/test/.../ftp/FtpCredentialVerifierTest.kt`，6 例：
+Thêm `runtime/src/test/.../ftp/FtpCredentialVerifierTest.kt`, 6 ca:
 
-| 用例 | 覆盖 |
+| Ca test | Phủ |
 |---|---|
-| `correct password matches` | 正例基线 |
-| `wrong password is rejected` | 后缀/大小写/空串/截断两侧 |
-| `unset expected password rejects every candidate` | **决定性守卫**：`null`/`""`/`"   "` 一律拒绝 |
-| `comparison is byte exact for unicode and control characters` | 不做 trim/折叠/归一化 |
-| `lookalike prefixes are not accepted` | 防草率 `startsWith`/`contains` |
-| `server delegates password comparison to this verifier` | 源码级守卫 |
+| `correct password matches` | Baseline ca đúng |
+| `wrong password is rejected` | Suffix/chữ hoa/thanh/chuỗi rỗng/cụt hai đầu |
+| `unset expected password rejects every candidate` | **Guard quyết định**: `null`/`""`/`"   "` đều từ chối |
+| `comparison is byte exact for unicode and control characters` | Không trim/gập/normalize |
+| `lookalike prefixes are not accepted` | Chặn `startsWith`/`contains` làm ẩu |
+| `server delegates password comparison to this verifier` | Guard cấp mã nguồn |
 
-### 守卫写法上踩到的三个坑（如实记录）
+### Ba bẫy khi viết guard (ghi trung thực)
 
-这一批的第三条（源码级守卫）在写成的过程中连续暴露了三个问题，都属于
-「**守卫自己不可靠**」，比缺陷本身更值得记录：
+Guard thứ ba của đợt này (guard cấp mã nguồn) liên tục bộc lộ ba vấn đề trong lúc viết, đều thuộc dạng
+"**guard tự không đáng tin**", đáng ghi hơn cả bản thân lỗi:
 
-**坑一：`substringAfter` 在右界缺失时返回超长文本，而非空串。** 首版写成
+**Bẫy một: `substringAfter` trả văn bản siêu dài khi thiếu giới hạn phải, chứ không phải chuỗi rỗng.** Phiên bản đầu viết
 
 ```kotlin
 val handlePass = source.substringAfter("private fun handlePass(")
     .substringBefore("private fun handleMode(")
 ```
 
-若源码被改动导致右界不存在，`substringBefore` 找不到分隔符会**原样返回整个剩余
-文本**——包含 `handleMode` 之后的所有代码，里面自然含 `FtpCredentialVerifier`，
-断言恒过。改为 `indexOf` + 显式断言 `end > start`，边界丢立即报错而不是静默放宽。
+Nếu mã bị đổi làm mất giới hạn phải, `substringBefore` không tìm thấy delimiter sẽ **trả nguyên toàn bộ phần còn lại**
+— bao gồm mọi mã sau `handleMode`, trong đó đương nhiên có `FtpCredentialVerifier`, assert luôn qua.
+Đổi sang `indexOf` + assert tường minh `end > start`, mất giới hạn thì báo lỗi ngay chứ không âm thầm nới.
 
-**坑二：注释里逐字引用旧代码，会被守卫当成代码命中。** 关于「本条守卫的写法定式」的注释里写了
-"不得退回 `pass == config.password` 或 `isNullOrBlank() ||`"，结果 `contains`
-扫描命中了**注释本身**，测试直接红在 `isNullOrBlank() ||` 这一条上。修复：
-按行 `filterNot { it.trimStart().startsWith("//") }` 剔除注释行后再判定。
-**这是一个通用教训——任何对源码做子串扫描的守卫，都必须先把注释排除，否则
-「把旧代码写进注释解释为什么不能这么写」这件事本身就会让守卫失效或误报。**
+**Bẫy hai: Comment trích nguyên văn mã cũ sẽ bị guard coi là mã trúng.** Trong comment giải thích "định dạng viết guard này"
+có câu "không được lùi về `pass == config.password` hay `isNullOrBlank() ||`", kết quả `contains`
+quét trúng **chính comment đó**, test đỏ ngay ở điều `isNullOrBlank() ||`. Sửa: lọc theo dòng
+`filterNot { it.trimStart().startsWith("//") }` rồi mới phán đoán.
+**Đây là bài học phổ quát — mọi guard quét substring trên mã nguồn đều phải loại comment trước,
+nếu không thì việc "viết mã cũ vào comment để giải thích tại sao không được viết thế" tự nó làm guard vô hiệu hoặc báo giả.**
 
-**坑三（本项目第 4 次出现）：子串判定无法区分「已修复」与「已退化」。**
-前两个坑修完后守卫才真正可用。反向验证：把 `handlePass` **忠实回退**为
+**Bẫy ba (lần thứ 4 trong dự án): Substring không phân biệt được "đã sửa" và "đã thoái hóa".**
+Sau khi sửa hai bẫy đầu guard mới thực sự dùng được. Reverse verification: hoàn tác **trung thực** `handlePass` về
 
 ```kotlin
 val passwordMatches = config.password.isNullOrBlank() || pass == config.password
 if (user.equals(config.username.ifBlank { "root" }, ignoreCase = true) || user.equals("root")) {
 ```
 
-`FtpCredentialVerifierTest` **6 例中恰好 1 例变红**，红的正是
-`server delegates password comparison to this verifier`，位置 `FtpCredentialVerifierTest.kt:73`
-（「handlePass 未委托给 FtpCredentialVerifier」）。恢复修复态后 6/6 全绿。
-**精确变红、且只有预期的那一条变红**，守卫有效。
+`FtpCredentialVerifierTest` **đúng 1 trong 6 ca chuyển đỏ**, đó chính là
+`server delegates password comparison to this verifier`, vị trí `FtpCredentialVerifierTest.kt:73`
+("handlePass không ủy thác cho FtpCredentialVerifier"). Khôi phục bản sửa thì 6/6 toàn xanh.
+**Đỏ đúng và chỉ đúng ca kỳ vọng**, guard có hiệu lực.
 
-至此本项目已**连续 4 次**（缺陷 #7 两次、缺陷 #8 一次、缺陷 #9 一次）出现
-「子串/固定长度窗口判定无法区分已修复与已退化」的同类问题。定式已经收敛：
+Đến đây dự án đã **liên tiếp 4 lần** (lỗi #7 hai lần, lỗi #8 một lần, lỗi #9 một lần) gặp cùng một dạng vấn đề
+"substring/cửa sổ độ dài cố định không phân biệt được đã sửa và đã thoái hóa". Định dạng đã hội tụ:
 
-> 凡是要区分「某结构存在/不存在」的断言，**必须按语法结构判定**
-> （取函数体区间、取某行实参、按行剥离注释），
-> **不能做子串匹配，也不能用固定长度窗口**。
+> Mọi assertion cần phân biệt "một cấu trúc có tồn tại hay không", **phải phán đoán theo cấu trúc cú pháp**
+> (lấy khoảng thân hàm, lấy đối số thực tế của một dòng, bóc comment theo dòng),
+> **không được substring matching, cũng không được cửa sổ độ dài cố định**.
 
-### 验证
+### Verification
 
-- 全项目 **1473 tests, 0 failures, 0 errors, 0 skipped**（237 个 suite；
-  较上一批 1467 增 6，即本次新增的 6 例）。
-- `architectureCheck`：31 个模块 · 依赖白名单/无环/import 黑名单/尺寸棘轮 全部通过。
-- `AndroidFtpServer.kt` **941 → 939 行**（基线 940）；`FtpCredentialVerifier.kt` 45 行。
-- 远端 `18b29748` 三个文件逐字节校验：**ALL MATCH**。
+- Toàn dự án **1473 tests, 0 failures, 0 errors, 0 skipped** (237 suite;
+  hơn đợt trước 1467 là 6, tức đúng 6 ca thêm mới).
+- `architectureCheck`: 31 module · whitelist phụ thuộc/không vòng/import blacklist/ratchet kích thước đều qua.
+- `AndroidFtpServer.kt` **941 → 939 dòng** (baseline 940); `FtpCredentialVerifier.kt` 45 dòng.
+- Ba tệp tại remote `18b29748` đối chiếu từng byte: **ALL MATCH**.
 
-### 边界声明
+### Tuyên bố ranh giới
 
-这**不是**在补救 FTP 协议本身。FTP 是**明文协议**，口令在网上直接可嗅探，恒定
-时间比较对它没有任何帮助。恒定时间比较消除的是**主动攻击者逐字节猜解口令**的
-通道，属于纵深防御的一层，**不能替代「不要把 FTP 暴露到不可信网络」这一根本
-边界**。这一句已逐字写入 `FtpCredentialVerifier` 的 KDoc，避免后来者高估该修复。
+Đây **không phải** là vá bản thân giao thức FTP. FTP là **giao thức plaintext**, mật khẩu có thể bị nghe trực tiếp trên mạng,
+so sánh hằng thời gian không giúp gì ở đó. Cái mà so sánh hằng thời gian loại bỏ là kênh
+**kẻ tấn công chủ động đoán mật khẩu từng byte**, thuộc một tầng phòng thủ chiều sâu,
+**không thay thế được ranh giới căn bản là "đừng phơi FTP ra mạng không tin cậy"**.
+Câu này đã được ghi từng chữ vào KDoc của `FtpCredentialVerifier` để người về sau không đánh giá cao quá mức bản sửa này.

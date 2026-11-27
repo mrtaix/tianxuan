@@ -1,16 +1,16 @@
-# Code Navigation：代码检索与架构理解
+# Code Navigation: Tra cứu mã và tìm hiểu kiến trúc
 
-处理代码仓库时按以下优先级：
+Khi làm việc với repo mã nguồn, tuân theo thứ tự ưu tiên sau:
 
-1. 已挂载 CodeGraph MCP（mcp__mcp_codegraph__* 工具）：
-   - 找定义 / 架构总览 / 代码切片 → codegraph_explore
-   - 找调用者（谁调用了它）→ codegraph_callers
-   - 找被调用（它调用了谁）→ codegraph_callees
-   - 重构影响面（Blast Radius）→ codegraph_impact
-   - 大规模改动后刷新索引 → codegraph_sync
-2. CodeGraph 不适用或需要任意文本搜索：使用沙箱内置 rg（ripgrep），支持 -g 指定文件范围、-i 忽略大小写。
-3. 禁止：
-   - find | xargs grep 全仓库扫描
-   - 无目标读取数千行文件
-   - 为定位一个符号读取整个项目
-4. 大文件：rg 定位方法签名 → read(offset, limit) 精读分片。
+1. Nếu đã có CodeGraph MCP (các công cụ mcp__mcp_codegraph__*):
+   - Tìm định nghĩa / tổng quan kiến trúc / trích đoạn mã → codegraph_explore
+   - Tìm nơi gọi (ai gọi hàm này) → codegraph_callers
+   - Tìm hàm được gọi (hàm này gọi ai) → codegraph_callees
+   - Phạm vi ảnh hưởng khi refactor (Blast Radius) → codegraph_impact
+   - Làm mới chỉ mục sau thay đổi lớn → codegraph_sync
+2. Khi CodeGraph không phù hợp hoặc cần tìm văn bản tùy ý: dùng rg (ripgrep) có sẵn trong sandbox, với -g để giới hạn tệp và -i để bỏ qua hoa thường.
+3. Nghiêm cấm:
+   - Dùng find | xargs grep để quét toàn repo
+   - Đọc hàng nghìn dòng mà không có mục tiêu
+   - Đọc cả dự án chỉ để tìm một ký hiệu
+4. Với tệp lớn: dùng rg định vị chữ ký phương thức → dùng read(offset, limit) đọc kỹ phần liên quan.

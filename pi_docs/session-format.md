@@ -1,48 +1,48 @@
-# Session File Format
+# Định dạng tệp Session
 
-Sessions are stored as JSONL (JSON Lines) files. Each line is a JSON object with a `type` field. Session entries form a tree structure via `id`/`parentId` fields, enabling in-place branching without creating new files.
+Các session được lưu dưới dạng tệp JSONL (JSON Lines). Mỗi dòng là một đối tượng JSON với một trường `type`. Các entry của session tạo thành cấu trúc tree thông qua các trường `id`/`parentId`, cho phép branch ngay tại chỗ mà không cần tạo tệp mới.
 
-## File Location
+## Vị trí tệp
 
 ```
 ~/.pi/agent/sessions/--<path>--/<timestamp>_<session-id>.jsonl
 ```
 
-By default, `<session-id>` is a UUID. Callers can supply a custom ID through the SDK or `--session-id`. For `<path>`, Pi removes the leading path separator and replaces `/`, `\\`, and `:` with `-`.
+Theo mặc định, `<session-id>` là một UUID. Người gọi có thể cung cấp ID tùy chỉnh thông qua SDK hoặc `--session-id`. Với `<path>`, Pi xóa dấu phân cách đường dẫn ở đầu và thay `/`, `\\`, và `:` bằng `-`.
 
-## Deleting Sessions
+## Xóa Session
 
-Sessions can be removed by deleting their `.jsonl` files under `~/.pi/agent/sessions/`.
+Có thể xóa session bằng cách xóa các tệp `.jsonl` tương ứng trong `~/.pi/agent/sessions/`.
 
-Pi also supports deleting sessions interactively from `/resume` (select a session and press `Ctrl+D`, then confirm). When available, pi uses the `trash` CLI to avoid permanent deletion.
+Pi cũng hỗ trợ xóa session tương tác từ `/resume` (chọn một session và nhấn `Ctrl+D`, sau đó xác nhận). Khi có sẵn, pi dùng CLI `trash` để tránh xóa vĩnh viễn.
 
-## Session Version
+## Phiên bản Session
 
-Sessions have a version field in the header:
+Session có một trường version trong header:
 
-- **Version 1**: Linear entry sequence (legacy, auto-migrated on load)
-- **Version 2**: Tree structure with `id`/`parentId` linking
-- **Version 3**: Renamed `hookMessage` role to `custom` (extensions unification)
+- **Version 1**: Chuỗi entry tuyến tính (legacy, tự động migrate khi tải)
+- **Version 2**: Cấu trúc tree với liên kết `id`/`parentId`
+- **Version 3**: Đổi tên role `hookMessage` thành `custom` (thống nhất các extension)
 
-Existing sessions are automatically migrated to the current version (v3) when loaded.
+Các session hiện có được tự động migrate sang phiên bản hiện tại (v3) khi tải.
 
-## Source Files
+## Tệp nguồn
 
-Source on GitHub ([pi](https://github.com/earendil-works/pi)):
-- [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts) - Session entry types and SessionManager
-- [`packages/coding-agent/src/core/messages.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/messages.ts) - Extended message types (BashExecutionMessage, CustomMessage, etc.)
-- [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/ai/src/types.ts) - Base message types (UserMessage, AssistantMessage, ToolResultMessage)
-- [`packages/agent/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/agent/src/types.ts) - AgentMessage union type
+Mã nguồn trên GitHub ([pi](https://github.com/earendil-works/pi)):
+- [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts) - Các kiểu entry của session và SessionManager
+- [`packages/coding-agent/src/core/messages.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/messages.ts) - Các kiểu message mở rộng (BashExecutionMessage, CustomMessage, v.v.)
+- [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/ai/src/types.ts) - Các kiểu message cơ bản (UserMessage, AssistantMessage, ToolResultMessage)
+- [`packages/agent/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/agent/src/types.ts) - Kiểu union AgentMessage
 
-For TypeScript definitions in your project, inspect `node_modules/@earendil-works/pi-coding-agent/dist/` and `node_modules/@earendil-works/pi-ai/dist/`.
+Để xem các định nghĩa TypeScript trong dự án của bạn, hãy kiểm tra `node_modules/@earendil-works/pi-coding-agent/dist/` và `node_modules/@earendil-works/pi-ai/dist/`.
 
-## Message Types
+## Kiểu Message
 
-Session entries contain `AgentMessage` objects. Understanding these types is essential for parsing sessions and writing extensions.
+Các entry của session chứa các đối tượng `AgentMessage`. Hiểu rõ các kiểu này là cần thiết để phân tích session và viết extension.
 
-### Content Blocks
+### Khối nội dung (Content Blocks)
 
-Messages contain arrays of typed content blocks:
+Message chứa các mảng khối nội dung có kiểu:
 
 ```typescript
 interface TextContent {
@@ -74,7 +74,7 @@ interface ToolCall {
 }
 ```
 
-### Base Message Types (from pi-ai)
+### Kiểu Message cơ bản (từ pi-ai)
 
 ```typescript
 interface UserMessage {
@@ -132,9 +132,9 @@ interface Usage {
 }
 ```
 
-`"pending"` is reserved for partial messages in streaming events. Terminal events replace it with a completion reason before Pi persists the assistant message, so `"pending"` should never appear in session JSONL. `"deferred"` is a terminal reason for a provider response that will complete later; its `deferred` handle contains the provider data needed to retrieve that response.
+`"pending"` được dành cho các message một phần trong các sự kiện streaming. Các sự kiện kết thúc thay thế nó bằng lý do hoàn tất trước khi Pi lưu message assistant, do đó `"pending"` không bao giờ xuất hiện trong JSONL của session. `"deferred"` là lý do kết thúc cho một phản hồi từ provider sẽ hoàn tất sau; handle `deferred` của nó chứa dữ liệu provider cần để truy xuất phản hồi đó.
 
-### Extended Message Types (from pi-coding-agent)
+### Kiểu Message mở rộng (từ pi-coding-agent)
 
 ```typescript
 interface BashExecutionMessage {
@@ -173,7 +173,7 @@ interface CompactionSummaryMessage {
 }
 ```
 
-### AgentMessage Union
+### Union AgentMessage
 
 ```typescript
 type AgentMessage =
@@ -186,9 +186,9 @@ type AgentMessage =
   | CompactionSummaryMessage;
 ```
 
-## Entry Base
+## Entry cơ sở
 
-All entries (except `SessionHeader`) extend `SessionEntryBase`:
+Tất cả entry (trừ `SessionHeader`) đều kế thừa `SessionEntryBase`:
 
 ```typescript
 interface SessionEntryBase {
@@ -199,17 +199,17 @@ interface SessionEntryBase {
 }
 ```
 
-## Entry Types
+## Các kiểu Entry
 
 ### SessionHeader
 
-First line of the file. Metadata only, not part of the tree (no `id`/`parentId`).
+Dòng đầu tiên của tệp. Chỉ chứa metadata, không thuộc tree (không có `id`/`parentId`).
 
 ```json
 {"type":"session","version":3,"id":"uuid","timestamp":"2024-12-03T14:00:00.000Z","cwd":"/path/to/project"}
 ```
 
-For sessions with a parent (created via `/fork`, `/clone`, or `newSession({ parentSession })`):
+Đối với session có parent (được tạo qua `/fork`, `/clone`, hoặc `newSession({ parentSession })`):
 
 ```json
 {"type":"session","version":3,"id":"uuid","timestamp":"2024-12-03T14:00:00.000Z","cwd":"/path/to/project","parentSession":"/path/to/original/session.jsonl"}
@@ -217,7 +217,7 @@ For sessions with a parent (created via `/fork`, `/clone`, or `newSession({ pare
 
 ### SessionMessageEntry
 
-A message in the conversation. The `message` field contains an `AgentMessage`.
+Một message trong cuộc hội thoại. Trường `message` chứa một `AgentMessage`.
 
 ```json
 {"type":"message","id":"a1b2c3d4","parentId":"prev1234","timestamp":"2024-12-03T14:00:01.000Z","message":{"role":"user","content":"Hello","timestamp":1733234401000}}
@@ -227,7 +227,7 @@ A message in the conversation. The `message` field contains an `AgentMessage`.
 
 ### ModelChangeEntry
 
-Emitted when the user switches models mid-session.
+Được phát ra khi người dùng chuyển model giữa chừng trong session.
 
 ```json
 {"type":"model_change","id":"d4e5f6g7","parentId":"c3d4e5f6","timestamp":"2024-12-03T14:05:00.000Z","provider":"openai","modelId":"gpt-4o"}
@@ -235,7 +235,7 @@ Emitted when the user switches models mid-session.
 
 ### ThinkingLevelChangeEntry
 
-Emitted when the user changes the thinking/reasoning level.
+Được phát ra khi người dùng thay đổi mức thinking/reasoning.
 
 ```json
 {"type":"thinking_level_change","id":"e5f6g7h8","parentId":"d4e5f6g7","timestamp":"2024-12-03T14:06:00.000Z","thinkingLevel":"high"}
@@ -243,85 +243,86 @@ Emitted when the user changes the thinking/reasoning level.
 
 ### CompactionEntry
 
-Created when context is compacted. Stores a summary of earlier messages.
+Được tạo khi context được nén (compact). Lưu bản tóm tắt các message trước đó.
 
 ```json
 {"type":"compaction","id":"f6g7h8i9","parentId":"e5f6g7h8","timestamp":"2024-12-03T14:10:00.000Z","summary":"User discussed X, Y, Z...","firstKeptEntryId":"c3d4e5f6","tokensBefore":50000}
 ```
 
-`firstKeptEntryId` is required. It identifies the first entry retained from before the compaction entry. When rebuilding context, Pi replaces older summarized entries with the compaction summary and keeps the range beginning at this entry.
+`firstKeptEntryId` là bắt buộc. Nó xác định entry đầu tiên được giữ lại từ trước entry compaction. Khi xây dựng lại context, Pi thay thế các entry cũ đã được tóm tắt bằng bản tóm tắt compaction và giữ lại phạm vi bắt đầu từ entry này.
 
-Optional fields:
-- `usage`: LLM usage from generating the summary; included in session token and cost totals
-- `details`: Implementation-specific data (e.g., `{ readFiles: string[], modifiedFiles: string[] }` for default, or custom data for extensions)
-- `fromHook`: `true` if generated by an extension, `false`/`undefined` if pi-generated (legacy field name)
+Các trường tùy chọn:
+- `usage`: Mức sử dụng LLM khi tạo bản tóm tắt; được tính vào tổng token và chi phí của session
+- `details`: Dữ liệu riêng cho từng implementation (ví dụ `{ readFiles: string[], modifiedFiles: string[] }` cho mặc định, hoặc dữ liệu tùy chỉnh cho extension)
+- `fromHook`: `true` nếu được tạo bởi extension, `false`/`undefined` nếu do pi tạo (tên trường legacy)
 
 ### BranchSummaryEntry
 
-Created when switching branches via `/tree` with an LLM generated summary of the left branch up to the common ancestor. Captures context from the abandoned path.
+Được tạo khi chuyển branch qua `/tree`, kèm bản tóm tắt do LLM tạo cho nhánh bên trái đến tổ tiên chung. Ghi lại context từ đường đi bị bỏ rơi.
 
 ```json
 {"type":"branch_summary","id":"g7h8i9j0","parentId":"a1b2c3d4","timestamp":"2024-12-03T14:15:00.000Z","fromId":"f6g7h8i9","summary":"Branch explored approach A..."}
 ```
 
-`parentId` is the entry from which the new branch continues. `fromId` is the previous leaf whose abandoned path was summarized.
+`parentId` là entry mà từ đó branch mới tiếp tục. `fromId` là leaf trước đó có đường đi bị bỏ rơi đã được tóm tắt.
 
-Optional fields:
-- `usage`: LLM usage from generating the summary; included in session token and cost totals
-- `details`: File tracking data (`{ readFiles: string[], modifiedFiles: string[] }`) for default, or custom data for extensions
-- `fromHook`: `true` if generated by an extension, `false`/`undefined` if pi-generated (legacy field name)
+Các trường tùy chọn:
+- `usage`: Mức sử dụng LLM khi tạo bản tóm tắt; được tính vào tổng token và chi phí của session
+- `details`: Dữ liệu theo dõi tệp (`{ readFiles: string[], modifiedFiles: string[] }`) cho mặc định, hoặc dữ liệu tùy chỉnh cho extension
+- `fromHook`: `true` nếu được tạo bởi extension, `false`/`undefined` nếu do pi tạo (tên trường legacy)
 
 ### CustomEntry
 
-Extension state persistence. Does NOT participate in LLM context.
+Lưu trữ trạng thái của extension. KHÔNG tham gia vào context của LLM.
 
 ```json
 {"type":"custom","id":"h8i9j0k1","parentId":"g7h8i9j0","timestamp":"2024-12-03T14:20:00.000Z","customType":"my-extension","data":{"count":42}}
 ```
 
-Use `customType` to identify your extension's entries on reload. Interactive mode can render custom entries via `pi.registerEntryRenderer(customType, renderer)`, but they still do not participate in LLM context.
+Dùng `customType` để xác định entry của extension khi tải lại. Chế độ tương tác có thể render các entry tùy chỉnh qua `pi.registerEntryRenderer(customType, renderer)`, nhưng chúng vẫn không tham gia context của LLM.
 
 ### CustomMessageEntry
 
-Extension-injected messages that DO participate in LLM context.
+Các message do extension chèn vào CÓ tham gia context của LLM.
 
 ```json
 {"type":"custom_message","id":"i9j0k1l2","parentId":"h8i9j0k1","timestamp":"2024-12-03T14:25:00.000Z","customType":"my-extension","content":"Injected context...","display":true}
 ```
 
-Fields:
-- `content`: String or `(TextContent | ImageContent)[]` (same as UserMessage)
-- `display`: `true` = show in TUI with distinct styling, `false` = hidden
-- `details`: Optional extension-specific metadata (not sent to LLM)
+Các trường:
+- `content`: Chuỗi hoặc `(TextContent | ImageContent)[]` (giống UserMessage)
+- `display`: `true` = hiển thị trong TUI với kiểu dáng riêng, `false` = ẩn
+- `details`: Metadata tùy chọn riêng cho extension (không gửi tới LLM)
 
 ### LabelEntry
 
-User-defined bookmark/marker on an entry.
+Đánh dấu/bookmark do người dùng định nghĩa trên một entry.
 
 ```json
 {"type":"label","id":"j0k1l2m3","parentId":"i9j0k1l2","timestamp":"2024-12-03T14:30:00.000Z","targetId":"a1b2c3d4","label":"checkpoint-1"}
 ```
 
-Set `label` to `undefined` to clear a label.
+Đặt `label` thành `undefined` để xóa nhãn.
 
 ### SessionInfoEntry
 
-Session metadata (e.g., user-defined display name). Set via `/name`, `--name` / `-n`, or `pi.setSessionName()` in extensions.
+Metadata của session (ví dụ tên hiển thị do người dùng định nghĩa). Đặt qua `/name`, `--name` / `-n`, hoặc `pi.setSessionName()` trong extension.
 
 ```json
 {"type":"session_info","id":"k1l2m3n4","parentId":"j0k1l2m3","timestamp":"2024-12-03T14:35:00.000Z","name":"Refactor auth module"}
 ```
 
-The session name is displayed in the session selector (`/resume`) instead of the first message when set.
+Tên session được hiển thị trong bộ chọn session (`/resume`) thay vì message đầu tiên khi đã được đặt.
 
-## Tree Structure
+## Cấu trúc Tree
 
-Entries normally form one tree, but navigation APIs can create multiple roots:
-- A root entry has `parentId: null`; the first entry is initially the root
-- Each non-root entry points to its parent via `parentId`
-- Branching creates new children from an earlier entry
-- The "leaf" is the current position in the tree
-- Calling `resetLeaf()` or `branchWithSummary(null, ...)` allows a later entry to become another root
+Thông thường các entry tạo thành một tree, nhưng các API điều hướng có thể tạo nhiều root:
+
+- Entry root có `parentId: null`; entry đầu tiên ban đầu là root
+- Mỗi entry không phải root trỏ tới parent của nó qua `parentId`
+- Việc branch tạo các con mới từ một entry trước đó
+- "leaf" là vị trí hiện tại trong tree
+- Gọi `resetLeaf()` hoặc `branchWithSummary(null, ...)` cho phép một entry sau đó trở thành root khác
 
 ```
 [user msg] ─── [assistant] ─── [user msg] ─── [assistant] ─┬─ [user msg] ← current leaf
@@ -329,30 +330,30 @@ Entries normally form one tree, but navigation APIs can create multiple roots:
                                                             └─ [branch_summary] ─── [user msg] ← alternate branch
 ```
 
-## Context Building
+## Xây dựng Context
 
-`buildContextEntries()` walks from the current leaf to the root, producing the active entry list while honoring compaction:
+`buildContextEntries()` đi từ leaf hiện tại đến root, tạo danh sách entry hoạt động trong khi tuân theo compaction:
 
-1. Collects all entries on the path
-2. If one or more `CompactionEntry` values are on the path, uses the latest one:
-   - Includes the compaction entry first
-   - Includes entries from `firstKeptEntryId` up to, but not including, the compaction entry
-   - Includes entries after the compaction entry
-3. Preserves non-message entries in the selected range so interactive mode can render them
+1. Thu thập tất cả entry trên đường đi
+2. Nếu có một hoặc nhiều `CompactionEntry` trên đường đi, dùng cái mới nhất:
+   - Đưa entry compaction vào trước tiên
+   - Đưa các entry từ `firstKeptEntryId` đến trước (không bao gồm) entry compaction
+   - Đưa các entry sau entry compaction
+3. Giữ lại các entry không phải message trong phạm vi đã chọn để chế độ tương tác có thể render chúng
 
-`buildSessionContext()` builds on that entry list to produce the message list for the LLM:
+`buildSessionContext()` dựa trên danh sách entry đó để tạo danh sách message cho LLM:
 
-1. Extracts current model and thinking level settings from the full path
-2. Converts selected entries to messages:
-   - `message` -> stored `AgentMessage`
+1. Trích xuất cài đặt model hiện tại và mức thinking từ toàn bộ đường đi
+2. Chuyển các entry đã chọn thành message:
+   - `message` -> `AgentMessage` đã lưu
    - `compaction` -> `compactionSummary`
    - `branch_summary` -> `branchSummary`
    - `custom_message` -> `CustomMessage`
-   - `custom` -> no context message
+   - `custom` -> không có message context
 
-The compaction summary replaces entries before `firstKeptEntryId`. The retained entries and all entries after the compaction remain available to the LLM.
+Bản tóm tắt compaction thay thế các entry trước `firstKeptEntryId`. Các entry được giữ lại và mọi entry sau compaction vẫn sẵn sàng cho LLM.
 
-## Parsing Example
+## Ví dụ phân tích
 
 ```typescript
 import { readFileSync } from "fs";
@@ -394,57 +395,57 @@ for (const line of lines) {
 }
 ```
 
-## SessionManager API
+## API SessionManager
 
-Key methods for working with sessions programmatically.
+Các phương thức chính để làm việc với session theo cách lập trình.
 
-### Static Creation Methods
-- `SessionManager.create(cwd, sessionDir?, options?)` - New session; `options` can set `id` and `parentSession`
-- `SessionManager.open(path, sessionDir?, cwdOverride?)` - Open existing session file
-- `SessionManager.continueRecent(cwd, sessionDir?)` - Continue most recent or create new
-- `SessionManager.inMemory(cwd?, options?, entries?)` - No file persistence, optionally initialized from entries
-- `SessionManager.forkFrom(sourcePath, targetCwd, sessionDir?, options?)` - Fork session from another project
+### Phương thức tạo tĩnh
+- `SessionManager.create(cwd, sessionDir?, options?)` - Session mới; `options` có thể đặt `id` và `parentSession`
+- `SessionManager.open(path, sessionDir?, cwdOverride?)` - Mở tệp session hiện có
+- `SessionManager.continueRecent(cwd, sessionDir?)` - Tiếp tục session gần nhất hoặc tạo mới
+- `SessionManager.inMemory(cwd?, options?, entries?)` - Không lưu vào tệp, có thể khởi tạo từ các entry
+- `SessionManager.forkFrom(sourcePath, targetCwd, sessionDir?, options?)` - Fork session từ một dự án khác
 
-### Static Listing Methods
-- `SessionManager.list(cwd, sessionDir?, onProgress?)` - List sessions for a directory
-- `SessionManager.listAll(onProgress?)` - List all sessions across all projects
-- `SessionManager.listAll(sessionDir?, onProgress?)` - List sessions from a custom session root
+### Phương thức liệt kê tĩnh
+- `SessionManager.list(cwd, sessionDir?, onProgress?)` - Liệt kê session cho một thư mục
+- `SessionManager.listAll(onProgress?)` - Liệt kê tất cả session trên mọi dự án
+- `SessionManager.listAll(sessionDir?, onProgress?)` - Liệt kê session từ một thư mục gốc session tùy chỉnh
 
-### Instance Methods - Session Management
-- `newSession(options?)` - Start a new session (options: `{ id?: string, parentSession?: string }`)
-- `setSessionFile(path)` - Switch to a different session file
-- `createBranchedSession(leafId)` - Extract branch to new session file
+### Phương thức instance - Quản lý Session
+- `newSession(options?)` - Bắt đầu session mới (options: `{ id?: string, parentSession?: string }`)
+- `setSessionFile(path)` - Chuyển sang tệp session khác
+- `createBranchedSession(leafId)` - Trích xuất branch sang tệp session mới
 
-### Instance Methods - Appending (all return entry ID)
-- `appendMessage(message)` - Add message
-- `appendThinkingLevelChange(level)` - Record thinking change
-- `appendModelChange(provider, modelId)` - Record model change
-- `appendCompaction(summary, firstKeptEntryId, tokensBefore, details?, fromHook?, usage?)` - Add compaction
-- `appendCustomEntry(customType, data?)` - Extension state (not in context)
-- `appendSessionInfo(name)` - Set session display name
-- `appendCustomMessageEntry(customType, content, display, details?)` - Extension message (in context)
-- `appendLabelChange(targetId, label)` - Set/clear label
+### Phương thức instance - Thêm entry (đều trả về entry ID)
+- `appendMessage(message)` - Thêm message
+- `appendThinkingLevelChange(level)` - Ghi lại thay đổi thinking
+- `appendModelChange(provider, modelId)` - Ghi lại thay đổi model
+- `appendCompaction(summary, firstKeptEntryId, tokensBefore, details?, fromHook?, usage?)` - Thêm compaction
+- `appendCustomEntry(customType, data?)` - Trạng thái extension (không nằm trong context)
+- `appendSessionInfo(name)` - Đặt tên hiển thị của session
+- `appendCustomMessageEntry(customType, content, display, details?)` - Message của extension (nằm trong context)
+- `appendLabelChange(targetId, label)` - Đặt/xóa nhãn
 
-### Instance Methods - Tree Navigation
-- `getLeafId()` - Current position
-- `getLeafEntry()` - Get current leaf entry
-- `getEntry(id)` - Get entry by ID
-- `getBranch(fromId?)` - Walk from entry to root
-- `getTree()` - Get full tree structure
-- `getChildren(parentId)` - Get direct children
-- `getLabel(id)` - Get label for entry
-- `branch(entryId)` - Move leaf to earlier entry
-- `resetLeaf()` - Reset leaf to null (before any entries)
-- `branchWithSummary(entryId, summary, details?, fromHook?, usage?)` - Branch with context summary; `entryId` may be `null` to branch from the root
+### Phương thức instance - Điều hướng Tree
+- `getLeafId()` - Vị trí hiện tại
+- `getLeafEntry()` - Lấy entry leaf hiện tại
+- `getEntry(id)` - Lấy entry theo ID
+- `getBranch(fromId?)` - Đi từ entry đến root
+- `getTree()` - Lấy toàn bộ cấu trúc tree
+- `getChildren(parentId)` - Lấy các con trực tiếp
+- `getLabel(id)` - Lấy nhãn của entry
+- `branch(entryId)` - Di chuyển leaf tới entry trước đó
+- `resetLeaf()` - Đặt leaf về null (trước mọi entry)
+- `branchWithSummary(entryId, summary, details?, fromHook?, usage?)` - Branch kèm tóm tắt context; `entryId` có thể là `null` để branch từ root
 
-### Instance Methods - Context & Info
-- `buildContextEntries()` - Get active branch entries with compaction applied
-- `buildSessionContext()` - Get messages, thinkingLevel, and model for LLM
-- `getEntries()` - All entries (excluding header)
-- `getHeader()` - Session header metadata
-- `getSessionName()` - Get display name from latest session_info entry
-- `getCwd()` - Working directory
-- `getSessionDir()` - Session storage directory
-- `getSessionId()` - Session UUID
-- `getSessionFile()` - Session file path (undefined for in-memory)
-- `isPersisted()` - Whether session is saved to disk
+### Phương thức instance - Context & Thông tin
+- `buildContextEntries()` - Lấy các entry của branch hoạt động sau khi áp dụng compaction
+- `buildSessionContext()` - Lấy message, thinkingLevel và model cho LLM
+- `getEntries()` - Tất cả entry (không gồm header)
+- `getHeader()` - Metadata header của session
+- `getSessionName()` - Lấy tên hiển thị từ entry session_info mới nhất
+- `getCwd()` - Thư mục làm việc
+- `getSessionDir()` - Thư mục lưu session
+- `getSessionId()` - UUID của session
+- `getSessionFile()` - Đường dẫn tệp session (undefined với in-memory)
+- `isPersisted()` - Session đã được lưu vào đĩa hay chưa

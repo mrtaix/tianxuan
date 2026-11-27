@@ -1,155 +1,155 @@
-# 🧭 天玄 (TianXuan) 离线开发插件小白使用指南
+# 🧭 Hướng dẫn dùng plugin ngoại tuyến CTHarness cho người mới
 
-> **一句话了解**：天玄离线插件包（`.txplugin`）是将手机上进行 **Android 开发、Flutter 编程、Rust 交叉编译、APK 逆向反编译与一键签名** 所需的全套工具打包好的“全家桶”。**无需联网下载任何依赖，导入即可开箱即用！**
+> **Hiểu nhanh trong một câu**: Gói plugin ngoại tuyến của CTHarness (`.txplugin`) là "bộ đầy đủ" đóng gói sẵn toàn bộ công cụ cần thiết để **phát triển Android, lập trình Flutter, biên dịch chéo Rust, dịch ngược/giải mã APK và ký chỉ với một chạm** ngay trên điện thoại. **Không cần tải bất kỳ gói phụ thuộc nào qua mạng, nhập là dùng ngay!**
 
 ---
 
-## 🎯 小白选包决策指南：我到底该安装哪一个？
+## 🎯 Bảng chọn gói cho người mới: tôi nên cài cái nào?
 
-如果你不知道自己该装什么，看下面的“对号入座”指南即可：
+Nếu bạn không biết mình cần cài gì, chỉ cần đối chiếu nhu cầu theo hướng dẫn dưới đây:
 
 ```
-                    ┌─────────────────────────┐
-                    │  你的手机剩余存储充足吗？  │
-                    └────────────┬────────────┘
-                                 │
-                 ┌───────────────┴───────────────┐
-                 ▼ 是                            ▼ 否（想省空间）
-    ┌───────────────────────────┐    ┌───────────────────────────┐
-    │  直接安装【Android全栈开发套件】│    │    按需求选择对应的子插件    │
-    │  （2.46 GB，一步到位全装齐） │    │    （请看下方的需求清单）    │
-    └───────────────────────────┘    └─────────────┬─────────────┘
-                                                   │
-        ┌──────────────────────────────────────────┼──────────────────────────────────────────┐
-        ▼                                          ▼                                          ▼
-【我想搞 APK 逆向 / 改软件】             【我想写 Flutter App】                   【我想写 C/C++ 或 Rust 底层】
-  1. 📦 Android核心基础套件(必装)          1. 📦 Android核心基础套件(必装)          1. 📦 Android核心基础套件(必装)
-  2. 📦 Android逆向分析套件                2. 📦 Flutter跨平台开发套件              2. 📦 Android-NDK原生开发套件
-  👉 总共只需 ~595 MB                      👉 总共只需 ~1.25 GB                    3. 📦 Rust交叉编译开发套件 (按需)
+                       ┌───────────────────────────────────┐
+                       │ Điện thoại còn đủ dung lượng không?│
+                       └─────────────────┬─────────────────┘
+                                         │
+                     ┌───────────────────┴───────────────────┐
+                     ▼ Có                                   ▼ Không (muốn tiết kiệm)
+    ┌────────────────────────────────────┐    ┌──────────────────────────────────┐
+    │ Cài Bộ phát triển Android toàn diện│    │ Chọn plugin thành phần theo nhu cầu│
+    │ (2.46 GB, cài trọn bộ một lần)      │    │ (xem danh sách nhu cầu bên dưới) │
+    └────────────────────────────────────┘    └─────────────────┬────────────────┘
+                                                               │
+        ┌──────────────────────────────────────────────────────┼──────────────────────────────────────────────────┐
+        ▼                                                      ▼                                                  ▼
+【Tôi muốn dịch ngược APK / sửa ứng dụng】       【Tôi muốn viết ứng dụng Flutter】          【Tôi muốn viết mã tầng thấp C/C++ hoặc Rust】
+  1. 📦 Bộ nền tảng Android (bắt buộc)            1. 📦 Bộ nền tảng Android (bắt buộc)       1. 📦 Bộ nền tảng Android (bắt buộc)
+  2. 📦 Bộ phân tích dịch ngược Android          2. 📦 Bộ phát triển đa nền tảng Flutter    2. 📦 Bộ phát triển mã gốc Android NDK
+  👉 Tổng cộng chỉ ~595 MB                       👉 Tổng cộng chỉ ~1.25 GB                  3. 📦 Bộ phát triển biên dịch chéo Rust (tùy nhu cầu)
 ```
 
 ---
 
-## 📦 各插件通俗详解（它们分别是干什么的？）
+## 📦 Giải thích từng plugin bằng ngôn ngữ dễ hiểu (chúng làm gì?)
 
-### 1. 🌟 `Android核心基础套件(必装)`（~449 MB）—— 必备底座
-- **通俗比喻**：相当于盖房子的**地基**。
-- **包含什么**：
-  - **Java 17 (JDK)**：运行 Android 开发工具和逆向工具的大脑；
-  - **Android SDK & Build-Tools**：Android 官方打包和编译核心；
-  - **Gradle**：自动化构建管家；
-  - **tianxuan-apk-sign**：天玄内置的**一键对齐与签名神器**（解决改包后装不上的问题）。
-- **适合人群**：**所有人都必须安装**（除非你只用纯 C 或纯 Dart，不涉及任何 APK 制作）。
-
----
-
-### 2. 🔍 `Android逆向分析套件`（~146 MB）—— 逆向修改神器
-- **通俗比喻**：拆解、查看和修改安卓应用的**手术刀工具箱**。
-- **包含什么**：
-  - **JADX**：把 APK 还原为看得懂的 **Java 源代码**；
-  - **Apktool**：把 APK 拆成图片、布局配置和 **Smali 汇编代码**，改完还能再装回去；
-  - **Dex2jar**：把安卓 DEX 文件转换为标准 Java Jar 包；
-  - **Ripgrep (`rg`)**：超高速代码搜索神器，1 秒在几十万行代码里搜出关键字；
-  - **Uber-apk-signer**：独立一键自动签名工具。
-- **适合人群**：想要反编译 APK、查看源码、汉化修改、破解分析、提取资源的小白。
+### 1. 🌟 `Bộ nền tảng Android (bắt buộc)` (~449 MB) — nền tảng bắt buộc
+- **Ẩn dụ dễ hiểu**: như **móng nhà** khi xây một căn nhà.
+- **Bao gồm gì**:
+  - **Java 17 (JDK)**: "bộ não" chạy công cụ phát triển Android và công cụ dịch ngược;
+  - **Android SDK & Build-Tools**: lõi đóng gói và biên dịch chính thức của Android;
+  - **Gradle**: công cụ quản lý dựng tự động;
+  - **tianxuan-apk-sign**: công cụ **căn chỉnh và ký chỉ với một chạm** tích hợp sẵn của CTHarness (giải quyết vấn đề sửa gói xong không cài được).
+- **Ai nên cài**: **mọi người đều bắt buộc cài** (trừ khi bạn chỉ dùng C thuần hoặc Dart thuần, không làm bất kỳ APK nào).
 
 ---
 
-### 3. ⚡ `Android-NDK原生开发套件`（~607 MB）—— C/C++ 底层高性能套件
-- **通俗比喻**：打造游戏引擎、加密模块和底层驱动的**重武器工厂**。
-- **包含什么**：
-  - **NDK r29**：Android 官方 C/C++ 编译器（Clang / LLVM）；
-  - **CMake & Ninja**：国际通用的 C/C++ 工程构建工具；
-  - **readelf / objdump / nm**：查看 `.so` 原生动态库内部导出函数与符号的逆向工具。
-- **适合人群**：需要编写或编译 C/C++ 动态库、编译游戏模块、分析 `.so` 文件的小白与极客。
+### 2. 🔍 `Bộ phân tích dịch ngược Android` (~146 MB) — công cụ dịch ngược và chỉnh sửa
+- **Ẩn dụ dễ hiểu**: **bộ dụng cụ phẫu thuật** để mổ xẻ, xem và sửa ứng dụng Android.
+- **Bao gồm gì**:
+  - **JADX**: khôi phục APK thành **mã nguồn Java** dễ đọc;
+  - **Apktool**: tách APK thành hình ảnh, cấu hình bố cục và **mã hợp ngữ Smali**, sửa xong còn đóng gói lại cài được;
+  - **Dex2jar**: chuyển tệp DEX của Android thành gói Java Jar chuẩn;
+  - **Ripgrep (`rg`)**: công cụ tìm mã siêu tốc, 1 giây tìm ra từ khóa trong hàng trăm nghìn dòng;
+  - **Uber-apk-signer**: công cụ tự ký một chạm độc lập.
+- **Ai nên cài**: người mới muốn giải mã APK, xem mã nguồn, dịch ngôn ngữ/chỉnh sửa, phân tích cơ chế bẻ khóa, trích xuất tài nguyên.
 
 ---
 
-### 4. 📱 `Flutter跨平台开发套件`（~809 MB）—— 跨平台现代 UI 开发
-- **通俗比喻**：写一套代码，就能跑出极致美观界面的**现代化开发神器**。
-- **包含什么**：
-  - **Flutter 3.47 SDK**：官方移动端跨平台框架（已剔除电脑端冗余，针对手机瘦身）；
-  - **Dart 运行时**：Dart 编程语言环境。
-- **适合人群**：想学习或开发 Flutter 手机应用、制作漂亮 UI 界面的开发者。
+### 3. ⚡ `Bộ phát triển mã gốc Android NDK` (~607 MB) — bộ C/C++ hiệu năng cao tầng thấp
+- **Ẩn dụ dễ hiểu**: **nhà máy vũ khí hạng nặng** để làm bộ máy trò chơi, module mã hóa và trình điều khiển tầng thấp.
+- **Bao gồm gì**:
+  - **NDK r29**: trình biên dịch C/C++ chính thức của Android (Clang / LLVM);
+  - **CMake & Ninja**: công cụ dựng dự án C/C++ phổ biến quốc tế;
+  - **readelf / objdump / nm**: công cụ dịch ngược để xem hàm xuất và ký hiệu bên trong thư viện động `.so`.
+- **Ai nên cài**: người mới và kỹ sư cần viết/biên dịch thư viện động C/C++, biên dịch module trò chơi, phân tích tệp `.so`.
 
 ---
 
-### 5. 🦀 `Rust交叉编译开发套件`（~505 MB）—— 现代内存安全语言
-- **通俗比喻**：极速且绝不崩溃的**新一代系统编程利器**。
-- **包含什么**：
-  - **Rust 1.85 编译器 (`rustc`) & 包管理器 (`cargo`)**；
-  - **Android JNI 交叉编译库**：直接在手机上把 Rust 代码编译成 Android 能用的 `.so` 库；
-  - 自动配置了清华大学国内镜像源与 NDK 链接器。
-- **适合人群**：Rust 语言爱好者、想用 Rust 为 Android 编写高性能安全模块的开发者。
+### 4. 📱 `Bộ phát triển đa nền tảng Flutter` (~809 MB) — phát triển giao diện hiện đại đa nền tảng
+- **Ẩn dụ dễ hiểu**: viết một bộ mã là tạo được giao diện đẹp mắt, tối ưu — **công cụ phát triển hiện đại**.
+- **Bao gồm gì**:
+  - **Flutter 3.47 SDK**: bộ khung đa nền tảng di động chính thức (đã loại bỏ phần thừa cho máy tính, tinh gọn cho điện thoại);
+  - **Môi trường thực thi Dart**: môi trường ngôn ngữ lập trình Dart.
+- **Ai nên cài**: nhà phát triển muốn học/làm ứng dụng Flutter trên điện thoại, tạo giao diện đẹp.
 
 ---
 
-### 6. 👑 `Android全栈开发套件`（~2.46 GB）—— 一揽子全量大合集
-- **包含以上 1~5 所有的套件**，一次导入，全部拥有！手机存储充足时的最佳选择。
+### 5. 🦀 `Bộ phát triển biên dịch chéo Rust` (~505 MB) — ngôn ngữ hiện đại an toàn bộ nhớ
+- **Ẩn dụ dễ hiểu**: **công cụ lập trình hệ thống thế hệ mới** nhanh và hầu như không bao giờ gặp sự cố.
+- **Bao gồm gì**:
+  - **Trình biên dịch Rust 1.85 (`rustc`) & trình quản lý gói (`cargo`)**;
+  - **Thư viện biên dịch chéo Android JNI**: trực tiếp biên dịch mã Rust trên điện thoại thành thư viện `.so` dùng được cho Android;
+  - Đã tự cấu hình máy chủ phản chiếu tại Trung Quốc của Đại học Thanh Hoa và trình liên kết NDK.
+- **Ai nên cài**: người yêu thích Rust, nhà phát triển muốn dùng Rust viết module bảo mật hiệu năng cao cho Android.
 
 ---
 
-## 🚀 保姆级安装教程（怎么导入天玄？）
-
-1. **第一步：把文件放进手机**
-   - 将电脑桌面上的 `.txplugin` 插件文件（如通过 QQ、微信、数据线或网盘）发送到手机。
-2. **第二步：在天玄中导入**
-   - 打开 **天玄 (TianXuan)** App；
-   - 点击底部导航栏的 **「工具」** 或 **「设置」** 页面；
-   - 找到 **「导入本地插件包」**（或者点击右上角的 `+` 号）；
-   - 在手机文件选择器中，选中下载的 `.txplugin` 文件；
-3. **第三步：等待安装完成**
-   - 界面会弹出进度条，依次执行“装载资源 ➔ 校验归档 ➔ 解压部署 ➔ 创建命令软链”；
-   - 提示 **「安装完成」** 后，回到 App **仪表盘**，体检状态将直接显示 **「已就绪」**！
+### 6. 👑 `Bộ phát triển Android toàn diện` (~2.46 GB) — bộ tổng hợp trọn gói
+- **Bao gồm tất cả các bộ từ 1 đến 5 ở trên**, nhập một lần là có đủ! Lựa chọn tốt nhất khi điện thoại còn nhiều dung lượng.
 
 ---
 
-## 💡 最常用的小白实战命令速查（终端怎么用？）
+## 🚀 Hướng dẫn cài đặt chi tiết (nhập vào CTHarness thế nào?)
 
-在天玄的 Linux 终端中，你可以直接运行以下命令：
+1. **Bước 1: đưa tệp vào điện thoại**
+   - Gửi tệp plugin `.txplugin` trên máy tính (qua QQ, WeChat, cáp dữ liệu hoặc đám mây) tới điện thoại.
+2. **Bước 2: nhập trong CTHarness**
+   - Mở ứng dụng **CTHarness**;
+   - Chạm **「Công cụ」** hoặc **「Cài đặt」** trên thanh điều hướng dưới;
+   - Tìm **「Nhập gói plugin cục bộ」** (hoặc chạm dấu `+` góc trên bên phải);
+   - Trong trình chọn tệp của điện thoại, chọn tệp `.txplugin` đã tải.
+3. **Bước 3: đợi cài đặt xong**
+   - Giao diện hiện thanh tiến độ, lần lượt chạy "nạp tài nguyên ➔ kiểm tra tệp nén ➔ giải nén triển khai ➔ tạo liên kết lệnh";
+   - Sau khi hiện **「Cài đặt hoàn tất」**, về **Bảng điều khiển** của ứng dụng, trạng thái kiểm tra sức khỏe sẽ hiện ngay **「Sẵn sàng」**!
 
-### 1. 逆向改包与一键签名（最常用！）
+---
+
+## 💡 Lệnh thực chiến thông dụng cho người mới (dùng terminal thế nào?)
+
+Trong terminal Linux của CTHarness, bạn có thể chạy trực tiếp các lệnh sau:
+
+### 1. Dịch ngược sửa gói và ký một chạm (dùng nhiều nhất!)
 ```bash
-# 第一步：把 APK 反编译成文件夹
+# Bước 1: giải mã APK thành một thư mục
 apktool d myapp.apk -o myapp_src
 
-# 第二步：修改里面的图片、文字或 smali 代码...
+# Bước 2: sửa hình ảnh, văn bản hoặc mã smali bên trong...
 
-# 第三步：把文件夹重新打包成未签名的 APK
+# Bước 3: đóng gói thư mục lại thành APK chưa ký
 apktool b myapp_src -o myapp_unsigned.apk
 
-# 第四步：一键对齐 + 自动签名（天玄内置神技，直接生成能安装的 APK！）
+# Bước 4: căn chỉnh + tự ký một chạm (kỹ năng tích hợp của CTHarness, tạo thẳng APK cài được!)
 tianxuan-apk-sign myapp_unsigned.apk myapp_signed.apk
 ```
 
-### 2. 查看 APK Java 源代码
+### 2. Xem mã nguồn Java của APK
 ```bash
-# 把 APK 源码直接导出为 Java 代码目录
+# Xuất thẳng mã nguồn APK thành thư mục mã Java
 jadx -d out_src myapp.apk
 ```
 
-### 3. 极速搜代码
+### 3. Tìm mã cực nhanh
 ```bash
-# 在当前文件夹所有代码中秒搜 "password" 或 "token"
+# Trong tất cả code của thư mục hiện tại, tìm "password" hoặc "token" trong tích tắc
 rg "password"
 ```
 
-### 4. 编译与开发命令
+### 4. Lệnh biên dịch và phát triển
 ```bash
-java -version     # 查看 Java 版本
-gradle --version  # 查看 Gradle 版本
-flutter doctor    # 查看 Flutter 环境状态
-rustc --version   # 查看 Rust 编译器版本
-cmake --version   # 查看 CMake 版本
+java -version     # xem phiên bản Java
+gradle --version  # xem phiên bản Gradle
+flutter doctor    # xem trạng thái môi trường Flutter
+rustc --version   # xem phiên bản trình biên dịch Rust
+cmake --version   # xem phiên bản CMake
 ```
 
 ---
 
-## ❓ 常见问题答疑 (FAQ)
+## ❓ Câu hỏi thường gặp
 
-- **Q1：安装这些插件需要联网吗？**
-  - **答**：**完全不需要！** 这是 100% 纯离线包，就算手机开启飞行模式也能完美解压和使用。
-- **Q2：安装后提示空间不够怎么办？**
-  - **答**：不要装 2.46 GB 的全栈大包。只需装 `Android核心基础套件`（449 MB）+ 对应的单个小插件（如逆向只需 146 MB）即可。
-- **Q3：为什么我改了别人的 APK 重新打包后，手机安装提示“安装包解析错误”或“签名不一致”？**
-  - **答**：因为 APK 重新打包后是**未签名**的，安卓系统禁止安装未签名 APK。**请务必运行 `tianxuan-apk-sign myapp_unsigned.apk` 进行一键签名！**
+- **C1: Cài mấy plugin này có cần lên mạng không?**
+  - **Đáp**: **Hoàn toàn không!** Đây là gói thuần ngoại tuyến 100%, dù điện thoại bật chế độ máy bay vẫn giải nén và dùng hoàn hảo.
+- **C2: Sau khi cài báo không đủ dung lượng thì làm sao?**
+  - **Đáp**: Đừng cài gói toàn diện 2.46 GB. Chỉ cần cài `Bộ nền tảng Android` (449 MB) + đúng một plugin nhỏ tương ứng (ví dụ chỉ dịch ngược thì cần 146 MB) là được.
+- **C3: Vì sao tôi sửa APK của người khác rồi đóng gói lại, điện thoại báo "lỗi phân tích gói cài đặt" hoặc "chữ ký không khớp"?**
+  - **Đáp**: Vì APK sau khi đóng gói lại là **chưa ký**, Android cấm cài APK chưa ký. **Hãy chạy `tianxuan-apk-sign myapp_unsigned.apk` để ký một chạm!**

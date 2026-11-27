@@ -1,7 +1,7 @@
-### Flutter 工程操作规约
-- 当前工程类型：Flutter；根目录标记：{{MARKER_TEXT}}。
-- 修改前先 read `pubspec.yaml`、`lib/` 和 `android/` 的 Gradle 配置；Dart 代码用 edit/write 修改。
-- 依赖优先执行 `flutter pub get`；构建入口：`/opt/tianxuan/scripts/build_flutter.sh "{{WORKSPACE_PATH}}" "apk --debug"`，或 `flutter build apk --debug`。
-- 若项目 Flutter/Gradle 版本与标准入口不兼容，先检查 `pubspec.yaml`、Flutter 约束与 Android wrapper 分析依赖要求；随后先调用 `build_script(action=list)` 检查库中是否已有适配的现有脚本。若有匹配脚本则直接调用 `build_script(action=bind, id=...)` 挂载复用；若无适配脚本，再调用 `build_script(action=create, project_type=flutter, ...)` 创建有明确适用版本说明的 POSIX shell 脚本并挂载。脚本的 `$1` 是项目目录，`$2` 是传给 `flutter build` 的完整参数；脚本内执行 `flutter build $2`（切勿加双引号以保留参数分词）；不得写死当前项目路径。
-- 安装到手机时，确认 `build/app/outputs/flutter-apk/*.apk` 完整后复制到 `/sdcard/Download/`，再执行 `tianxuan-host install-apk <apk路径>`；检测到 ADB 后可直接 `adb install -r <apk>`。排查运行日志或崩溃时直接调用 `host(action="logcat", package="<包名>")` 或执行 `logcat-grabber <包名>`，无需 Shizuku/Root。
-- 遇到 Android Gradle/AAPT2 错误，检查 `android/gradle.properties`、Android 核心环境和 ARM64 AAPT2，不要反复全量下载 Flutter SDK。
+### Quy tắc thao tác với dự án Flutter
+- Loại dự án hiện tại: Flutter; dấu nhận diện thư mục gốc: {{MARKER_TEXT}}.
+- Trước khi chỉnh sửa, dùng read để xem `pubspec.yaml`, `lib/` và cấu hình Gradle trong `android/`; dùng edit/write để sửa mã Dart.
+- Ưu tiên chạy `flutter pub get` để xử lý phụ thuộc; lệnh build: `/opt/tianxuan/scripts/build_flutter.sh "{{WORKSPACE_PATH}}" "apk --debug"`, hoặc `flutter build apk --debug`.
+- Nếu phiên bản Flutter/Gradle của dự án không tương thích với lệnh build tiêu chuẩn, trước tiên kiểm tra `pubspec.yaml`, các ràng buộc Flutter và wrapper Android để phân tích yêu cầu phụ thuộc; sau đó gọi `build_script(action=list)` để kiểm tra kho script đã có script phù hợp hay chưa. Nếu có, gọi trực tiếp `build_script(action=bind, id=...)` để gắn và tái sử dụng; nếu chưa có, gọi `build_script(action=create, project_type=flutter, ...)` để tạo script POSIX shell có mô tả rõ các phiên bản áp dụng rồi gắn vào dự án. Tham số `$1` của script là thư mục dự án, `$2` là toàn bộ tham số truyền cho `flutter build`; trong script, chạy `flutter build $2` (tuyệt đối không đặt trong dấu ngoặc kép để giữ nguyên việc tách tham số); không được ghi cứng đường dẫn dự án hiện tại.
+- Khi cài lên điện thoại, xác nhận `build/app/outputs/flutter-apk/*.apk` đã được tạo đầy đủ rồi sao chép vào `/sdcard/Download/`, sau đó chạy `tianxuan-host install-apk <duong-dan-apk>`; khi phát hiện ADB, có thể dùng trực tiếp `adb install -r <apk>`. Khi xem log chạy hoặc điều tra sự cố ứng dụng bị văng, gọi trực tiếp `host(action="logcat", package="<ten-goi>")` hoặc chạy `logcat-grabber <ten-goi>`, không cần Shizuku/Root.
+- Khi gặp lỗi Android Gradle/AAPT2, kiểm tra `android/gradle.properties`, môi trường Android cốt lõi và AAPT2 cho ARM64; không tải lại toàn bộ Flutter SDK nhiều lần.

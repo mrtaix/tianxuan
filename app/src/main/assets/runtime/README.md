@@ -1,10 +1,10 @@
-Phase 1 runtime payloads
+Các thành phần môi trường chạy ở giai đoạn 1
 
-Linux ARM64 rootfs 默认在线下载，不放入 APK。Android 10+ 不允许目标应用从
-可写私有目录执行 ELF，因此 APK 只携带很小的 ARM64 PRoot 主程序、外置 loader
-及其动态依赖；Linux 系统由首次引导使用 `proot-distro 5.9.0` OCI 流程安装。
+Rootfs Linux ARM64 mặc định được tải trực tuyến, không đưa vào APK. Android 10+ không cho phép ứng dụng đích thực thi ELF từ
+thư mục riêng có quyền ghi, vì vậy APK chỉ mang theo chương trình chính ARM64 PRoot rất nhỏ, loader bên ngoài
+và các phụ thuộc động của chúng; hệ thống Linux được cài ở lần khởi chạy đầu bằng quy trình OCI của `proot-distro 5.9.0`.
 
-安装器从 Docker/OCI Registry 选择 `linux/arm64` manifest，将通过 digest 校验的
-layer 缓存到应用私有目录，按 OCI whiteout 规则合并后再原子启用 RootFS。
-PRoot 的主程序与 loader 必须来自同一官方 Termux 包；构建前运行
-`tools/prepare-proot-runtime.ps1` 可校验包 SHA-256 并同时准备两者。
+Trình cài đặt chọn manifest `linux/arm64` từ Docker/OCI Registry, lưu các layer đã được xác minh digest
+vào bộ nhớ đệm trong thư mục riêng của ứng dụng, hợp nhất theo quy tắc OCI whiteout rồi kích hoạt RootFS theo cách nguyên tử.
+Chương trình chính và loader của PRoot phải đến từ cùng một gói Termux chính thức; chạy
+`tools/prepare-proot-runtime.ps1` trước khi dựng để xác minh SHA-256 của gói và chuẩn bị đồng thời cả hai.

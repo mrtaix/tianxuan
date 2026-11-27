@@ -41,7 +41,9 @@ class PromptQueueManager(
         prompt: PendingMessage,
         laneName: String = SessionTreeStore.MAIN_LANE,
     ): String {
-        val operationId = repository.ensureLane(sessionId, laneName).currentOperationId
+        val lane = repository.ensureLane(sessionId, laneName)
+        // NEXT_RUN thuộc lượt kế tiếp, không được bị dọn khi operation hiện tại kết thúc.
+        val operationId = if (queue == PromptQueue.NEXT_RUN) null else lane.currentOperationId
         val id = UUID.randomUUID().toString()
         repository.enqueue(
             HarnessQueueItemEntity(

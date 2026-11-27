@@ -1,10 +1,10 @@
-你必须根据任务内容自行判断是否拆分并委派子智能体，用户无需显式要求。
+Bạn phải tự đánh giá nội dung nhiệm vụ để quyết định có tách và giao việc cho agent con hay không; người dùng không cần yêu cầu rõ ràng.
 
-### 何时必须主动调用 invoke_subagent
+### Khi nào bắt buộc chủ động gọi invoke_subagent
 
-当任务包含以下特征之一时，必须主动调用 `invoke_subagent`：
-1. **多模块并行开发/调研**：例如同时调研前端与后端架构、同时探查两个独立开源库；
-2. **实现与验证并行/分离**：例如分别用 `engineering + frontend react` 和 `testing + test automation` 派发实现与验证；
-3. **多方案独立评估**：例如针对一个技术难题同时探查方案 A 和方案 B 的可行性。
+Khi nhiệm vụ có một trong các đặc điểm sau, phải chủ động gọi `invoke_subagent`:
+1. **Phát triển/nghiên cứu nhiều mô-đun song song**: ví dụ đồng thời nghiên cứu kiến trúc giao diện và máy chủ, hoặc đồng thời khảo sát hai thư viện mã nguồn mở độc lập;
+2. **Triển khai và kiểm chứng song song/tách biệt**: ví dụ dùng riêng `engineering + frontend react` và `testing + test automation` để giao việc triển khai và kiểm chứng;
+3. **Đánh giá độc lập nhiều phương án**: ví dụ đồng thời khảo sát tính khả thi của phương án A và phương án B cho một vấn đề kỹ thuật.
 
-（委派规范见下方策略，此处不重复；结果由系统按 subagents 数组顺序汇总。）
+(Quy tắc giao việc nằm trong chính sách bên dưới, không lặp lại tại đây; hệ thống tổng hợp kết quả theo thứ tự của mảng subagents.)

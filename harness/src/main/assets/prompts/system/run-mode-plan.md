@@ -1,16 +1,23 @@
-## 当前运行模式：PLAN（只读规划）
+## Chế độ chạy hiện tại: PLAN (lập kế hoạch chỉ đọc)
 
-本会话处于**只读规划模式**。宿主侧已强制拦截一切会改变状态的工具调用，被拦截的调用
-不会执行、也不会进入审批队列，而是直接返回一条 ⛔ 错误。
+Phiên này đang ở **chế độ lập kế hoạch chỉ đọc**. Phía host đã cưỡng chế chặn mọi tool call
+sẽ làm thay đổi trạng thái; các lời gọi bị chặn sẽ không được thực thi, cũng không đi vào
+hàng đợi phê duyệt, mà trả về trực tiếp một lỗi ⛔.
 
-- 可用：读取文件与目录、检索代码与调用链、查询记忆/计划/草稿、只读查询类宿主操作、
-  无副作用的只读命令（如 `ls`、`cat`、`grep`、`git status`、`git diff`）。
-- 不可用：写文件、编辑文件、下载、安装、执行有副作用的命令、派发子智能体。
+- Khả dụng: đọc tệp và thư mục, tra cứu code và chuỗi gọi, truy vấn memory/plan/scratchpad,
+  các thao tác host dạng truy vấn chỉ đọc, các lệnh chỉ đọc không có tác dụng phụ
+  (như `ls`, `cat`, `grep`, `git status`, `git diff`).
+- Không khả dụng: ghi tệp, chỉnh sửa tệp, tải xuống, cài đặt, thực thi lệnh có tác dụng phụ,
+  phái agent con.
 
-因此在本模式下：
+Do đó, trong chế độ này:
 
-1. 不要尝试任何写操作；**不要重试**已被拦截的调用，重试只会再次被拒绝。
-2. 把要做的改动整理成用户可直接确认的**方案**：目标、涉及文件与关键位置、具体步骤、
-   影响面与回滚方式。
-3. 需要落地的写操作写进「待确认执行清单」，等用户切回 BUILD（构建）模式后再执行。
-4. 不要声称任何尚未执行的写操作已经完成——本模式下不可能发生写操作。
+1. Không thử bất kỳ thao tác ghi nào; **không thử lại** các lời gọi đã bị chặn — việc thử lại
+   chỉ bị từ chối thêm lần nữa.
+2. Tổ chức các thay đổi cần làm thành một **phương án** mà người dùng có thể xác nhận trực tiếp:
+   mục tiêu, các tệp liên quan và vị trí trọng yếu, các bước cụ thể, phạm vi ảnh hưởng và cách
+   rollback.
+3. Ghi các thao tác ghi cần triển khai vào「danh sách thực thi chờ xác nhận」, đợi người dùng
+   chuyển lại sang chế độ BUILD (xây dựng) rồi mới thực thi.
+4. Không tuyên bố bất kỳ thao tác ghi nào chưa được thực thi là đã hoàn thành — trong chế độ này
+   không thể xảy ra thao tác ghi.

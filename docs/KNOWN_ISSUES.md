@@ -1,108 +1,105 @@
-# Known Issues
+# Vấn đề đã biết
 
-This file tracks known issues and environment notes for the TianXuan Android project.
+Tệp này theo dõi các vấn đề đã biết và ghi chú về môi trường của dự án Android CTHarness.
 
-## 1. Offline build depends on a warm Gradle dependency cache
+## 1. Bản dựng ngoại tuyến phụ thuộc vào bộ nhớ đệm thư viện Gradle đã được nạp sẵn
 
-- The Phase 0 dependency set uses Room `2.6.1`, and KSP `1.9.22-1.0.17`.
-- Room `2.6.1` pulls transitive processor dependencies:
+- Tập thư viện phụ thuộc của Giai đoạn 0 dùng Room `2.6.1` và KSP `1.9.22-1.0.17`.
+- Room `2.6.1` kéo theo các thư viện phụ thuộc bắc cầu của bộ xử lý:
   - `com.google.devtools.ksp:symbol-processing-api:1.9.0-1.0.13`
   - `org.jetbrains.kotlin:kotlin-stdlib:1.8.22`
   - `org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22`
-- On a fresh machine without those artifacts cached, the first offline `assembleDebug` will fail with
+- Trên máy mới chưa lưu đệm các gói này, lần đầu chạy `assembleDebug` ở chế độ ngoại tuyến sẽ thất bại với lỗi
   `No cached version of ... available for offline mode`.
-- On the current development machine the artifacts have now been downloaded and cached, so
-  `assembleDebug --offline` succeeds.
-- If the build is run on another machine with network access, remove `--offline` once to warm the cache,
-  then offline builds will work afterward.
+- Trên máy phát triển hiện tại các gói đã được tải xuống và lưu đệm, nên
+  `assembleDebug --offline` thành công.
+- Nếu dựng trên máy khác có kết nối mạng, hãy bỏ `--offline` một lần để nạp bộ nhớ đệm, sau đó các bản dựng ngoại tuyến sẽ chạy được.
 
-## 2. Room migration history
+## 2. Lịch sử di chuyển dữ liệu của Room
 
-  tool version/metadata fields;
-  normal upgrades must not fall back to destructive migration.
-- If the schema changes again, add a forward migration and a JVM/instrumented migration test before changing
-  the database version. Never reintroduce `fallbackToDestructiveMigration()` for a released build.
+  các trường phiên bản/siêu dữ liệu của công cụ;
+  các lần nâng cấp bình thường không được quay về cách di chuyển phá hủy dữ liệu.
+- Nếu lược đồ lại thay đổi, hãy thêm bước di chuyển tiến và một bài kiểm thử di chuyển dữ liệu trên JVM/thiết bị trước khi đổi phiên bản cơ sở dữ liệu. Tuyệt đối không đưa lại `fallbackToDestructiveMigration()` cho bản dựng đã phát hành.
 
-## 3. Dependency stack is intentionally old but stable for Phase 0
+## 3. Bộ thư viện phụ thuộc cố ý giữ phiên bản cũ nhưng ổn định cho Giai đoạn 0
 
 - Kotlin `1.9.22`, AGP `8.2.2`, Gradle `8.5`, KSP `1.9.22-1.0.17`, Room `2.6.1`.
-- These versions are sufficient for the Phase 0 skeleton and match the original project plan constraints.
-- A future modernization pass may align with the newer cached toolchain (Kotlin 2.2.x / AGP 8.7.x) if the
-  project later requires it, but that is out of scope for Phase 0.
+- Các phiên bản này đủ dùng cho khung Giai đoạn 0 và khớp với ràng buộc của kế hoạch dự án ban đầu.
+- Một đợt hiện đại hóa trong tương lai có thể căn chỉnh theo bộ công cụ được lưu đệm mới hơn (Kotlin 2.2.x / AGP 8.7.x) nếu dự án sau này cần, nhưng điều đó nằm ngoài phạm vi Giai đoạn 0.
 
-## 4. Phase 1 runtime payloads are downloaded on first initialization
+## 4. Các gói môi trường chạy của Giai đoạn 1 được tải xuống khi khởi tạo lần đầu
 
-- Linux rootfs 不内置到 APK；首次引导通过 `proot-distro 5.9.0` OCI Registry 流程拉取用户选择的 ARM64 镜像。
-- 安装器选择 `linux/arm64` manifest，逐层校验 Registry 提供的 SHA-256 digest，并按 OCI whiteout 语义合并到 staging 目录后原子激活。
-- layer 缓存位于应用私有目录，支持 gzip 与 zstd OCI layer；不存在旧版 release tarball 兼容入口。
-- 如果设备不是 ARM64，初始化会在架构检测阶段停止；PRoot 导入后还会执行 `--version` 启动校验。
-- PRoot native 组件仍需固定 SHA-256；RootFS 完整性由 OCI manifest 中每一层的 digest 保证。
+- RootFS Linux không được đóng gói sẵn trong APK; lần khởi động đầu tiên tải ảnh hệ thống ARM64 do người dùng chọn thông qua quy trình OCI Registry của `proot-distro 5.9.0`.
+- Trình cài đặt chọn bản kê `linux/arm64`, kiểm tra từng lớp theo giá trị băm SHA-256 do Registry cung cấp, hợp nhất theo ngữ nghĩa xóa tệp OCI vào thư mục chuẩn bị rồi kích hoạt một cách nguyên tử.
+- Bộ nhớ đệm các lớp nằm trong thư mục riêng của ứng dụng, hỗ trợ lớp OCI gzip và zstd; không có điểm vào tương thích cho các gói tar phát hành cũ.
+- Nếu thiết bị không phải ARM64, quá trình khởi tạo sẽ dừng ở bước phát hiện kiến trúc; sau khi nhập PRoot xong còn chạy kiểm tra khởi động `--version`.
+- Thành phần mã máy của PRoot vẫn cần cố định SHA-256; tính toàn vẹn RootFS được đảm bảo bởi giá trị băm của từng lớp trong bản kê OCI.
 
-## 5. Beta 前仍需补齐的能力
+## 5. Năng lực cần bổ sung trước bản Beta
 
-- 交互终端当前使用 Debian `script` + `ProcessBuilder` 创建 PTY；通过记录 `/dev/pts/*` 从属设备并执行独立 `stty -F` 命令，UTF-8、Ctrl+C、动态 Resize、ANSI SGR/光标/清屏和滚动缓冲已接通，不会把 `stty` 注入 Codex/OpenClaw/Hermes 的 stdin。真正的 JNI `forkpty` backend 仍可作为后续替换实现，当前需要在 ARM64 设备上验证更多复杂 TUI。
-- 真 PTY（JNI forkpty）后端的全部代码已就绪（`app/src/main/cpp/pty_native.c` + `NativePty.kt`/`NativePtySession.kt`，Termux 同款 setsid/控制终端语义）；当前机器未装 NDK，`build.gradle.kts` 的 `externalNativeBuild` 配置已临时注释。装上 NDK 后恢复配置即可启用，未启用时自动回退到 `script` 后端，功能不受影响。
-- Codex、OpenClaw、Hermes 的 Adapter 已隔离安装、验证、更新和卸载路径；官方脚本会先通过 HTTPS 下载到 Linux `/tmp`、设置为仅所有者可执行，再执行并由 `trap` 清理。脚本内容仍属于易变化的上游代码，正式发布前仍需按各自官方文档固定版本、复核许可，并在 ARM64 设备上逐个执行兼容性验收。
-- 工具程序统一安装到 `/opt/tianxuan/tools/{toolId}`，稳定命令入口位于 `/opt/tianxuan/bin`；Codex、OpenClaw、Hermes 的配置数据分别通过 `CODEX_HOME`、`OPENCLAW_HOME` 或 Hermes `--hermes-home` 指向 `/opt/tianxuan/data/{toolId}`。卸载默认保留数据，用户明确勾选后才删除对应工具数据。
-- `RemoteScriptRunner` 禁止脚本下载跨主机重定向，并支持为官方脚本配置固定 SHA-256、在执行前通过 `sha256sum -c` 校验；当前三个上游安装地址仍没有项目可长期信任的固定脚本版本哈希，因此正式 Beta 发布前必须把 URL 改为版本化地址并填入哈希，或改用固定 release archive。
-- 前台服务已声明并请求 Android 13+ 通知权限；若用户拒绝通知，后台 Agent 仍会受系统限制，建议从系统设置重新允许通知后使用持续运行服务。
-- 远程工具 Registry 已支持 HTTPS + Ed25519 签名校验、服务端口元数据和动态工具卡片；当前没有预置项目自己的签名 Registry 地址，默认继续使用 APK 内清单。
-- RuntimeManager 对 Python/Git 等继续使用 Debian apt；Node 会先尝试 apt，版本不满足工具约束时切换到带固定 SHA-256 的官方 ARM64 binary，并安装到持久化 `/opt/tianxuan`。正式发布前仍需在目标 ARM64 环境验证动态库兼容性。
-- 共享 Runtime 已提供引用计数和显式 `apt purge` 清理入口；默认不会随工具卸载自动删除，仍需产品发布前补充更细的磁盘占用估算。
-- 开发者页的存储统计现在按 RootFS、Runtime 基础目录、工具程序、工具数据、工作区和缓存分桶，避免把同一目录重复计入；统计仍是文件大小估算，不等同于文件系统实际占用的 block 数。
-- Tool Registry 已增加 `schemaVersion`、ARM64/HTTPS/服务路径校验、启停开关和版本元数据；主页更新现在走独立 UPDATE 事务，失败或取消不会释放旧版本的共享 Runtime 引用。
-- 安装事务会在 `/opt/tianxuan/.transactions` 保存程序目录快照；应用启动时会根据 Room 中仍为 RUNNING 的任务恢复更新前目录或清理半安装目录，完成后清理快照。工具配置数据不进入快照。
-- Manifest 依赖支持受控版本约束（例如 `node>=22.22.3`、`python>=3.11`），统一解析为 RuntimeRequirement；具体 Adapter 仍会在官方安装步骤前做一次显式依赖获取和验证。
-- Provider Base URL 已按 URI 解析：HTTPS 允许远端 API，HTTP 仅允许精确的 `localhost`、`127.0.0.1` 和 `::1` 回环地址，不接受 `localhost.evil` 这类前缀伪装。
-- 下载器会拒绝非 HTTPS、错误的断点 `Content-Range` 和超过 1 GiB 的响应，并使用临时文件加原子提交；各 Runtime 资产仍应在升级时同步更新固定 SHA-256。
-- 终端会识别带 OAuth/登录/设备授权提示的 HTTPS URL，显示用户主动打开浏览器的按钮；普通链接不会自动打开，设备码登录仍直接在终端完成。
-- RootFS 安装标记会记录在线来源版本；开发者页的 RootFS 更新会先 staging、保留 `/root` 与 `/opt/tianxuan`、执行健康检查并在失败时恢复旧版本。由于第三方工具可能把文件写入发行版的其他系统目录，正式 Beta 仍应在 ARM64 设备上验证更多工具组合的迁移兼容性。
-- RootFS 更新使用持久化 `rootfs.update.pending` 与 `rootfs.previous` 两阶段提交；如果应用在激活新 RootFS 后被终止，下次初始化会先恢复旧版本，再重新开始更新流程。
-- 工具配置和 `/opt/tianxuan` 已从 rootfs 中迁移到 App 私有 bind mount；旧版本 rootfs 会在首次配置时迁移一次，后续工具更新不会随 rootfs 替换丢失。
-- PRoot 下 dpkg 解包硬链接与 I/O 防御：
-  - 自动配置 `/etc/dpkg/dpkg.cfg.d/01_tianxuan_nodoc` 排除 doc/man/locale 文档，节省 >50% I/O，并消除文档类硬链接解包隐患；
-  - 自动配置 `/etc/apt/apt.conf.d/99tianxuan-apt-config` 增强重试与非交互配置；
-  - 自动在 `/usr/local/sbin/tianxuan-fix-perl` 预置 Perl 幽灵硬链接（`perlthanks` hardlink）自愈重包工具，并在 `RuntimeManager` 捕获异常时自动触发自愈。
-  - 自动配置 Git 全局 `safe.directory = *`，彻底解决 PRoot 虚拟 UID 0 与宿主 workspace 权限冲突导致的 dubious ownership 错误。
+- Thiết bị đầu cuối tương tác hiện dùng Debian `script` + `ProcessBuilder` để tạo PTY; bằng cách ghi lại thiết bị phụ `/dev/pts/*` và chạy lệnh `stty -F` riêng, UTF-8, Ctrl+C, đổi kích thước động, ANSI SGR/con trỏ/xóa màn hình và bộ đệm cuộn đã được nối thông, không đưa `stty` vào đầu vào chuẩn của Codex/OpenClaw/Hermes. Bộ xử lý JNI `forkpty` thật vẫn có thể dùng làm phương án thay thế về sau; hiện cần kiểm chứng thêm nhiều giao diện văn bản phức tạp trên thiết bị ARM64.
+- Toàn bộ mã cho bộ xử lý PTY thật (JNI forkpty) đã sẵn sàng (`app/src/main/cpp/pty_native.c` + `NativePty.kt`/`NativePtySession.kt`, cùng ngữ nghĩa setsid/thiết bị đầu cuối điều khiển như Termux); máy hiện tại chưa cài NDK, cấu hình `externalNativeBuild` trong `build.gradle.kts` đang tạm thời bị vô hiệu hóa bằng chú thích. Sau khi cài NDK chỉ cần khôi phục cấu hình để bật; khi chưa bật sẽ tự động quay về bộ xử lý `script`, chức năng không bị ảnh hưởng.
+- Bộ thích ứng của Codex, OpenClaw, Hermes đã cô lập các quy trình cài đặt, kiểm chứng, cập nhật và gỡ bỏ; mã lệnh chính thức sẽ được tải qua HTTPS xuống `/tmp` của Linux, đặt quyền chỉ chủ sở hữu thực thi, rồi chạy và dọn dẹp bằng `trap`. Nội dung mã lệnh vẫn là mã thượng nguồn dễ thay đổi, nên trước khi phát hành chính thức cần cố định phiên bản theo đúng tài liệu từng bên, rà soát giấy phép và nghiệm thu khả năng tương thích từng công cụ trên thiết bị ARM64.
+- Công cụ được cài thống nhất vào `/opt/tianxuan/tools/{toolId}`, điểm vào lệnh ổn định nằm ở `/opt/tianxuan/bin`; dữ liệu cấu hình của Codex, OpenClaw, Hermes lần lượt trỏ tới `/opt/tianxuan/data/{toolId}` qua `CODEX_HOME`, `OPENCLAW_HOME` hoặc `--hermes-home` của Hermes. Mặc định gỡ cài đặt giữ lại dữ liệu; chỉ xóa dữ liệu công cụ tương ứng khi người dùng chọn rõ.
+- `RemoteScriptRunner` cấm chuyển hướng sang máy chủ khác khi tải mã lệnh và hỗ trợ cấu hình SHA-256 cố định cho mã lệnh chính thức, kiểm tra bằng `sha256sum -c` trước khi chạy; hiện ba địa chỉ thượng nguồn vẫn chưa có giá trị băm của mã lệnh phiên bản cố định đáng tin cậy lâu dài cho dự án, nên trước khi phát hành Beta phải đổi URL sang địa chỉ có đánh số phiên bản và điền giá trị băm, hoặc dùng gói phát hành cố định.
+- Dịch vụ tiền cảnh đã khai báo và yêu cầu quyền thông báo Android 13+; nếu người dùng từ chối thông báo, Agent chạy nền vẫn bị hệ thống hạn chế, nên vào cài đặt hệ thống cho phép lại thông báo rồi dùng dịch vụ chạy liên tục.
+- Sổ đăng ký công cụ từ xa đã hỗ trợ HTTPS + kiểm chứng chữ ký Ed25519, siêu dữ liệu cổng dịch vụ và thẻ công cụ động; hiện chưa có sẵn địa chỉ sổ đăng ký đã ký của dự án, mặc định tiếp tục dùng bản kê trong APK.
+- RuntimeManager tiếp tục dùng Debian apt cho Python/Git; Node thử apt trước, nếu phiên bản không thỏa ràng buộc công cụ thì chuyển sang gói nhị phân ARM64 chính thức có SHA-256 cố định và cài bền vững vào `/opt/tianxuan`. Trước khi phát hành chính thức vẫn cần kiểm chứng tương thích thư viện động trong môi trường ARM64 mục tiêu.
+- Môi trường chạy dùng chung đã có đếm tham chiếu và điểm vào dọn dẹp `apt purge` rõ ràng; mặc định không tự xóa khi gỡ công cụ, vẫn cần bổ sung ước tính dung lượng đĩa chi tiết hơn trước khi phát hành sản phẩm.
+- Thống kê dung lượng lưu trữ trên trang nhà phát triển hiện chia theo RootFS, thư mục gốc môi trường chạy, chương trình công cụ, dữ liệu công cụ, không gian làm việc và bộ nhớ đệm, tránh đếm trùng cùng một thư mục; con số vẫn là ước tính kích thước tệp, không bằng số khối thực tế mà hệ thống tệp dùng.
+- Sổ đăng ký công cụ đã bổ sung `schemaVersion`, kiểm tra ARM64/HTTPS/đường dẫn dịch vụ, công tắc bật/tắt và siêu dữ liệu phiên bản; cập nhật trên trang chủ giờ đi qua giao dịch UPDATE riêng, thất bại hoặc hủy không giải phóng tham chiếu môi trường chạy dùng chung của phiên bản cũ.
+- Giao dịch cài đặt lưu bản chụp thư mục chương trình tại `/opt/tianxuan/.transactions`; khi ứng dụng khởi động sẽ dựa vào các tác vụ vẫn ở trạng thái RUNNING trong Room để khôi phục thư mục trước khi cập nhật hoặc dọn thư mục cài đặt dở, rồi xóa bản chụp sau khi xong. Dữ liệu cấu hình công cụ không nằm trong bản chụp.
+- Bản kê thư viện phụ thuộc hỗ trợ ràng buộc phiên bản có kiểm soát (ví dụ `node>=22.22.3`, `python>=3.11`), được phân giải thống nhất thành RuntimeRequirement; bộ thích ứng cụ thể vẫn thực hiện một lần tìm và kiểm chứng thư viện phụ thuộc rõ ràng trước bước cài đặt chính thức.
+- URL gốc của nhà cung cấp được phân tích theo URI: HTTPS cho phép API từ xa, HTTP chỉ cho phép các địa chỉ vòng lặp cục bộ chính xác `localhost`, `127.0.0.1` và `::1`, không chấp nhận giả mạo tiền tố kiểu `localhost.evil`.
+- Trình tải từ chối kết nối không dùng HTTPS, `Content-Range` tiếp tục tải không hợp lệ và phản hồi trên 1 GiB, đồng thời dùng tệp tạm và ghi nhận nguyên tử; các tài nguyên môi trường chạy vẫn nên cập nhật SHA-256 cố định khi nâng cấp.
+- Thiết bị đầu cuối nhận diện URL HTTPS kèm gợi ý OAuth/đăng nhập/ủy quyền thiết bị, hiển thị nút để người dùng chủ động mở trình duyệt; liên kết thường không tự mở, đăng nhập bằng mã thiết bị vẫn hoàn tất ngay trong thiết bị đầu cuối.
+- Cờ cài đặt RootFS ghi lại phiên bản nguồn trực tuyến; cập nhật RootFS trên trang nhà phát triển sẽ chuẩn bị trước, giữ `/root` và `/opt/tianxuan`, chạy kiểm tra sức khỏe và khôi phục bản cũ khi thất bại. Vì công cụ bên thứ ba có thể ghi tệp vào các thư mục hệ thống khác của bản phân phối, bản Beta chính thức vẫn nên kiểm chứng thêm khả năng tương thích di chuyển dữ liệu của nhiều tổ hợp công cụ trên ARM64.
+- Cập nhật RootFS dùng cơ chế ghi nhận hai giai đoạn bền vững với `rootfs.update.pending` và `rootfs.previous`; nếu ứng dụng bị kết thúc sau khi kích hoạt RootFS mới, lần khởi tạo sau sẽ khôi phục bản cũ trước rồi mới bắt đầu lại quy trình cập nhật.
+- Cấu hình công cụ và `/opt/tianxuan` đã được di chuyển ra khỏi rootfs sang vùng gắn kết riêng của ứng dụng; rootfs cũ sẽ được di chuyển một lần khi cấu hình lần đầu, các lần cập nhật công cụ sau không bị mất khi thay rootfs.
+- Phòng chống lỗi liên kết cứng và I/O khi dpkg giải nén dưới PRoot:
+  - Tự cấu hình `/etc/dpkg/dpkg.cfg.d/01_tianxuan_nodoc` để loại tài liệu/trang hướng dẫn/bản địa hóa, tiết kiệm >50% I/O và loại bỏ nguy cơ giải nén liên kết cứng dạng tài liệu;
+  - Tự cấu hình `/etc/apt/apt.conf.d/99tianxuan-apt-config` để tăng cường thử lại và cấu hình phi tương tác;
+  - Tự đặt sẵn công cụ tự sửa liên kết cứng ma Perl (liên kết cứng `perlthanks`) tại `/usr/local/sbin/tianxuan-fix-perl` và tự kích hoạt khi `RuntimeManager` bắt được ngoại lệ.
+  - Tự cấu hình Git toàn cục `safe.directory = *`, giải quyết triệt để lỗi quyền sở hữu đáng ngờ do UID 0 ảo của PRoot xung đột quyền của không gian làm việc phía máy chủ.
 
-## 7. Android 核心环境：装配期一次性部署（2026-08 重构）
+## 7. Môi trường lõi Android: triển khai một lần trong giai đoạn lắp ráp (tái cấu trúc 2026-08)
 
-- 【Android & 移动全栈套件 · android-core】现在在**插件装配阶段**一次性完成全部环境部署，`build_android.sh` 不再承担任何下载/自愈职责（旧版每次构建都重复 licenses 写入、init.gradle 生成、Gradle 下载自愈，浪费大量时间）。
-- 装配内容（`setup_android_core.sh`，幂等可重入，断点续装）：
-  - 真实 Android 34 平台包：`platform-34-ext7_r03.zip`（android.jar + core-for-system-modules.jar，~60MB）从腾讯云镜像 `mirrors.cloud.tencent.com/AndroidSDK/` 下载（官方源兜底），SHA-1 固定校验，安装到 `/opt/android-sdk/platforms/android-34/`；
-  - Gradle 8.9 官方独立包：腾讯云 → 华为云双镜像，SHA-256 固定校验（`d725d707...cab`）；
-  - 全套 SDK licenses 预接受 + Build Tools 35.0.0 的官方 Java 工具/元数据；宿主原生程序使用固定 SHA-256 的 lzhiyong ARM64 35.0.2 aapt/aapt2/aidl/zipalign；
-  - `lzhiyong/termux-ndk` r29（NDK `29.0.14206865`）Linux AArch64 静态工具链，固定 SHA-256 后安装到 `/opt/tianxuan/toolchains/android/ndk/artifacts/<digest>/ndk`；AGP 通过本地 Gradle init policy 的 `android.ndkPath` 使用该不可变路径；
-  - 全局阿里云 Maven 镜像 `/root/.gradle/init.gradle`（beforeSettings 注入，覆盖所有项目）；
-  - 持久化环境变量 `/etc/profile.d/tianxuan-android.sh`（JAVA_HOME/ANDROID_HOME/GRADLE_HOME/PATH），`/root/.bashrc` 自动 source；
-  - JAVA_HOME 推导、java/gradle 全局软链、cacerts 注入。
-- `build_android.sh` 重构为纯执行器：加载 profile 环境 → 前置校验（缺 java.jar/gradle 快速失败并指引插件中心）→ 写 local.properties → 多级 Gradle 调度。`android init` 脚手架直接预置阿里云镜像（替代旧版构建期 sed 自愈注入）。
-- ToolManager 批量装配对重型下载脚本（setup_android_core.sh / setup_flutter.sh / setup_jadx.sh / setup_pnpm.sh）超时从 180s 放宽到 20 分钟（与 GenericRecipeInstaller 对齐）；apt 聚合安装整批失败时降级 `--ignore-missing`，避免个别发行版缺包（如 apksigner）导致全部装不上。
-- Android 核心套件把 AAPT2 和 NDK 安装到带 SHA-256 的不可变制品目录，正式构建只注入规范制品路径；`/opt/tianxuan/android-sdk-tools/aapt2` 与 `/opt/android-sdk/ndk/<version>` 仅是旧项目兼容视图。`/root/.gradle/gradle.properties` 固定 `android.aapt2FromMavenOverride` 并设置 `android.builder.sdkDownload=false`，`/root/.gradle/init.d/tianxuan-android-ndk.gradle` 固定 `android.ndkPath`，阻止 AGP 在构建中补装官方 x86_64 主机工具。Android/Flutter 构建脚本会清理遗留的 `local.properties` `ndk.dir`，但不再写回，以保证 AGP 只看到 `ndkPath` 这一种 NDK locator。内置构建与工具链装配还通过 `/opt/tianxuan/locks/android-toolchain.lock` 共享/排他互斥。
-- 注意：插件中心的组件就绪探针已升级为校验真实 SDK（java + aapt + android.jar + gradle launcher jar），老沙箱升级 App 后探针会显示未就绪，重新装配一次即可（幂等，已下载组件会跳过）。
+- Bộ công cụ Android và di động · android-core hiện hoàn tất toàn bộ triển khai môi trường **trong giai đoạn lắp ráp phần bổ trợ**; `build_android.sh` không còn đảm nhiệm tải/xử lý tự phục hồi nào nữa (bản cũ mỗi lần dựng lại lặp việc ghi giấy phép, sinh init.gradle, tự sửa tải Gradle, tốn rất nhiều thời gian).
+- Nội dung lắp ráp (`setup_android_core.sh`, chạy lặp lại không đổi kết quả, có thể chạy lại và tiếp tục từ điểm ngắt):
+  - Gói nền tảng Android 34 thật: `platform-34-ext7_r03.zip` (android.jar + core-for-system-modules.jar, ~60MB) tải từ máy chủ phản chiếu Tencent Cloud `mirrors.cloud.tencent.com/AndroidSDK/` (nguồn chính làm dự phòng), cố định SHA-1, cài vào `/opt/android-sdk/platforms/android-34/`;
+  - Gói độc lập chính thức Gradle 8.9: hai nguồn phản chiếu Tencent Cloud → Huawei Cloud, cố định SHA-256 (`d725d707...cab`);
+  - Chấp nhận trước toàn bộ giấy phép SDK và công cụ/siêu dữ liệu Java của Build Tools 35.0.0; chương trình mã máy phía máy chủ dùng aapt/aapt2/aidl/zipalign ARM64 của lzhiyong 35.0.2 với SHA-256 cố định;
+  - Bộ công cụ tĩnh Linux AArch64 `lzhiyong/termux-ndk` r29 (NDK `29.0.14206865`), cố định SHA-256 rồi cài vào `/opt/tianxuan/toolchains/android/ndk/artifacts/<digest>/ndk`; AGP dùng đường dẫn bất biến này qua `android.ndkPath` trong chính sách khởi tạo Gradle cục bộ;
+  - Nguồn phản chiếu Maven Aliyun toàn cục `/root/.gradle/init.gradle` (chèn qua beforeSettings, áp dụng mọi dự án);
+  - Biến môi trường bền vững `/etc/profile.d/tianxuan-android.sh` (JAVA_HOME/ANDROID_HOME/GRADLE_HOME/PATH), `/root/.bashrc` tự nạp;
+  - Suy luận JAVA_HOME, liên kết mềm java/gradle toàn cục, chèn cacerts.
+- `build_android.sh` được tái cấu trúc thành phần thực thi thuần: nạp cấu hình môi trường → kiểm tra trước (thiếu java.jar/gradle thì dừng ngay và hướng tới trung tâm phần bổ trợ) → ghi local.properties → điều phối Gradle nhiều cấp. Khung `android init` đặt sẵn nguồn phản chiếu Aliyun (thay cho cơ chế tự sửa sed trong lúc dựng của bản cũ).
+- Quy trình lắp ráp hàng loạt của ToolManager nới thời gian chờ cho các mã lệnh tải nặng (setup_android_core.sh / setup_flutter.sh / setup_jadx.sh / setup_pnpm.sh) từ 180s lên 20 phút (khớp với GenericRecipeInstaller); khi apt gộp cả lô thất bại thì chuyển sang `--ignore-missing`, tránh việc thiếu một gói lẻ (như apksigner) khiến tất cả không cài được.
+- Bộ lõi Android cài AAPT2 và NDK vào thư mục tài nguyên bất biến kèm SHA-256; bản dựng chính chỉ chèn đường dẫn tài nguyên chuẩn. `/opt/tianxuan/android-sdk-tools/aapt2` và `/opt/android-sdk/ndk/<version>` chỉ là đường dẫn tương thích cho dự án cũ. `/root/.gradle/gradle.properties` cố định `android.aapt2FromMavenOverride` và đặt `android.builder.sdkDownload=false`; `/root/.gradle/init.d/tianxuan-android-ndk.gradle` cố định `android.ndkPath`, ngăn AGP tự cài công cụ máy chủ x86_64 chính thức trong lúc dựng. Mã lệnh dựng Android/Flutter dọn `ndk.dir` còn sót lại trong `local.properties` nhưng không ghi ngược lại, để AGP chỉ thấy một bộ định vị NDK duy nhất là `ndkPath`. Quy trình lắp ráp bản dựng và bộ công cụ nội bộ còn dùng khóa chia sẻ/loại trừ qua `/opt/tianxuan/locks/android-toolchain.lock`.
+- Lưu ý: bộ dò mức sẵn sàng thành phần của trung tâm phần bổ trợ đã nâng cấp để kiểm tra SDK thật (java + aapt + android.jar + gradle launcher jar); sau khi nâng cấp ứng dụng, môi trường cô lập cũ sẽ hiện chưa sẵn sàng, chỉ cần lắp ráp lại một lần (chạy lặp lại không đổi kết quả, thành phần đã tải sẽ được bỏ qua).
 
 ---
 
-# 6. 近期实现状态（截至 2026-08）
+# 6. Trạng thái triển khai gần đây (tính đến 2026-08)
 
-## 模块化
-- 已按计划 §4 拆为多模块：`core/{common,model,database,datastore,network,security}`、`feature/{theme,components,home,chat,terminal,workspace,settings,developer,navigation}`、`runtime`、`tools`（core/tools + runtime/tools 安装器）、`harness`、`app`；包名统一为 `top.wkbin.tianxuan.*`。
+## Mô-đun hóa
+- Đã tách thành đa mô-đun theo kế hoạch §4: `core/{common,model,database,datastore,network,security}`, `feature/{theme,components,home,chat,terminal,workspace,settings,developer,navigation}`, `runtime`, `tools` (core/tools + trình cài môi trường chạy/công cụ), `harness`, `app`; tên gói thống nhất thành `top.wkbin.tianxuan.*`.
 
-## 真 PTY
-- NDK（30.0）已安装，JNI forkpty 后端已启用（`NativePtySession` + `pty_native.c`），自动回退 `script` 后端。终端多会话（`TerminalSessionManager`）已接入，会话元数据存 `terminal_sessions` 表，进程重启后重建同名会话壳（只存元数据，不存输出）。
-- 会话选择从占位标签行改为标题栏按钮 + 会话列表弹窗（切换/关闭/新建/重命名）。
+## PTY thật
+- Đã cài NDK (30.0), bật bộ xử lý JNI forkpty (`NativePtySession` + `pty_native.c`), tự động chuyển về bộ xử lý `script` khi cần. Đã nối thông nhiều phiên thiết bị đầu cuối (`TerminalSessionManager`), siêu dữ liệu phiên lưu ở bảng `terminal_sessions`, sau khi khởi động lại tiến trình sẽ dựng lại trình bao của phiên cùng tên (chỉ lưu siêu dữ liệu, không lưu đầu ra).
+- Chuyển cách chọn phiên từ dòng nhãn giữ chỗ sang nút trên thanh tiêu đề và danh sách phiên bật lên (chuyển/đóng/tạo mới/đổi tên).
 
 ## Agent Harness
-- 原生 Agent（类 pi）：read/write/edit/base 四工具 + 工具循环，LLM 走 `harness_models`（Room）激活模型，回退 App Provider 配置。
-- 流式输出：`ChatApi.chatStream` 用 OkHttp okio 逐行解析 SSE，内容增量实时更新；tool_calls arguments 按 index 分片累积；解析用 `as? JsonObject/JsonArray/JsonPrimitive` 安全转换，避免 JsonNull 抛错。
-- 聊天内模型管理（添加/切换/删除模型）与会话重命名已加。
-- 会话可关联工作区，Agent 的 base 工具默认在该工作区目录执行。
+- Agent tích hợp trực tiếp (kiểu pi): bốn công cụ read/write/edit/base và vòng lặp công cụ, LLM đi qua mô hình được kích hoạt trong `harness_models` (Room), dự phòng bằng cấu hình nhà cung cấp của ứng dụng.
+- Đầu ra theo luồng: `ChatApi.chatStream` dùng okio của OkHttp để phân tích SSE từng dòng, cập nhật nội dung tăng dần theo thời gian thực; tham số của tool_calls được tích lũy theo chỉ số; quá trình phân tích dùng chuyển đổi an toàn `as? JsonObject/JsonArray/JsonPrimitive`, tránh JsonNull ném lỗi.
+- Đã thêm quản lý mô hình trong hội thoại (thêm/chuyển/xóa mô hình) và đổi tên phiên.
+- Phiên có thể gắn không gian làm việc; công cụ base của Agent mặc định chạy trong thư mục làm việc đó.
 
-## 已知待办
-- 终端触摸滚动 / IME 中文输入未完善：透明输入层在键盘输入时会挡 LazyColumn 触摸滚动；中文输入法组合尚未完全直通。
-- Codex / OpenClaw / Hermes 三个真实工具的整机安装、启动、健康检查验收**尚未完整跑通**（仅修了外围：apt 自愈、30s→20min 超时、git HTTP/1.1、安装器失败重试）。
-- `feature` 各屏缺单元测试（Compose 测试需 Robolectric，尚未接入）。
-- 设备当前离线，最新 APK（多会话/流式/模型管理/模块化）尚未真机安装验证。
+## Việc cần làm đã biết
+- Cuộn chạm trên thiết bị đầu cuối / nhập tiếng Trung qua IME chưa hoàn thiện: lớp nhập trong suốt chặn cuộn chạm LazyColumn khi bàn phím hiện; tổ hợp nhập của IME tiếng Trung chưa thông suốt hoàn toàn.
+- Nghiệm thu cài đặt toàn bộ máy, khởi động, kiểm tra sức khỏe của ba công cụ thật Codex / OpenClaw / Hermes **chưa chạy thông suốt** (chỉ sửa phần ngoại vi: tự sửa apt, thời gian chờ 30s→20phút, git HTTP/1.1, thử lại khi cài thất bại).
+- Các màn hình `feature` thiếu kiểm thử đơn vị (kiểm thử Compose cần Robolectric, chưa tích hợp).
+- Thiết bị hiện ngoại tuyến, APK mới nhất (đa phiên/đầu ra theo luồng/quản lý mô hình/mô-đun hóa) chưa được cài và kiểm chứng trên máy thật.
 
-## 依赖/构建
-- Kotlin 2.4.10 / AGP 9.3.1 / Gradle 9.7 / Room 2.8.4 / Compose BOM 2026.08。Room 迁移链 5→11（含 workspaces、harness sessions/messages/models、terminal_sessions）。测试分布在 `core/*`、`harness`、`feature:terminal` 与 `app`。
+## Thư viện phụ thuộc / bản dựng
+- Kotlin 2.4.10 / AGP 9.3.1 / Gradle 9.7 / Room 2.8.4 / Compose BOM 2026.08. Chuỗi di chuyển dữ liệu Room 5→11 (gồm workspaces, harness sessions/messages/models, terminal_sessions). Kiểm thử phân bổ ở `core/*`, `harness`, `feature:terminal` và `app`.

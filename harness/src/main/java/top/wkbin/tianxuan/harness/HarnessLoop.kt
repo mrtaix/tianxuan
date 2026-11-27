@@ -881,8 +881,12 @@ class HarnessLoop(
         messageProjector.publishPersisted(sessId, userMessage)
         val launched = launchSessionJobLocked(sessId, taskId, operationId = operationId) { runLoopInternal(sessId, now(), operationId, taskId) }
         if (!launched) {
-            agentTaskStateMachine.markFailed(taskId, "排队消息未能启动运行")
-            messageProjector.append(sessId, AssistantText(newId(), now(), "⚠️ 排队消息未能启动，请重新发送。"))
+            // acceptQueuedRun đã mở operation; phải đóng lại nếu không khởi chạy được,
+            // tránh giữ lane bận cho đến lần khôi phục tiếp theo.
+            runCatching { operationCoordinator.finish(sessId, "failed", details = "Không thể khởi chạy tin nhắn đang chờ") }
+                .onFailure { logger.w("Failed to finish queued operation $operationId: ${it.message}") }
+            agentTaskStateMachine.markFailed(taskId, "Không thể khởi chạy tin nhắn đang chờ")
+            messageProjector.append(sessId, AssistantText(newId(), now(), "⚠️ Không thể khởi chạy tin nhắn đang chờ. Vui lòng gửi lại."))
         }
         return launched
     }

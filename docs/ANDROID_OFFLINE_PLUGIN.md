@@ -1,21 +1,21 @@
-# Android 全套离线插件制作指南
+# Hướng dẫn tạo bộ plugin Android đầy đủ hoạt động ngoại tuyến
 
-本文档说明如何把 Android SDK、Build-Tools、ARM64 AAPT2、NDK、JDK、Gradle、ADB 和 Android-only Flutter SDK 全部放入一个 `.txplugin`，然后在无网络环境下导入和安装。本插件不包含 Web、iOS、Windows、macOS 或 Linux Desktop 构建资源；iOS 也不能在 Linux ARM64 PRoot 中构建。
+Tài liệu này hướng dẫn cách đóng gói toàn bộ Android SDK, Build-Tools, AAPT2 ARM64, NDK, JDK, Gradle, ADB và Flutter SDK phiên bản chỉ dành cho Android vào một tệp `.txplugin`, sau đó nhập và cài đặt trong môi trường không có mạng. Plugin này không chứa tài nguyên biên dịch cho Web, iOS, Windows, macOS hay máy tính Linux; iOS cũng không thể biên dịch trong PRoot Linux ARM64.
 
-## 0. 先理解当前实现
+## 0. Hiểu rõ triển khai hiện tại trước đã
 
-仓库里的 `android-suite` 目前是内置 `BuiltinPluginBundles`，由 `ToolManager.batchInstallComponents()` 驱动；它的默认脚本会下载 Android/Gradle/NDK/Flutter 资源。
+`android-suite` trong kho mã nguồn hiện là plugin tích hợp sẵn (`BuiltinPluginBundles`), được điều khiển bởi `ToolManager.batchInstallComponents()`; tập lệnh mặc định của nó sẽ tải xuống tài nguyên Android/Gradle/NDK/Flutter.
 
-本地 `.txplugin` 则走 `ToolRegistry -> ToolManager -> GenericRecipeInstaller`。因此要做完全离线版本，推荐先把 Android 全套做成一个单体本地插件，例如 `android-suite-offline`，由一个离线安装脚本一次性部署所有资源。不要直接把现有联网脚本原样塞进包里。
+Trong khi đó, `.txplugin` cục bộ đi theo luồng `ToolRegistry -> ToolManager -> GenericRecipeInstaller`. Vì vậy, để làm phiên bản hoàn toàn ngoại tuyến, nên gộp toàn bộ bộ công cụ Android thành một plugin cục bộ duy nhất, ví dụ `android-suite-offline`, với một tập lệnh cài đặt ngoại tuyến triển khai mọi tài nguyên trong một lần. Đừng sao chép nguyên xi tập lệnh có dùng mạng hiện tại vào gói.
 
-相关实现：
+Các triển khai liên quan:
 
 - [ToolManifest.kt](../core/model/src/main/java/top/wkbin/tianxuan/core/model/ToolManifest.kt)
 - [ToolRegistry.kt](../tools/src/main/java/top/wkbin/tianxuan/core/tools/ToolRegistry.kt)
 - [GenericRecipeInstaller.kt](../tools/src/main/java/top/wkbin/tianxuan/runtime/tools/GenericRecipeInstaller.kt)
 - [RuntimeAssetSynchronizer.kt](../runtime/src/main/java/top/wkbin/tianxuan/runtime/scripts/RuntimeAssetSynchronizer.kt)
 
-## 1. 推荐目录
+## 1. Cấu trúc thư mục đề xuất
 
 ```text
 android-suite-offline/
@@ -44,54 +44,54 @@ android-suite-offline/
         └── tianxuan-android-ndk.gradle
 ```
 
-### 资源是否必须提供
+### Tài nguyên nào là bắt buộc
 
-| 资源 | Android 核心 | Flutter | 说明 |
+| Tài nguyên | Android lõi | Flutter | Ghi chú |
 |---|---:|---:|---|
-| JDK 17 Linux ARM64 | 必须 | 必须 | 不要使用 x86_64 JDK。 |
-| Android Platform 34 | 必须 | 必须 | 至少包含 `android.jar`。 |
-| Build-Tools 35 | 必须 | 必须 | 至少包含 `d8.jar`、`aapt2`、`zipalign`、`apksigner`。 |
-| ARM64 AAPT2/SDK tools | 必须 | 必须 | Google 常见 Build-Tools 原生程序通常是 x86_64，必须使用 ARM64 版本覆盖。 |
-| NDK ARM64 | 必须 | 构建原生代码时必须 | 必须包含 `toolchains/llvm/.../clang`、`llvm-strip`。 |
-| Gradle 8.14.2 | 必须 | 必须 | 建议使用固定版本。 |
-| ADB ARM64 | 建议 | Android 调试需要 | 如果 RootFS 已有可不重复打包。 |
-| CMake/Ninja | NDK 构建需要 | Flutter 原生插件常用 | 建议一并提供。 |
-| Flutter ARM64 SDK | 可选 | 必须 | 使用已精简的 Linux ARM64 Android-only Flutter 包；不包含 Web/iOS/桌面资源。 |
+| JDK 17 Linux ARM64 | Bắt buộc | Bắt buộc | Không dùng JDK x86_64. |
+| Android Platform 34 | Bắt buộc | Bắt buộc | Ít nhất phải có `android.jar`. |
+| Build-Tools 35 | Bắt buộc | Bắt buộc | Ít nhất phải có `d8.jar`, `aapt2`, `zipalign`, `apksigner`. |
+| Bộ công cụ ARM64 AAPT2/SDK | Bắt buộc | Bắt buộc | Các chương trình gốc trong Build-Tools thông thường của Google thường là x86_64; phải dùng phiên bản ARM64 để ghi đè. |
+| NDK ARM64 | Bắt buộc | Bắt buộc khi biên dịch mã gốc | Phải chứa `toolchains/llvm/.../clang`, `llvm-strip`. |
+| Gradle 8.14.2 | Bắt buộc | Bắt buộc | Nên dùng một phiên bản cố định. |
+| ADB ARM64 | Nên có | Cần để gỡ lỗi Android | Nếu RootFS đã có thì không cần đóng gói lại. |
+| CMake/Ninja | Cần để biên dịch bằng NDK | Thường dùng cho plugin mã gốc Flutter | Nên cung cấp kèm. |
+| Flutter ARM64 SDK | Tùy chọn | Bắt buộc | Dùng gói Flutter Linux ARM64 chỉ dành cho Android đã được tinh gọn; không chứa tài nguyên Web/iOS/máy tính. |
 
-如果要求“断网且全新 RootFS 也能安装”，还必须将 `adb`、CMake、Ninja、`sha256sum`、`tar`、`xz` 等运行工具一起提供，或者确认它们已经存在于 RootFS。不要在离线安装脚本里执行 `apt-get install`。ZIP 解压优先使用系统 `unzip`，没有 `unzip` 时自动回退到已部署 JDK 的 `jar xf`，因此不要求额外联网安装解压包。
+Nếu yêu cầu "có thể cài đặt ngay cả khi mất mạng và RootFS hoàn toàn mới", bạn cũng phải cung cấp luôn các công cụ chạy như `adb`, CMake, Ninja, `sha256sum`, `tar`, `xz`, hoặc xác nhận chúng đã có sẵn trong RootFS. Đừng chạy `apt-get install` trong tập lệnh cài đặt ngoại tuyến. Việc giải nén ZIP ưu tiên dùng `unzip` của hệ thống; khi không có `unzip` thì tự động chuyển sang `jar xf` của JDK đã triển khai, nên không cần cài thêm gói giải nén từ mạng.
 
-## 2. 资源准备原则
+## 2. Nguyên tắc chuẩn bị tài nguyên
 
-### 2.1 所有资源必须是 Linux ARM64 可运行版本
+### 2.1 Mọi tài nguyên phải là phiên bản chạy được trên Linux ARM64
 
-宿主应用是 Android ARM64，但插件资源运行在 PRoot Linux 内。资源应满足：
+Ứng dụng chủ là Android ARM64, nhưng tài nguyên plugin lại chạy bên trong PRoot Linux. Tài nguyên cần đáp ứng:
 
 ```sh
 file jdk/bin/java
 readelf -h adb | grep -E 'Machine|AArch64'
 ```
 
-结果应显示 `ARM aarch64` 或 `AArch64`。Android APK 内的 x86_64 二进制、Windows `.exe`、macOS Mach-O 文件都不能放进去。
+Kết quả phải hiện `ARM aarch64` hoặc `AArch64`. Không được đưa vào gói các tệp nhị phân x86_64 trích từ Android APK, tệp `.exe` của Windows hay tệp Mach-O của macOS.
 
-### 2.2 归档不要在包内重复嵌套插件目录
+### 2.2 Đừng để tệp nén lồng thêm một tầng thư mục plugin bên trong gói
 
-正确：
+Đúng:
 
 ```text
 payload/archives/flutter-linux-arm64.tar.xz
 ```
 
-不推荐：
+Không nên:
 
 ```text
 payload/archives/flutter-linux-arm64/flutter/bin/flutter
 ```
 
-优先保存官方归档，安装脚本负责校验、解压和原子替换。
+Nên lưu nguyên tệp nén chính thức, để tập lệnh cài đặt đảm nhiệm việc kiểm tra, giải nén và thay thế nguyên tử.
 
-### 2.3 记录 SHA-256
+### 2.3 Ghi lại SHA-256
 
-PowerShell：
+PowerShell:
 
 ```powershell
 Get-ChildItem .\payload\archives -File | Get-FileHash -Algorithm SHA256 |
@@ -99,13 +99,13 @@ Get-ChildItem .\payload\archives -File | Get-FileHash -Algorithm SHA256 |
   Set-Content .\payload\checksums\SHA256SUMS
 ```
 
-Linux：
+Linux:
 
 ```sh
 sha256sum payload/archives/* > payload/checksums/SHA256SUMS
 ```
 
-## 3. `manifest.json` 示例
+## 3. Ví dụ `manifest.json`
 
 ```json
 {
@@ -144,17 +144,17 @@ sha256sum payload/archives/* > payload/checksums/SHA256SUMS
 }
 ```
 
-导入器会强制把本地插件改成 `source=LOCAL`、`offlineOnly=true`、`installMethod=LOCAL_PACKAGE`。`dependencies` 对离线插件应保持为空，不能依赖在线 Runtime 下载。
+Trình nhập sẽ ép plugin cục bộ thành `source=LOCAL`, `offlineOnly=true` và `installMethod=LOCAL_PACKAGE`. Với plugin ngoại tuyến, `dependencies` phải để trống, không được phụ thuộc vào việc tải môi trường thực thi từ mạng.
 
-## 4. 离线安装脚本结构
+## 4. Cấu trúc tập lệnh cài đặt ngoại tuyến
 
-不要直接使用现有 `app/src/main/assets/scripts/setup_android_core.sh` 和 `setup_flutter.sh`，因为它们包含网络下载逻辑。复制后新建：
+Đừng dùng trực tiếp `app/src/main/assets/scripts/setup_android_core.sh` và `setup_flutter.sh` hiện tại, vì chúng chứa logic tải từ mạng. Hãy sao chép rồi tạo mới:
 
 ```text
 payload/scripts/install-android-suite.sh
 ```
 
-推荐脚本结构：
+Cấu trúc tập lệnh đề xuất:
 
 ```sh
 #!/bin/sh
@@ -279,11 +279,11 @@ test -f "/opt/gradle-$GRADLE_VERSION/lib/gradle-launcher-$GRADLE_VERSION.jar"
 test -x "$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
 ```
 
-这只是安装流程骨架，具体归档内层目录需要根据你下载的 JDK、NDK、Flutter 包实际结构调整。关键原则是：每一个 `curl`、`wget`、`git clone`、`apt-get` 都必须从离线脚本中删除。
+Đây mới chỉ là khung của quy trình cài đặt; cấu trúc thư mục bên trong tệp nén cần được điều chỉnh theo đúng tệp JDK, NDK và Flutter mà bạn thực sự tải về. Nguyên tắc then chốt là: mọi `curl`, `wget`, `git clone`, `apt-get` đều phải bị xóa khỏi tập lệnh ngoại tuyến.
 
-## 5. 离线卸载脚本
+## 5. Tập lệnh gỡ cài đặt ngoại tuyến
 
-`payload/scripts/uninstall-android-suite.sh`：
+`payload/scripts/uninstall-android-suite.sh`:
 
 ```sh
 #!/bin/sh
@@ -300,11 +300,11 @@ rm -rf /opt/flutter
 rm -f /root/.gradle/init.d/tianxuan-android-ndk.gradle
 ```
 
-如果希望保留用户项目和 Gradle 缓存，不要删除 `/root/.gradle/caches`，也不要删除 `$TIANXUAN_TOOL_DATA`。
+Nếu muốn giữ lại dự án của người dùng và bộ nhớ đệm Gradle, đừng xóa `/root/.gradle/caches`, cũng đừng xóa `$TIANXUAN_TOOL_DATA`.
 
-## 6. 打包
+## 6. Đóng gói
 
-Windows PowerShell：
+Windows PowerShell:
 
 ```powershell
 $root = "D:\plugins\android-suite-offline"
@@ -314,20 +314,20 @@ Compress-Archive `
   -Force
 ```
 
-Linux/macOS：
+Linux/macOS:
 
 ```sh
 cd android-suite-offline
 zip -r ../android-suite-offline.txplugin manifest.json payload
 ```
 
-检查包内容：
+Kiểm tra nội dung gói:
 
 ```sh
 unzip -l android-suite-offline.txplugin
 ```
 
-根目录必须是：
+Thư mục gốc phải là:
 
 ```text
 manifest.json
@@ -336,39 +336,39 @@ payload/checksums/SHA256SUMS
 payload/scripts/...
 ```
 
-不能多一层 `android-suite-offline/` 目录。
+Không được có thêm một tầng thư mục `android-suite-offline/` bên ngoài.
 
-## 7. 导入和安装
+## 7. Nhập và cài đặt
 
-1. 打开“设置 -> 插件与工具中心”。
-2. 点击右上角导入按钮，选择 `android-suite-offline.txplugin`。
-3. 导入成功后，Android 全套会显示为一个本地插件。
-4. 点击安装。
-5. 安装脚本首先校验内置资源，然后部署 JDK、SDK、Build-Tools、NDK、Gradle、ADB 和 Flutter。
-6. 检查 `verifyCommand` 通过后，再用终端验证 `java`、`gradle`、`adb`、`flutter`。
+1. Mở "Cài đặt -> Trung tâm plugin và công cụ".
+2. Nhấn nút nhập ở góc trên bên phải, chọn `android-suite-offline.txplugin`.
+3. Sau khi nhập thành công, toàn bộ bộ công cụ Android sẽ hiện ra như một plugin cục bộ.
+4. Nhấn Cài đặt.
+5. Tập lệnh cài đặt trước tiên kiểm tra tài nguyên đóng gói, rồi triển khai JDK, SDK, Build-Tools, NDK, Gradle, ADB và Flutter.
+6. Sau khi `verifyCommand` báo đạt, dùng thiết bị đầu cuối kiểm tra lại `java`, `gradle`, `adb`, `flutter`.
 
-安装过程不应访问网络。如果日志出现 `curl`、`wget`、`apt-get update`、`git clone`，说明脚本仍有联网分支，不能称为完全离线插件。
+Quá trình cài đặt không được truy cập mạng. Nếu nhật ký xuất hiện `curl`, `wget`, `apt-get update` hay `git clone`, chứng tỏ tập lệnh vẫn còn nhánh dùng mạng và không thể coi là plugin hoàn toàn ngoại tuyến.
 
-## 8. 体积限制和实际建议
+## 8. Giới hạn kích thước và khuyến nghị thực tế
 
-当前本地导入器对 ZIP 解压后的总大小限制为 8 GiB。Android + NDK + Flutter 全套仍可能接近这个上限；打包前必须统计资源体积：
+Trình nhập cục bộ hiện giới hạn tổng kích thước sau khi giải nén ZIP là 8 GiB. Toàn bộ Android + NDK + Flutter vẫn có thể tiệm cận ngưỡng này, vì vậy phải thống kê kích thước tài nguyên trước khi đóng gói:
 
 ```powershell
 Get-ChildItem .\payload -Recurse -File | Measure-Object Length -Sum
 ```
 
-如果超过 8 GiB，当前实现不能用一个 `.txplugin` 导入，需要后续增加分卷插件或共享资源包能力。资源必须保证应用有足够的内部存储空间，不能依赖 `/sdcard` 直接执行。
+Nếu vượt 8 GiB, triển khai hiện tại không thể nhập bằng một `.txplugin` duy nhất; về sau cần bổ sung khả năng chia plugin thành nhiều phần hoặc gói tài nguyên dùng chung. Phải đảm bảo ứng dụng có đủ dung lượng lưu trữ nội bộ; không được dựa vào `/sdcard` để thực thi trực tiếp.
 
-## 9. 最终检查
+## 9. Kiểm tra cuối cùng
 
 ```text
-[ ] 所有 JDK/NDK/Flutter/ADB/SDK 原生程序都是 Linux ARM64
-[ ] payload/archives 中包含所有离线归档
-[ ] payload/checksums/SHA256SUMS 与实际文件一致
-[ ] 安装脚本不包含 curl、wget、git clone、apt-get、在线 Maven/Google URL
-[ ] Android Platform、Build-Tools、AAPT2、NDK、Gradle 均有安装后检查
-[ ] 断网情况下可以完成全新安装
-[ ] 重复安装不会损坏已有环境
-[ ] 卸载不会删除用户项目和 Gradle 缓存（除非用户明确选择删除数据）
-[ ] `.txplugin` 解压后总大小小于 8 GiB
+[ ] Mọi chương trình gốc JDK/NDK/Flutter/ADB/SDK đều là Linux ARM64
+[ ] payload/archives chứa toàn bộ archive cần thiết cho offline
+[ ] payload/checksums/SHA256SUMS khớp với tệp thực tế
+[ ] Script cài đặt không chứa curl, wget, git clone, apt-get hay URL Maven/Google trực tuyến
+[ ] Android Platform, Build-Tools, AAPT2, NDK, Gradle đều có kiểm tra sau khi cài
+[ ] Có thể hoàn tất cài đặt mới khi mất mạng
+[ ] Cài đặt lặp lại không làm hỏng môi trường hiện có
+[ ] Gỡ cài đặt không xóa project người dùng và cache Gradle (trừ khi người dùng chủ chọn xóa dữ liệu)
+[ ] Tổng kích thước sau khi giải nén `.txplugin` nhỏ hơn 8 GiB
 ```

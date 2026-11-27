@@ -1,30 +1,30 @@
-# 天玄 · TianXuan v0.17.0 更新说明
+# Ghi chú phát hành CTHarness v0.17.0
 
-> **当前版本**：v0.17.0  
-> **运行环境**：Android 10+ · arm64-v8a（PRoot Linux 沙箱 + AI 结对）
+> **Phiên bản hiện tại**: v0.17.0  
+> **Môi trường chạy**: Android 10+ · arm64-v8a (hộp cát PRoot Linux + lập trình cặp cùng AI)
 
 ---
 
-### ✨ 新特性
+### ✨ Tính năng mới
 
-- **端侧离线翻译**：深度集成 Google ML Kit 端侧离线翻译能力，支持自动语言识别与模型离线下载进度展示，无需 API Key 即可进行精准双向翻译。
-- **Material You 壁纸动态取色**：深度支持 Android 系统壁纸动态取色与实时刷新，保留“澄明 (Liquid Glass)”毛玻璃与“Material You”原生质感双主题自由切换。
-- **Agent Harness 架构进化**：
-  - 吸收 RikkaHub / Pi 最佳实践，提供容错编辑、Prompt Caching、视觉直通与干净重试机制。
-  - 补齐 `.agents/skills` 发现机制、停止保留内容与 Prompt Cache 开关与 TTL 自定义。
-  - 实装 Split-Turn 角色桥接与机械摘要文件足迹，补齐可选工程能力。
-  - 消除压缩快照内嵌转义与全分支加载引起的 512MB 内存溢出（OOM）。
-  - 始终规范输出 `content` 字段并智能过滤 UI-only 技能建议。
-  - 简化 `history_read` 工具参数 Schema 并与历史检索精确对齐。
+- **Dịch ngoại tuyến trên thiết bị**: Tích hợp sâu khả năng dịch ngoại tuyến trên thiết bị của Google ML Kit, hỗ trợ tự động nhận diện ngôn ngữ và hiển thị tiến độ tải mô hình dùng ngoại tuyến, cho phép dịch hai chiều chính xác mà không cần API Key.
+- **Lấy màu động từ hình nền Material You**: Hỗ trợ sâu khả năng lấy màu động từ hình nền hệ thống Android và làm mới theo thời gian thực, đồng thời vẫn cho phép chuyển đổi tự do giữa hai chủ đề: kính mờ “Trong trẻo (Liquid Glass)” và phong cách nguyên bản “Material You”.
+- **Cải tiến kiến trúc Agent Harness**:
+  - Tiếp thu các phương pháp tốt nhất từ RikkaHub / Pi, cung cấp cơ chế chỉnh sửa chịu lỗi, Prompt Caching, truyền hình ảnh trực tiếp và thử lại với ngữ cảnh sạch.
+  - Hoàn thiện cơ chế phát hiện `.agents/skills`, giữ lại nội dung khi dừng, công tắc Prompt Cache và tùy chỉnh TTL.
+  - Triển khai cầu nối vai trò Split-Turn và dấu vết tệp trong bản tóm tắt theo quy tắc, bổ sung các khả năng kỹ thuật tùy chọn.
+  - Loại bỏ lỗi tràn bộ nhớ 512MB (OOM) do escape lồng trong ảnh chụp trạng thái nén và tải toàn bộ các nhánh.
+  - Luôn xuất trường `content` đúng chuẩn và lọc thông minh các gợi ý kỹ năng chỉ dành cho giao diện (UI-only).
+  - Đơn giản hóa Schema tham số của công cụ `history_read` và đồng bộ chính xác với việc truy xuất lịch sử.
 
-### 🐛 问题修复
+### 🐛 Sửa lỗi
 
-- **终端与通信**：切换 mDNS 为按需发现，彻底杜绝在 Android 17 系统上频繁弹出 `NSD_PICKER` 异常弹窗。
-- **智枢聊天体验**：消息气泡支持长按选中文本与一键复制；优化模型用量进度条的圆角贴合度与内边距间隙。
-- **UI 布局稳定性**：排查并消除多处列表项异常撑高与文本折行挤压问题，保障紧凑屏与折叠屏排版协调。
-- **模型配置**：移除思考语言强制配置约束，由大模型根据指令语境自主适配。
+- **Thiết bị đầu cuối và kết nối**: Chuyển mDNS sang cơ chế phát hiện theo nhu cầu, loại bỏ hoàn toàn hiện tượng hộp thoại bất thường `NSD_PICKER` xuất hiện liên tục trên Android 17.
+- **Trải nghiệm trò chuyện tại trung tâm AI**: Bong bóng tin nhắn hỗ trợ nhấn giữ để chọn văn bản và sao chép bằng một lần chạm; tối ưu độ khớp góc bo và khoảng đệm của thanh tiến độ mức sử dụng mô hình.
+- **Độ ổn định bố cục UI**: Rà soát và loại bỏ nhiều lỗi khiến mục danh sách cao bất thường hoặc văn bản xuống dòng bị chèn ép, bảo đảm bố cục hài hòa trên màn hình nhỏ và màn hình gập.
+- **Cấu hình mô hình**: Loại bỏ ràng buộc bắt buộc về ngôn ngữ suy nghĩ, để mô hình ngôn ngữ tự điều chỉnh theo ngữ cảnh chỉ dẫn.
 
-### ⚡ 构建与工程
+### ⚡ Bản dựng và kỹ thuật
 
-- Debug 构建在配置签名密钥时自动复用 Release 签名参数，避免调试与正式签名不一致。
-- 架构分层治理：将 Markdown 渲染引擎全面下沉至通用组件层，更新弹窗与关于日志全面支持富文本预览。
+- Bản dựng Debug tự động dùng lại tham số ký của Release khi có cấu hình khóa ký, tránh sự khác biệt chữ ký giữa bản gỡ lỗi và bản chính thức.
+- Chuẩn hóa phân tầng kiến trúc: chuyển toàn bộ bộ máy kết xuất Markdown xuống tầng thành phần dùng chung; hộp thoại cập nhật và nhật ký trong mục Giới thiệu đều hỗ trợ đầy đủ việc xem trước văn bản có định dạng.

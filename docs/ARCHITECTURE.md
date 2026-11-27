@@ -1,89 +1,89 @@
-# 🏗️ 天玄 (TianXuan) — 系统架构与模块拓扑 (Architecture & Modules)
+# 🏗️ CTHarness — Kiến trúc hệ thống và cấu trúc module
 
 ---
 
-## 1. 🚀 项目定位与技术栈摘要 (Tech Stack Snapshot)
+## 1. 🚀 Định vị dự án và tóm tắt nền tảng công nghệ
 
-- **核心定位**：在 **Android 无 Root 用户态** 下，基于 **PRoot** 运行完整的 **Linux 沙箱**，并深度集成 **AI Agent Harness 智能体引擎**、**原生 PTY 终端**、**工作区文件管理** 与 **Material 3 Expressive UI**。
-- **Android / UI 层**：
-  - **主工程构建链**：Gradle 9.7.0 / AGP 9.3.1 / Kotlin 2.4.10 / compileSdk 37.1 / targetSdk 37 / NDK 30.0.15729638
-  - **语言**：Kotlin（100% Kotlin + Jetpack Compose）
-  - **UI 风格**：Material 3 Expressive (M3 动态表面、Haptic 触觉反馈、双栏自适应 Dual-Pane)
-  - **依赖注入**：Koin 4.2.2（显式 Kotlin DSL）
-  - **状态与异步**：Kotlin Coroutines, StateFlow, SharedFlow
-  - **本地存储**：Jetpack DataStore (Preferences), Room Database (SQLite)
-- **底层运行时 (Runtime & Native)**：
-  - **C/C++ JNI**：`app/src/main/cpp/pty.c` (openpty, fork, exec, ioctl 终端 PTY 桥接，编译为 `libtianxuan_pty.so`, `arm64-v8a`)
-  - **Linux 容器**：内置 PRoot 引擎，启动 Debian rootfs
-  - **宿主存储映射**：PRoot `-b <host>:<guest>` 原生绑定机制（Download, Documents, /sdcard）
-- **AI 智能体引擎 (Agent Harness)**：
-  - **协议兼容**：OpenAI Chat Completion API 标准（支持流式 SSE、`reasoning_content` 思考过程、函数工具调用 `tool_calls`）
-  - **内置工具**：`read` / `write` / `edit` / `base` / `process`，并可扩展 MCP 与子智能体工具
-  - **命令生命周期**：`base` 用于有界前台命令，默认超时由用户配置；`process` 通过 Runtime 进程注册表托管跨工具调用持续运行的命令
-  - **本地端侧模型**：沙箱内原生支持 `llama.cpp` 与 `Ollama`，无需 API Key
-- **沙箱 Android 开发套件（不要与主工程构建链混淆）**：Gradle 8.14.2 / AGP 8.11.1 / Kotlin 2.2.20 / compileSdk & targetSdk 34 / NDK 29.0.14206865，仅面向 ARM64 沙箱内的 Android/Flutter APK 构建。
+- **Định vị cốt lõi**: Chạy một **sandbox Linux** đầy đủ dựa trên **PRoot** trong **không gian người dùng Android không cần Root**, tích hợp sâu **bộ máy Agent AI Harness**, **terminal PTY gốc**, **quản lý tệp trong không gian làm việc** và **giao diện Material 3 Expressive**.
+- **Tầng Android / giao diện**:
+  - **Chuỗi công cụ dựng của dự án chính**: Gradle 9.7.0 / AGP 9.3.1 / Kotlin 2.4.10 / compileSdk 37.1 / targetSdk 37 / NDK 30.0.15729638
+  - **Ngôn ngữ**: Kotlin (100% Kotlin + Jetpack Compose)
+  - **Phong cách giao diện**: Material 3 Expressive (bề mặt động M3, phản hồi xúc giác, bố cục thích ứng hai cột)
+  - **Tiêm phụ thuộc**: Koin 4.2.2 (Kotlin DSL tường minh)
+  - **Trạng thái và bất đồng bộ**: Kotlin Coroutines, StateFlow, SharedFlow
+  - **Lưu trữ cục bộ**: Jetpack DataStore (tùy chọn người dùng), Room Database (SQLite)
+- **Môi trường thực thi tầng dưới và mã gốc**:
+  - **C/C++ JNI**: `app/src/main/cpp/pty.c` (openpty, fork, exec, ioctl — cầu nối terminal PTY, biên dịch thành `libtianxuan_pty.so`, `arm64-v8a`)
+  - **Container Linux**: bộ máy PRoot tích hợp sẵn, khởi động hệ thống tệp gốc Debian
+  - **Ánh xạ bộ nhớ phía chủ**: cơ chế gắn kết gốc `-b <host>:<guest>` của PRoot (Download, Documents, /sdcard)
+- **Bộ máy Agent thông minh (Agent Harness)**:
+  - **Tương thích giao thức**: chuẩn OpenAI Chat Completion API (hỗ trợ truyền luồng SSE, quá trình suy nghĩ `reasoning_content`, gọi công cụ hàm `tool_calls`)
+  - **Công cụ tích hợp**: `read` / `write` / `edit` / `base` / `process`, có thể mở rộng thêm công cụ MCP và Agent con
+  - **Vòng đời lệnh**: `base` dùng cho lệnh chạy trực tiếp có giới hạn, thời gian chờ mặc định do người dùng cấu hình; `process` dùng `ProcessRegistry` của môi trường thực thi để quản lý các lệnh chạy xuyên nhiều lần gọi công cụ
+  - **Mô hình cục bộ trên thiết bị**: sandbox hỗ trợ chạy trực tiếp `llama.cpp` và `Ollama`, không cần khóa API
+- **Bộ công cụ phát triển Android trong sandbox (đừng nhầm với chuỗi công cụ dựng của dự án chính)**: Gradle 8.14.2 / AGP 8.11.1 / Kotlin 2.2.20 / compileSdk & targetSdk 34 / NDK 29.0.14206865, chỉ phục vụ dựng APK Android/Flutter trong sandbox ARM64.
 
 ---
 
-## 2. 🗺️ 模块拓扑与职责 (Module Topology)
+## 2. 🗺️ Cấu trúc module và trách nhiệm
 
 ```text
 TianXuan/
-├── app/                  # 应用壳工程：MainActivity、Koin 初始化、JNI C 代码、前台保活 Service
+├── app/                  # Khung ứng dụng: MainActivity, khởi tạo Koin, mã C JNI, Service tiền cảnh giữ tiến trình
 ├── core/
-│   ├── model/           # 纯 Kotlin 数据模型 (不含 Android SDK 依赖)
-│   ├── common/          # 协程调度器、日志、通用工具类
-│   ├── database/        # Room 数据库：Harness 对话记录、会话、工具执行历史
-│   ├── datastore/       # Jetpack DataStore：用户偏好、存储挂载、激活模型、Agent 命令超时
-│   ├── network/         # OkHttp 网络客户端、SSE 流式解析器、超时策略
-│   └── security/        # API Key 本地安全加解密
-├── runtime/              # Linux 沙箱与 PRoot 核心：命令/进程注册、PTY、工作区导入导出与构建
-├── project-template/     # 标准化项目模板：manifest、变量表单协议、导入导出、物化与内置模板资产
-├── harness/              # Agent 智能体核心：Agent 循环、流式推理、内置工具/审批、MCP
-├── tools/                # 工具生态中心：Registry、本地插件、安装事务、批量组件安装、Provider 安全
-└── feature/              # Compose UI 业务特性层
-    ├── components/      # 天玄 M3 Expressive 设计规范、通用组件 (RuntimeCard, TopBar, Icons)
-    ├── theme/           # Material 3 调色板、字体、主题配置
-    ├── home/            # 首页运行仪表盘：Linux 系统状态、内存/磁盘/进程实时监控
-    ├── chat/            # 智枢 Agent 对话界面、TaskPlanCard 任务拆解卡片、宽屏双栏布局
-    ├── terminal/        # 终端 Compose UI 与触觉按键条；会话/VT100 状态机位于 runtime
-    ├── workspace/       # 工作区管理器：创建/ZIP/GitHub 导入、导出、代码浏览、后台构建
-    ├── workflow/        # 工作流目录、DAG 画布、执行时间线与人工审批界面
-    ├── settings/        # 设置中心：模型档案、Agent 超时、工具/本地插件、存储挂载、外观与诊断
-    ├── developer/       # 开发者原生沙箱与诊断面板
-    ├── onboarding/      # 首次启动引导与 RootFS 解压就绪流程
-    ├── custom_iteration/ # 自定义迭代（AI 改应用）入口
-    └── navigation/      # 顶层导航路由与 NavHost 调度
+│   ├── model/           # Mô hình dữ liệu Kotlin thuần (không phụ thuộc Android SDK)
+│   ├── common/          # Bộ điều phối coroutine, nhật ký, lớp tiện ích dùng chung
+│   ├── database/        # Cơ sở dữ liệu Room: hội thoại Harness, phiên, lịch sử thực thi công cụ
+│   ├── datastore/       # Jetpack DataStore: tùy chọn người dùng, gắn kết bộ nhớ, mô hình đang dùng, thời gian chờ lệnh Agent
+│   ├── network/         # Máy khách OkHttp, bộ phân tích luồng SSE, chính sách thời gian chờ
+│   └── security/        # Mã hóa và giải mã khóa API an toàn tại thiết bị
+├── runtime/              # Lõi sandbox Linux và PRoot: đăng ký lệnh/tiến trình, PTY, nhập/xuất và dựng không gian làm việc
+├── project-template/     # Mẫu dự án chuẩn hóa: manifest, giao thức biểu mẫu biến, nhập/xuất, tạo dự án thực và tài nguyên mẫu tích hợp
+├── harness/              # Lõi Agent: vòng lặp Agent, suy luận dạng luồng, công cụ/phê duyệt tích hợp, MCP
+├── tools/                # Trung tâm hệ sinh thái công cụ: Registry, plugin cục bộ, giao dịch cài đặt, cài thành phần hàng loạt, bảo mật Provider
+└── feature/              # Tầng tính năng nghiệp vụ Compose UI
+    ├── components/      # Quy chuẩn thiết kế CTHarness M3 Expressive, thành phần dùng chung (RuntimeCard, TopBar, Icons)
+    ├── theme/           # Bảng màu, phông chữ và cấu hình chủ đề Material 3
+    ├── home/            # Bảng điều khiển trang chủ: trạng thái Linux, giám sát bộ nhớ/đĩa/tiến trình theo thời gian thực
+    ├── chat/            # Giao diện hội thoại Agent Tri-Shu, thẻ phân tách tác vụ TaskPlanCard, bố cục hai cột trên màn hình rộng
+    ├── terminal/        # Giao diện terminal Compose và thanh phím xúc giác; phiên/máy trạng thái VT100 nằm trong runtime
+    ├── workspace/       # Quản lý không gian làm việc: tạo/nhập ZIP/GitHub, xuất, duyệt mã, dựng nền
+    ├── workflow/        # Danh mục quy trình, khung vẽ DAG, dòng thời gian thực thi và giao diện phê duyệt thủ công
+    ├── settings/        # Trung tâm cài đặt: hồ sơ mô hình, thời gian chờ Agent, công cụ/plugin cục bộ, gắn kết bộ nhớ, giao diện và chẩn đoán
+    ├── developer/       # Sandbox gốc và bảng chẩn đoán dành cho nhà phát triển
+    ├── onboarding/      # Hướng dẫn lần đầu khởi động và quy trình giải nén, chuẩn bị RootFS
+    ├── custom_iteration/ # Điểm vào tính năng cải tiến tùy chỉnh (AI sửa ứng dụng)
+    └── navigation/      # Tuyến điều hướng cấp cao nhất và điều phối NavHost
 ```
 
 ---
 
-## 3. 🔗 跨模块交互原则 (Cross-Module Rules)
+## 3. 🔗 Nguyên tắc tương tác liên module
 
-1. **单向依赖流**：
-   - 依赖方向严格保持 `feature/*` → `core/*` / `runtime` / `harness` / `tools`。
-   - 业务 feature 之间**严禁**互相横向依赖，仅可依赖共享 UI `feature/components` 与 `feature/theme`，顶层由 `feature/navigation` 负责页面装配与路由调度。
-2. **持久化隔离**：
-   - feature / runtime / harness 只能依赖 `core/database/PersistenceRepositories.kt` 暴露的 Repository 接口，严禁直接注入或操作 Room DAO。
-   - 偏好配置统一通过 `core/datastore/PreferenceFacades.kt` 提供的领域分面接口读取或写入。
-3. **纯模型层隔离**：
-   - `:core:model` 必须保持 Pure Kotlin，**严禁**引入 `android.*`、`androidx.*` 或 Compose 依赖。
-   - `architectureCheck` 任务已接入 `app:preBuild` 验证阶段，严密阻断模型层平台化与违规依赖。
-4. **命令执行边界**：
-   - 短时、有明确退出状态的前台命令调用 `LinuxRuntime.execute()` / Harness `base`。
-   - 跨调用持续运行的服务或长任务调用 `LinuxRuntime.startBackground()` / Harness `process`，统一由 `ProcessRegistry` 托管 PID、生命周期与环形日志缓冲。
-5. **工作区操作边界**：
-   - 项目生命周期与物理目录交互统一通过 `WorkspaceManager` 与 `WorkspaceFileService`。
-   - ZIP 导入必须执行路径穿越防范（Zip Slip Check）、文件大小上限与条目数校验；Git clone 必须在沙箱内隔离执行。
-6. **构建调度与保活边界**：
-   - 工作区构建由单例 `WorkspaceBuildTaskCoordinator` 全局持有，UI 页面旋转或重建不中断构建任务；底层构建执行与环境预检由 `WorkspaceBuildRunner` 承载。
+1. **Luồng phụ thuộc một chiều**:
+   - Hướng phụ thuộc giữ nghiêm ngặt `feature/*` → `core/*` / `runtime` / `harness` / `tools`.
+   - Giữa các module tính năng nghiệp vụ **nghiêm cấm** phụ thuộc ngang nhau, chỉ được phụ thuộc giao diện dùng chung `feature/components` và `feature/theme`; tầng cao nhất `feature/navigation` đảm nhiệm lắp ráp trang và điều phối tuyến.
+2. **Cách ly lưu trữ bền vững**:
+   - Các tầng tính năng / thực thi / Harness chỉ được phụ thuộc giao diện Repository do `core/database/PersistenceRepositories.kt` cung cấp, nghiêm cấm tiêm trực tiếp hay thao tác Room DAO.
+   - Cấu hình tùy chọn thống nhất đọc/ghi qua các giao diện theo miền nghiệp vụ do `core/datastore/PreferenceFacades.kt` cung cấp.
+3. **Cách ly tầng mô hình thuần**:
+   - `:core:model` phải giữ Kotlin thuần, **nghiêm cấm** đưa vào `android.*`, `androidx.*` hay phụ thuộc Compose.
+   - Tác vụ `architectureCheck` đã nối vào giai đoạn xác thực `app:preBuild`, chặn việc đưa nền tảng vào tầng mô hình và các phụ thuộc vi phạm.
+4. **Ranh giới thực thi lệnh**:
+   - Lệnh chạy trực tiếp ngắn, có trạng thái thoát rõ ràng gọi `LinuxRuntime.execute()` / `base` của Harness.
+   - Dịch vụ hoặc tác vụ dài chạy xuyên nhiều lần gọi dùng `LinuxRuntime.startBackground()` / `process` của Harness, thống nhất do `ProcessRegistry` quản lý PID, vòng đời và bộ đệm nhật ký dạng vòng.
+5. **Ranh giới thao tác không gian làm việc**:
+   - Vòng đời dự án và tương tác thư mục vật lý thống nhất qua `WorkspaceManager` và `WorkspaceFileService`.
+   - Nhập ZIP phải phòng chống vượt đường dẫn (Zip Slip), kiểm tra giới hạn kích thước tệp và số mục; sao chép kho Git phải chạy cô lập trong sandbox.
+6. **Ranh giới điều phối dựng và giữ tiến trình**:
+   - Việc dựng không gian làm việc do đối tượng duy nhất cấp tiến trình `WorkspaceBuildTaskCoordinator` giữ toàn cục, xoay hay dựng lại giao diện không làm ngắt tác vụ dựng; phần thực thi dựng và tiền kiểm tra môi trường do `WorkspaceBuildRunner` đảm nhiệm.
 
-## 4. 依赖装配（Koin）
+## 4. Lắp ráp phụ thuộc (Koin)
 
-- 各模块的 `src/main/java/top/wkbin/tianxuan/di/**/KoinModule.kt` 声明本模块构造器与接口绑定；`app/di/TianXuanModules.kt` 汇总完整依赖图，Application 启动时注册应用 Context，并禁止定义覆盖。
-- 业务类使用普通构造器；仅 Android 创建的 Application、Activity、Service、Receiver 和 Compose ViewModel 入口访问 Koin。新增构造依赖时同步更新所属模块注册，并运行 `:app:testDebugUnitTest` 的依赖图测试。
-- 原进程单例使用 `single`，无作用域对象使用 `factory`，ViewModel 使用 `viewModel`，保留 Navigation3 的 ViewModelStoreOwner 归属。
-- Kotlin `Lazy` 保留 Runtime、仓储与 MCP Server 的延迟创建；子代理通过 `() -> ToolExecutor` 打断依赖环。ToolExecutor 的偏好通过构造器显式装配。
-- 工作流执行器与工具适配器集合使用不同 qualifier，避免泛型擦除后的 Set 定义冲突。
-- WorkManager 保留 `Configuration.Provider` 按需初始化，使用 `KoinWorkerFactory` 创建 Worker；WorkerParameters 来自系统，Context 来自应用容器。
-- DI 使用经典 DSL，不引入 Koin 编译插件；KSP 仅用于 Room。依赖完整性由图测试保障，不能把 Kotlin 编译通过等同于 DI 图验证通过。
+- Tệp `src/main/java/top/wkbin/tianxuan/di/**/KoinModule.kt` của mỗi module khai báo liên kết hàm khởi tạo và giao diện của module đó; `app/di/TianXuanModules.kt` tổng hợp toàn bộ đồ thị phụ thuộc, đăng ký Application Context lúc Application khởi động và cấm ghi đè định nghĩa.
+- Lớp nghiệp vụ dùng hàm khởi tạo thông thường; chỉ các điểm vào do Android tạo là Application, Activity, Service, Receiver và Compose ViewModel mới truy cập Koin. Khi thêm phụ thuộc vào hàm khởi tạo, cập nhật đồng bộ phần đăng ký của module tương ứng và chạy kiểm thử đồ thị phụ thuộc `:app:testDebugUnitTest`.
+- Đối tượng duy nhất cấp tiến trình dùng `single`, đối tượng không có phạm vi dùng `factory`, ViewModel dùng `viewModel`, giữ quyền sở hữu ViewModelStoreOwner của Navigation3.
+- Kotlin `Lazy` giữ việc tạo trễ của môi trường thực thi, kho dữ liệu và máy chủ MCP; Agent con dùng `() -> ToolExecutor` để cắt vòng phụ thuộc. Các tùy chọn của ToolExecutor được lắp tường minh qua hàm khởi tạo.
+- Tập bộ thực thi quy trình và tập bộ thích nghi công cụ dùng định danh phân biệt khác nhau để tránh xung đột định nghĩa Set sau khi thông tin kiểu tổng quát bị xóa.
+- WorkManager giữ khởi tạo theo nhu cầu `Configuration.Provider`, dùng `KoinWorkerFactory` tạo Worker; WorkerParameters do hệ thống cung cấp, Context lấy từ bộ chứa ứng dụng.
+- Dùng DSL cổ điển, không đưa plugin biên dịch của Koin vào; KSP chỉ dùng cho Room. Tính toàn vẹn phụ thuộc do kiểm thử đồ thị đảm bảo, không được coi Kotlin biên dịch thành công là đã xác thực xong đồ thị DI.

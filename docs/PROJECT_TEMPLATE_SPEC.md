@@ -1,26 +1,26 @@
-# 天玄可移植项目模板规范（v1）
+# Đặc tả mẫu dự án di động của CTHarness (v1)
 
-天玄模板是一个可导入、导出和分享的 ZIP 包。用户可在“智坊 → 更多 → 模板管理”中导入 ZIP，也可导出任意内置模板作为制作样例。
+Mẫu CTHarness là một gói ZIP có thể nhập, xuất và chia sẻ. Người dùng có thể nhập ZIP trong "Xưởng thông minh → Thêm → Quản lý mẫu", hoặc xuất bất kỳ mẫu tích hợp sẵn nào làm ví dụ để làm theo.
 
-## 1. 目录结构
+## 1. Cấu trúc thư mục
 
-ZIP 根目录可以直接包含 `template.json`，也可以只包含一个模板目录：
+Thư mục gốc của ZIP có thể chứa trực tiếp `template.json`, hoặc chỉ chứa một thư mục mẫu duy nhất:
 
 ```text
 my-template/
 ├── template.json
-├── preview.png                   # 可选，固定 270×270
-├── template-hooks/             # 可选
+├── preview.png                   # tùy chọn, cố định 270×270
+├── template-hooks/             # tùy chọn
 │   ├── before-create.sh
 │   └── after-create.sh
-└── ...工程文件或 *.template
+└── ...tệp dự án hoặc *.template
 ```
 
-模板包最多 5000 个条目；单文件不超过 16 MiB；总解压体积不超过 128 MiB。ZIP 路径穿越会被拒绝。
+Gói mẫu tối đa 5000 mục; mỗi tệp không vượt quá 16 MiB; tổng kích thước sau khi giải nén không vượt quá 128 MiB. Đường dẫn ZIP đi xuyên thư mục sẽ bị từ chối.
 
 ## 2. template.json
 
-完整结构由 [project-template.schema.json](project-template.schema.json) 描述。最小示例：
+Cấu trúc đầy đủ được mô tả trong [project-template.schema.json](project-template.schema.json). Ví dụ tối thiểu:
 
 ```json
 {
@@ -35,47 +35,47 @@ my-template/
 }
 ```
 
-- `id` 只能包含小写字母、数字以及 `.`、`_`、`-` 分隔符。
-- `builtin.` 是系统内置模板保留前缀，用户模板不能使用。
-- `projectType` 支持 `ANDROID`、`FLUTTER`、`GENERAL`。
-- `category` 是模板选择页的第二级分组，`sortOrder` 越小越靠前。
-- JSON 采用严格解析；未知字段会被拒绝，避免拼写错误被静默忽略。
+- `id` chỉ được chứa chữ cái thường, chữ số và các dấu phân cách `.`, `_`, `-`.
+- `builtin.` là tiền tố dành riêng cho mẫu tích hợp sẵn của hệ thống, mẫu do người dùng tạo không được dùng.
+- `projectType` hỗ trợ `ANDROID`, `FLUTTER`, `GENERAL`.
+- `category` là nhóm phân cấp thứ hai trên trang chọn mẫu; `sortOrder` càng nhỏ thì xếp càng trên.
+- JSON được phân tích nghiêm ngặt; trường không xác định sẽ bị từ chối, tránh lỗi chính tả bị bỏ qua âm thầm.
 
-## 3. 项目名称与路径
+## 3. Tên dự án và đường dẫn
 
-项目名称和创建路径不属于动态字段，由智坊对所有模板统一提供：
+Tên dự án và đường dẫn tạo không phải là trường động, được Xưởng thông minh cung cấp thống nhất cho mọi mẫu:
 
-- 项目名称必填。
-- 路径可留空；内部空间默认创建到 `/workspace/<项目名称>`。
-- 模板可使用系统派生变量 `projectName`、`appName` 和 `projectPath`；`appName` 若由动态字段提供则优先使用用户输入。
-- 模板可以将 `projectName` 声明为 `prompt: false` 的固定变量，并通过 `validationRegex` 约束项目名称；智坊会在统一的项目名称输入框显示 `description` 提示并阻止无效提交。例如 Flutter 模板可要求名称匹配 `^[a-z][a-z0-9_]*$`。
-- 智坊不会静默改写用户输入的项目名称；名称不符合模板规则时必须由用户修改。
-- `packageName`、`packagePath` 只有在模板清单中声明时才生成和校验；非 Android 模板不依赖 Java 包名。
+- Tên dự án là bắt buộc.
+- Đường dẫn có thể để trống; mặc định không gian làm việc được tạo tại `/workspace/<项目名称>`.
+- Mẫu có thể dùng các biến do hệ thống dẫn xuất `projectName`, `appName` và `projectPath`; nếu `appName` do trường động cung cấp thì ưu tiên giá trị người dùng nhập.
+- Mẫu có thể khai báo `projectName` là biến cố định với `prompt: false`, và ràng buộc tên dự án bằng `validationRegex`; Xưởng thông minh sẽ hiển thị `description` làm gợi ý trong ô nhập tên dự án chung và chặn các giá trị không hợp lệ. Ví dụ mẫu Flutter có thể yêu cầu tên khớp `^[a-z][a-z0-9_]*$`.
+- Xưởng thông minh không âm thầm đổi tên dự án do người dùng nhập; khi tên không đúng quy tắc của mẫu, bắt buộc người dùng phải sửa.
+- `packageName`, `packagePath` chỉ được tạo và xác thực khi có khai báo trong bản kê mẫu; mẫu không phải Android không phụ thuộc vào tên gói Java.
 
-## 4. 动态变量
+## 4. Biến động
 
-`variables` 支持 `TEXT`、`MULTILINE`、`NUMBER`、`BOOLEAN`、`SELECT`、`SECRET`，还可以声明 `label`、`description`、`placeholder`、`required`、`defaultValue`、`validationRegex` 和 `options`。
+`variables` hỗ trợ `TEXT`, `MULTILINE`, `NUMBER`, `BOOLEAN`, `SELECT`, `SECRET`, đồng thời có thể khai báo `label`, `description`, `placeholder`, `required`, `defaultValue`, `validationRegex` và `options`.
 
-- `prompt: true`：创建工程时渲染为动态表单。
-- `prompt: false`：不显示；隐藏必填变量必须提供 `defaultValue`，系统派生变量除外。
-- 变量名必须匹配 `^[A-Za-z][A-Za-z0-9_]*$`，且不能重复。
-- `SELECT` 必须提供至少一个不重复的选项；可选 `SELECT` 允许留空。
+- `prompt: true`: được hiển thị thành biểu mẫu động khi tạo dự án.
+- `prompt: false`: không hiển thị; biến bắt buộc ẩn phải có `defaultValue`, trừ biến do hệ thống dẫn xuất.
+- Tên biến phải khớp `^[A-Za-z][A-Za-z0-9_]*$` và không được trùng lặp.
+- `SELECT` phải có ít nhất một lựa chọn không trùng nhau; `SELECT` không bắt buộc được phép để trống.
 
-## 5. 文件和路径替换
+## 5. Thay thế tệp và đường dẫn
 
-文本内容和相对路径都可使用 `{{variableName}}`，例如 `src/{{moduleName}}/config.json.template`。生成时会替换变量并去掉末尾的 `.template`。
+Cả nội dung văn bản và đường dẫn tương đối đều có thể dùng `{{variableName}}`, ví dụ `src/{{moduleName}}/config.json.template`. Khi tạo sẽ thay thế biến và bỏ hậu tố `.template` ở cuối.
 
-任意需要替换的文本文件都建议添加 `.template` 后缀；常见源码和配置扩展名也会自动按文本处理。Android/Kotlin 包目录使用 `TIANXUAN_PACKAGE_PATH`，创建时会替换为包名对应的目录层级。不要使用以下划线开头的占位目录，否则可能被 Android AAPT 忽略。
+Mọi tệp văn bản cần thay thế đều nên thêm hậu tố `.template`; các phần mở rộng nguồn và cấu hình phổ biến cũng tự động được xử lý như văn bản. Thư mục gói Android/Kotlin dùng `TIANXUAN_PACKAGE_PATH`, khi tạo sẽ được thay bằng cấp thư mục tương ứng với tên gói. Đừng dùng thư mục giữ chỗ bắt đầu bằng dấu gạch dưới, nếu không có thể bị Android AAPT bỏ qua.
 
-生成结束前若仍存在 `{{unknownVariable}}`，创建会失败。所有输出路径都会进行规范化和越界检查。
+Nếu khi kết thúc quá trình tạo vẫn còn `{{unknownVariable}}`, việc tạo sẽ thất bại. Mọi đường dẫn đầu ra đều được chuẩn hóa và kiểm tra vượt giới hạn.
 
-## 6. 预览图
+## 6. Ảnh xem trước
 
-模板通过单一的 `previewImage` 字段声明预览图，不再区分手机、平板或横竖屏。支持 PNG、JPEG、WebP、GIF，必须使用包内相对路径。
+Mẫu khai báo ảnh xem trước thông qua một trường duy nhất `previewImage`, không còn phân biệt điện thoại, máy tính bảng hay chiều ngang/dọc. Hỗ trợ PNG, JPEG, WebP, GIF, bắt buộc dùng đường dẫn tương đối bên trong gói.
 
-硬限制：预览图比例统一为 **1:1**，像素尺寸必须为 **270×270 px**，单图不超过 4 MiB。建议将 Logo、标题和关键内容放在中央安全区，避免紧贴边缘。
+Giới hạn cứng: tỉ lệ ảnh xem trước thống nhất là **1:1**, kích thước pixel phải là **270×270 px**, mỗi ảnh không quá 4 MiB. Nên đặt logo, tiêu đề và nội dung chính vào vùng an toàn ở giữa, tránh sát mép.
 
-## 7. 随身构造脚本
+## 7. Mã lệnh đi kèm
 
 ```json
 {
@@ -86,17 +86,17 @@ my-template/
 }
 ```
 
-- 脚本必须位于 `template-hooks/` 内，单个脚本不超过 1 MiB。
-- 导入、查看和导出模板不会执行脚本；创建工程时必须由用户明确授权。
-- 脚本在 Linux 沙箱的新工程目录中运行，单阶段最长 60 秒。
-- `beforeCreate` 在复制模板文件前执行，`afterCreate` 在物化完成后执行。
-- 工程路径通过 `TIANXUAN_PROJECT_DIR` 提供。
-- 变量通过 `TIANXUAN_VAR_<大写变量名>` 提供，例如 `packageName` 对应 `TIANXUAN_VAR_PACKAGENAME`。
-- 任一脚本非零退出会终止创建并显示错误输出。
+- Mã lệnh phải nằm trong `template-hooks/`, mỗi tệp không quá 1 MiB.
+- Việc nhập, xem và xuất mẫu sẽ không chạy mã lệnh; thời điểm tạo dự án mới cần người dùng cấp quyền rõ ràng.
+- Mã lệnh chạy trong môi trường Linux cô lập, trong thư mục dự án mới, mỗi giai đoạn tối đa 60 giây.
+- `beforeCreate` chạy trước khi sao chép tệp mẫu, `afterCreate` chạy sau khi hoàn tất việc tạo tệp và thay thế biến.
+- Đường dẫn dự án được cung cấp qua `TIANXUAN_PROJECT_DIR`.
+- Biến được cung cấp qua `TIANXUAN_VAR_<大写变量名>`, ví dụ `packageName` tương ứng `TIANXUAN_VAR_PACKAGENAME`.
+- Bất kỳ mã lệnh nào thoát với mã không phải 0 sẽ chấm dứt quá trình tạo và hiển thị đầu ra lỗi.
 
-## 8. 生成结果校验
+## 8. Kiểm chứng kết quả tạo
 
-模板可以自行声明生成后必须满足的条件，不依赖模板 ID 或应用内硬编码：
+Mẫu có thể tự khai báo điều kiện phải thỏa mãn sau khi tạo, không phụ thuộc vào ID mẫu hay mã cứng trong ứng dụng:
 
 ```json
 {
@@ -113,16 +113,16 @@ my-template/
 }
 ```
 
-- `requiredFiles`：必须存在的文件。
-- `forbiddenFiles`：不得生成的文件或目录。
-- `contentRules`：支持 `equals`、`contains`、`excludes` 文本规则。
-- 路径和期望内容都支持模板变量及 `TIANXUAN_PACKAGE_PATH`。
-- 校验在 `afterCreate` 脚本完成后执行，因此脚本可以参与最终工程构造。
+- `requiredFiles`: tệp phải tồn tại.
+- `forbiddenFiles`: tệp hoặc thư mục không được tạo.
+- `contentRules`: hỗ trợ các quy tắc văn bản `equals`, `contains`, `excludes`.
+- Cả đường dẫn và nội dung mong đợi đều hỗ trợ biến mẫu và `TIANXUAN_PACKAGE_PATH`.
+- Việc kiểm chứng chạy sau khi mã lệnh `afterCreate` kết thúc, vì vậy mã lệnh có thể tham gia vào quá trình kiến tạo dự án cuối cùng.
 
-## 9. 导入、导出与分享
+## 9. Nhập, xuất và chia sẻ
 
-导入时会校验清单、变量、分类、预览图、脚本路径及 ZIP 安全限制。用户模板安装在应用私有模板目录，不会覆盖内置模板。
+Khi nhập sẽ kiểm chứng bản kê, biến, phân loại, ảnh xem trước, đường dẫn mã lệnh và giới hạn an toàn của ZIP. Mẫu của người dùng được cài đặt vào thư mục mẫu riêng của ứng dụng, không ghi đè mẫu tích hợp sẵn.
 
-模板管理页支持导入用户 ZIP、导出用户或内置模板，以及删除用户模板；内置模板不可删除。以内置模板为样例制作新模板时，必须修改 `id` 并移除保留的 `builtin.` 前缀。
+Trang quản lý mẫu hỗ trợ nhập ZIP của người dùng, xuất mẫu của người dùng hoặc mẫu tích hợp sẵn, và xóa mẫu người dùng; mẫu tích hợp sẵn không thể xóa. Khi dùng mẫu tích hợp sẵn làm ví dụ để tạo mẫu mới, bắt buộc phải đổi `id` và bỏ tiền tố dành riêng `builtin.`.
 
-应用内置模板会从 `project-template/src/main/assets/templates/<项目类型>/<模板目录>/template.json` 自动发现；新增标准目录不需要修改 Kotlin 注册表。
+Mẫu tích hợp sẵn của ứng dụng được tự động phát hiện từ `project-template/src/main/assets/templates/<项目类型>/<模板目录>/template.json`; thêm thư mục chuẩn không cần sửa sổ đăng ký Kotlin.
