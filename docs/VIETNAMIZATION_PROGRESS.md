@@ -62,4 +62,12 @@ Cố ý **giữ nguyên** chuỗi là khóa kỹ thuật / hợp đồng nội b
 - Tên bước build `拉取`/`编译`/`打包` trong `WorkspaceBuildDialogs.kt` (khớp màu với nhãn toolchain).
 - `ToolSelfHealingHelper.kt` tạo prompt cho agent → nằm ngoài phạm vi theo yêu cầu mới.
 
-Kiểm tra: `tools/check-ctharness.py` **16/16 đạt**, `tools/test-queue-lifecycle.py` **3/3 đạt**, `git diff --check` sạch, đọc lại từng tệp đã sửa bằng regex Unicode xác nhận không còn chữ Hán trong string literal (trừ các khóa cố ý giữ ở trên). Chưa chạy được test Kotlin/Unit hay build APK do môi trường thiếu JDK; chỉ build qua GitHub Actions.
+Kiểm tra: `tools/check-ctharness.py` **16/16 đạt**, `tools/test-queue-lifecycle.py` **3/3 đạt**, `git diff --check` sạch, đọc lại từng tệp đã sửa bằng regex Unicode xác nhận không còn chữ Hán trong string literal (trừ các khóa cố ý giữ ở trên). Chưa chạy được test Kotlin/Unit do môi trường thiếu JDK lúc đầu; chỉ build qua GitHub Actions.
+
+### Phát hành (cập nhật cuối)
+
+- Commit `6d71984` (Việt hóa + sửa lỗi build) và `decc07f` (chữ ký cố định) đã push `feat/ctharness-vi`. Trong quá trình build đã sửa 3 lỗi do đợt trước để lại: ratchet kích thước tệp (`ProviderClient.kt`, `ChatMessageBubbles.kt`, `StorageMountSettingsScreen.kt` đưa về đúng baseline) và `RuntimeIconName.Bolt` không tồn tại trong `WorkflowEditorScreen.kt` → đổi về `RuntimeIconName.Play`.
+- Build CI: run `46091514190` (success, chữ ký ngẫu nhiên) → phát hiện lỗi cài `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. Đã tạo keystore cố định, lưu 4 GitHub Secrets (`TIANXUAN_RELEASE_KEYSTORE_BASE64`, `TIANXUAN_RELEASE_STORE_PASSWORD`, `TIANXUAN_RELEASE_KEY_ALIAS`, `TIANXUAN_RELEASE_KEY_PASSWORD`), cập nhật workflow decode keystore. Run `46130618955` **success**.
+- APK `CTHarnessDev-arm64-debug.apk` sha256 `7cd92fa620578568dc7b78cc13ed51cfa6d07a775364aa33e11b6396b5fb3378` (khớp file `.sha256` đi kèm), kích thước 48.099.112 bytes.
+- Cài lên thiết bị thành công: gỡ riêng `com.ctharness.app` (bắt buộc do đổi chữ ký → mất dữ liệu của app này), `pm install` → Success. Xác minh versionCode 52 / versionName `0.36.4-dev`, chữ ký v3 `a42edf44`. App cũ `top.wkbin.tianxuan` vẫn còn nguyên, không đụng vào.
+- Keystore lưu ngoài repo tại `/workspace/signing/ctharness-release.jks` và trong GitHub Secrets (không commit private key). Các build sau dùng chung chữ ký này.
