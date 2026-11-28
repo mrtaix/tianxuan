@@ -87,6 +87,7 @@ class SettingsViewModel(
     private val mcpOAuthCredentials: top.wkbin.tianxuan.core.database.McpOAuthCredentialRepository,
     private val storageMountBindingRepository: StorageMountBindingRepository,
     private val approvalRepository: top.wkbin.tianxuan.core.database.AgentApprovalRepository,
+    private val backupService: top.wkbin.tianxuan.core.backup.BackupService,
     private val sessionDao: top.wkbin.tianxuan.core.database.HarnessSessionRepository,
     private val toolManager: ToolManager,
     private val quickPhraseRepository: top.wkbin.tianxuan.core.database.QuickPhraseRepository,
@@ -759,6 +760,13 @@ class SettingsViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
     fun setChatRoundCollapse(value: Boolean) { viewModelScope.launch { agentPreferences.setChatRoundCollapse(value) } }
 
+    /** Xuất bản sao lưu (hội thoại + cài đặt đã chọn) ra chuỗi JSON. */
+    suspend fun exportBackup(): String = backupService.export()
+
+    /** Nhập bản sao lưu từ JSON; trả về thống kê để UI báo lại. */
+    suspend fun importBackup(rawJson: String): Result<top.wkbin.tianxuan.core.backup.RestoreResult> =
+        backupService.import(rawJson)
+
     val queueSendAfterToolBatch: StateFlow<Boolean> = agentPreferences.queueSendAfterToolBatch
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
     fun setQueueSendAfterToolBatch(value: Boolean) { viewModelScope.launch { agentPreferences.setQueueSendAfterToolBatch(value) } }
@@ -822,9 +830,7 @@ class SettingsViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, 128_000)
 
     /**
-     * 当前全局激活模型的生效上下文上限：显式 `contextTokens` 优先；
-     * 未填写时自动适配主流模型元数据（DeepSeek V4 / Gemini / GPT-4.1 等）；
-     * 都识别不到时返回 null，由全局预算兜底。
+     * Giới hạn ngữ cảnh hiệu lực của mô hình đang bật; null thì dùng ngân sách toàn cục.
      */
     val activeModelDeclaredTokens: StateFlow<Int?> = models.map { list ->
         list.firstOrNull { it.isActive }?.let { model ->
@@ -833,8 +839,7 @@ class SettingsViewModel(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /**
-     * 当前**实际生效**的上下文预算，与 Harness 引擎保持同一口径：
-     * `clampedBudget(activeModel.contextTokens, 全局预算)`（先 resolve 再钳到 [ContextWindowPolicy.MAX_CONTEXT_BUDGET]）。
+     * Ngân sách ngữ cảnh thực tế, cùng cách tính với engine.
      *
      * 设置页的「折叠线预览」必须基于本值计算，才能做到「填多少、看到多少、按多少折叠」三处一致。
      */
@@ -846,8 +851,7 @@ class SettingsViewModel(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, 128_000)
 
     /**
-     * 历史折叠线比例（%，默认 100）：100 对齐主流 harness 的 contextWindow - reserveTokens；
-     * 调低可让历史更早进入摘要，节省 input token 成本。
+     * Tỉ lệ ngưỡng gấp lịch sử (%, mặc định 100); giảm xuống để tóm tắt sớm hơn.
      */
     val contextFoldingRatioPercent: StateFlow<Int> = agentPreferences.contextFoldingRatioPercent
         .stateIn(viewModelScope, SharingStarted.Eagerly, ContextWindowPolicy.DEFAULT_FOLDING_RATIO_PERCENT)
@@ -1138,10 +1142,7 @@ class SettingsViewModel(
     }
 
     /**
-     * 从用户自选的任意目录（SAF 目录选择器）导入 Skill：递归查找直属含 SKILL.md
-     * 的目录，把最顶层的 Skill 目录整体复制到 attachments/skills 下再由扫描入库，
-     * 保证资源落在 PRoot 可访问的挂载路径内。嵌套的 Skill 子目录随父目录一并复制，
-     * 之后由递归扫描逐个注册。
+     * Nhập Skill từ thư mục SAF: tìm đệ quy thư mục có SKILL.md, copy cả cây vào attachments/skills rồi quét.
      */
     fun importSkillsFromTree(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -1688,9 +1689,7 @@ class SettingsViewModel(
     }
 
     /**
-     * 新增自定义挂载绑定。保存前做与运行时一致的安全校验（StorageMountBinding.validationError），
-     * 拒绝越界路径（容器路径必须在 /mnt 或 /sdcard 内、宿主路径必须在共享存储内），
-     * 避免历史版本"先入库、会话启动时才崩"的问题再次发生。
+     * Thêm điểm gắn kết tùy chỉnh; kiểm tra an toàn như lúc chạy để chặn đường dẫn vượt phạm vi.
      */
     fun addCustomMountBinding(name: String, hostPath: String, guestPath: String): Result<Unit> {
         val binding = top.wkbin.tianxuan.core.model.StorageMountBinding(

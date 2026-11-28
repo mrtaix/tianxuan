@@ -128,6 +128,7 @@ val appModule = module {
     single<RuntimeDao> { provideRuntimeDao(database = get()) }
 
     single<HarnessSessionDao> { provideHarnessSessionDao(database = get()) }
+    single { top.wkbin.tianxuan.core.backup.BackupService(sessionDao = get(), runtimeDao = get(), json = get()) }
 
     single<AiModelDao> { provideAiModelDao(database = get()) }
 

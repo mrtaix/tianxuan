@@ -741,7 +741,7 @@ fun TianXuanNavHost(
             }
             entry<NewFeaturesDestination> {
                 GuardedEntry(NewFeaturesDestination) {
-                    top.wkbin.tianxuan.ui.settings.NewFeaturesScreen(onBack = ::popBack)
+                    top.wkbin.tianxuan.ui.settings.NewFeaturesRoute(onBack = ::popBack)
                 }
             }
             entry<CustomIterationDestination> {

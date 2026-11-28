@@ -126,7 +126,13 @@ class ChatViewModel(
     private val workflowRepository: top.wkbin.tianxuan.core.database.WorkflowRepository,
     val translationManager: top.wkbin.tianxuan.core.common.translation.TranslationManager? = null,
     val globalNavigationBus: top.wkbin.tianxuan.core.common.navigation.GlobalNavigationBus? = null,
+    val btwQuestionService: top.wkbin.tianxuan.harness.btw.BtwQuestionService? = null,
 ) : ViewModel() {
+    /** Kết quả câu hỏi phụ /btw; không nằm trong lịch sử hội thoại. */
+    private val _btwAnswer = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val btwAnswer: kotlinx.coroutines.flow.StateFlow<String?> = _btwAnswer
+    fun clearBtwAnswer() { _btwAnswer.value = null }
+
     private val _workflowLaunchRequests = kotlinx.coroutines.flow.MutableSharedFlow<WorkflowLaunchRequest>(extraBufferCapacity = 2)
     val workflowLaunchRequests: kotlinx.coroutines.flow.SharedFlow<WorkflowLaunchRequest> = _workflowLaunchRequests
     private val _workflowSuggestions = MutableStateFlow<List<ProactiveWorkflowSuggestion>>(emptyList())
@@ -373,11 +379,7 @@ class ChatViewModel(
      */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val activeCompaction: StateFlow<top.wkbin.tianxuan.harness.compaction.CompactionSnapshot?> =
-        // 原写法 combine(currentSessionId, messages) { sessionId, _ -> sessionId }
-        // 的 lambda 输出恒等于 sessionId：messages 变化虽会触发重跑，但输出值不变，
-        // 若上游加了 distinctUntilChanged 则变化被吞。上下文压缩恰好伴随状态切换
-        // （运行 → 压缩 → 运行），以 (sessionId, status) 作为重投影信号更贴合语义，
-        // 状态每变一次即重读快照。
+        // Dùng (sessionId, status) làm tín hiệu chiếu lại vì nén luôn kèm chuyển trạng thái.
         combine(harnessLoop.currentSessionId, harnessLoop.status) { sessionId, status ->
             sessionId to status
         }
@@ -522,12 +524,7 @@ class ChatViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /**
-     * 真实压缩投影缓存（与引擎 ApiContextAssembler 同源）：按 (sessionId, compactionRevision)
-     * 从树读取 `CompactionManager.project()`。只在会话切换或某次压缩落库后才重读，
-     * 避免流式期间（每 token 一次）对 DAO 的频繁查询。
-     * 键必须同时含 revision：只发 sessionId 会被 distinctUntilChanged 吞掉压缩信号，
-     * 面板就只有重进应用（ViewModel 重建）才能看到压缩后的用量。
-     * 用量面板依赖它：已折叠历史以摘要层形式计 token，不再重复计入对话体积。
+     * Cache chiếu nén thật theo (sessionId, compactionRevision); khóa phải kèm revision nếu không tín hiệu nén bị nuốt.
      */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val compactedContext: StateFlow<CompactedContext?> =
@@ -544,11 +541,7 @@ class ChatViewModel(
      * 因此这里明确是预估值，而不是 provider 返回的精确 tokenizer 计数。
      */
     val contextUsage: StateFlow<ContextUsage> = combine(
-        // 用 revision（消息数量 + 末条 id + 末条内容长度）压缩上游：
-        // contextUsage 的计算含 estimateEffectiveUsage（遍历全部消息）与两次 filterIsInstance 求和，
-        // 都是 O(n)。流式期间 messages 每个 token 块都换新引用，若不压缩会每帧全量重算，
-        // 叠加列表渲染开销后表现为「聊久了明显变卡」。
-        // 末条内容长度必须计入：流式时末条长度持续变化，是 contextUsage 真正需要更新的信号。
+        // Nén tín hiệu theo revision để không tính lại O(n) mỗi token khi đang stream.
         messages.map { list ->
             Triple(
                 list.size,
@@ -637,11 +630,7 @@ class ChatViewModel(
             compactionEnabled = compactionEnabled,
         )
 
-        // 与引擎同源（ApiContextAssembler 折叠线）：真实摘要层与召回后缀都计为固定系统开销，
-        // 从历史预算中扣除，否则面板的折叠触发线会比引擎实际行为偏高。
-        // summaryTokens 同时计入「已折叠对话」细分——estimateEffectiveUsage 的 summarizedTokens
-        // 只反映预算驱动的再折叠，压缩后保留窗不再越过预算线 → 恒为 0，若不补真值，压缩这种
-        // 最大的体积削减会从面板上完全消失。
+        // Trừ đúng khoản dự phòng như engine để ngưỡng hiển thị khớp hành vi thật.
         val summaryTokens = if (compactionEnabled) {
             ContextWindowPolicy.estimateTokens(compacted?.summaryLayer.orEmpty())
         } else 0
@@ -992,6 +981,16 @@ class ChatViewModel(
     fun send(customText: String? = null, imageUrls: List<String> = emptyList()) {
         val rawText = (customText ?: _input.value).trim()
         if (rawText.isBlank() && imageUrls.isEmpty()) return
+        // /btw: câu hỏi phụ — trả lời riêng, không ghi vào lịch sử và không ngắt agent đang chạy.
+        btwQuestionService?.parseQuestion(rawText)?.let { question ->
+            setInput("")
+            viewModelScope.launch {
+                _btwAnswer.value = "Đang trả lời câu hỏi phụ…"
+                val reply = btwQuestionService.ask(sessionId.value, question)
+                _btwAnswer.value = reply.getOrElse { "Không trả lời được câu hỏi phụ: ${it.message}" }
+            }
+            return
+        }
         WORKFLOW_COMMAND.matchEntire(rawText)?.let { match ->
             setInput("")
             val projectName = workspace.value.trim('/').removePrefix("workspace/").substringBefore('/').takeIf(String::isNotBlank).orEmpty()

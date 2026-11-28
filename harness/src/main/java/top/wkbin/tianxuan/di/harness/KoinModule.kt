@@ -26,6 +26,7 @@ import top.wkbin.tianxuan.harness.approval.ApprovalResumePolicy
 import top.wkbin.tianxuan.harness.approval.SessionApprovalGrants
 import top.wkbin.tianxuan.harness.browser.BrowserMcpBootstrap
 import top.wkbin.tianxuan.harness.checkpoint.ConversationRewinder
+import top.wkbin.tianxuan.harness.btw.BtwQuestionService
 import top.wkbin.tianxuan.harness.checkpoint.RewindController
 import top.wkbin.tianxuan.harness.checkpoint.SessionForkConversationRewinder
 import top.wkbin.tianxuan.harness.compaction.BranchSummarizer
@@ -297,9 +298,7 @@ val harnessModule = module {
     /** 技能提供者注册表（对齐 DSH skill registry）：分层技能来源注册表。 */
     single<top.wkbin.tianxuan.harness.skill.SkillRegistry> {
         top.wkbin.tianxuan.harness.skill.SkillRegistry().also { registry ->
-            // 注册文件系统技能提供者（对齐 DSH skill-filesystem）：
-            // 把 AgentSkillRepository 包装为 SkillProvider，使 SkillRegistry
-            // 可以发现和加载来自文件系统的技能（含目录扫描、SKILL.md frontmatter 解析）。
+            // Bọc AgentSkillRepository thành SkillProvider để SkillRegistry nạp kỹ năng từ hệ tệp.
             runCatching {
                 registry.registerProvider { top.wkbin.tianxuan.harness.skill.SkillFilesystemProvider(repository = get()) }
             }.onFailure {
@@ -347,6 +346,8 @@ val harnessModule = module {
             conversationRewinder = get(),
         )
     }
+
+    single { BtwQuestionService(providerClient = get(), messageStore = get(), modelRepository = get()) }
 
     single<SessionForkConversationRewinder> {
         SessionForkConversationRewinder(
@@ -455,9 +456,7 @@ val harnessModule = module {
 
     single<McpToolDispatcher> { McpToolDispatcher(browserTools = get()) }
 
-    // ===== MCP 被控端（外部 AI 客户端控制本 App）：独立端点 + 独立 dispatcher =====
-    // 工具集复用 ProviderClient.TOOLS，经 HarnessToolProvider 按能力分层暴露；
-    // 写入/执行层开关由 AgentMcpBootstrap 从偏好实时刷新。
+    // ===== MCP server (AI bên ngoài điều khiển app): endpoint và dispatcher riêng =====
     single<HarnessToolProvider> { HarnessToolProvider(executor = get()) }
 
     single(named(AGENT_MCP_DISPATCHER)) {

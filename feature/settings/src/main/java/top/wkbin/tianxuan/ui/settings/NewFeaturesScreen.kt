@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -56,11 +58,7 @@ private val upcomingFeatures = listOf(
         "Tìm kiếm plugin từ GitHub/GitLab",
         "Tìm plugin từ GitHub và GitLab, tự động phát hiện bản cập nhật, kèm nút bật/tắt plugin.",
     ),
-    UpcomingFeature(
-        RuntimeIconName.Info,
-        "Tính năng /btw (câu hỏi phụ)",
-        "Đặt câu hỏi phụ ngay khi agent đang chạy: chạy độc lập, không làm gián đoạn, không ghi vào lịch sử hội thoại và chỉ trả lời từ ngữ cảnh đã có.",
-    ),
+
     UpcomingFeature(
         RuntimeIconName.Bot,
         "Rà soát lại tính năng subagent",
@@ -71,17 +69,17 @@ private val upcomingFeatures = listOf(
         "Sửa và nâng cấp tính năng RAG",
         "Cải thiện độ chính xác truy xuất và khả năng bổ sung ngữ cảnh của kho tri thức RAG.",
     ),
-    UpcomingFeature(
-        RuntimeIconName.FolderDownload,
-        "Sao lưu trò chuyện và cài đặt",
-        "Xuất và nhập dữ liệu để sao lưu lịch sử hội thoại cùng cấu hình ứng dụng.",
-    ),
+
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewFeaturesScreen(
     onBack: () -> Unit,
+    backupStatus: String? = null,
+    backupBusy: Boolean = false,
+    onExportBackup: () -> Unit = {},
+    onImportBackup: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val queueSendAfterToolBatch by viewModel.queueSendAfterToolBatch.collectAsStateWithLifecycle()
@@ -149,6 +147,63 @@ fun NewFeaturesScreen(
                             checked = queueSendAfterToolBatch,
                             onCheckedChange = viewModel::setQueueSendAfterToolBatch,
                         )
+                    }
+                }
+            }
+            item {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        RuntimeIcon(RuntimeIconName.Info, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("/btw — câu hỏi phụ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                            Text(
+                                "Gõ /btw <câu hỏi> trong ô soạn tin: trả lời riêng, không ghi vào lịch sử, không ngắt agent đang chạy.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+            item {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            RuntimeIcon(
+                                RuntimeIconName.FolderDownload,
+                                Modifier.size(22.dp),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                "Sao lưu trò chuyện và cài đặt",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                        Text(
+                            backupStatus ?: "Xuất toàn bộ hội thoại ra tệp JSON để sao lưu, hoặc nhập lại từ tệp đã xuất.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = onExportBackup, enabled = !backupBusy) { Text("Xuất") }
+                            OutlinedButton(onClick = onImportBackup, enabled = !backupBusy) { Text("Nhập") }
+                        }
                     }
                 }
             }
