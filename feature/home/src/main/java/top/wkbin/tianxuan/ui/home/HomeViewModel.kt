@@ -306,7 +306,7 @@ class HomeViewModel(
                 // 3. 刷新仪表盘数据
                 refreshMetrics()
             } catch (e: CancellationException) {
-                throw e // 取消必须透传，不能显示为 "切换失败"
+                throw e // 取消必须透传，不能显示为 "Chuyển đổi thất bại"
             } catch (e: Exception) {
                 logger.w("HomeViewModel: Failed to switch distro: ${e.message}", e)
             } finally {

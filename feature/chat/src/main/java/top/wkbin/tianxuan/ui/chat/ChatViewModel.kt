@@ -270,7 +270,7 @@ class ChatViewModel(
                 Log.w(TAG, "applySkillSuggestion failed", t)
                 _notice.value = context.getString(
                     R.string.chat_skill_suggestion_apply_failed,
-                    t.message ?: "unknown",
+                    t.message ?: context.getString(R.string.chat_unknown_error),
                 )
             }
         }
@@ -1166,7 +1166,7 @@ class ChatViewModel(
                     },
                 )
             }.onFailure { throwable ->
-                _notice.value = context.getString(R.string.chat_rewind_failed, throwable.message ?: "unknown")
+                _notice.value = context.getString(R.string.chat_rewind_failed, throwable.message ?: context.getString(R.string.chat_unknown_error))
             }
         }
     }
@@ -1232,7 +1232,7 @@ class ChatViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _notice.value = "模型保存失败：${e.message ?: e::class.simpleName}"
+                _notice.value = context.getString(R.string.chat_model_save_failed, e.message ?: e::class.simpleName)
             }
         }
     }
@@ -1284,7 +1284,7 @@ class ChatViewModel(
                 if (current?.sessionId == sessionId && current.branch.laneName == laneName) {
                     _subagentResult.value = current.copy(
                         loading = false,
-                        error = throwable.message ?: "无法读取子智能体成果",
+                        error = throwable.message ?: context.getString(R.string.chat_subagent_result_read_failed),
                     )
                 }
             }
@@ -1341,7 +1341,7 @@ class ChatViewModel(
                     }
                 }
                 .onFailure {
-                    Log.w(TAG, "模型发现失败 profile=$profileId", it)
+                    Log.w(TAG, "Khám phá mô hình thất bại profile=$profileId", it)
                     _providerModelDiscoveryError.value = context.getString(R.string.chat_model_discovery_failed)
                 }
             _discoveringProviderModels.value = false

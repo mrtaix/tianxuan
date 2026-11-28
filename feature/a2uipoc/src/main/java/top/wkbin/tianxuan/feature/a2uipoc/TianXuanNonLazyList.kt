@@ -96,7 +96,7 @@ internal object TianXuanNonLazyList : A2uiBasicCatalogV1.List {
 
             is A2uiComponentState.Error ->
                 Text(
-                    text = "子组件渲染失败：" + (state.exception.message ?: "未知错误"),
+                    text = "Không thể kết xuất thành phần con: " + (state.exception.message ?: "Lỗi không xác định"),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = modifier,
@@ -104,7 +104,7 @@ internal object TianXuanNonLazyList : A2uiBasicCatalogV1.List {
 
             is A2uiComponentState.Loading ->
                 Text(
-                    text = "加载中…",
+                    text = "Đang tải…",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = modifier,
                 )

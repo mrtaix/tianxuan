@@ -156,7 +156,7 @@ internal fun ProjectCard(
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text("运行工作流") },
+                            text = { Text("Chạy quy trình") },
                             leadingIcon = {
                                 RuntimeIcon(RuntimeIconName.Hub, Modifier.size(17.dp))
                             },

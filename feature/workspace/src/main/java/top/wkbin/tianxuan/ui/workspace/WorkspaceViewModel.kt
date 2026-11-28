@@ -84,7 +84,7 @@ class WorkspaceViewModel(
             _busy.value = true
             runCatching {
                 val input = requireNotNull(context.contentResolver.openInputStream(android.net.Uri.parse(uri))) {
-                    "无法读取模板文件"
+                    "Không thể đọc tệp mẫu"
                 }
                 input.use(projectTemplateStore::importZip)
             }.onSuccess { template ->
@@ -103,7 +103,7 @@ class WorkspaceViewModel(
             _busy.value = true
             runCatching {
                 val output = requireNotNull(context.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt")) {
-                    "无法创建模板文件"
+                    "Không thể tạo tệp mẫu"
                 }
                 output.use { projectTemplateStore.exportZip(id, it) }
             }.onSuccess {
@@ -134,8 +134,8 @@ class WorkspaceViewModel(
             _templateScriptPreview.value = runCatching {
                 projectTemplateStore.hookScripts(id).joinToString("\n\n") { (path, script) ->
                     "===== $path =====\n$script"
-                }.ifBlank { "该模板没有构造脚本" }
-            }.getOrElse { error -> "读取脚本失败：${error.message.orEmpty()}" }
+                }.ifBlank { "Mẫu này không có script dựng" }
+            }.getOrElse { error -> "Không thể đọc script: ${error.message.orEmpty()}" }
         }
     }
 

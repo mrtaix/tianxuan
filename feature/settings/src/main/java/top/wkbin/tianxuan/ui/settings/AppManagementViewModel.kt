@@ -24,7 +24,7 @@ class AppManagementViewModel(
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
-    /** 当前 message 是否为失败结果（类型化标记，避免 UI 用字符串匹配判断样式）。 */
+    /** Đánh dấu kết quả lỗi bằng kiểu dữ liệu để UI không phải dò chuỗi khi chọn kiểu hiển thị. */
     private val _messageIsError = MutableStateFlow(false)
     val messageIsError: StateFlow<Boolean> = _messageIsError.asStateFlow()
 
@@ -35,8 +35,8 @@ class AppManagementViewModel(
             val result = appManager.synchronize()
             _syncing.value = false
             _message.value = result.fold(
-                onSuccess = { "已同步 ${it.total} 个应用：${it.userApps} 个用户应用、${it.systemApps} 个系统应用。" },
-                onFailure = { it.message ?: "应用同步失败" },
+                onSuccess = { "Đã đồng bộ ${it.total} ứng dụng: ${it.userApps} ứng dụng người dùng và ${it.systemApps} ứng dụng hệ thống." },
+                onFailure = { it.message ?: "Đồng bộ ứng dụng thất bại" },
             )
             _messageIsError.value = result.isFailure
         }

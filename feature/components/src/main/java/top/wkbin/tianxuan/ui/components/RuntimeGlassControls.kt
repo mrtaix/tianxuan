@@ -996,7 +996,7 @@ fun RuntimeSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "搜索...",
+    placeholder: String = "Tìm kiếm...",
     leadingIcon: (@Composable () -> Unit)? = null,
     onSearch: ((String) -> Unit)? = null,
     onClear: (() -> Unit)? = null,
@@ -1326,8 +1326,8 @@ fun RuntimeSheetHeader(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     onConfirm: (() -> Unit)? = null,
-    confirmText: String = "完成",
-    dismissText: String = "取消",
+    confirmText: String = "Xong",
+    dismissText: String = "Hủy",
 ) {
     val isDark = MaterialTheme.colorScheme.onSurface.luminance() > 0.5f
 

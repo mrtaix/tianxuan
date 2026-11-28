@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -868,7 +869,7 @@ internal fun ThinkingBlock(
                                         } else {
                                             Toast.makeText(
                                                 context,
-                                                result.exceptionOrNull()?.message ?: "离线翻译失败",
+                                                result.exceptionOrNull()?.message ?: context.getString(R.string.chat_translation_failed),
                                                 Toast.LENGTH_SHORT,
                                             ).show()
                                         }
@@ -878,7 +879,7 @@ internal fun ThinkingBlock(
                             }
                         },
                         modifier = Modifier.size(22.dp),
-                        contentDescription = if (showTranslation) "查看英文原文" else "离线翻译思考",
+                        contentDescription = stringResource(if (showTranslation) R.string.chat_translation_show_original else R.string.chat_translation_reasoning),
                     ) {
                         if (isTranslating) {
                             CircularProgressIndicator(
@@ -950,7 +951,7 @@ internal fun ThinkingBlock(
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                             Text(
-                                text = "中文译文 (ML Kit 离线生成)",
+                                text = stringResource(R.string.chat_translation_chinese_label),
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 10.5.sp,
                                     fontWeight = FontWeight.Medium,
@@ -975,7 +976,7 @@ internal fun ThinkingBlock(
                             color = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "正在离线翻译思考内容...",
+                            text = stringResource(R.string.chat_translation_in_progress),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 11.5.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1013,16 +1014,16 @@ internal fun ThinkingBlock(
             onDismissRequest = { showMissingModelDialog = false },
             title = {
                 Text(
-                    text = if (isDownloading) "离线翻译模型下载中" else "未下载离线翻译语种包",
+                    text = stringResource(if (isDownloading) R.string.chat_translation_model_downloading else R.string.chat_translation_model_missing),
                     style = MaterialTheme.typography.titleMedium,
                 )
             },
             text = {
                 Text(
                     text = if (isDownloading && downloadingStatus != null) {
-                        "离线翻译语种模型正在后台下载中（${downloadingStatus.stepName}，${downloadingStatus.detailText}）。\n\n下载完成后将自动就绪支持离线翻译，您可前往「智能体设置」查看详细进度。"
+                        stringResource(R.string.chat_translation_download_details, downloadingStatus.stepName, downloadingStatus.detailText)
                     } else {
-                        "本地英语-中文翻译模型（约 60MB）尚未下载。请前往「Agent 设置」完成语种模型下载后方可离线翻译思考流内容。"
+                        stringResource(R.string.chat_translation_download_required)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -1038,12 +1039,12 @@ internal fun ThinkingBlock(
                         }
                     }
                 ) {
-                    Text(if (isDownloading) "查看下载进度" else "前往设置")
+                    Text(stringResource(if (isDownloading) R.string.chat_translation_view_progress else R.string.chat_go_to_settings))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showMissingModelDialog = false }) {
-                    Text(if (isDownloading) "后台继续" else "取消")
+                    Text(stringResource(if (isDownloading) R.string.chat_continue_in_background else R.string.chat_cancel))
                 }
             },
         )
@@ -1051,8 +1052,7 @@ internal fun ThinkingBlock(
 }
 
 /**
- * 技能进化建议卡片（对话后技能沉淀/进化）：
- * 创建新技能 / 更新既有技能 / 忽略，动作完成后由上层隐藏卡片。
+ * Thẻ gợi ý cải tiến kỹ năng sau hội thoại: tạo kỹ năng mới / cập nhật kỹ năng hiện có / bỏ qua; lớp gọi ẩn thẻ sau thao tác.
  */
 @Composable
 internal fun SkillSuggestionCard(
@@ -1081,7 +1081,7 @@ internal fun SkillSuggestionCard(
                     tint = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    if (isUpdate) "技能进化建议 · 修复既有技能" else "技能进化建议 · 沉淀为新技能",
+                    stringResource(if (isUpdate) R.string.chat_skill_suggestion_update else R.string.chat_skill_suggestion_create),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -1105,7 +1105,7 @@ internal fun SkillSuggestionCard(
             }
             if (suggestion.reason.isNotBlank()) {
                 Text(
-                    "依据：" + suggestion.reason,
+                    stringResource(R.string.chat_skill_suggestion_reason, suggestion.reason),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
@@ -1120,25 +1120,25 @@ internal fun SkillSuggestionCard(
                 if (isUpdate) {
                     OutlinedButton(
                         onClick = onUpdate,
-                        modifier = Modifier.height(32.dp),
+                        modifier = Modifier.heightIn(min = 32.dp),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                     ) {
-                        Text("更新技能", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+                        Text(stringResource(R.string.chat_skill_update), style = MaterialTheme.typography.labelSmall)
                     }
                 }
                 Button(
                     onClick = onCreate,
-                    modifier = Modifier.height(32.dp),
+                    modifier = Modifier.heightIn(min = 32.dp),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                 ) {
-                    Text(if (isUpdate) "另存为新技能" else "创建技能", style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+                    Text(stringResource(if (isUpdate) R.string.chat_skill_save_as_new else R.string.chat_skill_create), style = MaterialTheme.typography.labelSmall)
                 }
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.height(32.dp),
+                    modifier = Modifier.heightIn(min = 32.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                 ) {
-                    Text("忽略", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                    Text(stringResource(R.string.chat_ignore), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

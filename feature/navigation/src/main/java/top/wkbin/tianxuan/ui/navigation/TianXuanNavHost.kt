@@ -597,7 +597,7 @@ fun TianXuanNavHost(
                         onOpenToolDetail = { toolId -> activeStack.push(ToolCenterDestination, ToolDetailDestination(toolId = toolId)) },
                         onStartAiHealing = { toolId, toolName, logs ->
                             val prompt = top.wkbin.tianxuan.ui.settings.ToolSelfHealingHelper.buildHealingPrompt(toolId, toolName, logs)
-                            pendingHealingTask = HealingTask("🔧 自愈: $toolName", prompt)
+                            pendingHealingTask = HealingTask("🔧 Tự phục hồi: $toolName", prompt)
                             selectedMain = MainDestination.Agent
                         },
                     )
@@ -617,7 +617,7 @@ fun TianXuanNavHost(
                             runCatching {
                                 context.startActivity(intent)
                             }.onFailure {
-                                android.widget.Toast.makeText(context, "无法唤起外部浏览器: ${it.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, "Không thể mở trình duyệt ngoài: ${it.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         },
                     )
@@ -631,7 +631,7 @@ fun TianXuanNavHost(
                         onLaunchTerminal = { toolId -> activeStack.push(destination, TerminalDestination(toolId = toolId)) },
                         onStartAiHealing = { toolId, toolName, logs ->
                             val prompt = top.wkbin.tianxuan.ui.settings.ToolSelfHealingHelper.buildHealingPrompt(toolId, toolName, logs)
-                            pendingHealingTask = HealingTask("🔧 自愈: $toolName", prompt)
+                            pendingHealingTask = HealingTask("🔧 Tự phục hồi: $toolName", prompt)
                             selectedMain = MainDestination.Agent
                         },
                     )

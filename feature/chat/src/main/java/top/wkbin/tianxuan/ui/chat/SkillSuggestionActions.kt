@@ -5,8 +5,8 @@ import top.wkbin.tianxuan.core.model.AgentSkill
 import top.wkbin.tianxuan.harness.SkillSuggestion
 
 /**
- * 把技能进化建议转成 [AgentSkill]，口径与设置页新增自定义技能对齐：
- * 更新走既有自定义技能 id（内置技能不可覆盖），创建则生成 `custom_` 前缀 id。
+ * Chuyển gợi ý cải tiến thành [AgentSkill], nhất quán với thao tác thêm kỹ năng trong cài đặt:
+ * cập nhật dùng id kỹ năng tùy chỉnh hiện có (không ghi đè kỹ năng tích hợp), tạo mới dùng tiền tố `custom_`.
  */
 internal object SkillSuggestionActions {
     fun resolveExisting(
@@ -39,13 +39,14 @@ internal object SkillSuggestionActions {
             AgentSkill(
                 id = newId(),
                 name = trimmedName,
-                description = suggestion.description.trim().ifBlank { "自定义技能" },
+                description = suggestion.description.trim().ifBlank { "Kỹ năng tùy chỉnh" },
                 systemPrompt = trimmedPrompt,
                 triggerCommand = trigger,
                 iconName = "Code",
                 isEnabled = true,
                 isBuiltin = false,
-                category = "自定义",
+                // Giữ khóa danh mục lưu trữ để khớp bộ lọc và ánh xạ nhãn hiện có.
+        category = "自定义",
             )
         }
     }

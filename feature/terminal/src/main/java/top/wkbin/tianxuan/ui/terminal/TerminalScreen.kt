@@ -79,7 +79,7 @@ private const val MIN_TERMINAL_FONT_SIZE_SP = 10f
 private const val MAX_TERMINAL_FONT_SIZE_SP = 24f
 
 /**
- * 天玄 · 矩阵控制台 — Termux TerminalView + PRoot argv via TerminalSession JNI.
+ * CTHarness · Bảng điều khiển ma trận — Termux TerminalView + PRoot argv qua TerminalSession JNI.
  * Input is owned by TerminalView (same as Android-PRoot-Engine TerminalBridge).
  */
 @Composable
@@ -111,8 +111,8 @@ fun TerminalScreen(
     val sysOutline = MaterialTheme.colorScheme.outlineVariant
     val (termBg, termHeaderBg, termTextDefault, termBorder) = remember(colorScheme, sysSurfaceLowest, sysSurfaceHigh, sysOnSurface, sysOutline) {
         when (colorScheme) {
-            // obsidian 是默认方案：终端恒为深底浅字（与设置页预览卡一致），
-            // 不能落入 else 跟随系统主题——浅色主题下会是浅底 + Termux 默认白字，不可读。
+            // obsidian là mặc định: terminal luôn dùng nền tối, chữ sáng (như thẻ xem trước trong cài đặt).
+            // Không để rơi vào else theo giao diện hệ thống: nền sáng với chữ trắng mặc định của Termux sẽ khó đọc.
             "obsidian" -> listOf(Color(0xFF0F1117), Color(0xFF171B26), Color(0xFFE2E2E9), Color(0xFF282A36))
             "matrix" -> listOf(Color(0xFF0A0F0D), Color(0xFF101B14), Color(0xFF10B981), Color(0xFF1A3324))
             "amber" -> listOf(Color(0xFF140F0A), Color(0xFF1F170F), Color(0xFFF59E0B), Color(0xFF3B2B1B))
@@ -125,8 +125,8 @@ fun TerminalScreen(
         TianXuanTerminalBridge(context, viewModel.sessionClientRouter)
     }
     DisposableEffect(bridge) {
-        // 副作用必须放在 DisposableEffect：原在组合体内无条件 attachToRouter()，
-        // 每次重组都会重复 router.attach(this)。attach 需早于 AndroidView 布局以免丢首个 PTY 回调。
+        // Đặt tác dụng phụ trong DisposableEffect: gọi attachToRouter() vô điều kiện trong phần thân composable
+        // sẽ lặp router.attach(this) mỗi lần tái kết hợp. Cần attach trước bố cục AndroidView để không mất callback PTY đầu tiên.
         bridge.attachToRouter()
         bridge.onFontScale = { increase ->
             fontSizeSp = (fontSizeSp + if (increase) 1f else -1f)

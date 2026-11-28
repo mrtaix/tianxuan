@@ -182,7 +182,7 @@ fun WebChatBridgeDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RuntimeIcon(RuntimeIconName.Globe, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
-                Text("天玄智枢 Web 协作台")
+                Text("Không gian cộng tác web CTHarness")
             }
         },
         text = {
@@ -191,7 +191,7 @@ fun WebChatBridgeDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = "在同一 Wi-Fi / 局域网下，通过电脑浏览器连接天玄智枢，同步处理 Agent 任务、对话与 Linux 工作区文件。",
+                    text = "Kết nối với CTHarness qua trình duyệt máy tính trên cùng mạng Wi-Fi / mạng cục bộ để đồng bộ xử lý tác vụ Agent, cuộc trò chuyện và tệp trong không gian làm việc Linux.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
@@ -205,7 +205,7 @@ fun WebChatBridgeDialog(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "协作服务状态",
+                                text = "Trạng thái dịch vụ cộng tác",
                                 style = MaterialTheme.typography.titleSmall,
                             )
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -224,7 +224,7 @@ fun WebChatBridgeDialog(
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("浏览器访问地址", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Địa chỉ truy cập bằng trình duyệt", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Row(
                                     Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -237,14 +237,14 @@ fun WebChatBridgeDialog(
                                     )
                                     TextButton(
                                         onClick = {
-                                            copyToClipboard(context, status.accessUrl, "天玄智枢协作地址", "已复制基础链接")
+                                            copyToClipboard(context, status.accessUrl, "Địa chỉ cộng tác CTHarness", "Đã sao chép liên kết cơ bản")
                                         }
-                                    ) { Text("复制") }
+                                    ) { Text("Sao chép") }
                                 }
                             }
 
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("安全配对码 (PIN)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Mã ghép nối bảo mật (PIN)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Row(
                                     Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -257,9 +257,9 @@ fun WebChatBridgeDialog(
                                     )
                                     TextButton(
                                         onClick = {
-                                            copyToClipboard(context, status.pinCode, "PIN", "已复制配对码")
+                                            copyToClipboard(context, status.pinCode, "PIN", "Đã sao chép mã ghép nối")
                                         }
-                                    ) { Text("复制") }
+                                    ) { Text("Sao chép") }
                                 }
                             }
 
@@ -269,8 +269,8 @@ fun WebChatBridgeDialog(
                                     copyToClipboard(
                                         context,
                                         directUrl,
-                                        "天玄智枢直连地址",
-                                        "已复制免密直达链接，在电脑浏览器打开即可！",
+                                        "Địa chỉ kết nối trực tiếp CTHarness",
+                                        "Đã sao chép liên kết truy cập không cần mật khẩu. Chỉ cần mở trong trình duyệt máy tính!",
                                     )
                                 },
                                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -278,12 +278,12 @@ fun WebChatBridgeDialog(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     RuntimeIcon(RuntimeIconName.Copy, Modifier.size(16.dp))
-                                    Text("一键复制免密直达链接 (免输PIN)")
+                                    Text("Sao chép liên kết truy cập trực tiếp (không cần nhập PIN)")
                                 }
                             }
 
                             Text(
-                                text = "💡 提示：确保电脑与手机处于同一 Wi-Fi；当前在线设备：${status.activeConnections} 台",
+                                text = "💡 Lưu ý: Đảm bảo máy tính và điện thoại dùng cùng mạng Wi-Fi; số thiết bị đang kết nối: ${status.activeConnections}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -294,13 +294,13 @@ fun WebChatBridgeDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("完成")
+                Text("Xong")
             }
         },
     )
 }
 
-/** 应用版本号；三处界面共用一份查询逻辑 */
+/** Phiên bản ứng dụng; ba giao diện dùng chung logic truy vấn. */
 @Composable
 fun rememberAppVersion(): String {
     val context = androidx.compose.ui.platform.LocalContext.current

@@ -41,12 +41,12 @@ fun WorkflowHudOverlay(
         else -> MaterialTheme.colorScheme.secondary
     }
     val phaseLabel = when (session.phase) {
-        WorkflowGuiHudBridge.Phase.THINKING -> "思考中"
-        WorkflowGuiHudBridge.Phase.ACTING -> "操作中"
-        WorkflowGuiHudBridge.Phase.SUCCESS -> "成功"
-        WorkflowGuiHudBridge.Phase.FAILED -> "失败"
-        WorkflowGuiHudBridge.Phase.CANCELLED -> "已停止"
-        WorkflowGuiHudBridge.Phase.IDLE -> "空闲"
+        WorkflowGuiHudBridge.Phase.THINKING -> "Đang suy nghĩ"
+        WorkflowGuiHudBridge.Phase.ACTING -> "Đang thao tác"
+        WorkflowGuiHudBridge.Phase.SUCCESS -> "Thành công"
+        WorkflowGuiHudBridge.Phase.FAILED -> "Thất bại"
+        WorkflowGuiHudBridge.Phase.CANCELLED -> "Đã dừng"
+        WorkflowGuiHudBridge.Phase.IDLE -> "Sẵn sàng"
     }
 
     Surface(
@@ -100,7 +100,7 @@ fun WorkflowHudOverlay(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "停止",
+                        text = "Dừng",
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.error,
                         maxLines = 1,

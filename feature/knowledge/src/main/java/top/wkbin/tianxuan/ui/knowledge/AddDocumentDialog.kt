@@ -32,14 +32,14 @@ fun AddDocumentDialogImpl(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("添加知识库文档") },
+        title = { Text("Thêm tài liệu vào kho tri thức") },
         text = {
             Column {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("文档名称") },
-                    placeholder = { Text("用于 @kb:名称 引用") },
+                    label = { Text("Tên tài liệu") },
+                    placeholder = { Text("Dùng cú pháp @kb:tên để tham chiếu") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -47,8 +47,8 @@ fun AddDocumentDialogImpl(
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("文档内容") },
-                    placeholder = { Text("支持多段文本，系统会自动分块并嵌入") },
+                    label = { Text("Nội dung tài liệu") },
+                    placeholder = { Text("Hỗ trợ nhiều đoạn văn bản; hệ thống sẽ tự chia đoạn và tạo embedding") },
                     minLines = 5,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -62,12 +62,12 @@ fun AddDocumentDialogImpl(
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp))
                 } else {
-                    Text("添加并嵌入")
+                    Text("Thêm và tạo embedding")
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text("Hủy") }
         },
     )
 }

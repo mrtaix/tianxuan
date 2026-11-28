@@ -283,10 +283,10 @@ internal fun BuildProgressDialog(
                                 progress.stepDurations.forEach { step ->
                                     val barRatio = (step.durationMs.toFloat() / maxDuration.toFloat()).coerceIn(0.02f, 1f)
                                     val barColor = when {
-                                        step.step.contains("拉取") || step.step.contains("依赖") -> Color(0xFF2196F3) // 蓝色
-                                        step.step.contains("编译") || step.step.contains("Kotlin") || step.step.contains("Java") || step.step.contains("Dex") -> Color(0xFF4CAF50) // 绿色
-                                        step.step.contains("打包") || step.step.contains("APK") -> Color(0xFFFF9800) // 橙色
-                                        else -> Color(0xFF9E9E9E) // 灰色
+                                        step.step.contains("拉取") || step.step.contains("依赖") -> Color(0xFF2196F3) // xanh dương
+                                        step.step.contains("编译") || step.step.contains("Kotlin") || step.step.contains("Java") || step.step.contains("Dex") -> Color(0xFF4CAF50) // xanh lá
+                                        step.step.contains("打包") || step.step.contains("APK") -> Color(0xFFFF9800) // cam
+                                        else -> Color(0xFF9E9E9E) // xám
                                     }
                                     val durationText = if (step.durationMs >= 1000) "${"%.1f".format(step.durationMs / 1000.0)}s" else "${step.durationMs}ms"
                                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

@@ -39,3 +39,27 @@ Bản vá launch-fail cũ một mình chưa đủ để kết luận đã sửa 
 2. Kiểm thử end-to-end: giữ tool của lượt A, gửi B/C khi A bận, thả tool, xác nhận B/C được chạy đúng thứ tự và đúng một lần, không cần gửi thêm tin D.
 3. Rà lại approval/recovery và trường hợp item đầu không claim được task; chưa có xác nhận end-to-end cho các nhánh này.
 4. Tiếp tục dịch persona/docs/website theo nhóm file không chồng lấn; kiểm chứng trực tiếp nội dung sau mỗi đợt, không chỉ kiểm tra hết chữ Hán vì prose tiếng Anh cũng cần dịch.
+
+## Đợt tiếp theo — chuỗi hiển thị còn sót (theo yêu cầu mới)
+
+Theo yêu cầu mới, **bỏ toàn bộ `harness/src/main/assets/prompts/**` khỏi phạm vi Việt hóa**; chỉ xử lý chuỗi người dùng thấy trong app/feature/runtime.
+
+Đã dịch và đọc lại trực tiếp các nhóm sau:
+
+- Kho tri thức: `KnowledgeScreen.kt`, `AddDocumentDialog.kt`, `EmbeddingSettingsCard.kt`, `KnowledgeViewModel.kt`.
+- Thông báo/dịch vụ nền: `AdbNotificationReceiver.kt`, `AdbNotificationManager.kt`, `WorkflowForegroundService.kt`, `AgentForegroundService.kt`, `AgentMcpForegroundService.kt`, `RuntimeServiceController.kt`, `WorkflowScheduleWorker.kt`, `WorkflowApprovalReceiver.kt`, `WorkflowApprovalNotifier.kt`, `TianXuanApplication.kt`.
+- Settings/onboarding/stats: `OnboardingViewModel.kt`, `SshSettingsViewModel.kt`, `CcSwitchViewModel.kt`, `CcSwitchScreen.kt` (đồng bộ khóa màu log `[Bước `), `RomAutostartHelper.kt`, `SponsorList*`, `StatsRepository.kt`, `StatsMetricGrid/Heatmap/RankSection/UsageChart`.
+- Khác: `WorkflowEditorState.kt`, `WorkflowScheduleDialog.kt`, `WorkflowViewModel.kt`, `GitManager.kt`, `HomeViewModel.kt`, `TianXuanNavHost.kt`, `ChatAttachment.kt`, `ChatViewModel.kt`, `DeveloperScreen.kt`, template build trong `WorkshopSettingsScreen.kt`.
+
+Cố ý **giữ nguyên** chuỗi là khóa kỹ thuật / hợp đồng nội bộ, không dịch:
+
+- `"连接成功"` (so sánh kết quả trong `ModelEditorScreen.kt`/`SettingsViewModel.kt`).
+- `"无环图"` (`WorkflowValidator` message được `contains` trong `WorkflowEditorState.kt`).
+- `"自定义"` (giá trị `category` lưu DB, có assertion trong test).
+- `"环境不完整"` và regex `^(生成|创建)签名失败`/`^签名导入失败` trong `WorkshopSigningScreen.kt`.
+- Delimiter `任务详情：`/`你是被主智能体派发的子智能体`/`[附件：` trong `ChatWorkbenchPanels.kt` (dùng để cắt prompt).
+- Tên nhà cung cấp tiếng Trung trong `ProviderBadge.kt` (`阿里云`, `智谱`, …) là khóa tra cứu alias.
+- Tên bước build `拉取`/`编译`/`打包` trong `WorkspaceBuildDialogs.kt` (khớp màu với nhãn toolchain).
+- `ToolSelfHealingHelper.kt` tạo prompt cho agent → nằm ngoài phạm vi theo yêu cầu mới.
+
+Kiểm tra: `tools/check-ctharness.py` **16/16 đạt**, `tools/test-queue-lifecycle.py` **3/3 đạt**, `git diff --check` sạch, đọc lại từng tệp đã sửa bằng regex Unicode xác nhận không còn chữ Hán trong string literal (trừ các khóa cố ý giữ ở trên). Chưa chạy được test Kotlin/Unit hay build APK do môi trường thiếu JDK; chỉ build qua GitHub Actions.

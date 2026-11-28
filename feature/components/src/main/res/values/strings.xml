@@ -2,7 +2,8 @@
 <resources>
     <string name="components_nav_home">Trang chủ</string>
     <string name="components_nav_agent">Agent</string>
-    <string name="components_nav_workspace">Không gian làm việc</string>
+    <!-- Tên thẻ workspace; giữ nguyên thuật ngữ dùng trong toàn ứng dụng. -->
+    <string name="components_nav_workspace">Workspace</string>
     <string name="components_nav_settings">Cài đặt</string>
     <string name="components_back">Quay lại</string>
     <string name="components_tianxuan_logo">Logo CTHarness</string>

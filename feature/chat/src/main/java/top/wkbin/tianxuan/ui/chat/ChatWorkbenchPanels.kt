@@ -191,7 +191,7 @@ internal fun CollapsibleChatWorkbenchStrip(
                 StatusDivider()
                 WorkbenchStatusItem(
                     icon = RuntimeIconName.GitBranch,
-                    label = if (repositoryHighlight) "仓库 •" else stringResource(R.string.chat_repository),
+                    label = stringResource(if (repositoryHighlight) R.string.chat_repository_highlight else R.string.chat_repository),
                     tint = if (repositoryHighlight) Color(0xFF2E9E5B) else MaterialTheme.colorScheme.onSurfaceVariant,
                     highlight = repositoryHighlight,
                     onClick = onOpenRepository,
@@ -203,7 +203,7 @@ internal fun CollapsibleChatWorkbenchStrip(
                 StatusDivider()
                 WorkbenchStatusItem(
                     icon = RuntimeIconName.Globe,
-                    label = if (browserHighlight) "浏览器 •" else "浏览器",
+                    label = stringResource(if (browserHighlight) R.string.chat_browser_highlight else R.string.chat_browser),
                     tint = if (browserHighlight) Color(0xFF3F8FFF) else MaterialTheme.colorScheme.onSurfaceVariant,
                     highlight = browserHighlight,
                     onClick = onOpenBrowser,
@@ -766,7 +766,7 @@ internal fun RuntimeTimelineSheet(
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = pad.key.ifBlank { "草稿" },
+                                                text = pad.key.ifBlank { stringResource(R.string.chat_scratchpad_default_title) },
                                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                                 color = MaterialTheme.colorScheme.tertiary,
                                             )
@@ -1286,7 +1286,7 @@ private fun PayloadBox(label: String, text: String) {
                 onClick = {
                     val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                     clipboard?.setPrimaryClip(android.content.ClipData.newPlainText(label, text))
-                    android.widget.Toast.makeText(context, "已复制", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, context.getString(R.string.chat_copied), android.widget.Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.size(20.dp),
             ) {
@@ -1437,19 +1437,19 @@ private fun eventVisual(event: HarnessEvent): EventVisual = when (event) {
             "RUNNING" -> MaterialTheme.colorScheme.primary
             else -> Color(0xFF7C4DFF)
         },
-        "工序 ${event.stepId} · ${event.title}",
-        event.resultSummary ?: "状态: ${event.status}",
+        stringResource(R.string.chat_event_plan_step, event.stepId, event.title),
+        event.resultSummary ?: stringResource(R.string.chat_event_status, event.status),
     )
     is HarnessEvent.ApprovalAsked -> EventVisual(
         RuntimeIconName.Shield,
         MaterialTheme.colorScheme.tertiary,
-        "审批请求",
+        stringResource(R.string.chat_event_approval),
         "${event.toolName}: ${event.reason}".takeIf { it.isNotBlank() } ?: event.toolName,
     )
     is HarnessEvent.ApprovalDecided -> EventVisual(
         if (event.outcome == "ALLOWED_ONCE") RuntimeIconName.Check else RuntimeIconName.Stop,
         if (event.outcome == "ALLOWED_ONCE") Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
-        "审批结果",
+        stringResource(R.string.chat_event_approval_decision),
         event.outcome,
     )
 }
@@ -1486,7 +1486,7 @@ internal fun QueuedPromptStack(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    // 若当前消息处于排队状态，支持一键转为修正指令
+                    // Cho phép chuyển tin nhắn đang chờ thành chỉ dẫn điều chỉnh bằng một lần chạm.
                     if (prompt.queue == PromptQueue.NEXT_RUN && onConvertToSteer != null) {
                         Surface(
                             onClick = { onConvertToSteer(prompt) },
@@ -1570,7 +1570,7 @@ private fun prettyArgs(args: JsonObject): String =
 
 internal fun limitDiagnosticText(text: String, maxChars: Int = MAX_DIAGNOSTIC_TEXT_CHARS): String {
     if (text.length <= maxChars) return text
-    return text.take(maxChars) + "\n…（内容过长，已截断）"
+    return text.take(maxChars) + "\n… (Nội dung quá dài, đã cắt bớt)"
 }
 
 /**
@@ -1604,12 +1604,12 @@ internal fun sanitizeModelResponseForDiagnostics(
                 .take(40)
                 .ifBlank { "image" }
             if (out.isNotEmpty() && !out.last().isWhitespace()) out.append(' ')
-            out.append("[图片数据已隐藏：").append(mime).append(']')
+            out.append("[Đã ẩn dữ liệu ảnh: ").append(mime).append(']')
             val end = text.indexOfAny(charArrayOf(')', '"', '\'', '>', ' ', '\n', '\r', '\t'), dataStart)
             cursor = if (end >= 0) end + 1 else text.length
         } else {
             out.append(text, cursor, minOf(jsonKeyStart, cursor + (maxChars - out.length)))
-            out.append("\"b64_json\":\"[图片 Base64 已隐藏]\"")
+            out.append("\"b64_json\":\"[Đã ẩn dữ liệu ảnh Base64]\"")
             val colon = text.indexOf(':', jsonKeyStart + 10)
             val valueStart = if (colon >= 0) text.indexOf('"', colon + 1) else -1
             val valueEnd = if (valueStart >= 0) text.indexOf('"', valueStart + 1) else -1

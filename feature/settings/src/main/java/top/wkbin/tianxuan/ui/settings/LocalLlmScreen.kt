@@ -64,15 +64,15 @@ fun LocalLlmScreen(
     val deviceRamBytes = viewModel.deviceRamBytes
     val mobileModelPresets = viewModel.mobileModelPresets
     val topBarStatus = when (val state = serviceState) {
-        LocalLlmServiceState.Stopped -> "服务未启动"
-        is LocalLlmServiceState.Starting -> "正在启动 · ${state.fileName}"
-        is LocalLlmServiceState.Running -> "运行中 · ${state.fileName}"
-        is LocalLlmServiceState.Failed -> "启动失败"
+        LocalLlmServiceState.Stopped -> "Dịch vụ chưa khởi động"
+        is LocalLlmServiceState.Starting -> "Đang khởi động · ${state.fileName}"
+        is LocalLlmServiceState.Running -> "Đang chạy · ${state.fileName}"
+        is LocalLlmServiceState.Failed -> "Khởi động thất bại"
     }
 
     var showDownloadDialog by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var showPathDialog by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    // 待确认删除的模型文件名（破坏性操作二次确认）
+    // Tên tệp mô hình chờ xác nhận xóa; thao tác phá hủy cần xác nhận lại.
     var pendingDeleteModel by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -82,10 +82,10 @@ fun LocalLlmScreen(
     message?.let { currentMessage ->
         RuntimeAlertDialog(
             onDismissRequest = viewModel::consumeMessage,
-            title = { Text(if (messageIsError) "操作未完成" else "本地 LLM") },
+            title = { Text(if (messageIsError) "Thao tác chưa hoàn tất" else "LLM cục bộ") },
             text = { Text(currentMessage) },
             confirmButton = {
-                RuntimeTextButton(onClick = viewModel::consumeMessage) { Text("知道了") }
+                RuntimeTextButton(onClick = viewModel::consumeMessage) { Text("Đã hiểu") }
             },
         )
     }
@@ -125,7 +125,7 @@ fun LocalLlmScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RuntimeTopBar(
-                title = "本地 LLM",
+                title = "LLM cục bộ",
                 onBack = onBack,
                 statusText = topBarStatus,
                 actions = {
@@ -136,7 +136,7 @@ fun LocalLlmScreen(
                         ) {
                             RuntimeIcon(RuntimeIconName.Stop, Modifier.size(16.dp))
                             Spacer(Modifier.size(4.dp))
-                            Text("停止")
+                            Text("Dừng")
                         }
                     }
                 },
@@ -161,7 +161,7 @@ fun LocalLlmScreen(
                     ) {
                         RuntimeIcon(RuntimeIconName.Download, Modifier.size(18.dp))
                         Spacer(Modifier.size(6.dp))
-                        Text("网络下载", maxLines = 1)
+                        Text("Tải từ mạng", maxLines = 1)
                     }
                     RuntimeOutlinedButton(
                         onClick = { showPathDialog = true },
@@ -171,7 +171,7 @@ fun LocalLlmScreen(
                     ) {
                         RuntimeIcon(RuntimeIconName.Folder, Modifier.size(18.dp))
                         Spacer(Modifier.size(6.dp))
-                        Text("从路径导入", maxLines = 1)
+                        Text("Nhập từ đường dẫn", maxLines = 1)
                     }
                     RuntimeOutlinedButton(
                         onClick = { filePicker.launch(arrayOf("application/octet-stream", "application/*", "*/*")) },
@@ -181,7 +181,7 @@ fun LocalLlmScreen(
                     ) {
                         RuntimeIcon(RuntimeIconName.File, Modifier.size(18.dp))
                         Spacer(Modifier.size(6.dp))
-                        Text("选择文件", maxLines = 1)
+                        Text("Chọn tệp", maxLines = 1)
                     }
                 }
             }
@@ -212,7 +212,7 @@ fun LocalLlmScreen(
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             RuntimeTextButton(onClick = viewModel::cancelTransfer, modifier = Modifier.align(Alignment.End)) {
-                                Text("取消")
+                                Text("Hủy")
                             }
                         }
                     }
@@ -231,10 +231,10 @@ fun LocalLlmScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             RuntimeIcon(RuntimeIconName.Info, Modifier.size(23.dp), MaterialTheme.colorScheme.primary)
-                            Text("本地 LLM 推理", style = MaterialTheme.typography.titleMedium)
+                            Text("Suy luận bằng LLM cục bộ", style = MaterialTheme.typography.titleMedium)
                         }
                         Text(
-                            "通过 llama.cpp 在 Linux 沙箱内运行 GGUF 模型，推理数据不离开设备。支持 HTTPS / Hugging Face 直链断点下载，也可从手机文件选择器导入。",
+                            "Chạy mô hình GGUF bằng llama.cpp trong sandbox Linux; dữ liệu suy luận không rời khỏi thiết bị. Hỗ trợ tải tiếp từ liên kết trực tiếp HTTPS / Hugging Face hoặc nhập qua trình chọn tệp của điện thoại.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -244,10 +244,10 @@ fun LocalLlmScreen(
                                 color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
                             ) {
                                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text("需要先安装 llama.cpp 推理引擎", fontWeight = FontWeight.SemiBold)
+                                    Text("Cần cài bộ máy suy luận llama.cpp trước", fontWeight = FontWeight.SemiBold)
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        RuntimeButton(onClick = viewModel::installEngine) { Text("一键安装") }
-                                        RuntimeOutlinedButton(onClick = onOpenEngine) { Text("查看详情") }
+                                        RuntimeButton(onClick = viewModel::installEngine) { Text("Cài ngay") }
+                                        RuntimeOutlinedButton(onClick = onOpenEngine) { Text("Xem chi tiết") }
                                     }
                                 }
                             }
@@ -258,9 +258,9 @@ fun LocalLlmScreen(
 
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("手机小模型推荐", style = MaterialTheme.typography.titleMedium)
+                    Text("Mô hình nhỏ đề xuất cho điện thoại", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "本机内存 ${formatBytes(deviceRamBytes)} · 默认推荐 Q4_K_M，兼顾体积、速度和效果",
+                        "RAM thiết bị ${formatBytes(deviceRamBytes)} · Đề xuất Q4_K_M để cân bằng dung lượng, tốc độ và chất lượng",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -286,7 +286,7 @@ fun LocalLlmScreen(
             }
 
             item {
-                Text("已导入模型", style = MaterialTheme.typography.titleMedium)
+                Text("Mô hình đã nhập", style = MaterialTheme.typography.titleMedium)
             }
 
             if (models.isEmpty()) {
@@ -302,8 +302,8 @@ fun LocalLlmScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             RuntimeIcon(RuntimeIconName.Model, Modifier.size(44.dp), MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f))
-                            Text("暂无模型", style = MaterialTheme.typography.titleSmall)
-                            Text("使用上方按钮下载或导入 GGUF 模型", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Chưa có mô hình", style = MaterialTheme.typography.titleSmall)
+                            Text("Dùng các nút phía trên để tải hoặc nhập mô hình GGUF", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -357,7 +357,7 @@ private fun MobileModelPresetCard(
                     },
                 ) {
                     Text(
-                        if (suitable) "适合本机" else "内存不足",
+                        if (suitable) "Phù hợp thiết bị" else "Không đủ RAM",
                         modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = if (suitable) {
@@ -381,7 +381,7 @@ private fun MobileModelPresetCard(
                         ModelSpecChip(formatBytes(preset.downloadBytes))
                     }
                     Text(
-                        "建议设备内存 ${formatRam(preset.minimumDeviceRamBytes)} 以上",
+                        "Khuyến nghị thiết bị có ít nhất ${formatRam(preset.minimumDeviceRamBytes)} RAM",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -396,7 +396,7 @@ private fun MobileModelPresetCard(
                         Modifier.size(16.dp),
                     )
                     Spacer(Modifier.size(4.dp))
-                    Text(if (alreadyDownloaded) "已下载" else "下载")
+                    Text(if (alreadyDownloaded) "Đã tải" else "Tải xuống")
                 }
             }
         }
@@ -440,10 +440,10 @@ private fun ServiceStatusCard(
                 Surface(modifier = Modifier.size(10.dp), shape = RoundedCornerShape(50), color = color) {}
                 Text(
                     when (serviceState) {
-                        LocalLlmServiceState.Stopped -> "未运行"
-                        is LocalLlmServiceState.Starting -> "正在启动 · ${serviceState.fileName}"
-                        is LocalLlmServiceState.Running -> "运行中 · ${serviceState.fileName}"
-                        is LocalLlmServiceState.Failed -> "启动失败"
+                        LocalLlmServiceState.Stopped -> "Chưa chạy"
+                        is LocalLlmServiceState.Starting -> "Đang khởi động · ${serviceState.fileName}"
+                        is LocalLlmServiceState.Running -> "Đang chạy · ${serviceState.fileName}"
+                        is LocalLlmServiceState.Failed -> "Khởi động thất bại"
                     },
                     style = MaterialTheme.typography.titleMedium,
                 )
@@ -452,14 +452,14 @@ private fun ServiceStatusCard(
                     RuntimeOutlinedButton(onClick = stop, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp)) {
                         RuntimeIcon(RuntimeIconName.Stop, Modifier.size(16.dp))
                         Spacer(Modifier.size(4.dp))
-                        Text("停止")
+                        Text("Dừng")
                     }
                 }
             }
             Text(
                 running?.endpoint ?: when (serviceState) {
                     is LocalLlmServiceState.Failed -> serviceState.message
-                    else -> "选择下方模型启动服务；启动成功后会自动设为当前对话模型"
+                    else -> "Chọn mô hình bên dưới để khởi động dịch vụ. Sau khi khởi động thành công, mô hình sẽ được chọn cho hội thoại hiện tại."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -511,7 +511,7 @@ private fun ModelCard(
                     RuntimeIcon(RuntimeIconName.Play, Modifier.size(17.dp))
                     if (isStarting) {
                         Spacer(Modifier.size(4.dp))
-                        Text("启动中")
+                        Text("Đang khởi động")
                     }
                 }
             }
@@ -529,12 +529,12 @@ private fun DownloadModelDialog(
 ) {
     var url by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var sha256 by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
-    // URL 校验：必须是 http(s) 直链且指向 .gguf 文件（允许携带 ?download=true 之类查询参数）
+    // Kiểm tra URL: liên kết trực tiếp http(s) tới tệp .gguf; chấp nhận tham số như ?download=true.
     val urlValid = (url.startsWith("http://") || url.startsWith("https://")) &&
         url.substringBefore('?').lowercase().endsWith(".gguf")
     RuntimeAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("网络下载 GGUF") },
+        title = { Text("Tải GGUF từ mạng") },
         text = {
             Column(
                 modifier = Modifier
@@ -542,16 +542,16 @@ private fun DownloadModelDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text("粘贴以 .gguf 结尾的 HTTPS 直链。Hugging Face 文件页请复制 Download 链接。")
+                Text("Dán liên kết HTTPS trực tiếp kết thúc bằng .gguf. Trên trang tệp Hugging Face, hãy sao chép liên kết Download.")
                 OutlinedTextField(
                     value = url,
                     onValueChange = { url = it },
-                    label = { Text("GGUF 下载地址") },
+                    label = { Text("Địa chỉ tải GGUF") },
                     placeholder = { Text("https://.../model.gguf") },
                     isError = url.isNotBlank() && !urlValid,
                     supportingText = {
                         if (url.isNotBlank() && !urlValid) {
-                            Text("请输入以 http(s):// 开头且指向 .gguf 文件的直链")
+                            Text("Nhập liên kết trực tiếp bắt đầu bằng http(s):// và trỏ tới tệp .gguf")
                         }
                     },
                     singleLine = false,
@@ -560,16 +560,16 @@ private fun DownloadModelDialog(
                 OutlinedTextField(
                     value = sha256,
                     onValueChange = { sha256 = it },
-                    label = { Text("SHA-256（可选）") },
+                    label = { Text("SHA-256 (không bắt buộc)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
         confirmButton = {
-            RuntimeButton(onClick = { onDownload(url, sha256.ifBlank { null }) }, enabled = urlValid) { Text("开始下载") }
+            RuntimeButton(onClick = { onDownload(url, sha256.ifBlank { null }) }, enabled = urlValid) { Text("Bắt đầu tải") }
         },
-        dismissButton = { RuntimeTextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { RuntimeTextButton(onClick = onDismiss) { Text("Hủy") } },
     )
 }
 
@@ -582,7 +582,7 @@ private fun ImportPathDialog(
     val pathValid = path.substringBefore('?').lowercase().endsWith(".gguf")
     RuntimeAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("从路径导入") },
+        title = { Text("Nhập từ đường dẫn") },
         text = {
             Column(
                 modifier = Modifier
@@ -590,15 +590,15 @@ private fun ImportPathDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text("输入应用可读取的绝对路径，例如 /storage/emulated/0/Download/model.gguf。受 Android 存储权限限制时请改用“选择文件”。")
+                Text("Nhập đường dẫn tuyệt đối mà ứng dụng có thể đọc, ví dụ /storage/emulated/0/Download/model.gguf. Nếu bị giới hạn bởi quyền lưu trữ Android, hãy dùng nút Chọn tệp.")
                 OutlinedTextField(
                     value = path,
                     onValueChange = { path = it },
-                    label = { Text("GGUF 文件路径") },
+                    label = { Text("Đường dẫn tệp GGUF") },
                     isError = path.isNotBlank() && !pathValid,
                     supportingText = {
                         if (path.isNotBlank() && !pathValid) {
-                            Text("路径需指向 .gguf 模型文件")
+                            Text("Đường dẫn phải trỏ tới tệp mô hình .gguf")
                         }
                     },
                     singleLine = false,
@@ -607,13 +607,13 @@ private fun ImportPathDialog(
             }
         },
         confirmButton = {
-            RuntimeButton(onClick = { onImport(path) }, enabled = pathValid) { Text("导入") }
+            RuntimeButton(onClick = { onImport(path) }, enabled = pathValid) { Text("Nhập") }
         },
-        dismissButton = { RuntimeTextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { RuntimeTextButton(onClick = onDismiss) { Text("Hủy") } },
     )
 }
 
-/** 删除 GGUF 模型二次确认弹窗（与 DistroManagementScreen 删除确认同款倒计时锁样式） */
+/** Hộp thoại xác nhận xóa GGUF, dùng khóa đếm ngược giống DistroManagementScreen. */
 @Composable
 private fun DeleteModelConfirmDialog(
     fileName: String,
@@ -633,19 +633,19 @@ private fun DeleteModelConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "删除模型 $fileName？",
+                text = "Xóa mô hình $fileName?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "• 将从沙箱中删除该 GGUF 模型文件，释放对应存储空间",
+                    text = "• Tệp mô hình GGUF sẽ bị xóa khỏi sandbox để giải phóng dung lượng tương ứng",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "• 删除后需要重新下载或导入才能再次使用",
+                    text = "• Sau khi xóa, cần tải hoặc nhập lại mô hình để sử dụng",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -661,12 +661,12 @@ private fun DeleteModelConfirmDialog(
                 ),
             ) {
                 Text(
-                    text = if (countdown > 0) "确认删除 (" + countdown + "s)" else "确认删除",
+                    text = if (countdown > 0) "Xác nhận xóa ($countdown giây)" else "Xác nhận xóa",
                     color = if (countdown == 0) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onError.copy(alpha = 0.6f),
                 )
             }
         },
-        dismissButton = { RuntimeTextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { RuntimeTextButton(onClick = onDismiss) { Text("Hủy") } },
     )
 }
 

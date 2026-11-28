@@ -22,19 +22,19 @@ import androidx.compose.ui.unit.sp
 import top.wkbin.tianxuan.feature.components.R
 
 /**
- * 模型厂商徽章：优先显示真实 logo（单色矢量，白色绘制在品牌色圆底上，
- * 视觉统一且深浅色主题均可读）；无公开 logo 素材的厂商回退品牌色 + 标识字。
+ * Huy hiệu nhà cung cấp mô hình: ưu tiên logo thật (vector đơn sắc trắng trên nền tròn màu thương hiệu,
+ * đồng nhất và dễ đọc ở cả giao diện sáng lẫn tối); nếu không có logo thì dùng màu thương hiệu và ký hiệu.
  */
 data class ProviderVisual(
-    /** 有真实 logo 时的 drawable 资源 id。 */
+    /** ID tài nguyên drawable khi có logo thật. */
     val logoRes: Int?,
-    /** 无 logo 时的徽章标识字符。 */
+    /** Ký hiệu trên huy hiệu khi không có logo. */
     val label: String,
-    /** 品牌主色（圆底）。 */
+    /** Màu chủ đạo của thương hiệu, dùng làm nền tròn. */
     val color: Color,
 )
 
-/** provider id / 厂商名 → 视觉标识；未知厂商回退中性色 + 首字符，空值回退通用模型图标。 */
+/** Ánh xạ ID/tên nhà cung cấp sang huy hiệu; tên lạ dùng màu trung tính và chữ đầu, tên rỗng dùng biểu tượng mô hình chung. */
 fun providerVisual(providerIdOrName: String): ProviderVisual {
     val trimmed = providerIdOrName.trim()
     if (trimmed.isEmpty()) return ProviderVisual(null, "", Color(0xFF64748B))
@@ -67,12 +67,12 @@ private val PROVIDER_VISUALS: List<Pair<String, ProviderVisual>> = listOf(
     "grok" to ProviderVisual(null, "X", Color(0xFF1A1A1A)),
     "zhipu" to ProviderVisual(null, "GLM", Color(0xFF3859FF)),
     "智谱" to ProviderVisual(null, "GLM", Color(0xFF3859FF)),
-    "doubao" to ProviderVisual(null, "豆", Color(0xFF00C8C8)),
-    "火山" to ProviderVisual(null, "豆", Color(0xFF00C8C8)),
-    "siliconflow" to ProviderVisual(null, "硅", Color(0xFF7C3AED)),
-    "硅基" to ProviderVisual(null, "硅", Color(0xFF7C3AED)),
-    "modelscope" to ProviderVisual(null, "魔", Color(0xFFE62E2E)),
-    "魔搭" to ProviderVisual(null, "魔", Color(0xFFE62E2E)),
+    "doubao" to ProviderVisual(null, "DB", Color(0xFF00C8C8)),
+    "火山" to ProviderVisual(null, "DB", Color(0xFF00C8C8)),
+    "siliconflow" to ProviderVisual(null, "SF", Color(0xFF7C3AED)),
+    "硅基" to ProviderVisual(null, "SF", Color(0xFF7C3AED)),
+    "modelscope" to ProviderVisual(null, "MS", Color(0xFFE62E2E)),
+    "魔搭" to ProviderVisual(null, "MS", Color(0xFFE62E2E)),
     "llamacpp" to ProviderVisual(null, "ll", Color(0xFF7B2CBF)),
     "llama" to ProviderVisual(null, "ll", Color(0xFF7B2CBF)),
     "ollama" to ProviderVisual(R.drawable.components_ic_provider_ollama, "ll", Color(0xFF334155)),
@@ -120,7 +120,7 @@ fun ProviderBadge(
                 softWrap = false,
             )
         } else {
-            // 空 provider：渲染通用模型图标，避免无意义的 "?" 占位
+            // Nhà cung cấp rỗng: dùng biểu tượng mô hình chung thay vì dấu "?" vô nghĩa.
             RuntimeIcon(
                 name = RuntimeIconName.Model,
                 modifier = Modifier.size(size / 2),

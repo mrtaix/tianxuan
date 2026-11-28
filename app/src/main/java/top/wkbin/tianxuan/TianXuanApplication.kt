@@ -114,7 +114,7 @@ class TianXuanApplication : Application(), Configuration.Provider {
                             )
                         )
                         if (imported.isNotEmpty()) {
-                            Log.i(TAG, "Skill 目录自动发现并导入 ${imported.size} 个：${imported.joinToString { it.name }}")
+                            Log.i(TAG, "Đã tự phát hiện và nhập ${imported.size} thư mục Skill: ${imported.joinToString { it.name }}")
                         }
                     }
                 }
@@ -144,10 +144,10 @@ class TianXuanApplication : Application(), Configuration.Provider {
             runCatching {
                 val recovered = harnessLoop.recoverAllInterruptedSessions()
                 if (recovered > 0) {
-                    Log.i(TAG, "已恢复 $recovered 个被中断的 Agent 会话/任务")
+                    Log.i(TAG, "Đã khôi phục $recovered phiên/tác vụ agent bị gián đoạn")
                 }
             }.onFailure {
-                Log.w(TAG, "恢复中断会话失败", it)
+                Log.w(TAG, "Khôi phục phiên bị gián đoạn thất bại", it)
             }
             // 工作流后台化：启动对账（把进程死亡遗留的非终态运行标为已中断）+ 通知/HUD
             // 控制器 + FGS 联动。工作流 agent 会话由工作流体系自管，已在恢复中排除。
@@ -156,7 +156,7 @@ class TianXuanApplication : Application(), Configuration.Provider {
             workflowRunUiController.start()
             workflowApprovalNotifier.start(this@TianXuanApplication)
             runCatching { workflowRunManager.reconcileInterruptedRuns() }
-                .onFailure { Log.w(TAG, "工作流启动对账失败", it) }
+                .onFailure { Log.w(TAG, "Đối soát khởi chạy workflow thất bại", it) }
             launch {
                 workflowRunManager.running.collectLatest { running ->
                     if (running) {

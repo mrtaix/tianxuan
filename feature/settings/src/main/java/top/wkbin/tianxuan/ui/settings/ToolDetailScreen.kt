@@ -120,7 +120,7 @@ fun ToolDetailScreen(
         topBar = {
             RuntimeTopBar(
                 title = tool?.name ?: toolId,
-                statusText = "配置详情",
+                statusText = "Chi tiết cấu hình",
                 onBack = onBack,
             )
         },
@@ -136,10 +136,10 @@ fun ToolDetailScreen(
                     // 工具列表尚未加载完成：显示加载中而非「未找到」
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         CircularProgressIndicator(modifier = Modifier.size(32.dp), strokeWidth = 3.dp)
-                        Text("正在加载工具信息…", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                        Text("Đang tải thông tin công cụ…", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                 } else {
-                    Text("工具未找到", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Không tìm thấy công cụ", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             return@Scaffold
@@ -176,12 +176,12 @@ fun ToolDetailScreen(
                             )
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
-                                    text = "工具安装/环境自检未通过",
+                                    text = "Cài đặt công cụ hoặc tự kiểm tra môi trường không thành công",
                                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.error,
                                 )
                                 Text(
-                                    text = state.error ?: "可呼叫天玄 Agent 在 PRoot 沙箱内自主排查与自愈",
+                                    text = state.error ?: "Bạn có thể gọi agent CTHarness tự chẩn đoán và sửa lỗi trong sandbox PRoot",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 2,
@@ -201,7 +201,7 @@ fun ToolDetailScreen(
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         ) {
-                            Text("呼叫自愈", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                            Text("Gọi tự sửa lỗi", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
@@ -234,7 +234,7 @@ fun ToolDetailScreen(
                     // `clipboard?.setPrimaryClip(...)` 后无条件弹「已复制」，
                     // 拿不到剪贴板服务时会告诉用户复制成功，用户在粘贴处找不到内容。
                     onCopy = { text ->
-                        copyToClipboard(context, text, "service_logs", "控制台日志已复制")
+                        copyToClipboard(context, text, "service_logs", "Đã sao chép nhật ký bảng điều khiển")
                     },
                 )
             }
@@ -267,7 +267,7 @@ fun ToolDetailScreen(
                     onGenerate = viewModel::generateToken,
                     onClear = viewModel::clearToken,
                     onCopy = { url ->
-                        copyToClipboard(context, url, "tool_url", "链接已复制")
+                        copyToClipboard(context, url, "tool_url", "Đã sao chép liên kết")
                     },
                 )
             }
@@ -412,9 +412,9 @@ private fun ToolOverviewCard(
                         Text(
                             text = "${tool.publisher} · ${
                                 when (tool.category) {
-                                    "CODING_AGENT" -> "编程智能体"
-                                    "AI_AGENT" -> "AI 智能体"
-                                    "DEVELOPER_TOOL" -> "开发加速包"
+                                    "CODING_AGENT" -> "Agent lập trình"
+                                    "AI_AGENT" -> "Agent AI"
+                                    "DEVELOPER_TOOL" -> "Gói tăng tốc phát triển"
                                     else -> tool.category
                                 }
                             }",
@@ -450,12 +450,12 @@ private fun ToolOverviewCard(
 
             StatusBadge(
                 text = when {
-                    gatewayOperating -> "启动中"
-                    gatewayRunning -> "运行中"
-                    tool.state == ToolState.UPDATE_AVAILABLE.name -> "可更新"
-                    isInstalled -> "已就绪"
-                    tool.state == ToolState.FAILED.name -> "异常"
-                    else -> "未安装"
+                    gatewayOperating -> "Đang khởi động"
+                    gatewayRunning -> "Đang chạy"
+                    tool.state == ToolState.UPDATE_AVAILABLE.name -> "Có bản cập nhật"
+                    isInstalled -> "Sẵn sàng"
+                    tool.state == ToolState.FAILED.name -> "Có lỗi"
+                    else -> "Chưa cài"
                 },
                 color = when {
                     gatewayOperating -> warningStatusColor()
@@ -503,7 +503,7 @@ private fun GatewayManagementCard(
                         tint = if (running) successStatusColor() else MaterialTheme.colorScheme.outline,
                     )
                     Text(
-                        text = "网关服务",
+                        text = "Dịch vụ gateway",
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
@@ -517,9 +517,9 @@ private fun GatewayManagementCard(
                         else -> MaterialTheme.colorScheme.outline
                     }
                     val statusText = when {
-                        running -> "运行中"
-                        operating -> "启动中…"
-                        else -> "已停止"
+                        running -> "Đang chạy"
+                        operating -> "Đang khởi động…"
+                        else -> "Đã dừng"
                     }
                     Box(
                         modifier = Modifier
@@ -538,7 +538,7 @@ private fun GatewayManagementCard(
                     )
                     if (port != null) {
                         Text(
-                            text = "· 端口 $port",
+                            text = "· Cổng $port",
                             style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -556,7 +556,7 @@ private fun GatewayManagementCard(
                 ) {
                     RuntimeIcon(name = RuntimeIconName.Stop, modifier = Modifier.size(15.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("停止", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Dừng", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
             } else {
                 Button(
@@ -566,7 +566,7 @@ private fun GatewayManagementCard(
                 ) {
                     RuntimeIcon(name = RuntimeIconName.Play, modifier = Modifier.size(15.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("启动", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Khởi động", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -606,7 +606,7 @@ private fun ServiceLogsCard(
                     tint = if (running) successStatusColor() else MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "服务实时控制台日志",
+                    text = "Nhật ký dịch vụ theo thời gian thực",
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -621,7 +621,7 @@ private fun ServiceLogsCard(
                         modifier = Modifier
                             .minimumInteractiveComponentSize()
                             .size(30.dp),
-                        contentDescription = "复制服务日志",
+                        contentDescription = "Sao chép nhật ký dịch vụ",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Copy,
@@ -634,7 +634,7 @@ private fun ServiceLogsCard(
                         modifier = Modifier
                             .minimumInteractiveComponentSize()
                             .size(30.dp),
-                        contentDescription = "清空服务日志",
+                        contentDescription = "Xóa nhật ký dịch vụ",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Trash,
@@ -662,7 +662,7 @@ private fun ServiceLogsCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "暂无服务日志。点击【启动】网关后将在此实时输出控制台信息与异常报错。",
+                        text = "Chưa có nhật ký dịch vụ. Nhấn Khởi động gateway để xem thông tin bảng điều khiển và lỗi tại đây theo thời gian thực.",
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontFamily = FontFamily.Monospace,
                             fontSize = 11.sp,
@@ -728,7 +728,7 @@ private fun ModelApplyCard(
                     tint = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "模型配置",
+                    text = "Cấu hình mô hình",
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -737,7 +737,7 @@ private fun ModelApplyCard(
                 shape = RoundedCornerShape(6.dp),
             ) {
                 Text(
-                    text = "AI 插件",
+                    text = "Plugin AI",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -746,14 +746,14 @@ private fun ModelApplyCard(
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "一键将已配置的 AI 模型（API Key、Base URL 与 Model）注入至 $toolName，插件重启后生效。",
+            text = "Áp dụng mô hình AI đã cấu hình (API Key, Base URL và Model) cho $toolName chỉ với một lần nhấn. Có hiệu lực sau khi khởi động lại plugin.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         if (models.isEmpty()) {
             Spacer(Modifier.height(8.dp))
-            NoticeBanner(text = "尚未配置任何模型档案，可前往【设置 → 模型档案管理】添加 Claude、OpenAI 或 DeepSeek 模型")
+            NoticeBanner(text = "Chưa có hồ sơ mô hình nào. Vào Cài đặt → Quản lý hồ sơ mô hình để thêm mô hình Claude, OpenAI hoặc DeepSeek.")
         } else {
             Spacer(Modifier.height(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -801,7 +801,7 @@ private fun ModelApplyCard(
                                             shape = RoundedCornerShape(4.dp),
                                         ) {
                                             Text(
-                                                text = "当前活跃",
+                                                text = "Đang hoạt động",
                                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                                                 color = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
@@ -814,7 +814,7 @@ private fun ModelApplyCard(
                                             shape = RoundedCornerShape(4.dp),
                                         ) {
                                             Text(
-                                                text = "已应用",
+                                                text = "Đã áp dụng",
                                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                                                 color = successStatusColor(),
                                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
@@ -823,7 +823,7 @@ private fun ModelApplyCard(
                                     }
                                 }
                                 Text(
-                                    text = "${model.provider} · ${model.model.ifBlank { "默认模型" }}",
+                                    text = "${model.provider} · ${model.model.ifBlank { "Mô hình mặc định" }}",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.outline,
                                     maxLines = 1,
@@ -840,7 +840,7 @@ private fun ModelApplyCard(
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                                 ) {
                                     Text(
-                                        "应用",
+                                        "Áp dụng",
                                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                                     )
                                 }
@@ -874,11 +874,11 @@ private fun AutoStartCard(
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "随应用自启动",
+                    text = "Tự khởi động cùng ứng dụng",
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = "Linux 环境就绪后自动启动 $toolName 网关服务",
+                    text = "Tự khởi động dịch vụ gateway $toolName khi môi trường Linux sẵn sàng",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -925,7 +925,7 @@ private fun AccessLinkCard(
                     tint = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "访问链接",
+                    text = "Liên kết truy cập",
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -935,7 +935,7 @@ private fun AccessLinkCard(
                 shape = RoundedCornerShape(6.dp),
             ) {
                 Text(
-                    text = if (running) "已绑定 0.0.0.0" else "服务未启动",
+                    text = if (running) "Đã liên kết 0.0.0.0" else "Dịch vụ chưa khởi động",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.SemiBold),
                     color = if (running) successStatusColor() else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -946,9 +946,9 @@ private fun AccessLinkCard(
         Spacer(Modifier.height(4.dp))
         Text(
             text = if (running) {
-                "网关服务已绑定全网卡 (0.0.0.0)。同局域网设备打开【局域网 IP 链接】即可直接操作，无需 localhost 映射。"
+                "Dịch vụ gateway đã liên kết mọi giao diện mạng (0.0.0.0). Thiết bị cùng mạng LAN có thể mở liên kết IP LAN để sử dụng trực tiếp, không cần ánh xạ localhost."
             } else {
-                "服务尚未启动，请先在【网关服务】卡片中点击启动，启动成功后将在此展示可访问链接。Token 可提前生成，启动时自动注入。"
+                "Dịch vụ chưa khởi động. Hãy nhấn Khởi động trong thẻ Dịch vụ gateway; liên kết truy cập sẽ hiện ở đây khi khởi động thành công. Có thể tạo Token trước để tự động áp dụng khi khởi động."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -962,7 +962,7 @@ private fun AccessLinkCard(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             listOf(
-                "LAN" to "局域网 IP",
+                "LAN" to "IP LAN",
                 "0.0.0.0" to "0.0.0.0",
                 "127.0.0.1" to "127.0.0.1",
             ).forEach { (modeKey, label) ->
@@ -993,7 +993,7 @@ private fun AccessLinkCard(
         if (selectedMode == "LAN" && !state.deviceLanIp.isNullOrBlank()) {
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "设备局域网 IP：${state.deviceLanIp}",
+                text = "IP LAN của thiết bị: ${state.deviceLanIp}",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontFamily = FontFamily.Monospace,
                     fontSize = 10.sp,
@@ -1032,7 +1032,7 @@ private fun AccessLinkCard(
                         modifier = Modifier
                             .minimumInteractiveComponentSize()
                             .size(32.dp),
-                        contentDescription = "复制访问链接",
+                        contentDescription = "Sao chép liên kết truy cập",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Copy,
@@ -1049,7 +1049,7 @@ private fun AccessLinkCard(
                 color = MaterialTheme.colorScheme.surfaceContainerHighest,
             ) {
                 Text(
-                    text = "启动网关后此处将展示可访问链接",
+                    text = "Liên kết truy cập sẽ hiện ở đây sau khi khởi động gateway",
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontFamily = FontFamily.Monospace,
                         fontSize = 11.sp,
@@ -1069,7 +1069,7 @@ private fun AccessLinkCard(
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
             ) {
                 Text(
-                    text = if (state.accessToken != null) "重新生成 Token" else "生成安全 Token",
+                    text = if (state.accessToken != null) "Tạo lại Token" else "Tạo Token bảo mật",
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 )
             }
@@ -1079,7 +1079,7 @@ private fun AccessLinkCard(
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
                 ) {
                     Text(
-                        "清除 Token",
+                        "Xóa Token",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -1107,7 +1107,7 @@ private fun ToolMetadataCard(
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "工具信息",
+                text = "Thông tin công cụ",
                 style = MaterialTheme.typography.titleMedium,
             )
         }
@@ -1115,34 +1115,34 @@ private fun ToolMetadataCard(
         Spacer(Modifier.height(10.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            InfoRow(label = "工具 ID", value = tool.id)
+            InfoRow(label = "ID công cụ", value = tool.id)
             InfoRow(
-                label = "启动类型",
+                label = "Kiểu khởi động",
                 value = when (manifest.launchType) {
-                    "web" -> "Web 网关服务"
-                    "pty" -> "交互式终端"
-                    "one_shot" -> "一次性命令"
+                    "web" -> "Dịch vụ gateway Web"
+                    "pty" -> "Terminal tương tác"
+                    "one_shot" -> "Lệnh chạy một lần"
                     else -> manifest.launchType
                 },
                 isCode = false,
             )
-            manifest.servicePort?.let { InfoRow(label = "服务端口", value = it.toString()) }
-            InfoRow(label = "安装方式", value = manifest.installMethod, isCode = false)
+            manifest.servicePort?.let { InfoRow(label = "Cổng dịch vụ", value = it.toString()) }
+            InfoRow(label = "Phương thức cài đặt", value = manifest.installMethod, isCode = false)
 
             manifest.launchCommand?.let {
-                CodeBlockRow(label = "启动命令", code = it)
+                CodeBlockRow(label = "Lệnh khởi động", code = it)
             }
             manifest.verifyCommand?.let {
-                CodeBlockRow(label = "验证命令", code = it)
+                CodeBlockRow(label = "Lệnh xác minh", code = it)
             }
 
-            CodeBlockRow(label = "安装路径", code = "/opt/tianxuan/tools/${tool.id}")
-            CodeBlockRow(label = "数据目录", code = "/opt/tianxuan/data/${tool.id}")
+            CodeBlockRow(label = "Đường dẫn cài đặt", code = "/opt/tianxuan/tools/${tool.id}")
+            CodeBlockRow(label = "Thư mục dữ liệu", code = "/opt/tianxuan/data/${tool.id}")
 
             if (manifest.dependencies.isNotEmpty()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest)
                 Text(
-                    text = "依赖项",
+                    text = "Phụ thuộc",
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1172,7 +1172,7 @@ private fun ToolMetadataCard(
             if (manifest.environment.isNotEmpty()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest)
                 Text(
-                    text = "环境变量",
+                    text = "Biến môi trường",
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1213,7 +1213,7 @@ private fun ToolMetadataCard(
             if (tool.permissions.isNotBlank()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest)
                 Text(
-                    text = "权限清单",
+                    text = "Danh sách quyền",
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1258,7 +1258,7 @@ private fun ToolActionsCard(
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "操作",
+                text = "Thao tác",
                 style = MaterialTheme.typography.titleMedium,
             )
         }
@@ -1278,7 +1278,7 @@ private fun ToolActionsCard(
                 ) {
                     RuntimeIcon(name = RuntimeIconName.Terminal, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("打开终端", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Mở terminal", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
 
                 OutlinedButton(
@@ -1292,11 +1292,11 @@ private fun ToolActionsCard(
                 ) {
                     RuntimeIcon(name = RuntimeIconName.Trash, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("卸载工具", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Gỡ công cụ", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
             } else {
                 Text(
-                    text = "工具尚未安装，请先在工具中心完成安装",
+                    text = "Công cụ chưa được cài. Hãy cài đặt trong trung tâm công cụ trước.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1325,19 +1325,19 @@ internal fun UninstallToolConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "卸载 $toolName？",
+                text = "Gỡ cài đặt $toolName?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "• 将移除该工具及其在沙箱内的数据目录",
+                    text = "• Công cụ và thư mục dữ liệu của nó trong sandbox sẽ bị xóa",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "• 卸载后可随时在工具中心重新安装",
+                    text = "• Bạn có thể cài lại từ trung tâm công cụ bất cứ lúc nào",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -1353,14 +1353,14 @@ internal fun UninstallToolConfirmDialog(
                 ),
             ) {
                 Text(
-                    text = if (countdown > 0) "确认卸载 (${countdown}s)" else "确认卸载",
+                    text = if (countdown > 0) "Xác nhận gỡ (${countdown}s)" else "Xác nhận gỡ",
                     color = if (countdown == 0) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onError.copy(alpha = 0.6f),
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "取消")
+                Text(text = "Hủy")
             }
         },
     )

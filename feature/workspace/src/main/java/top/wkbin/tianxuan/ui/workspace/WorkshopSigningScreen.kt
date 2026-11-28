@@ -185,12 +185,12 @@ private fun CreateKeystoreDialog(
                 Text(stringResource(R.string.workshop_signing_create))
                 if (!createError.isNullOrBlank()) {
                     val displayReason = if (createError == "环境不完整" || createError?.contains("环境") == true) {
-                        "环境不完整"
+                        "Môi trường chưa đầy đủ"
                     } else {
                         createError?.replace(Regex("^(生成|创建)签名失败[：:]?\\s*"), "") ?: ""
                     }
                     Text(
-                        text = "（创建签名失败:$displayReason）",
+                        text = "(Không thể tạo chữ ký: $displayReason)",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.error,
                         maxLines = 1,
@@ -348,7 +348,7 @@ private fun ImportKeystoreDialog(
                 Text(stringResource(R.string.workshop_signing_import))
                 if (!importError.isNullOrBlank()) {
                     Text(
-                        text = "（导入失败：$importError）",
+                        text = "(Nhập thất bại: $importError)",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.error,
                         maxLines = 1,
@@ -426,7 +426,7 @@ private fun SigningField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(if (optional) "$label（可选）" else label) },
+        label = { Text(if (optional) "$label (tùy chọn)" else label) },
         singleLine = true,
         isError = isError,
         supportingText = supportingText?.let { hint -> { Text(hint) } },

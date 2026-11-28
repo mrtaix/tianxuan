@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import top.wkbin.tianxuan.harness.mcp.McpManager
 
-/** MCP 服务监控面板 ViewModel：轮询各 server 的连接状态、工具数与最近错误。 */
+/** ViewModel giám sát MCP: định kỳ lấy trạng thái kết nối, số công cụ và lỗi gần nhất của mỗi server. */
 class McpMonitorViewModel(
     private val mcpManager: McpManager,
 ) : ViewModel() {
@@ -31,7 +31,7 @@ class McpMonitorViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                // 快照失败保持旧列表
+                // Giữ danh sách cũ nếu không lấy được ảnh chụp trạng thái.
             } finally {
                 _refreshing.value = false
             }

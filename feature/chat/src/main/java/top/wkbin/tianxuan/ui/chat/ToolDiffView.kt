@@ -352,7 +352,7 @@ private fun FilePathHeader(
                 context.contentResolver.openOutputStream(uri)?.use { output ->
                     output.write(previewContent.toByteArray(Charsets.UTF_8))
                     output.flush()
-                } ?: error("无法打开目标文件流")
+                } ?: error(context.getString(R.string.chat_file_stream_failed))
             }.onSuccess {
                 Toast.makeText(context, context.getString(R.string.chat_artifact_export_success), Toast.LENGTH_SHORT).show()
             }.onFailure { err ->

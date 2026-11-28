@@ -92,15 +92,15 @@ class LocalLlmViewModel(
 
     fun download(url: String, sha256: String? = null) {
         if (url.isBlank()) {
-            showMessage("请先输入 GGUF 的 HTTPS 下载地址", isError = true)
+            showMessage("Vui lòng nhập địa chỉ tải GGUF qua HTTPS trước", isError = true)
             return
         }
-        startTransfer("正在下载模型") { localLlmManager.download(url, sha256) }
+        startTransfer("Đang tải mô hình") { localLlmManager.download(url, sha256) }
     }
 
     fun downloadPreset(preset: MobileModelPreset) {
         if (!isDeviceSuitable(preset)) {
-            showMessage("设备总内存低于该模型建议值，不建议在本机运行 ${preset.name}", isError = true)
+            showMessage("Tổng RAM của thiết bị thấp hơn mức khuyến nghị; không nên chạy ${preset.name} trên thiết bị này", isError = true)
             return
         }
         download(preset.url, preset.sha256)
@@ -128,18 +128,18 @@ class LocalLlmViewModel(
         }
         val displayName = metadata?.first ?: uri.lastPathSegment?.substringAfterLast('/') ?: "model.gguf"
         val size = metadata?.second
-        startTransfer("正在导入模型") {
-            val input = resolver.openInputStream(uri) ?: error("无法读取所选文件")
+        startTransfer("Đang nhập mô hình") {
+            val input = resolver.openInputStream(uri) ?: error("Không thể đọc tệp đã chọn")
             localLlmManager.import(displayName, input, size)
         }
     }
 
     fun importPath(path: String) {
         if (path.isBlank()) {
-            showMessage("请输入 GGUF 文件路径", isError = true)
+            showMessage("Vui lòng nhập đường dẫn tệp GGUF", isError = true)
             return
         }
-        startTransfer("正在导入模型") { localLlmManager.importPath(path) }
+        startTransfer("Đang nhập mô hình") { localLlmManager.importPath(path) }
     }
 
     fun cancelTransfer() {
@@ -156,10 +156,10 @@ class LocalLlmViewModel(
                 localLlmManager.start(fileName)
                 activateLocalProfile(fileName)
             }.onSuccess {
-                showMessage("模型服务已启动，并已设为当前对话模型", isError = false)
+                showMessage("Dịch vụ mô hình đã khởi động và được chọn làm mô hình cho hội thoại hiện tại", isError = false)
             }.onFailure { throwable ->
                 if (throwable !is CancellationException) {
-                    showMessage(throwable.message ?: "模型启动失败", isError = true)
+                    showMessage(throwable.message ?: "Khởi động mô hình thất bại", isError = true)
                 }
             }
         }
@@ -168,20 +168,20 @@ class LocalLlmViewModel(
     fun stop() {
         viewModelScope.launch {
             runCatching { localLlmManager.stop() }
-                .onFailure { showMessage(it.message ?: "停止服务失败", isError = true) }
+                .onFailure { showMessage(it.message ?: "Không thể dừng dịch vụ", isError = true) }
         }
     }
 
     fun delete(fileName: String) {
         viewModelScope.launch {
             runCatching { localLlmManager.delete(fileName) }
-                .onFailure { showMessage(it.message ?: "删除模型失败", isError = true) }
+                .onFailure { showMessage(it.message ?: "Không thể xóa mô hình", isError = true) }
         }
     }
 
     fun installEngine() {
         toolManager.startInstall(LocalLlmManager.TOOL_ID)
-        showMessage("已提交 llama.cpp 推理引擎安装任务，可在工具中心查看进度", isError = false)
+        showMessage("Đã gửi tác vụ cài bộ máy suy luận llama.cpp. Bạn có thể xem tiến độ trong trung tâm công cụ.", isError = false)
     }
 
     fun consumeMessage() {
@@ -194,7 +194,7 @@ class LocalLlmViewModel(
         source: () -> kotlinx.coroutines.flow.Flow<LocalModelTransfer>,
     ) {
         if (transferJob?.isActive == true) {
-            showMessage("已有模型传输任务正在进行", isError = true)
+            showMessage("Đang có một tác vụ truyền mô hình khác", isError = true)
             return
         }
         transferJob = viewModelScope.launch {
@@ -210,17 +210,17 @@ class LocalLlmViewModel(
                             copiedBytes = event.copiedBytes,
                             totalBytes = event.totalBytes,
                         )
-                        LocalModelTransfer.Verifying -> _transfer.value.copy(running = true, label = "正在校验 GGUF")
+                        LocalModelTransfer.Verifying -> _transfer.value.copy(running = true, label = "Đang kiểm tra GGUF")
                         is LocalModelTransfer.Completed -> LocalModelTransferUiState()
                     }
                     if (event is LocalModelTransfer.Completed) {
-                        showMessage("模型已就绪：${event.model.fileName}", isError = false)
+                        showMessage("Mô hình đã sẵn sàng: ${event.model.fileName}", isError = false)
                     }
                 }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
-                showMessage(throwable.message ?: "模型传输失败", isError = true)
+                showMessage(throwable.message ?: "Truyền mô hình thất bại", isError = true)
             } finally {
                 _transfer.value = LocalModelTransferUiState()
                 transferJob = null
@@ -236,8 +236,8 @@ class LocalLlmViewModel(
         aiModelRepository.upsert(
             AiModelEntity(
                 id = profileId,
-                name = "本地 LLM · $fileName",
-                provider = "llama.cpp 沙箱离线模型",
+                name = "LLM cục bộ · $fileName",
+                provider = "Mô hình ngoại tuyến llama.cpp trong sandbox",
                 model = fileName,
                 baseUrl = LocalLlmManager.BASE_URL,
                 secretRef = existing?.secretRef.orEmpty(),
@@ -267,7 +267,7 @@ class LocalLlmViewModel(
             MobileModelPreset(
                 id = "qwen25-05b-instruct-q4km",
                 name = "Qwen2.5 0.5B Instruct",
-                purpose = "低内存首选 · 中英日常对话",
+                purpose = "Ưu tiên cho máy ít RAM · Hội thoại thường ngày bằng tiếng Trung và tiếng Anh",
                 parameterCount = "0.5B",
                 quantization = "Q4_K_M",
                 downloadBytes = 491L * MIB,
@@ -278,7 +278,7 @@ class LocalLlmViewModel(
             MobileModelPreset(
                 id = "qwen25-coder-05b-instruct-q4km",
                 name = "Qwen2.5 Coder 0.5B",
-                purpose = "轻量代码补全与简单解释",
+                purpose = "Hoàn thiện mã nhẹ và giải thích đơn giản",
                 parameterCount = "0.5B",
                 quantization = "Q4_K_M",
                 downloadBytes = 491L * MIB,
@@ -288,7 +288,7 @@ class LocalLlmViewModel(
             MobileModelPreset(
                 id = "qwen35-2b-q4km",
                 name = "Qwen3.5 2B",
-                purpose = "新一代通用模型 · 当前按文本模式运行",
+                purpose = "Mô hình đa dụng thế hệ mới · Hiện chạy ở chế độ văn bản",
                 parameterCount = "2B",
                 quantization = "Q4_K_M",
                 downloadBytes = 1280L * MIB,
@@ -299,7 +299,7 @@ class LocalLlmViewModel(
             MobileModelPreset(
                 id = "qwen25-15b-instruct-q4km",
                 name = "Qwen2.5 1.5B Instruct",
-                purpose = "效果优先 · 适合 6 GB 以上手机",
+                purpose = "Ưu tiên chất lượng · Phù hợp điện thoại có ít nhất 6 GB RAM",
                 parameterCount = "1.5B",
                 quantization = "Q4_K_M",
                 downloadBytes = 1120L * MIB,
@@ -309,7 +309,7 @@ class LocalLlmViewModel(
             MobileModelPreset(
                 id = "qwen25-coder-15b-instruct-q4km",
                 name = "Qwen2.5 Coder 1.5B",
-                purpose = "移动端编程助手 · 适合 6 GB 以上手机",
+                purpose = "Trợ lý lập trình di động · Phù hợp điện thoại có ít nhất 6 GB RAM",
                 parameterCount = "1.5B",
                 quantization = "Q4_K_M",
                 downloadBytes = 1120L * MIB,
@@ -319,7 +319,7 @@ class LocalLlmViewModel(
             MobileModelPreset(
                 id = "gemma4-e2b-it-q4km",
                 name = "Gemma 4 E2B IT",
-                purpose = "移动端高质量模型 · 当前按文本模式运行",
+                purpose = "Mô hình di động chất lượng cao · Hiện chạy ở chế độ văn bản",
                 parameterCount = "E2B",
                 quantization = "Q4_K_M",
                 downloadBytes = 3185L * MIB,

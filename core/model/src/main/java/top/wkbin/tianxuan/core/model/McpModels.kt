@@ -141,8 +141,8 @@ object BuiltinMcpPresets {
     val presets: List<McpServerConfig> = listOf(
         McpServerConfig(
             id = "mcp_sqlite",
-            name = "SQLite 数据库探索器",
-            description = "查询、分析与操作沙箱或工作区内的 SQLite 数据库文件",
+            name = "Trình khám phá cơ sở dữ liệu SQLite",
+            description = "Truy vấn, phân tích và thao tác với tệp cơ sở dữ liệu SQLite trong sandbox hoặc workspace",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/sqlite_mcp_server.py", "--db-path", "/root/tianxuan.db"),
@@ -151,8 +151,8 @@ object BuiltinMcpPresets {
         ),
         McpServerConfig(
             id = "mcp_git",
-            name = "Git 仓库协同中心",
-            description = "深入分析 Git 历史提交、分支拓扑、Diff 差异与工作区状态",
+            name = "Trung tâm cộng tác kho Git",
+            description = "Phân tích sâu lịch sử commit Git, cấu trúc nhánh, khác biệt Diff và trạng thái workspace",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/git_mcp_server.py", "--repository", "/workspace"),
@@ -161,8 +161,8 @@ object BuiltinMcpPresets {
         ),
         McpServerConfig(
             id = "mcp_apktool",
-            name = "Android 逆向与 APK 审计",
-            description = "自动化反编译 APK、解析清单权限、提取硬编码凭据、Smali 敏感代码检索与重打包签名（天玄内置 MCP 服务，依赖 android-suite 的 apktool/jadx/aapt 工具链）",
+            name = "Phân tích ngược Android và kiểm toán APK",
+            description = "Tự động dịch ngược APK, phân tích quyền trong manifest, trích xuất thông tin xác thực hardcode, tìm mã nhạy cảm Smali và đóng gói/ký lại (dịch vụ MCP tích hợp TianXuan, phụ thuộc toolchain apktool/jadx/aapt của android-suite)",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/apktool_mcp_server.py"),
@@ -171,8 +171,8 @@ object BuiltinMcpPresets {
         ),
         McpServerConfig(
             id = "mcp_codegraph",
-            name = "CodeGraph 代码知识图谱",
-            description = "毫秒级索引工作区符号定义、调用链与影响面（支持 Python/Java/Kotlin/C/C++/JS/TS/Smali），大幅减少代码探索的 Token 与工具调用轮次",
+            name = "Đồ thị tri thức mã CodeGraph",
+            description = "Lập chỉ mục nhanh định nghĩa ký hiệu, chuỗi gọi và phạm vi ảnh hưởng trong workspace (hỗ trợ Python/Java/Kotlin/C/C++/JS/TS/Smali), giảm đáng kể Token và số lượt gọi công cụ khi khảo sát mã",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/codegraph_mcp_server.py", "--repository", "/workspace"),
@@ -181,8 +181,8 @@ object BuiltinMcpPresets {
         ),
         McpServerConfig(
             id = "mcp_websearch",
-            name = "Web 搜索（Open-WebSearch）",
-            description = "免 API Key 的多引擎网络搜索与网页正文抓取（天玄内置零依赖 MCP 服务）：支持 Baidu、Bing、DuckDuckGo 等多引擎直连搜索与正文清洗提取，毫秒级响应，无需 Node.js/npx，开箱即用",
+            name = "Tìm kiếm web (Open-WebSearch)",
+            description = "Tìm kiếm web đa công cụ và trích xuất nội dung trang không cần API Key (dịch vụ MCP tích hợp TianXuan, không phụ thuộc): hỗ trợ tìm kiếm trực tiếp Baidu, Bing, DuckDuckGo và làm sạch nội dung, phản hồi nhanh, không cần Node.js/npx, dùng ngay",
             transportType = McpTransportType.STDIO,
             command = "python3",
             args = listOf("-u", "/opt/tianxuan/scripts/websearch_mcp_server.py"),

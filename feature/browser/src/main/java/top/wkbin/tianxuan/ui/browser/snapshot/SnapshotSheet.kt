@@ -78,7 +78,7 @@ fun SnapshotSheet(state: SnapshotSheetState, onDismiss: () -> Unit) {
         },
         confirmButton = {
             RuntimeTextButton(onClick = onDismiss) {
-                Text("关闭", color = MaterialTheme.colorScheme.primary)
+                Text("Đóng", color = MaterialTheme.colorScheme.primary)
             }
         },
     )

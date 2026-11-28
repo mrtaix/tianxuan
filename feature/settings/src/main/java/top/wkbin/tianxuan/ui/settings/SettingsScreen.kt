@@ -68,9 +68,9 @@ fun SettingsScreen(
     val terminalFontSize by viewModel.terminalFontSize.collectAsStateWithLifecycle()
 
     val themeLabel = when (themeMode) {
-        "light" -> "浅色"
-        "dark" -> "曜石"
-        else -> "跟随系统"
+        "light" -> "Sáng"
+        "dark" -> "Tối"
+        else -> "Theo hệ thống"
     }
 
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -81,8 +81,8 @@ fun SettingsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RuntimeTopBar(
-                title = "天玄 · 摇光",
-                statusText = "系统设置与控制中枢",
+                title = "CTHarness · Cài đặt",
+                statusText = "Cấu hình và điều khiển hệ thống",
             )
         },
         bottomBar = {
@@ -119,7 +119,7 @@ fun SettingsScreen(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "搜索全局功能与设置选项...",
+                            text = "Tìm chức năng và tùy chọn cài đặt...",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                             modifier = Modifier.weight(1f),
@@ -135,7 +135,7 @@ fun SettingsScreen(
 
             item {
                 Text(
-                    text = "系统与配置分类",
+                    text = "Danh mục cài đặt",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
@@ -147,9 +147,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Brain,
                     accent = MaterialTheme.colorScheme.primary,
-                    title = "智能体与 AI 模型",
-                    subtitle = "模型档案 · 插件工具中心 · 技能与 MCP 生态",
-                    badge = if (models.isEmpty()) "未配置模型" else "${models.size} 个模型 · ${skills.count { it.isEnabled }} 技能",
+                    title = "Agent và mô hình AI",
+                    subtitle = "Hồ sơ mô hình · Công cụ và plugin · Kỹ năng và MCP",
+                    badge = if (models.isEmpty()) "Chưa cấu hình mô hình" else "${models.size} mô hình · ${skills.count { it.isEnabled }} kỹ năng",
                     onClick = onOpenAgentEco,
                 )
             }
@@ -159,9 +159,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Server,
                     accent = MaterialTheme.colorScheme.tertiary,
-                    title = "Linux 容器与存储",
-                    subtitle = "多发行版管理 · 宿主存储映射 · 运行特权模式",
-                    badge = "${installedDistros.size} 套系统 · ${effectiveExecutionMode.shortLabel}",
+                    title = "Môi trường Linux và lưu trữ",
+                    subtitle = "Quản lý bản phân phối · Gắn bộ nhớ thiết bị · Quyền thực thi",
+                    badge = "${installedDistros.size} hệ thống · ${effectiveExecutionMode.shortLabel}",
                     onClick = onOpenLinuxEnv,
                 )
             }
@@ -171,8 +171,8 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Palette,
                     accent = MaterialTheme.colorScheme.secondary,
-                    title = "外观、字号与终端定制",
-                    subtitle = "深浅色主题 · 应用字号缩放 · 终端配色与字体",
+                    title = "Giao diện, cỡ chữ và terminal",
+                    subtitle = "Chủ đề sáng/tối · Cỡ chữ ứng dụng · Màu và phông terminal",
                     badge = "$themeLabel · ${terminalFontSize}sp",
                     onClick = onOpenAppearance,
                 )
@@ -183,9 +183,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Admin,
                     accent = MaterialTheme.colorScheme.primary,
-                    title = "系统保活与开发者诊断",
-                    subtitle = "后台电池优化白名单 · 调试监控 · PRoot 控制台",
-                    badge = if (developer) "诊断模式已开启" else "运行平稳",
+                    title = "Chạy nền và chẩn đoán",
+                    subtitle = "Miễn tối ưu pin · Giám sát gỡ lỗi · Bảng điều khiển PRoot",
+                    badge = if (developer) "Đã bật chế độ chẩn đoán" else "Hoạt động ổn định",
                     onClick = onOpenSystemDev,
                 )
             }
@@ -196,9 +196,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Sparkles,
                     accent = MaterialTheme.colorScheme.tertiary,
-                    title = "A2UI 渲染器 PoC",
-                    subtitle = "智能体把回答画成原生界面卡片 · 点开可体验示例",
-                    badge = "实验功能",
+                    title = "Trình kết xuất A2UI thử nghiệm",
+                    subtitle = "Agent trình bày câu trả lời bằng thẻ giao diện native · Nhấn để xem ví dụ",
+                    badge = "Tính năng thử nghiệm",
                     onClick = onOpenA2uiPoc,
                 )
             }
@@ -209,9 +209,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Document,
                     accent = MaterialTheme.colorScheme.secondary,
-                    title = "RAG 知识库",
-                    subtitle = "向量化检索增强 · 自动注入对话上下文 · 支持 @kb:文档名 手动引用",
-                    badge = "AI 增强",
+                    title = "Kho tri thức RAG",
+                    subtitle = "Truy xuất vector · Tự bổ sung ngữ cảnh hội thoại · Tham chiếu bằng @kb:tên_tài_liệu",
+                    badge = "Bổ trợ AI",
                     onClick = onOpenKnowledge,
                 )
             }
@@ -221,9 +221,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Community,
                     accent = MaterialTheme.colorScheme.secondary,
-                    title = "关于、更新与官方社区",
-                    subtitle = "检查新版本 · GitHub 开源仓库 · 官方 QQ 交流群",
-                    badge = if (appVersionName == "unknown") "版本号未知 · 稳定版" else "v$appVersionName 稳定版",
+                    title = "Giới thiệu, cập nhật và cộng đồng",
+                    subtitle = "Kiểm tra cập nhật · Mã nguồn GitHub · Nhóm cộng đồng QQ",
+                    badge = if (appVersionName == "unknown") "Chưa rõ phiên bản" else "v$appVersionName",
                     onClick = onOpenAboutCommunity,
                 )
             }

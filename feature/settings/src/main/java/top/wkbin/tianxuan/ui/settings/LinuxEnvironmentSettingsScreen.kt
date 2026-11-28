@@ -43,7 +43,7 @@ import top.wkbin.tianxuan.ui.components.RuntimeTextButton as TextButton
 import top.wkbin.tianxuan.ui.components.RuntimeTopBar
 
 /**
- * 二级子页 2：Linux 容器沙箱与存储
+ * Trang con cấp 2: container Linux, sandbox và lưu trữ.
  */
 @Composable
 fun LinuxEnvironmentSettingsScreen(
@@ -67,7 +67,7 @@ fun LinuxEnvironmentSettingsScreen(
     var showExecutionModeDialog by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var showWebChatDialog by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var privilegeResultMessage by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
-    // Web 开关切换进行中指示，防止重复点击
+    // Theo dõi quá trình bật/tắt Web để tránh nhấn lặp.
     var webChatToggling by remember { mutableStateOf(false) }
     LaunchedEffect(webChatStatus.isRunning) { webChatToggling = false }
 
@@ -91,13 +91,13 @@ fun LinuxEnvironmentSettingsScreen(
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     RuntimeIcon(RuntimeIconName.Alert, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.error)
-                    Text("运行模式授权未通过")
+                    Text("Chưa được cấp quyền cho chế độ chạy")
                 }
             },
             text = { Text(errorMsg, style = MaterialTheme.typography.bodyMedium) },
             confirmButton = {
                 TextButton(onClick = { privilegeResultMessage = null }) {
-                    Text("知道了")
+                    Text("Đã hiểu")
                 }
             },
         )
@@ -117,7 +117,7 @@ fun LinuxEnvironmentSettingsScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { RuntimeTopBar("Linux 容器与存储", onBack) },
+        topBar = { RuntimeTopBar("Container Linux và lưu trữ", onBack) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -126,7 +126,7 @@ fun LinuxEnvironmentSettingsScreen(
         ) {
             item {
                 Text(
-                    text = "容器系统与沙箱管理",
+                    text = "Quản lý hệ thống container và sandbox",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -134,63 +134,63 @@ fun LinuxEnvironmentSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Server,
-                        title = "Linux 发行版管理",
-                        subtitle = "多沙箱并存 · 镜像拉取 · 一键切换主系统",
-                        value = "${installedDistros.size} 套系统",
+                        title = "Quản lý bản phân phối Linux",
+                        subtitle = "Nhiều sandbox song song · Tải ảnh hệ thống · Chuyển hệ thống chính bằng một lần nhấn",
+                        value = "${installedDistros.size} hệ thống",
                         onClick = onOpenDistroManagement,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Storage,
-                        title = "存储管理",
-                        subtitle = "按 Linux、插件、项目与 Skills 分析占用",
+                        title = "Quản lý lưu trữ",
+                        subtitle = "Phân tích dung lượng Linux, tiện ích, dự án và Skill",
                         onClick = onOpenStorageUsage,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.SdCard,
-                        title = "存储挂载与共享",
-                        subtitle = "PRoot 宿主存储映射 (-b /sdcard)",
+                        title = "Gắn kết và chia sẻ bộ nhớ",
+                        subtitle = "Ánh xạ bộ nhớ máy chủ vào PRoot (-b /sdcard)",
                         onClick = onOpenStorageMounts,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Key,
-                        title = "环境变量",
-                        subtitle = "为终端、Agent 和工具注入用户变量",
+                        title = "Biến môi trường",
+                        subtitle = "Truyền biến người dùng cho terminal, agent và công cụ",
                         onClick = onOpenEnvironmentVariables,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Network,
-                        title = "SSH 远程访问",
-                        subtitle = "公钥认证 · 端口与局域网监听 · 随运行时启动",
+                        title = "Truy cập từ xa qua SSH",
+                        subtitle = "Xác thực khóa công khai · Cổng và lắng nghe mạng LAN · Khởi động cùng môi trường chạy",
                         onClick = onOpenSshSettings,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.FolderOpen,
-                        title = "FTP 远程文件访问",
-                        subtitle = "挂载 Linux 根目录 (/) · FileZilla / 资源管理器直连",
+                        title = "Truy cập tệp từ xa qua FTP",
+                        subtitle = "Gắn thư mục gốc Linux (/) · Kết nối trực tiếp bằng FileZilla / trình quản lý tệp",
                         onClick = onOpenFtpSettings,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Globe,
-                        title = "天玄智枢 Web 协作台",
+                        title = "Không gian cộng tác Web CTHarness",
                         subtitle = if (webChatStatus.isRunning) {
-                            "运行中 · ${webChatStatus.accessUrl} (PIN: ${webChatStatus.pinCode})"
+                            "Đang chạy · ${webChatStatus.accessUrl} (PIN: ${webChatStatus.pinCode})"
                         } else {
-                            "在同一 Wi-Fi 下使用电脑浏览器访问天玄 Agent 与工作区"
+                            "Truy cập agent và workspace CTHarness bằng trình duyệt máy tính trên cùng Wi-Fi"
                         },
-                        value = if (webChatStatus.isRunning) "已开启" else "未开启",
+                        value = if (webChatStatus.isRunning) "Đang bật" else "Chưa bật",
                         onClick = { showWebChatDialog = true },
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Package,
-                        title = "应用管理",
-                        subtitle = "同步系统/用户应用，查看禁用、冻结与后台联网限制状态",
+                        title = "Quản lý ứng dụng",
+                        subtitle = "Đồng bộ ứng dụng hệ thống/người dùng, xem trạng thái vô hiệu hóa, đóng băng và hạn chế mạng nền",
                         onClick = onOpenAppManagement,
                     )
                 }
@@ -198,7 +198,7 @@ fun LinuxEnvironmentSettingsScreen(
 
             item {
                 Text(
-                    text = "系统底层特权",
+                    text = "Đặc quyền hệ thống nền tảng",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -206,16 +206,16 @@ fun LinuxEnvironmentSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Key,
-                        title = "系统运行特权模式",
+                        title = "Chế độ đặc quyền hệ thống",
                         subtitle = if (executionMode != effectiveExecutionMode) {
-                            "首选 ${executionMode.shortLabel} 暂不可用：${privilegeState.reason}"
+                            "Chế độ ưu tiên ${executionMode.shortLabel} tạm không khả dụng: ${privilegeState.reason}"
                         } else {
-                            "PRoot 用户态沙箱 · Shizuku · Root"
+                            "Sandbox PRoot ở không gian người dùng · Shizuku · Root"
                         },
                         value = if (executionMode == effectiveExecutionMode) {
                             effectiveExecutionMode.shortLabel
                         } else {
-                            "${effectiveExecutionMode.shortLabel}（已降级）"
+                            "${effectiveExecutionMode.shortLabel} (đã hạ cấp)"
                         },
                         onClick = { showExecutionModeDialog = true },
                     )
@@ -237,7 +237,7 @@ private fun ExecutionModeDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 RuntimeIcon(RuntimeIconName.Shield, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
-                Text("选择系统运行模式", fontWeight = FontWeight.Bold)
+                Text("Chọn chế độ chạy hệ thống", fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -246,7 +246,7 @@ private fun ExecutionModeDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    "切换特权模式将自动发起授权检测；授权成功后即刻释放对应的高级系统与硬件能力。",
+                    "Khi chuyển chế độ đặc quyền, ứng dụng sẽ tự kiểm tra quyền. Sau khi được cấp quyền, các tính năng hệ thống và phần cứng nâng cao tương ứng sẽ khả dụng ngay.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -258,7 +258,7 @@ private fun ExecutionModeDialog(
                     ) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.size(12.dp))
-                        Text("正在进行特权探测与授权申请…", style = MaterialTheme.typography.bodyMedium)
+                        Text("Đang kiểm tra đặc quyền và yêu cầu cấp quyền…", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 ExecutionMode.entries.forEach { mode ->
@@ -273,7 +273,7 @@ private fun ExecutionModeDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss, enabled = !switching) {
-                Text("关闭")
+                Text("Đóng")
             }
         },
     )
@@ -309,7 +309,7 @@ private fun ExecutionModeOptionItem(
                         color = MaterialTheme.colorScheme.primary,
                     ) {
                         Text(
-                            "当前激活",
+                            "Đang dùng",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -323,7 +323,7 @@ private fun ExecutionModeOptionItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = "要求: ${mode.requiredPrivilege}",
+                text = "Yêu cầu: ${mode.requiredPrivilege}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.secondary,
             )

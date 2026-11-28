@@ -55,17 +55,17 @@ class AdbNotificationManager(
         runCatching {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "无线 ADB 与调试",
+                "ADB không dây và gỡ lỗi",
                 NotificationManager.IMPORTANCE_LOW,
             ).apply {
-                description = "用于在手机开发者选项中直接下拉输入配对码并快捷连接无线 ADB 的通知助手"
+                description = "Thông báo hỗ trợ nhập mã ghép đôi từ thanh thông báo và kết nối nhanh ADB không dây trong tùy chọn nhà phát triển"
                 enableVibration(false)
                 setSound(null, null)
                 setShowBadge(false)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             notificationManager.createNotificationChannel(channel)
-        }.onFailure { Log.w(TAG, "创建无线 ADB 通知渠道失败", it) }
+        }.onFailure { Log.w(TAG, "Tạo kênh thông báo ADB không dây thất bại", it) }
     }
 
     /** 开启与 EmbeddedAdbManager 状态的自动同步。进入无线 ADB 页面或需要配对时调用。 */
@@ -115,13 +115,13 @@ class AdbNotificationManager(
     fun showPairingPrompt(pairingEndpointsCount: Int = 0, connectEndpointsCount: Int = 0) {
         isManuallyDismissed = false
         val contentText = when {
-            pairingEndpointsCount > 0 -> "已发现配对端口 · 请在下方输入 6 位配对码"
-            connectEndpointsCount > 0 -> "已发现连接端口 · 可直接点击「连接」或输入配对码"
-            else -> "已开启 mDNS 端口探测 · 请在系统无线调试中点击「使用配对码配对设备」"
+            pairingEndpointsCount > 0 -> "Đã tìm thấy cổng ghép đôi · Nhập mã ghép đôi 6 chữ số bên dưới"
+            connectEndpointsCount > 0 -> "Đã tìm thấy cổng kết nối · Nhấn Kết nối hoặc nhập mã ghép đôi"
+            else -> "Đang dò cổng bằng mDNS · Trong phần Gỡ lỗi không dây của hệ thống, chọn Ghép đôi thiết bị bằng mã ghép đôi"
         }
 
         val notif = buildNotification(
-            title = "天玄 · 无线 ADB 快捷配对",
+            title = "CTHarness · Ghép đôi nhanh ADB không dây",
             contentText = contentText,
             isOngoing = true,
             actions = listOf(
@@ -137,8 +137,8 @@ class AdbNotificationManager(
     fun showPairingInProgress() {
         isManuallyDismissed = false
         val notif = buildNotification(
-            title = "天玄 · 正在配对无线 ADB…",
-            contentText = "正在与发现的端口进行安全握手 (TLS + SPAKE2)…",
+            title = "CTHarness · Đang ghép đôi ADB không dây…",
+            contentText = "Đang bắt tay bảo mật với cổng đã tìm thấy (TLS + SPAKE2)…",
             isOngoing = true,
             showProgress = true,
             actions = listOf(buildDismissAction()),
@@ -150,8 +150,8 @@ class AdbNotificationManager(
     fun showConnectingInProgress() {
         isManuallyDismissed = false
         val notif = buildNotification(
-            title = "天玄 · 正在建立 ADB 连接…",
-            contentText = "正在完成 RSA 密钥认证…",
+            title = "CTHarness · Đang thiết lập kết nối ADB…",
+            contentText = "Đang xác thực khóa RSA…",
             isOngoing = true,
             showProgress = true,
             actions = listOf(buildDismissAction()),
@@ -163,8 +163,8 @@ class AdbNotificationManager(
     fun showConnected(host: String, port: Int) {
         isManuallyDismissed = false
         val notif = buildNotification(
-            title = "天玄 · 无线 ADB 已连接",
-            contentText = "已连接到 $host:$port · 点击返回工作台",
+            title = "CTHarness · Đã kết nối ADB không dây",
+            contentText = "Đã kết nối với $host:$port · Nhấn để trở về bàn làm việc",
             isOngoing = false,
             actions = listOf(
                 buildOpenWorkbenchAction(),
@@ -178,7 +178,7 @@ class AdbNotificationManager(
     fun showFailed(errorMessage: String) {
         isManuallyDismissed = false
         val notif = buildNotification(
-            title = "天玄 · 无线 ADB 连接/配对异常",
+            title = "CTHarness · Lỗi kết nối/ghép đôi ADB không dây",
             contentText = errorMessage,
             isOngoing = false,
             actions = listOf(
@@ -254,12 +254,12 @@ class AdbNotificationManager(
         )
 
         val remoteInput = RemoteInput.Builder(KEY_PAIRING_CODE)
-            .setLabel("输入 6 位配对码 (例如 123456)")
+            .setLabel("Nhập mã ghép đôi 6 chữ số (ví dụ 123456)")
             .build()
 
         return NotificationCompat.Action.Builder(
             R.drawable.tianxuan_notification,
-            if (isRetry) "重试输入配对码" else "输入配对码",
+            if (isRetry) "Nhập lại mã ghép đôi" else "Nhập mã ghép đôi",
             pairPendingIntent,
         ).addRemoteInput(remoteInput).build()
     }
@@ -276,7 +276,7 @@ class AdbNotificationManager(
         )
         return NotificationCompat.Action.Builder(
             R.drawable.tianxuan_notification,
-            "连接",
+            "Kết nối",
             connectPendingIntent,
         ).build()
     }
@@ -293,7 +293,7 @@ class AdbNotificationManager(
         )
         return NotificationCompat.Action.Builder(
             R.drawable.tianxuan_notification,
-            "断开",
+            "Ngắt kết nối",
             disconnectPendingIntent,
         ).build()
     }
@@ -310,7 +310,7 @@ class AdbNotificationManager(
         )
         return NotificationCompat.Action.Builder(
             R.drawable.tianxuan_notification,
-            "关闭通知",
+            "Đóng thông báo",
             dismissPendingIntent,
         ).build()
     }
@@ -329,7 +329,7 @@ class AdbNotificationManager(
         )
         return NotificationCompat.Action.Builder(
             R.drawable.tianxuan_notification,
-            "打开工作台",
+            "Mở bàn làm việc",
             openPendingIntent,
         ).build()
     }
@@ -337,7 +337,7 @@ class AdbNotificationManager(
     private fun safeNotify(notification: Notification) {
         runCatching {
             notificationManager.notify(NOTIFICATION_ID, notification)
-        }.onFailure { Log.w(TAG, "发布无线 ADB 通知失败", it) }
+        }.onFailure { Log.w(TAG, "Đăng thông báo ADB không dây thất bại", it) }
     }
 
     companion object {

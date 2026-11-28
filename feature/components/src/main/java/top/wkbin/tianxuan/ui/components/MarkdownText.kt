@@ -858,7 +858,7 @@ private fun copyImageSource(context: Context, source: Any, target: Uri) {
             is String -> when {
                 source.startsWith("data:", ignoreCase = true) -> {
                     val payload = source.substringAfter(',', missingDelimiterValue = "")
-                    require(payload.isNotEmpty()) { "Invalid image data URL" }
+                    require(payload.isNotEmpty()) { "URL dữ liệu hình ảnh không hợp lệ" }
                     ByteArrayInputStream(Base64.decode(payload, Base64.DEFAULT)).use { it.copyTo(output) }
                 }
                 source.startsWith("file://", ignoreCase = true) ->
@@ -878,7 +878,7 @@ private fun copyImageSource(context: Context, source: Any, target: Uri) {
                 else -> java.io.File(source).inputStream().use { it.copyTo(output) }
             }
         }
-    } ?: error("Cannot open destination")
+    } ?: error("Không thể mở đích lưu")
 }
 
 private val MEDIA_MAX_WIDTH = 260.dp

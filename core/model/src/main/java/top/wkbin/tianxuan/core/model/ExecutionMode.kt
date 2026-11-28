@@ -1,7 +1,7 @@
 package top.wkbin.tianxuan.core.model
 
 /**
- * 天玄支持的系统运行与特权模式。
+ * Các chế độ chạy hệ thống và đặc quyền mà TianXuan hỗ trợ.
  */
 enum class ExecutionMode(
     val id: String,
@@ -14,45 +14,45 @@ enum class ExecutionMode(
     PROOT(
         id = "PROOT",
         shortLabel = "PRoot",
-        title = "PRoot 用户态沙箱 (默认)",
-        summary = "无需任何特殊权限，开箱即用。通过 PRoot 模拟 Linux 用户态环境。",
-        requiredPrivilege = "无（普通应用权限）",
+        title = "Sandbox chế độ người dùng PRoot (mặc định)",
+        summary = "Không cần quyền đặc biệt nào, dùng được ngay. Mô phỏng môi trường người dùng Linux qua PRoot.",
+        requiredPrivilege = "Không (quyền ứng dụng thông thường)",
         capabilities = listOf(
-            "100% 免 Root 运行完整的 Debian / Ubuntu",
-            "支持 APT / APK 等包管理生态",
-            "支持 PTY 交互终端与 Agent 工具链",
+            "Chạy Debian / Ubuntu đầy đủ mà không cần Root",
+            "Hỗ trợ hệ sinh thái quản lý gói như APT / APK",
+            "Hỗ trợ terminal tương tác PTY và toolchain của Agent",
         ),
     ),
     SHIZUKU(
         id = "SHIZUKU",
         shortLabel = "Shizuku",
-        title = "Shizuku / ADB 提权模式",
-        summary = "通过 Shizuku 服务获得 ADB 权限，解除 Android 系统限制并开启整机自动化。",
-        requiredPrivilege = "Shizuku 服务授权 (UID 2000 shell)",
+        title = "Chế độ nâng quyền Shizuku / ADB",
+        summary = "Nhận quyền ADB qua dịch vụ Shizuku, gỡ bỏ giới hạn của hệ thống Android và bật tự động hoá toàn máy.",
+        requiredPrivilege = "Cấp quyền dịch vụ Shizuku (UID 2000 shell)",
         capabilities = listOf(
-            "解除 Android 12+ 幽灵进程 32 上限 (Phantom Process Killer)",
-            "深度后台保活白名单豁免",
-            "Agent 宿主自动化操控 (input / 截屏 / logcat)",
-            "突破 /sdcard/Android/data 文件访问限制",
+            "Gỡ bỏ giới hạn 32 tiến trình ma trên Android 12+ (Phantom Process Killer)",
+            "Miễn trừ whitelist giữ sống nền chuyên sâu",
+            "Điều khiển tự động hoá máy chủ cho Agent (input / chụp màn hình / logcat)",
+            "Vượt qua giới hạn truy cập tệp /sdcard/Android/data",
         ),
     ),
     ROOT(
         id = "ROOT",
         shortLabel = "Root",
-        title = "Root 原生性能模式",
-        summary = "请求 SU 权限，释放 100% 硬件算力，彻底避免 PRoot 系统调用拦截损耗。",
-        requiredPrivilege = "Root 权限 (Magisk / KernelSU / APatch / UID 0)",
+        title = "Chế độ hiệu năng native Root",
+        summary = "Yêu cầu quyền SU, giải phóng 100% sức mạnh phần cứng, loại bỏ hoàn toàn tổn thất do PRoot chặn syscall.",
+        requiredPrivilege = "Quyền Root (Magisk / KernelSU / APatch / UID 0)",
         capabilities = listOf(
-            "100% 原生 Linux 性能（零 syscall 拦截开销）",
-            "原生 ext4 语义（彻底解决 perl/dpkg 硬链接问题）",
-            "支持 Docker / Podman 容器与镜像运行",
-            "直接访问 GPU/NPU 节点 (/dev/kgsl-3d0 等) 硬件加速",
-            "支持监听 80/443 特权端口与 iptables",
+            "Hiệu năng Linux native 100% (không tốn chi phí chặn syscall)",
+            "Ngữ nghĩa ext4 native (giải quyết triệt để vấn đề hard link của perl/dpkg)",
+            "Hỗ trợ chạy container và image Docker / Podman",
+            "Truy cập trực tiếp node GPU/NPU (/dev/kgsl-3d0 v.v.) để tăng tốc phần cứng",
+            "Hỗ trợ lắng nghe cổng đặc quyền 80/443 và iptables",
         ),
     );
 
     companion object {
-        /** 兼容历史持久化值：已下线的 ADB 等未知 id 会安全回落到 PROOT。 */
+        /** Tương thích giá trị lưu trữ lịch sử: các id không xác định như ADB đã ngừng hỗ trợ sẽ an toàn lùi về PROOT. */
         fun fromId(id: String): ExecutionMode =
             entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: PROOT
     }

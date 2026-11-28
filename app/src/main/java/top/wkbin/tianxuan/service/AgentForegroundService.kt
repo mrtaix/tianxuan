@@ -66,7 +66,7 @@ class AgentForegroundService : Service() {
                 getString(R.string.tianxuan_agent_notification_channel),
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
-                description = "用于展示 AI 深度思考与任务进度的常驻通知"
+                description = "Thông báo thường trực hiển thị quá trình suy nghĩ chuyên sâu của AI và tiến độ nhiệm vụ"
                 enableVibration(false)
                 setSound(null, null)
                 setShowBadge(true)
@@ -75,7 +75,7 @@ class AgentForegroundService : Service() {
             manager.createNotificationChannel(channel)
             // 清理历史版本遗留的灵动岛/胶囊渠道，避免系统设置里残留无效项
             runCatching { manager.deleteNotificationChannel(LEGACY_CAPSULE_CHANNEL_ID) }
-        }.onFailure { Log.w(TAG, "创建通知渠道失败", it) }
+        }.onFailure { Log.w(TAG, "Tạo kênh thông báo thất bại", it) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -88,7 +88,7 @@ class AgentForegroundService : Service() {
                     } else {
                         harnessLoop.cancel()
                     }
-                }.onFailure { Log.w(TAG, "取消 Agent 失败", it) }
+                }.onFailure { Log.w(TAG, "Hủy agent thất bại", it) }
                 return START_NOT_STICKY
             }
             else -> {
@@ -315,25 +315,25 @@ class AgentForegroundService : Service() {
     }
 
     private fun formatElapsed(seconds: Long): String = when {
-        seconds < 60 -> "${seconds}秒"
-        seconds < 3600 -> "${seconds / 60}分${seconds % 60}秒"
-        else -> "${seconds / 3600}小时${(seconds % 3600) / 60}分"
+        seconds < 60 -> "${seconds} giây"
+                    seconds < 3600 -> "${seconds / 60} phút ${seconds % 60} giây"
+                    else -> "${seconds / 3600} giờ ${(seconds % 3600) / 60} phút"
     }
 
     private fun safeStartForeground(id: Int, notification: Notification) {
         runCatching { startForeground(id, notification) }
-            .onFailure { Log.w(TAG, "startForeground 失败", it) }
+            .onFailure { Log.w(TAG, "startForeground thất bại", it) }
     }
 
     private fun stopForegroundSafely(flag: Int) {
         runCatching { stopForeground(flag) }
-            .onFailure { Log.w(TAG, "stopForeground 失败", it) }
+            .onFailure { Log.w(TAG, "stopForeground thất bại", it) }
     }
 
     private fun safeNotify(id: Int, notification: Notification) {
         runCatching {
             getSystemService(NotificationManager::class.java).notify(id, notification)
-        }.onFailure { Log.w(TAG, "发布通知失败", it) }
+        }.onFailure { Log.w(TAG, "Đăng thông báo thất bại", it) }
     }
 
     companion object {
@@ -354,14 +354,14 @@ class AgentForegroundService : Service() {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
                 PackageManager.PERMISSION_GRANTED
             ) {
-                Log.w(TAG, "通知权限未授权，跳过 Agent 前台保活服务")
+                Log.w(TAG, "Chưa cấp quyền thông báo; bỏ qua dịch vụ giữ agent chạy nền")
                 return
             }
             val intent = Intent(context, AgentForegroundService::class.java)
                 .setAction(ACTION_START)
             sessionId?.let { intent.putExtra(EXTRA_SESSION_ID, it) }
             runCatching { context.startForegroundService(intent) }
-                .onFailure { Log.w(TAG, "启动 Agent 前台服务失败", it) }
+                .onFailure { Log.w(TAG, "Khởi động dịch vụ nền agent thất bại", it) }
         }
 
         fun startFromReply(context: Context, sessionId: String? = null) {

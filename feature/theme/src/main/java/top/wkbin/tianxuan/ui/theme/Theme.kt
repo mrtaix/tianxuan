@@ -39,10 +39,12 @@ import kotlinx.coroutines.withContext
 import top.wkbin.tianxuan.feature.theme.R
 
 /**
- * 天玄内置主题风格。
+ * Các kiểu giao diện tích hợp của CTHarness.
  *
- * - [XUANTONG]（玄同）—— 默认主题。源自《老子》「万物同归于玄」，Material You 设计系统（支持 Monet 动态壁纸取色与曜石/素白基调）。
- * - [CHENGMING]（澄明）—— 液态玻璃主题。源自「澄明」通透清澈之意，以毛玻璃折射 + 流光 Aurora 渲染虚实交织的界面。
+ * - [XUANTONG] (Huyền Đồng): giao diện mặc định, lấy cảm hứng từ Lão Tử; dùng Material You
+ *   với màu động Monet từ hình nền và tông đen obsidian hoặc trắng thuần.
+ * - [CHENGMING] (Trừng Minh): giao diện kính lỏng, gợi sự trong trẻo;
+ *   kết hợp khúc xạ kính mờ và ánh sáng Aurora để tạo chiều sâu.
  */
 enum class ThemeStyle(
     val id: String,
@@ -54,20 +56,20 @@ enum class ThemeStyle(
         id = "material_you",
         displayName = "Material You",
         displayNameEn = "Material You",
-        description = "默认主题 · Google Material You (M3) 原生设计系统，支持跟随系统壁纸动态取色与经典曜石配色。",
+        description = "Giao diện mặc định · Hệ thống thiết kế Google Material You (M3), hỗ trợ màu động theo hình nền hệ thống và bảng màu đen obsidian cổ điển.",
     ),
     LIQUID_GLASS(
         id = "liquid_glass",
-        displayName = "液态玻璃",
+        displayName = "Kính lỏng",
         displayNameEn = "Liquid Glass",
-        description = "液态玻璃主题 · 毛玻璃折射 + 流光 Aurora，通透清澈的玻璃质感。",
+        description = "Giao diện kính lỏng · Khúc xạ kính mờ kết hợp ánh sáng Aurora, tạo cảm giác kính trong trẻo.",
     ),
     ;
 
     companion object {
-        @Deprecated("使用 MATERIAL_YOU 代替", ReplaceWith("MATERIAL_YOU"))
+        @Deprecated("Thay bằng MATERIAL_YOU", ReplaceWith("MATERIAL_YOU"))
         val XUANTONG get() = MATERIAL_YOU
-        @Deprecated("使用 LIQUID_GLASS 代替", ReplaceWith("LIQUID_GLASS"))
+        @Deprecated("Thay bằng LIQUID_GLASS", ReplaceWith("LIQUID_GLASS"))
         val CHENGMING get() = LIQUID_GLASS
 
         fun fromId(id: String?): ThemeStyle = when (id) {

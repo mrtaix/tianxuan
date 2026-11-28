@@ -68,7 +68,7 @@ class DeveloperViewModel(
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
-    /** 当前 message 是否为失败结果（类型化标记，避免 UI 用字符串匹配判断样式）。 */
+    /** Cho biết message hiện tại có phải kết quả thất bại hay không (cờ kiểu hóa, tránh để UI xác định kiểu hiển thị bằng cách so khớp chuỗi). */
     private val _messageIsError = MutableStateFlow(false)
     val messageIsError: StateFlow<Boolean> = _messageIsError.asStateFlow()
 
@@ -108,11 +108,11 @@ class DeveloperViewModel(
         if (_adbBusy.value) return
         viewModelScope.launch {
             _adbBusy.value = true
-            _adbMessage.value = if (pairingPort != null) "正在使用指定配对端口 $pairingPort 进行安全配对…" else "正在使用自动发现的配对端口进行安全配对…"
+            _adbMessage.value = if (pairingPort != null) "Đang ghép đôi an toàn qua cổng ghép đôi đã chỉ định $pairingPort…" else "Đang ghép đôi an toàn qua cổng ghép đôi được tự động phát hiện…"
             val result = embeddedAdbManager.pair(pairingPort, code.trim())
             _adbMessage.value = result.fold(
-                onSuccess = { "配对并连接成功；密钥已安全保存，后续将自动发现端口并重连。" },
-                onFailure = { it.message ?: "无线 ADB 配对失败" },
+                onSuccess = { "Đã ghép đôi và kết nối thành công; khóa đã được lưu an toàn, các lần sau sẽ tự tìm cổng và kết nối lại." },
+                onFailure = { it.message ?: "Ghép đôi ADB không dây thất bại" },
             )
             _adbBusy.value = false
         }
@@ -122,11 +122,11 @@ class DeveloperViewModel(
         if (_adbBusy.value) return
         viewModelScope.launch {
             _adbBusy.value = true
-            _adbMessage.value = if (explicitPort != null) "正在连接指定端口 $explicitPort…" else "正在连接自动发现的无线调试端口…"
+            _adbMessage.value = if (explicitPort != null) "Đang kết nối qua cổng đã chỉ định $explicitPort…" else "Đang kết nối qua cổng gỡ lỗi không dây được tự động phát hiện…"
             val result = embeddedAdbManager.connect(explicitPort)
             _adbMessage.value = result.fold(
-                onSuccess = { "无线 ADB 已连接。" },
-                onFailure = { it.message ?: "无线 ADB 连接失败" },
+                onSuccess = { "Đã kết nối ADB không dây." },
+                onFailure = { it.message ?: "Kết nối ADB không dây thất bại" },
             )
             _adbBusy.value = false
         }
@@ -134,23 +134,23 @@ class DeveloperViewModel(
 
     fun restartAdbDiscovery() {
         embeddedAdbManager.restartDiscovery()
-        _adbMessage.value = "已重新启动 mDNS 端口探测。"
+        _adbMessage.value = "Đã khởi động lại quá trình dò cổng mDNS."
     }
 
     fun captureLogcat(packageName: String, tag: String, priority: Char, keyword: String, lines: Int) {
         if (_adbBusy.value) return
         viewModelScope.launch {
             _adbBusy.value = true
-            _adbMessage.value = "正在抓取日志…"
+            _adbMessage.value = "Đang thu thập nhật ký…"
             runCatching {
                 embeddedAdbManager.captureLogcat(
                     EmbeddedAdbManager.LogcatRequest(packageName.trim(), tag.trim(), priority, keyword, lines),
                 )
             }.onSuccess { result ->
                 _logcatOutput.value = result.output
-                _adbMessage.value = if (result.success) "日志抓取完成。" else result.output
+                _adbMessage.value = if (result.success) "Đã thu thập nhật ký." else result.output
             }.onFailure { error ->
-                _adbMessage.value = error.message ?: "日志抓取失败"
+                _adbMessage.value = error.message ?: "Thu thập nhật ký thất bại"
             }
             _adbBusy.value = false
         }
@@ -162,7 +162,7 @@ class DeveloperViewModel(
             _adbBusy.value = true
             val result = embeddedAdbManager.clearLogcat()
             if (result.success) _logcatOutput.value = ""
-            _adbMessage.value = if (result.success) "设备 Logcat 缓冲区已清空。" else result.output
+            _adbMessage.value = if (result.success) "Đã xóa bộ đệm Logcat của thiết bị." else result.output
             _adbBusy.value = false
         }
     }
@@ -176,7 +176,7 @@ class DeveloperViewModel(
     private val _registryStatus = MutableStateFlow<String?>(null)
     val registryStatus: StateFlow<String?> = _registryStatus.asStateFlow()
 
-    /** 工具清单更新是否失败（类型化标记）。 */
+    /** Cho biết cập nhật danh mục công cụ có thất bại hay không (cờ kiểu hóa). */
     private val _registryStatusIsError = MutableStateFlow(false)
     val registryStatusIsError: StateFlow<Boolean> = _registryStatusIsError.asStateFlow()
 
@@ -209,19 +209,19 @@ class DeveloperViewModel(
     fun clearAgentLogs() {
         logger.clearAgentLogs()
         refreshAgentLogSize()
-        setMessage("智能体日志已清空。")
+        setMessage("Đã xóa nhật ký tác tử.")
     }
 
     fun saveRegistryConfig(manifestUrl: String, signatureUrl: String, publicKey: String) {
         viewModelScope.launch {
             registryPreferences.setRegistryConfig(manifestUrl, signatureUrl, publicKey)
-            setRegistryStatus("工具清单配置已保存。")
+            setRegistryStatus("Đã lưu cấu hình danh mục công cụ.")
         }
     }
 
     fun updateRegistry() {
         viewModelScope.launch {
-            setRegistryStatus("正在下载并验证工具清单…")
+            setRegistryStatus("Đang tải xuống và xác minh danh mục công cụ…")
             val request = SignedRegistryRequest(
                 manifestUrl = registryManifestUrl.value,
                 signatureUrl = registrySignatureUrl.value,
@@ -230,10 +230,10 @@ class DeveloperViewModel(
             val result = toolRegistry.updateSigned(request)
             if (result.isSuccess) {
                 toolManager.syncRegistry()
-                setRegistryStatus("工具清单已更新：${result.getOrNull()} 个工具。")
+                setRegistryStatus("Đã cập nhật danh mục công cụ: ${result.getOrNull()} công cụ.")
             } else {
                 logger.e("Registry update failed: ${result.errorOrNull()?.message}")
-                setRegistryStatus("工具清单更新失败，请检查清单地址、签名与公钥配置", isError = true)
+                setRegistryStatus("Cập nhật danh mục công cụ thất bại. Hãy kiểm tra địa chỉ danh mục, chữ ký và cấu hình khóa công khai.", isError = true)
             }
         }
     }
@@ -256,10 +256,10 @@ class DeveloperViewModel(
             _busy.value = true
             try {
                 when (val result = linuxRuntime.initialize()) {
-                    is AppResult.Success -> setMessage("初始化完成。")
+                    is AppResult.Success -> setMessage("Khởi tạo hoàn tất.")
                     is AppResult.Failure -> {
                         logger.e("Runtime initialize failed: ${result.error.message}")
-                        setMessage("初始化失败，请检查网络与存储空间后重试", isError = true)
+                        setMessage("Khởi tạo thất bại. Hãy kiểm tra kết nối mạng và dung lượng lưu trữ rồi thử lại.", isError = true)
                     }
                 }
             } finally {
@@ -282,16 +282,16 @@ class DeveloperViewModel(
             runCatching { linuxRuntime.updateRootfs() }
                 .onSuccess { result ->
                     if (result.isSuccess) {
-                        setMessage("RootFS 更新完成，用户数据已保留。")
+                        setMessage("Đã cập nhật RootFS; dữ liệu người dùng được giữ nguyên.")
                     } else {
                         logger.e("RootFS update failed: ${result.errorOrNull()?.message}")
-                        setMessage("RootFS 更新失败，已自动恢复旧版本；请稍后重试", isError = true)
+                        setMessage("Cập nhật RootFS thất bại; đã tự động khôi phục phiên bản cũ. Vui lòng thử lại sau.", isError = true)
                     }
                     refreshRootfsVersion()
                 }
                 .onFailure { throwable ->
                     logger.e("RootFS update failed", throwable)
-                    setMessage("RootFS 更新失败，请检查网络后重试", isError = true)
+                    setMessage("Cập nhật RootFS thất bại. Hãy kiểm tra kết nối mạng rồi thử lại.", isError = true)
                 }
             _busy.value = false
         }
@@ -301,25 +301,25 @@ class DeveloperViewModel(
         if (_busy.value || linuxRuntime.state.value !is RuntimeState.Ready) return
         viewModelScope.launch {
             _busy.value = true
-            setMessage("正在检查 RootFS 的 OCI manifest…")
+            setMessage("Đang kiểm tra manifest OCI của RootFS…")
             runCatching { linuxRuntime.checkRootfsUpdate() }
                 .onSuccess { result ->
                     if (result.isSuccess) {
                         val info = result.getOrNull()!!
                         _rootfsUpdate.value = info
                         if (info.hasUpdate) {
-                            setMessage("检测到 RootFS 新版本，可以更新。")
+                            setMessage("Đã phát hiện phiên bản RootFS mới, có thể cập nhật.")
                         } else {
-                            setMessage("RootFS 已是最新版本。")
+                            setMessage("RootFS đã là phiên bản mới nhất.")
                         }
                     } else {
                         logger.e("RootFS update check failed: ${result.errorOrNull()?.message}")
-                        setMessage("RootFS 更新检查失败，请检查网络后重试", isError = true)
+                        setMessage("Kiểm tra cập nhật RootFS thất bại. Hãy kiểm tra kết nối mạng rồi thử lại.", isError = true)
                     }
                 }
                 .onFailure { throwable ->
                     logger.e("RootFS update check failed", throwable)
-                    setMessage("RootFS 更新检查失败，请检查网络后重试", isError = true)
+                    setMessage("Kiểm tra cập nhật RootFS thất bại. Hãy kiểm tra kết nối mạng rồi thử lại.", isError = true)
                 }
             _busy.value = false
         }
@@ -334,7 +334,7 @@ class DeveloperViewModel(
                 .onSuccess { _health.value = it }
                 .onFailure {
                     logger.e("Health check failed", it)
-                    setMessage("健康检查失败，请确认运行时已就绪后重试", isError = true)
+                    setMessage("Kiểm tra tình trạng thất bại. Hãy đảm bảo Runtime đã sẵn sàng rồi thử lại.", isError = true)
                 }
             _busy.value = false
         }
@@ -344,7 +344,7 @@ class DeveloperViewModel(
         viewModelScope.launch {
             runCatching { runtimeManager.unusedRuntimes() }
                 .onSuccess { _unusedRuntimes.value = it }
-                .onFailure { logger.e("读取可清理 Runtime 失败", it) }
+                .onFailure { logger.e("Không thể đọc Runtime có thể dọn dẹp", it) }
         }
     }
 
@@ -355,10 +355,10 @@ class DeveloperViewModel(
             _message.value = null
             runCatching { runtimeManager.cleanup(runtimeId) }
                 .onSuccess { result ->
-                    if (result.isSuccess) setMessage("共享 Runtime 已清理。") else setMessage("清理失败，请稍后重试", isError = true)
+                    if (result.isSuccess) setMessage("Đã dọn dẹp Runtime dùng chung.") else setMessage("Dọn dẹp thất bại. Vui lòng thử lại sau.", isError = true)
                     refreshUnusedRuntimes()
                 }
-                .onFailure { logger.e("Runtime cleanup failed", it); setMessage("清理失败，请稍后重试", isError = true) }
+                .onFailure { logger.e("Runtime cleanup failed", it); setMessage("Dọn dẹp thất bại. Vui lòng thử lại sau.", isError = true) }
             _busy.value = false
         }
     }
@@ -369,7 +369,7 @@ class DeveloperViewModel(
                 linuxRuntime.cleanupDeadBackground()
                 linuxRuntime.listBackground()
             }.onSuccess { _processes.value = it }
-                .onFailure { logger.e("读取后台进程失败", it) }
+                .onFailure { logger.e("Không thể đọc tiến trình nền", it) }
         }
     }
 
@@ -378,7 +378,7 @@ class DeveloperViewModel(
         viewModelScope.launch {
             runCatching { linuxRuntime.stopBackground(processId) }
                 .onSuccess { refreshProcesses() }
-                .onFailure { logger.e("Stop process failed", it); setMessage("停止进程失败，请稍后重试", isError = true) }
+                .onFailure { logger.e("Stop process failed", it); setMessage("Dừng tiến trình thất bại. Vui lòng thử lại sau.", isError = true) }
         }
     }
 
@@ -393,23 +393,22 @@ class DeveloperViewModel(
             val distroId = linuxRuntime.activeDistroId.value
             runCatching {
                 val result = linuxRuntime.resetSandbox(distroId)
-                check(result.isSuccess) { result.errorOrNull()?.message ?: "Linux 环境重置失败" }
+                check(result.isSuccess) { result.errorOrNull()?.message ?: "Đặt lại môi trường Linux thất bại" }
                 toolManager.resetDistroState(distroId)
-                // A factory-style runtime reset intentionally restarts the
-                // complete first-run flow: environment download, then model
-                // selection/configuration.
+                // Việc đặt lại Runtime theo kiểu khôi phục cài đặt gốc sẽ chủ ý khởi động lại
+                // toàn bộ quy trình thiết lập lần đầu: tải môi trường, sau đó chọn/cấu hình mô hình.
                 onboardingPreferences.setOnboardingCompleted(false)
                 result
             }
                 .onSuccess { result ->
                     if (result.isSuccess) {
-                        setMessage("Linux 环境已恢复初始状态，工作区工程未删除。")
+                        setMessage("Đã khôi phục môi trường Linux về trạng thái ban đầu; dự án trong không gian làm việc không bị xóa.")
                     } else {
                         logger.e("Linux reset failed: ${result.errorOrNull()?.message}")
-                        setMessage("重置失败，请稍后重试", isError = true)
+                        setMessage("Đặt lại thất bại. Vui lòng thử lại sau.", isError = true)
                     }
                 }
-                .onFailure { logger.e("Linux reset failed", it); setMessage("重置失败，请稍后重试", isError = true) }
+                .onFailure { logger.e("Linux reset failed", it); setMessage("Đặt lại thất bại. Vui lòng thử lại sau.", isError = true) }
             _busy.value = false
         }
     }
@@ -418,7 +417,7 @@ class DeveloperViewModel(
         if (_busy.value) return
         val command = _commandInput.value.trim()
         if (command.isEmpty()) {
-            setMessage("命令不能为空。", isError = true)
+            setMessage("Lệnh không được để trống.", isError = true)
             return
         }
         viewModelScope.launch {
@@ -431,7 +430,7 @@ class DeveloperViewModel(
             }.onFailure {
                 logger.e("Command execution failed", it)
                 _commandResult.value = null
-                setMessage("命令执行失败，请检查命令语法与运行时状态", isError = true)
+                setMessage("Thực thi lệnh thất bại. Hãy kiểm tra cú pháp lệnh và trạng thái Runtime.", isError = true)
             }
             _busy.value = false
         }

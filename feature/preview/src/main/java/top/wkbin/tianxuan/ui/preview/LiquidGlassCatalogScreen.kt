@@ -86,26 +86,26 @@ import top.wkbin.tianxuan.ui.theme.XuantongDarkColors
 import top.wkbin.tianxuan.ui.theme.XuantongLightColors
 
 /**
- * 预览底衬壁纸类型定义。
+ * Định nghĩa các loại hình nền phủ cho màn hình xem trước.
  */
 enum class CatalogWallpaper(val title: String) {
-    AURORA("流光极光"),
-    LIQUID_BLOOM("液态折射"),
-    NEON_DARK("赛博暗夜"),
-    MINIMAL_CLEAN("极简素白"),
+    AURORA("Cực quang rực sáng"),
+    LIQUID_BLOOM("Khúc xạ chất lỏng"),
+    NEON_DARK("Đêm neon cyber"),
+    MINIMAL_CLEAN("Trắng tối giản"),
 }
 
 /**
- * 天玄 · 澄明液态玻璃全景组件图鉴与工作台 (LiquidGlassCatalogScreen)。
+ * Bộ sưu tập và không gian thử nghiệm toàn cảnh các thành phần Liquid Glass của TianXuan (LiquidGlassCatalogScreen).
  *
- * 聚合展示全套对齐 Apple HIG Materials 与 Kyant Backdrop 规范的液态玻璃控件：
- * 1. 字体排版标尺 (AppleTypography)；
- * 2. 交互式流光触感按钮 (RuntimeLiquidButton / RuntimeButton)；
- * 3. 药丸分段选择器 (RuntimeSegmentedControl)；
- * 4. 内嵌凹陷文本框与搜索栏 (RuntimeOutlinedTextField / RuntimeSearchBar)；
- * 5. 双重折射滑动条与开关 (RuntimeSlider / RuntimeSwitch)；
- * 6. 模态底部抽屉与多层嵌套玻璃 (RuntimeModalBottomSheet Glass-on-Glass)；
- * 7. 上下文浮动菜单与弹窗 (RuntimeDropdownMenu / RuntimeAlertDialog)。
+ * Tập hợp toàn bộ thành phần Liquid Glass tuân theo tiêu chuẩn Apple HIG Materials và Kyant Backdrop:
+ * 1. Thang kiểu chữ và bố cục (AppleTypography);
+ * 2. Nút tương tác có hiệu ứng ánh sáng và phản hồi chạm (RuntimeLiquidButton / RuntimeButton);
+ * 3. Bộ chọn phân đoạn dạng viên thuốc (RuntimeSegmentedControl);
+ * 4. Trường văn bản lõm và thanh tìm kiếm tích hợp (RuntimeOutlinedTextField / RuntimeSearchBar);
+ * 5. Thanh trượt khúc xạ kép và công tắc (RuntimeSlider / RuntimeSwitch);
+ * 6. Trang tính phương thức ở cạnh dưới và các lớp kính lồng nhau (RuntimeModalBottomSheet Glass-on-Glass);
+ * 7. Menu nổi theo ngữ cảnh và hộp thoại (RuntimeDropdownMenu / RuntimeAlertDialog).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,16 +117,16 @@ fun LiquidGlassCatalogScreen(
     var isDarkTheme by remember { mutableStateOf(true) }
     var selectedWallpaper by remember { mutableStateOf(CatalogWallpaper.AURORA) }
 
-    // 状态模拟
+    // Mô phỏng trạng thái
     var segmentedIndex by remember { mutableIntStateOf(0) }
-    var sampleText by remember { mutableStateOf("Linux AIRuntime (天玄)") }
+    var sampleText by remember { mutableStateOf("Linux AIRuntime (TianXuan)") }
     var searchQuery by remember { mutableStateOf("") }
     var switchState by remember { mutableStateOf(true) }
     var sliderValue by remember { mutableFloatStateOf(0.65f) }
     var checkboxState by remember { mutableStateOf(true) }
     var radioIndex by remember { mutableIntStateOf(0) }
 
-    // 弹窗与抽屉控制
+    // Điều khiển hộp thoại và trang tính
     val sheetScope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -150,7 +150,7 @@ fun LiquidGlassCatalogScreen(
                 .fillMaxSize()
                 .background(if (isDarkTheme) Color(0xFF090B10) else Color(0xFFF2F2F7)),
         ) {
-            // 1. 底层高保真流光/折射壁纸渲染（受 rootBackdrop 捕获供全屏玻璃控件折射）
+            // 1. Kết xuất hình nền ánh sáng/khúc xạ chất lượng cao ở lớp dưới (rootBackdrop thu nhận để các thành phần kính toàn màn hình khúc xạ)
             CatalogWallpaperCanvas(
                 wallpaper = selectedWallpaper,
                 isDark = isDarkTheme,
@@ -163,7 +163,7 @@ fun LiquidGlassCatalogScreen(
                     ),
             )
 
-            // 2. 顶层主内容，向内注入 LocalLiquidGlassSurfaceBackdrop
+            // 2. Nội dung chính ở lớp trên, cung cấp LocalLiquidGlassSurfaceBackdrop cho các thành phần con
             CompositionLocalProvider(
                 LocalLiquidGlassSurfaceBackdrop provides if (currentThemeStyle == ThemeStyle.LIQUID_GLASS) rootBackdrop else null,
             ) {
@@ -195,22 +195,22 @@ fun LiquidGlassCatalogScreen(
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
-                        // 顶部状态横幅
+                        // Biểu ngữ trạng thái đầu trang
                         CatalogModeBanner(currentThemeStyle, isDarkTheme, selectedWallpaper)
 
-                        // 展区 1：字体与排版层级 (Typography Scale)
+                        // Khu vực 1: Cấp bậc kiểu chữ và bố cục (Typography Scale)
                         CatalogTypographySection()
 
-                        // 展区 2：按钮与触控物理 (Buttons & Interactive Physics)
+                        // Khu vực 2: Nút và hiệu ứng tương tác chạm (Buttons & Interactive Physics)
                         CatalogButtonsSection()
 
-                        // 展区 3：胶囊分段器 (Segmented Controls)
+                        // Khu vực 3: Bộ điều khiển phân đoạn dạng viên thuốc (Segmented Controls)
                         CatalogSegmentedSection(
                             selectedIndex = segmentedIndex,
                             onSelect = { segmentedIndex = it },
                         )
 
-                        // 展区 4：文本输入框与搜索栏 (TextFields & Search)
+                        // Khu vực 4: Trường nhập văn bản và thanh tìm kiếm (TextFields & Search)
                         CatalogInputSection(
                             sampleText = sampleText,
                             onTextChange = { sampleText = it },
@@ -218,7 +218,7 @@ fun LiquidGlassCatalogScreen(
                             onQueryChange = { searchQuery = it },
                         )
 
-                        // 展区 5：开关与滑动条 (Toggles & Sliders)
+                        // Khu vực 5: Công tắc và thanh trượt (Toggles & Sliders)
                         CatalogControlsSection(
                             switchState = switchState,
                             onSwitchChange = { switchState = it },
@@ -230,7 +230,7 @@ fun LiquidGlassCatalogScreen(
                             onRadioChange = { radioIndex = it },
                         )
 
-                        // 展区 6：浮层、抽屉与多层嵌套 (Sheets & Dialogs Glass-on-Glass)
+                        // Khu vực 6: Lớp phủ, trang tính và các lớp kính lồng nhau (Sheets & Dialogs Glass-on-Glass)
                         CatalogOverlaysSection(
                             onOpenSheet = { showBottomSheet = true },
                             onOpenDialog = { showAlertDialog = true },
@@ -239,21 +239,21 @@ fun LiquidGlassCatalogScreen(
                             onDismissDropdown = { showDropdownMenu = false },
                         )
 
-                        // 展区 7：内容卡片与状态角标 (Cards & Badges)
+                        // Khu vực 7: Thẻ nội dung và nhãn trạng thái (Cards & Badges)
                         CatalogCardsSection()
 
                         Spacer(Modifier.height(48.dp))
                     }
                 }
 
-                // 模态底部抽屉 (Modal Bottom Sheet) 实装演示
+                // Bản trình diễn trang tính phương thức ở cạnh dưới (Modal Bottom Sheet)
                 if (showBottomSheet) {
                     RuntimeModalBottomSheet(
                         onDismissRequest = { showBottomSheet = false },
                         sheetState = bottomSheetState,
                     ) {
                         RuntimeSheetHeader(
-                            title = "液态玻璃抽屉 (Sheet Presentation)",
+                            title = "Trang tính Liquid Glass (Sheet Presentation)",
                             onDismiss = { showBottomSheet = false },
                             onConfirm = { showBottomSheet = false },
                         )
@@ -265,24 +265,24 @@ fun LiquidGlassCatalogScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             Text(
-                                text = "✨ Glass-on-Glass 安全嵌套演示：本抽屉使用 Thick 材质，抽屉内部的卡片与按钮已自动通过 CompositionLocalProvider 折射本抽屉，彻底杜绝 RenderThread 递归合成崩溃。",
+                                text = "✨ Bản trình diễn lồng lớp kính an toàn: trang tính này dùng chất liệu Thick; các thẻ và nút bên trong tự động khúc xạ trang tính thông qua CompositionLocalProvider, tránh hoàn toàn sự cố kết hợp đệ quy trên RenderThread.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
 
-                            // 抽屉内部嵌套卡片
+                            // Thẻ lồng bên trong trang tính
                             RuntimeCard(
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 Column(Modifier.padding(16.dp)) {
                                     Text(
-                                        "嵌套卡片 (Second Glass Layer)",
+                                        "Thẻ lồng nhau (Lớp kính thứ hai)",
                                         style = AppleTypography.Headline,
                                         color = MaterialTheme.colorScheme.onSurface,
                                     )
                                     Spacer(Modifier.height(6.dp))
                                     Text(
-                                        "注意观察此卡片边缘的透镜折射与高光，背景正确折射抽屉本身，呈现物理级半透明进深感。",
+                                        "Hãy quan sát hiệu ứng khúc xạ thấu kính và điểm sáng ở viền thẻ. Nền khúc xạ chính xác trang tính phía sau, tạo cảm giác chiều sâu bán trong suốt chân thực.",
                                         style = AppleTypography.Subhead,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -292,7 +292,7 @@ fun LiquidGlassCatalogScreen(
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.fillMaxWidth(),
                                     ) {
-                                        Text("确认并关闭抽屉", color = Color.White)
+                                        Text("Xác nhận và đóng trang tính", color = Color.White)
                                     }
                                 }
                             }
@@ -300,14 +300,14 @@ fun LiquidGlassCatalogScreen(
                     }
                 }
 
-                // 对话框 (AlertDialog) 演示
+                // Bản trình diễn hộp thoại (AlertDialog)
                 if (showAlertDialog) {
                     RuntimeAlertDialog(
                         onDismissRequest = { showAlertDialog = false },
-                        title = { Text("天玄液态玻璃对话框", style = AppleTypography.Headline) },
+                        title = { Text("Hộp thoại Liquid Glass của TianXuan", style = AppleTypography.Headline) },
                         text = {
                             Text(
-                                "完全基于 Apple HIG Materials 与 Kyant Backdrop 架构打造，支持景深遮罩与按压触感反馈。",
+                                "Được xây dựng hoàn toàn theo kiến trúc Apple HIG Materials và Kyant Backdrop, hỗ trợ mặt nạ chiều sâu và phản hồi xúc giác khi nhấn.",
                                 style = AppleTypography.Body,
                             )
                         },
@@ -316,12 +316,12 @@ fun LiquidGlassCatalogScreen(
                                 onClick = { showAlertDialog = false },
                                 tint = MaterialTheme.colorScheme.primary,
                             ) {
-                                Text("知道了", color = Color.White)
+                                Text("Đã hiểu", color = Color.White)
                             }
                         },
                         dismissButton = {
                             RuntimeTextButton(onClick = { showAlertDialog = false }) {
-                                Text("取消")
+                                Text("Hủy")
                             }
                         },
                     )
@@ -332,7 +332,7 @@ fun LiquidGlassCatalogScreen(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 各展区精装子组件实现
+// Triển khai các thành phần con được hoàn thiện cho từng khu vực
 // ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -358,12 +358,12 @@ private fun CatalogModeBanner(
                 TianXuanBrandBadge(size = 42.dp)
                 Column {
                     Text(
-                        text = if (themeStyle == ThemeStyle.LIQUID_GLASS) "澄明 · 液态玻璃模式" else "玄同 · Material You 模式",
+                        text = if (themeStyle == ThemeStyle.LIQUID_GLASS) "Chengming · Chế độ Liquid Glass" else "Xuantong · Chế độ Material You",
                         style = AppleTypography.Headline,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = "底衬: ${wallpaper.title} · ${if (isDark) "深色" else "浅色"}外观",
+                        text = "Hình nền: ${wallpaper.title} · giao diện ${if (isDark) "tối" else "sáng"}",
                         style = AppleTypography.Footnote,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -386,18 +386,18 @@ private fun CatalogTypographySection() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             SectionHeader(
-                title = "字体与排版标尺 (Apple HIG Scale)",
-                subtitle = "San Francisco (SF Pro) 字重阶梯与负向 Tight Tracking",
+                title = "Thang kiểu chữ và bố cục (Apple HIG Scale)",
+                subtitle = "Các cấp độ độ đậm chữ San Francisco (SF Pro) và khoảng cách ký tự âm (Tight Tracking)",
             )
             Text("LargeTitle (34sp Bold)", style = AppleTypography.LargeTitle)
             Text("Title1 (28sp Bold)", style = AppleTypography.Title1)
             Text("Title2 (22sp Bold)", style = AppleTypography.Title2)
             Text("Title3 (20sp SemiBold)", style = AppleTypography.Title3)
             Text("Headline (17sp SemiBold)", style = AppleTypography.Headline)
-            Text("Body (17sp Regular) · 天玄移动端原生 Linux 沙箱运行环境", style = AppleTypography.Body)
-            Text("Callout (16sp Regular) · 智枢核心与终端原生 PTY 结对通信", style = AppleTypography.Callout)
-            Text("Footnote (13sp Regular) · Apple HIG Materials 光学材质分级对齐", style = AppleTypography.Footnote)
-            Text("Caption (12sp Regular) · 1px 镜面天顶光反光线", style = AppleTypography.Caption1)
+            Text("Body (17sp Regular) · Môi trường chạy sandbox Linux gốc trên thiết bị di động TianXuan", style = AppleTypography.Body)
+            Text("Callout (16sp Regular) · Giao tiếp ghép đôi giữa lõi Smart Hub và PTY gốc của terminal", style = AppleTypography.Callout)
+            Text("Footnote (13sp Regular) · Phân cấp chất liệu quang học theo Apple HIG Materials", style = AppleTypography.Footnote)
+            Text("Caption (12sp Regular) · Đường phản chiếu ánh sáng gương trên đỉnh, rộng 1px", style = AppleTypography.Caption1)
         }
     }
 }
@@ -412,32 +412,32 @@ private fun CatalogButtonsSection() {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             SectionHeader(
-                title = "按钮与触控流光 (Liquid Buttons)",
-                subtitle = "AGSL 触控流动漫射光斑 + tanh 双轴阻尼拉伸形变",
+                title = "Nút và hiệu ứng ánh sáng khi chạm (Liquid Buttons)",
+                subtitle = "Vệt sáng AGSL tỏa ra khi chạm + biến dạng kéo giãn hai trục có giảm chấn tanh",
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                // 原版 Kyant 胶囊流体按钮
+                // Nút chất lỏng dạng viên thuốc nguyên bản của Kyant
                 RuntimeLiquidButton(
                     onClick = {},
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
                 ) {
                     RuntimeIcon(RuntimeIconName.Play, Modifier.size(18.dp), tint = Color.White)
-                    Text("流光按钮", color = Color.White, style = AppleTypography.Button)
+                    Text("Nút ánh sáng", color = Color.White, style = AppleTypography.Button)
                 }
 
-                // 成功/绿色浸润按钮
+                // Nút thành công với sắc xanh lá
                 RuntimeLiquidButton(
                     onClick = {},
                     tint = Color(0xFF34C759),
                     modifier = Modifier.weight(1f),
                 ) {
                     RuntimeIcon(RuntimeIconName.Check, Modifier.size(18.dp), tint = Color.White)
-                    Text("成功浸润", color = Color.White, style = AppleTypography.Button)
+                    Text("Thành công", color = Color.White, style = AppleTypography.Button)
                 }
             }
 
@@ -445,21 +445,21 @@ private fun CatalogButtonsSection() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                // 标准 RuntimeButton
+                // RuntimeButton tiêu chuẩn
                 RuntimeButton(
                     onClick = {},
                     tonal = true,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Tonal 填充")
+                    Text("Tô màu Tonal")
                 }
 
-                // 边框按钮与图标按钮
+                // Nút viền và nút biểu tượng
                 RuntimeOutlinedButton(
                     onClick = {},
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("边框按钮")
+                    Text("Nút viền")
                 }
 
                 RuntimeIconButton(
@@ -490,19 +490,19 @@ private fun CatalogSegmentedSection(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             SectionHeader(
-                title = "胶囊分段选择器 (Segmented Control)",
-                subtitle = "UltraThin 底轨 + Thin 色散滑块 + 速度微拉伸弹性手感",
+                title = "Bộ chọn phân đoạn dạng viên thuốc (Segmented Control)",
+                subtitle = "Rãnh nền UltraThin + nút trượt tán sắc Thin + cảm giác đàn hồi kéo giãn nhẹ theo tốc độ",
             )
 
             RuntimeSegmentedControl(
-                options = listOf("全局概览", "终端中枢", "智坊", "摇光"),
+                options = listOf("Tổng quan", "Trung tâm terminal", "Xưởng thông minh", "Diêu Quang"),
                 selectedIndex = selectedIndex,
                 onSelect = onSelect,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             Text(
-                text = "当前激活项: 第 ${selectedIndex + 1} 项 · 点击或左右切换可感知 Apple 规范的 LiquidSpringSpec 动力学与震动反馈。",
+                text = "Mục đang chọn: ${selectedIndex + 1} · Chạm hoặc chuyển trái/phải để cảm nhận động lực học LiquidSpringSpec và phản hồi rung theo tiêu chuẩn Apple.",
                 style = AppleTypography.Footnote,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -525,26 +525,26 @@ private fun CatalogInputSection(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             SectionHeader(
-                title = "输入与搜索 (Inset Glass Fields)",
-                subtitle = "UltraThin 凹陷微内阴影 + 1px 镜面反光线 + 获焦流光外发光",
+                title = "Nhập liệu và tìm kiếm (Inset Glass Fields)",
+                subtitle = "Lõm nhẹ UltraThin với bóng trong + đường phản chiếu gương 1px + quầng sáng khi lấy tiêu điểm",
             )
 
-            // 全圆角搜索栏
+            // Thanh tìm kiếm bo tròn hoàn toàn
             RuntimeSearchBar(
                 query = searchQuery,
                 onQueryChange = onQueryChange,
-                placeholder = "搜索沙箱应用、命令或工作区...",
+                placeholder = "Tìm ứng dụng sandbox, lệnh hoặc không gian làm việc...",
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // 带标签与图标的内嵌输入框
+            // Trường nhập liệu lõm, có nhãn và biểu tượng
             RuntimeOutlinedTextField(
                 value = sampleText,
                 onValueChange = onTextChange,
-                label = { Text("沙箱容器名称") },
-                placeholder = { Text("请输入容器名称...") },
+                label = { Text("Tên container sandbox") },
+                placeholder = { Text("Nhập tên container...") },
                 leadingIcon = { RuntimeIcon(RuntimeIconName.Terminal, Modifier.size(20.dp)) },
-                supportingText = { Text("支持中英文、数字与横线组合") },
+                supportingText = { Text("Hỗ trợ chữ Trung, chữ Anh, chữ số và dấu gạch ngang") },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -570,8 +570,8 @@ private fun CatalogControlsSection(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             SectionHeader(
-                title = "开关与滑动条 (Toggles & Sliders)",
-                subtitle = "双重折射拇指 + 阻尼挤压拉伸 (Squash & Stretch)",
+                title = "Công tắc và thanh trượt (Toggles & Sliders)",
+                subtitle = "Núm trượt khúc xạ kép + hiệu ứng bóp và kéo giãn có giảm chấn (Squash & Stretch)",
             )
 
             Row(
@@ -580,8 +580,8 @@ private fun CatalogControlsSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
-                    Text("液态玻璃开关 (LiquidToggle)", style = AppleTypography.Headline)
-                    Text("双重折射色散滑块", style = AppleTypography.Footnote, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Công tắc Liquid Glass (LiquidToggle)", style = AppleTypography.Headline)
+                    Text("Núm trượt tán sắc khúc xạ kép", style = AppleTypography.Footnote, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 RuntimeSwitch(
                     checked = switchState,
@@ -594,7 +594,7 @@ private fun CatalogControlsSection(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text("阻尼滑动条 (LiquidSlider)", style = AppleTypography.Callout)
+                    Text("Thanh trượt có giảm chấn (LiquidSlider)", style = AppleTypography.Callout)
                     Text("${(sliderValue * 100).toInt()}%", style = AppleTypography.Callout, fontWeight = FontWeight.Bold)
                 }
                 RuntimeSlider(
@@ -614,14 +614,14 @@ private fun CatalogControlsSection(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RuntimeCheckbox(checked = checkboxState, onCheckedChange = onCheckboxChange)
                     Spacer(Modifier.width(8.dp))
-                    Text("跟随系统深浅色", style = AppleTypography.Subhead)
+                    Text("Theo giao diện sáng/tối của hệ thống", style = AppleTypography.Subhead)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RuntimeRadioButton(selected = radioIndex == 0, onClick = { onRadioChange(0) })
-                    Text("选项 A", style = AppleTypography.Subhead)
+                    Text("Tùy chọn A", style = AppleTypography.Subhead)
                     Spacer(Modifier.width(8.dp))
                     RuntimeRadioButton(selected = radioIndex == 1, onClick = { onRadioChange(1) })
-                    Text("选项 B", style = AppleTypography.Subhead)
+                    Text("Tùy chọn B", style = AppleTypography.Subhead)
                 }
             }
         }
@@ -644,8 +644,8 @@ private fun CatalogOverlaysSection(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             SectionHeader(
-                title = "抽屉、弹窗与浮层 (Sheets & Overlays)",
-                subtitle = "Thick/Regular 材质 + 28dp 大圆角 + Glass-on-Glass 安全嵌套",
+                title = "Trang tính, hộp thoại và lớp phủ (Sheets & Overlays)",
+                subtitle = "Chất liệu Thick/Regular + góc bo lớn 28dp + lồng lớp kính an toàn (Glass-on-Glass)",
             )
 
             Row(
@@ -656,14 +656,14 @@ private fun CatalogOverlaysSection(
                     onClick = onOpenSheet,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("打开底部抽屉")
+                    Text("Mở trang tính bên dưới")
                 }
 
                 RuntimeOutlinedButton(
                     onClick = onOpenDialog,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("弹出对话框")
+                    Text("Mở hộp thoại")
                 }
 
                 Box {
@@ -677,17 +677,17 @@ private fun CatalogOverlaysSection(
                         onDismissRequest = onDismissDropdown,
                     ) {
                         RuntimeDropdownMenuItem(
-                            text = { Text("工作区设置") },
+                            text = { Text("Cài đặt không gian làm việc") },
                             leadingIcon = { RuntimeIcon(RuntimeIconName.Settings, Modifier.size(18.dp)) },
                             onClick = onDismissDropdown,
                         )
                         RuntimeDropdownMenuItem(
-                            text = { Text("重载沙箱") },
+                            text = { Text("Tải lại sandbox") },
                             leadingIcon = { RuntimeIcon(RuntimeIconName.Refresh, Modifier.size(18.dp)) },
                             onClick = onDismissDropdown,
                         )
                         RuntimeDropdownMenuItem(
-                            text = { Text("清除缓存") },
+                            text = { Text("Xóa bộ nhớ đệm") },
                             leadingIcon = { RuntimeIcon(RuntimeIconName.Trash, Modifier.size(18.dp)) },
                             onClick = onDismissDropdown,
                         )
@@ -708,17 +708,17 @@ private fun CatalogCardsSection() {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             SectionHeader(
-                title = "内容容器与状态角标 (Cards & Badges)",
-                subtitle = "Thick 材质内容面板 + 色散水滴状态角标",
+                title = "Thẻ nội dung và nhãn trạng thái (Cards & Badges)",
+                subtitle = "Bảng nội dung chất liệu Thick + nhãn trạng thái dạng giọt tán sắc",
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                StatusBadge(text = "运行中", color = Color(0xFF34C759))
-                StatusBadge(text = "已就绪", color = MaterialTheme.colorScheme.primary)
-                StatusBadge(text = "异常", color = MaterialTheme.colorScheme.error)
+                StatusBadge(text = "Đang chạy", color = Color(0xFF34C759))
+                StatusBadge(text = "Sẵn sàng", color = MaterialTheme.colorScheme.primary)
+                StatusBadge(text = "Lỗi", color = MaterialTheme.colorScheme.error)
                 RuntimeBadge(containerColor = Color(0xFFFF9500)) {
                     Text("NEW")
                 }
@@ -728,11 +728,11 @@ private fun CatalogCardsSection() {
             }
 
             InfoRow(
-                label = "ARM64 架构沙箱",
+                label = "Sandbox kiến trúc ARM64",
                 value = "Ubuntu 24.04 LTS (PRoot)",
             )
             InfoRow(
-                label = "渲染着色器核心",
+                label = "Lõi shader kết xuất",
                 value = "Android AGSL Liquid Shaders",
             )
         }
@@ -740,7 +740,7 @@ private fun CatalogCardsSection() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 顶栏与动态壁纸画布
+// Thanh trên cùng và canvas hình nền động
 // ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -772,7 +772,7 @@ private fun CatalogTopBar(
             }
             Column {
                 Text(
-                    text = "液态玻璃全景图鉴",
+                    text = "Bộ sưu tập Liquid Glass toàn cảnh",
                     style = AppleTypography.Headline,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -788,7 +788,7 @@ private fun CatalogTopBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            // 壁纸切换器
+            // Bộ chuyển đổi hình nền
             Box(
                 modifier = Modifier
                     .clip(CapsuleShape)
@@ -800,14 +800,14 @@ private fun CatalogTopBar(
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             ) {
                 Text(
-                    text = "壁纸: ${wallpaper.title}",
+                    text = "Hình nền: ${wallpaper.title}",
                     style = AppleTypography.Caption1,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
             }
 
-            // 主题切换（澄明 vs 玄同）
+            // Chuyển chủ đề (Chengming và Xuantong)
             Box(
                 modifier = Modifier
                     .clip(CapsuleShape)
@@ -822,14 +822,14 @@ private fun CatalogTopBar(
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             ) {
                 Text(
-                    text = if (themeStyle == ThemeStyle.LIQUID_GLASS) "澄明" else "玄同",
+                    text = if (themeStyle == ThemeStyle.LIQUID_GLASS) "Chengming" else "Xuantong",
                     style = AppleTypography.Caption1,
                     fontWeight = FontWeight.Bold,
                     color = if (themeStyle == ThemeStyle.LIQUID_GLASS) Color.White else MaterialTheme.colorScheme.onSurface,
                 )
             }
 
-            // 深浅切换
+            // Chuyển chế độ sáng/tối
             RuntimeIconButton(
                 onClick = onToggleDark,
             ) {
@@ -840,7 +840,7 @@ private fun CatalogTopBar(
 }
 
 /**
- * 动态流光壁纸画布：生成丰富渐变色块，测试玻璃的折射效果。
+ * Canvas hình nền ánh sáng động: tạo các mảng màu chuyển sắc phong phú để kiểm tra hiệu ứng khúc xạ của kính.
  */
 @Composable
 private fun CatalogWallpaperCanvas(
@@ -848,14 +848,14 @@ private fun CatalogWallpaperCanvas(
     isDark: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // aurora 渐变球的圆心偏移动画（已被移除：原 animOffset 从未被 Canvas 读取，
-    // 却以 60fps 持续驱动重组与重绘，浪费 CPU/电量）
+    // Hoạt ảnh dịch chuyển tâm của quả cầu chuyển sắc aurora (đã xóa: animOffset trước đây không được Canvas đọc,
+    // nhưng vẫn kích hoạt tái tổ hợp và vẽ lại ở 60fps, gây lãng phí CPU/pin)
     val auroraCenter = androidx.compose.ui.geometry.Offset(0.5f, 0.5f)
 
     when (wallpaper) {
         CatalogWallpaper.AURORA -> {
             Canvas(modifier = modifier) {
-                // 极光渐变球
+                // Quả cầu chuyển sắc cực quang
                 val w = size.width
                 val h = size.height
 
@@ -962,19 +962,19 @@ private fun CatalogWallpaperCanvas(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Compose @Preview 支持（Android Studio 实时可视化渲染）
+// Hỗ trợ Compose @Preview (kết xuất trực quan trực tiếp trong Android Studio)
 // ═══════════════════════════════════════════════════════════════════════════
 
-@Preview(name = "澄明 · 液态玻璃 (深色)", showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(name = "Chengming · Liquid Glass (tối)", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 fun PreviewLiquidGlassCatalogDark() {
     LiquidGlassCatalogScreen()
 }
 
-@Preview(name = "澄明 · 液态玻璃 (浅色)", showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(name = "Chengming · Liquid Glass (sáng)", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 fun PreviewLiquidGlassCatalogLight() {
-    // 浅色预览
+    // Bản xem trước giao diện sáng
     MaterialTheme(colorScheme = ChengmingLightColors, typography = LiquidGlassTypography) {
         LiquidGlassCatalogScreen()
     }

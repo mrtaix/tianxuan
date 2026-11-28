@@ -94,10 +94,10 @@ class MainActivity : AppCompatActivity() {
         if (granted) runtimeServiceController.start()
     }
 
-    /** 是否已发起过 POST_NOTIFICATIONS 系统弹窗；与服务启动解耦，避免授权后无法补启。 */
+    /** Đã yêu cầu quyền POST_NOTIFICATIONS hay chưa; tách khỏi khởi động dịch vụ để có thể thử lại sau khi cấp quyền. */
     private var notificationPermissionRequested = false
 
-    /** 控制 SplashScreen 持续显示，直到 onboarding 偏好从 DataStore 加载完成，避免白屏空窗。 */
+    /** Giữ SplashScreen cho đến khi tải xong tùy chọn hướng dẫn ban đầu từ DataStore để tránh màn hình trắng. */
     private val keepSplashOnScreen: MutableState<Boolean> = mutableStateOf(true)
 
     private var createdUptimeMs: Long = 0L
@@ -139,8 +139,8 @@ class MainActivity : AppCompatActivity() {
                 val onboardingViewModel: OnboardingViewModel = koinViewModel()
                 val onboarding by onboardingViewModel.status.collectAsStateWithLifecycle()
 
-                // onboarding 偏好读盘完成后让 SplashScreen 退场；Runtime 恢复已在后台继续，不阻塞首帧。
-                // Linux 环境恢复（restoreInstalledState）由 OnboardingViewModel.init 自行发起，不再在此重复触发。
+                // Đóng SplashScreen khi đọc xong tùy chọn hướng dẫn; Runtime tiếp tục khôi phục trong nền, không chặn khung hình đầu.
+                // OnboardingViewModel.init tự gọi restoreInstalledState để khôi phục Linux; không gọi lại tại đây.
                 LaunchedEffect(onboarding.loaded) {
                     if (onboarding.loaded && keepSplashOnScreen.value) {
                         keepSplashOnScreen.value = false
@@ -151,7 +151,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                // 启动时静默检查更新
+                // Kiểm tra cập nhật âm thầm khi khởi động.
                 var updateInfo by remember { mutableStateOf<AppUpdateInfo?>(null) }
                 var downloadProgress by remember { mutableStateOf<Float?>(null) }
                 var isDownloading by remember { mutableStateOf(false) }
@@ -246,7 +246,7 @@ class MainActivity : AppCompatActivity() {
                                     }
                                 }
                                 if (downloadFailed) {
-                                    // 下载失败必须可见：不再静默停止
+                                    // Phải hiển thị lỗi tải xuống, không dừng âm thầm.
                                     Text(
                                         text = stringResource(R.string.tianxuan_update_download_failed),
                                         style = MaterialTheme.typography.labelMedium,
@@ -273,7 +273,7 @@ class MainActivity : AppCompatActivity() {
                                                 appUpdateManager.installApk(apkFile)
                                                 updateInfo = null
                                             }.onFailure {
-                                                // 下载失败：在更新对话框内给出可见的错误文案（跟随现有 UI 模式）
+                                                // Khi tải thất bại, hiển thị lỗi ngay trong hộp thoại cập nhật theo mẫu UI hiện có.
                                                 downloadFailed = true
                                             }
                                         }
@@ -321,7 +321,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 主应用回到前台时，自动关闭智枢桌面悬浮小窗，避免主界面与悬浮窗重叠
+        // Tự đóng cửa sổ nổi Trí Khu khi ứng dụng trở lại tiền cảnh để tránh chồng lên giao diện chính.
         runCatching {
             top.wkbin.tianxuan.ui.chat.floating.FloatingChatService.stop(this)
         }
@@ -346,7 +346,7 @@ class MainActivity : AppCompatActivity() {
                             lifecycleScope.launch { mcpManager.invalidateServer(result.serverId) }
                         }
                     }
-                    .onFailure { /* UI observes server auth state; never log callback code/token. */ }
+                    .onFailure { /* UI theo dõi trạng thái xác thực máy chủ; tuyệt đối không ghi mã/token callback vào log. */ }
             }
             return
         }
@@ -356,7 +356,7 @@ class MainActivity : AppCompatActivity() {
         if (isAdbLogcat) {
             globalNavigationBus.navigateTo(top.wkbin.tianxuan.core.common.navigation.AppNavigationTarget.AdbLogcat)
         }
-        // 工作流通知点入：打开运行页并定位到对应执行
+        // Khi nhấn thông báo luồng công việc, mở trang chạy và tìm lần thực thi tương ứng.
         if (action == top.wkbin.tianxuan.service.WorkflowForegroundService.ACTION_OPEN_RUN) {
             globalNavigationBus.navigateTo(
                 top.wkbin.tianxuan.core.common.navigation.AppNavigationTarget.WorkflowRun(
@@ -368,15 +368,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPostResume() {
         super.onPostResume()
-        // Runtime permission dialogs are most reliable after the first page is resumed and drawn.
-        // First launch also restores onboarding/theme state, so requesting from onCreate can be
-        // swallowed by some Android builds before the Activity becomes fully interactive.
-        // 每次回到前台都尝试启动保活：用户可能在系统设置里补授了通知权限。
+        // Hộp thoại quyền thời gian chạy đáng tin cậy nhất sau khi trang đầu được tiếp tục và vẽ xong.
+        // Lần mở đầu còn khôi phục hướng dẫn và giao diện; một số bản Android có thể bỏ qua yêu cầu
+        // từ onCreate nếu Activity chưa tương tác được hoàn toàn.
+        // Thử duy trì dịch vụ mỗi lần trở lại tiền cảnh vì người dùng có thể vừa cấp quyền trong cài đặt hệ thống.
         window.decorView.post {
             if (!isFinishing && !isDestroyed) {
-                // MIUI 会在 POST_NOTIFICATIONS 尚未授权时拒绝 START_FOREGROUND AppOp。
-                // 先完成权限门，再启动需要常驻通知的 Runtime 服务，避免无通知的幽灵服务
-                // 和随后出现的系统转场噪声。
+                // MIUI từ chối AppOp START_FOREGROUND khi chưa cấp quyền POST_NOTIFICATIONS.
+                // Hoàn tất kiểm tra quyền trước khi khởi động Runtime cần thông báo thường trực,
+                // tránh dịch vụ không có thông báo và hiệu ứng chuyển cảnh hệ thống bất thường.
                 startRuntimeServiceWhenNotificationAllowed()
             }
         }

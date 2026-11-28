@@ -6,18 +6,19 @@ import top.wkbin.tianxuan.core.model.Community
 import top.wkbin.tianxuan.feature.settings.R
 
 /**
- * 动态文案的翻译规则。
+ * Quy tắc dịch nội dung động.
  *
- * [SettingsLocalization.legacyStringResource] 是「中文原文 → 资源ID」的静态表，
- * 只能覆盖编译期已知的字面量。像「3 个模型」「群号: xxx」这类**运行时拼出来的
- * 字符串**不在表里，需要在此按结构匹配后注入参数。
+ * [SettingsLocalization.legacyStringResource] là bảng tĩnh ánh xạ văn bản gốc tiếng Trung
+ * sang ID tài nguyên, chỉ bao phủ các chuỗi literal đã biết khi biên dịch. Các chuỗi
+ * ghép lúc chạy, như số mô hình hoặc mã nhóm, cần được khớp theo cấu trúc rồi truyền tham số tại đây.
+ * Giữ nguyên literal tiếng Trung trong các mẫu và điều kiện để tương thích với nội dung gốc.
  *
- * 群号尤其不能进静态表：它是[Community.QQ_GROUP_ID] 的运行时值，
- * 进表就等于多一份要同步的副本，改群号必然漏改（历史上就是这么漏的）。
+ * Không đưa mã nhóm vào bảng tĩnh: giá trị được lấy lúc chạy từ [Community.QQ_GROUP_ID].
+ * Thêm vào bảng sẽ tạo một bản sao cần đồng bộ và dễ bị bỏ sót khi đổi mã nhóm, như đã từng xảy ra.
  */
 @Composable
 internal fun resolveDynamicString(source: String): String? {
-    // NOTE: raw 字符串不做转义处理，此处必须写 \d；写成 \\d 会匹配字面 "\d" 导致永不命中。
+    // Chuỗi raw không xử lý escape: phải dùng \d; dùng \\d sẽ khớp literal "\d" nên không khớp số.
     matchOne(source, """(\d+) 套系统 · (.+)""") {
         return stringResource(R.string.settings_dynamic_system_mode, it.groupValues[1], it.groupValues[2])
     }
@@ -66,8 +67,8 @@ internal fun resolveDynamicString(source: String): String? {
     matchOne(source, """(\d+) 次""") {
         return stringResource(R.string.settings_text_0341, it.groupValues[1])
     }
-    // 群号匹配到结构后，一律注入 Community 的当前值而非正则捕获组：
-    // 调用方传的可能是过期文案，用真值才不会出现两个群号并存
+    // Sau khi khớp cấu trúc mã nhóm, luôn truyền giá trị hiện tại từ Community thay vì nhóm bắt của regex:
+    // Bên gọi có thể truyền nội dung cũ; dùng giá trị chuẩn để tránh hiển thị hai mã nhóm khác nhau.
     matchOne(source, """群号: (\d+) · .+""") {
         return stringResource(R.string.settings_dynamic_qq_group, Community.QQ_GROUP_ID)
     }
@@ -77,6 +78,6 @@ internal fun resolveDynamicString(source: String): String? {
     return null
 }
 
-/** 整串匹配才回调，否则 null。避免前缀命中导致误翻译。 */
+/** Chỉ gọi callback khi khớp toàn bộ chuỗi, nếu không trả null; tránh dịch nhầm do chỉ khớp tiền tố. */
 private inline fun matchOne(source: String, pattern: String, block: (MatchResult) -> String): String? =
     Regex(pattern).matchEntire(source)?.let(block)

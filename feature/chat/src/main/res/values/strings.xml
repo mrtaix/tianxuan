@@ -520,4 +520,52 @@
     <string name="chat_floating_thinking">🧠 Đang suy nghĩ…</string>
     <string name="chat_floating_running">⚡ Đang thực thi…</string>
     <string name="chat_context_compaction_threshold">Tự động nén lịch sử khi đạt %1$s (theo mức %2$d%%)</string>
+    <!-- Nhãn điều hướng và trạng thái có dấu chấm báo hoạt động mới. -->
+    <string name="chat_terminal">Terminal</string>
+    <string name="chat_browser">Trình duyệt</string>
+    <string name="chat_browser_highlight">Trình duyệt •</string>
+    <string name="chat_repository_highlight">Kho mã •</string>
+    <string name="chat_run_action">Chạy</string>
+    <string name="chat_scratchpad_default_title">Bản nháp</string>
+    <string name="chat_copied">Đã sao chép</string>
+    <!-- Lỗi lưu hồ sơ và đọc kết quả; %1$s là thông báo lỗi kỹ thuật. -->
+    <string name="chat_model_save_failed">Không thể lưu mô hình: %1$s</string>
+    <string name="chat_unknown_error">Lỗi không xác định</string>
+    <string name="chat_subagent_result_read_failed">Không thể đọc kết quả của agent con</string>
+    <string name="chat_file_stream_failed">Không thể mở luồng ghi vào tệp đích</string>
+    <!-- Công cụ dịch hiện có chỉ dịch từ tiếng Anh sang tiếng Trung, không phải tiếng Việt. -->
+    <string name="chat_translation_failed">Dịch ngoại tuyến thất bại</string>
+    <string name="chat_translation_show_original">Xem bản gốc tiếng Anh</string>
+    <string name="chat_translation_reasoning">Dịch quá trình suy luận ngoại tuyến</string>
+    <string name="chat_translation_chinese_label">Bản dịch tiếng Trung (tạo ngoại tuyến bằng ML Kit)</string>
+    <string name="chat_translation_in_progress">Đang dịch nội dung suy luận ngoại tuyến…</string>
+    <string name="chat_translation_model_downloading">Đang tải mô hình dịch ngoại tuyến</string>
+    <string name="chat_translation_model_missing">Chưa tải gói ngôn ngữ dịch ngoại tuyến</string>
+    <!-- %1$s là bước tải xuống, %2$s là chi tiết tiến độ. -->
+    <string name="chat_translation_download_details">Mô hình ngôn ngữ dịch ngoại tuyến đang được tải trong nền (%1$s, %2$s).\n\nSau khi tải xong, tính năng dịch ngoại tuyến sẽ tự sẵn sàng. Bạn có thể xem tiến độ chi tiết trong “Cài đặt agent”.</string>
+    <string name="chat_translation_download_required">Chưa tải mô hình dịch tiếng Anh–tiếng Trung trên thiết bị (khoảng 60 MB). Hãy vào “Cài đặt agent” và tải mô hình ngôn ngữ để dịch ngoại tuyến nội dung suy luận.</string>
+    <string name="chat_translation_view_progress">Xem tiến độ tải</string>
+    <string name="chat_go_to_settings">Mở cài đặt</string>
+    <string name="chat_continue_in_background">Tiếp tục trong nền</string>
+    <!-- Thẻ gợi ý cải tiến kỹ năng sau hội thoại. %1$s là lý do do agent cung cấp. -->
+    <string name="chat_skill_suggestion_update">Gợi ý cải tiến kỹ năng · Sửa kỹ năng hiện có</string>
+    <string name="chat_skill_suggestion_create">Gợi ý cải tiến kỹ năng · Lưu thành kỹ năng mới</string>
+    <string name="chat_skill_suggestion_reason">Lý do: %1$s</string>
+    <string name="chat_skill_update">Cập nhật kỹ năng</string>
+    <string name="chat_skill_save_as_new">Lưu thành kỹ năng mới</string>
+    <string name="chat_skill_create">Tạo kỹ năng</string>
+    <!-- Bảng agent con: số lượng theo trạng thái và số bước thực thi. -->
+    <string name="chat_fleet_title">Agent con chạy song song</string>
+    <string name="chat_fleet_running_count">Đang chạy %1$d</string>
+    <string name="chat_fleet_faulted_count">Có lỗi %1$d</string>
+    <string name="chat_fleet_other_count">Khác %1$d</string>
+    <string name="chat_fleet_running">Đang chạy</string>
+    <string name="chat_fleet_faulted">Có lỗi</string>
+    <string name="chat_fleet_idle">Rảnh</string>
+    <string name="chat_fleet_steps">%1$d bước</string>
+    <!-- Sự kiện runtime: %1$s là mã bước, %2$s là tiêu đề; trạng thái giữ nguyên giá trị kỹ thuật. -->
+    <string name="chat_event_plan_step">Bước %1$s · %2$s</string>
+    <string name="chat_event_status">Trạng thái: %1$s</string>
+    <string name="chat_event_approval_decision">Kết quả phê duyệt</string>
+    <string name="chat_floating_capsule">Thu gọn thành bong bóng nổi</string>
 </resources>

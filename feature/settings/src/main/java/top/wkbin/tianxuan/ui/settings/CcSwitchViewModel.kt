@@ -56,7 +56,7 @@ data class CcSwitchUiState(
     val upgradingAgent: CcAgentState? = null,
     val installLogs: List<String> = emptyList(),
     val showLogDialog: Boolean = false,
-    val logAgentTitle: String = "安装日志",
+    val logAgentTitle: String = "Nhật ký cài đặt",
 ) {
     val loopbackUrl: String get() = "http://127.0.0.1:$servicePort"
     val lanUrl: String? get() = deviceLanIp?.let { "http://$it:$servicePort" }
@@ -105,7 +105,7 @@ class CcSwitchViewModel(
     private val _upgradingAgent = MutableStateFlow<CcAgentState?>(null)
     private val _installLogs = MutableStateFlow<List<String>>(emptyList())
     private val _showLogDialog = MutableStateFlow(false)
-    private val _logAgentTitle = MutableStateFlow("Agent 安装日志")
+    private val _logAgentTitle = MutableStateFlow("Nhật ký cài đặt agent")
 
     val uiState: StateFlow<CcSwitchUiState> = combine(
         linuxRuntime.activeDistroId,
@@ -296,7 +296,7 @@ class CcSwitchViewModel(
             if (ok) _webPassword.value = newPassword
             withContext(Dispatchers.Main.immediate) {
                 _successMessage.value =
-                    if (ok) "Web 访问密码已重置（重启中枢生效）" else "Web 访问密码重置失败，请重试"
+                    if (ok) "Đã đặt lại mật khẩu truy cập Web (có hiệu lực khi khởi động lại trung tâm)" else "Không thể đặt lại mật khẩu truy cập Web, hãy thử lại"
             }
         }
     }
@@ -487,10 +487,10 @@ EOF
                 withContext(Dispatchers.Main.immediate) {
                     _isDaemonRunning.value = running
                     if (running) {
-                        _successMessage.value = "CC-Switch 守护进程已启动，端口 19870"
+                        _successMessage.value = "Đã khởi động daemon CC-Switch trên cổng 19870"
                     } else {
                         val lastLog = toolManager.getServiceLogs(toolId).takeLast(10).joinToString("\n").trim()
-                        _errorMessage.value = if (lastLog.isNotBlank()) "中枢启动后未保持运行，最新日志：\n$lastLog" else "中枢启动失败，端口未正常监听"
+                        _errorMessage.value = if (lastLog.isNotBlank()) "Trung tâm không duy trì hoạt động sau khi khởi động. Nhật ký mới nhất:\n$lastLog" else "Khởi động trung tâm thất bại, cổng không lắng nghe như mong đợi"
                     }
                 }
                 if (running) {
@@ -501,7 +501,7 @@ EOF
             } catch (e: Exception) {
                 logger.w("Failed to start cc-switch daemon: ${e.message}", e)
                 withContext(Dispatchers.Main.immediate) {
-                    _errorMessage.value = "启动中枢守护进程失败：${e.message}"
+                    _errorMessage.value = "Không thể khởi động daemon trung tâm: ${e.message}"
                 }
             } finally {
                 _isOperating.value = false
@@ -521,9 +521,9 @@ EOF
                     _isDaemonRunning.value = running
                     if (!running) {
                         _daemonStatus.value = null
-                        _successMessage.value = "CC-Switch 守护进程已停止"
+                        _successMessage.value = "Đã dừng daemon CC-Switch"
                     } else {
-                        _errorMessage.value = "守护进程未能停止，端口可能仍被占用"
+                        _errorMessage.value = "Không thể dừng daemon, cổng có thể vẫn đang được sử dụng"
                     }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
@@ -531,7 +531,7 @@ EOF
             } catch (e: Exception) {
                 logger.w("Failed to stop cc-switch daemon: ${e.message}", e)
                 withContext(Dispatchers.Main.immediate) {
-                    _errorMessage.value = "停止中枢守护进程失败：${e.message}"
+                    _errorMessage.value = "Không thể dừng daemon trung tâm: ${e.message}"
                 }
             } finally {
                 _isOperating.value = false
@@ -550,10 +550,10 @@ EOF
                 withContext(Dispatchers.Main.immediate) {
                     _isDaemonRunning.value = running
                     if (running) {
-                        _successMessage.value = "CC-Switch 守护进程已重启"
+                        _successMessage.value = "Đã khởi động lại daemon CC-Switch"
                     } else {
                         val lastLog = toolManager.getServiceLogs(toolId).takeLast(10).joinToString("\n").trim()
-                        _errorMessage.value = if (lastLog.isNotBlank()) "中枢重启后未保持运行，最新日志：\n$lastLog" else "中枢重启失败，端口未正常监听"
+                        _errorMessage.value = if (lastLog.isNotBlank()) "Trung tâm không duy trì hoạt động sau khi khởi động lại. Nhật ký mới nhất:\n$lastLog" else "Khởi động lại trung tâm thất bại, cổng không lắng nghe như mong đợi"
                     }
                 }
                 if (running) {
@@ -564,7 +564,7 @@ EOF
             } catch (e: Exception) {
                 logger.w("Failed to restart cc-switch daemon: ${e.message}", e)
                 withContext(Dispatchers.Main.immediate) {
-                    _errorMessage.value = "重启失败：${e.message}"
+                    _errorMessage.value = "Khởi động lại thất bại: ${e.message}"
                 }
             } finally {
                 _isOperating.value = false
@@ -607,9 +607,9 @@ EOF
                             )
                         } else it
                     }
-                    _successMessage.value = "已将 ${agent.type.displayName} 切换至 ${provider.name}"
+                    _successMessage.value = "Đã chuyển ${agent.type.displayName} sang ${provider.name}"
                 } else {
-                    _errorMessage.value = "切换 Provider 失败：${res.exceptionOrNull()?.message}"
+                    _errorMessage.value = "Đổi nhà cung cấp thất bại: ${res.exceptionOrNull()?.message}"
                 }
             } finally {
                 _isOperating.value = false
@@ -638,9 +638,9 @@ EOF
                 val saveRes = ccSwitchClient.saveProvider(profile)
                 if (saveRes.isSuccess) {
                     _providers.value = _providers.value.filterNot { it.id == profile.id } + profile
-                    _successMessage.value = "已从天玄模型库同步：${model.name}"
+                    _successMessage.value = "Đã đồng bộ từ thư viện mô hình TianXuan: ${model.name}"
                 } else {
-                    _errorMessage.value = "同步到 CC-Switch 失败：${saveRes.exceptionOrNull()?.message}"
+                    _errorMessage.value = "Đồng bộ sang CC-Switch thất bại: ${saveRes.exceptionOrNull()?.message}"
                 }
             } finally {
                 _isOperating.value = false
@@ -666,7 +666,7 @@ EOF
         _installingAgentType.value = agent.type
         _errorMessage.value = null
         _successMessage.value = null
-        _logAgentTitle.value = "${agent.type.displayName} 安装与部署"
+        _logAgentTitle.value = "Cài đặt và triển khai ${agent.type.displayName}"
         _showLogDialog.value = true
 
         val timeFormatter = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
@@ -677,7 +677,7 @@ EOF
             }
         }
 
-        _installLogs.value = listOf("[${timeFormatter.format(Date())}] [*] 准备安装/升级 ${agent.type.displayName} (目标版本: ${targetVersion ?: "最新版本"})...")
+        _installLogs.value = listOf("[${timeFormatter.format(Date())}] [*] Chuẩn bị cài đặt/nâng cấp ${agent.type.displayName} (phiên bản đích: ${targetVersion ?: "Mới nhất"})...")
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -693,18 +693,18 @@ EOF
                 )
 
                 if (isNodeTool) {
-                    log("[*] [步骤 1/3] 检查沙箱内 Node.js / npm 运行时环境...")
+                    log("[*] [Bước 1/3] Kiểm tra môi trường runtime Node.js / npm trong sandbox...")
                     val hasNode = linuxRuntime.execute(
                         ShellCommand("command -v npm >/dev/null 2>&1 || [ -x /opt/tianxuan/bin/npm ] || [ -x /usr/local/bin/npm ]")
                     ).isSuccess
                     if (!hasNode) {
-                        log("[!] 沙箱内未检测到可用 npm，正在通过天玄依赖管理器自动解析...")
+                        log("[!] Không tìm thấy npm khả dụng trong sandbox, đang tự xử lý qua trình quản lý phụ thuộc TianXuan...")
                         val depRes = dependencyManager.acquire(
                             RuntimeRequirement(RuntimeName.NODE),
                             "cc-switch",
                         )
                         if (depRes is top.wkbin.tianxuan.core.common.result.AppResult.Failure) {
-                            log("[!] 依赖管理器未命中预置包，降级使用 apt-get 安装 nodejs & npm (请耐心等待)...")
+                            log("[!] Không có gói cài sẵn trong trình quản lý phụ thuộc, chuyển sang apt-get để cài nodejs & npm (vui lòng chờ)...")
                             val aptRes = linuxRuntime.execute(
                                 ShellCommand(
                                     commandLine = "apt-get update -y && apt-get install -y nodejs npm curl",
@@ -714,25 +714,25 @@ EOF
                                 ),
                             )
                             if (!aptRes.isSuccess) {
-                                log("[-] apt-get 安装 nodejs 失败，返回码: ${aptRes.exitCode}")
+                                log("[-] Cài nodejs bằng apt-get thất bại, mã trả về: ${aptRes.exitCode}")
                             }
                         } else {
-                            log("[+] Node.js 运行时依赖装载完成")
+                            log("[+] Đã nạp các phụ thuộc runtime Node.js")
                         }
                     } else {
-                        log("[+] Node.js / npm 运行时环境已就绪")
+                        log("[+] Môi trường runtime Node.js / npm đã sẵn sàng")
                     }
                 } else if (agent.type == CcAgentType.HERMES) {
-                    log("[*] [步骤 1/3] 检查沙箱内 Python3 运行时环境...")
+                    log("[*] [Bước 1/3] Kiểm tra môi trường runtime Python3 trong sandbox...")
                     val hasPython = linuxRuntime.execute(ShellCommand("command -v python3 >/dev/null 2>&1")).isSuccess
                     if (!hasPython) {
-                        log("[!] 正在装载 Python 运行时依赖...")
+                        log("[!] Đang nạp các phụ thuộc runtime Python...")
                         dependencyManager.acquire(
                             RuntimeRequirement(RuntimeName.PYTHON),
                             "cc-switch",
                         )
                     } else {
-                        log("[+] Python3 运行时环境已就绪")
+                        log("[+] Môi trường runtime Python3 đã sẵn sàng")
                     }
                 }
 
@@ -750,7 +750,7 @@ EOF
 
                 val installScript = if (agent.type == CcAgentType.HERMES) {
                     val pkg = if (targetVersion.isNullOrBlank()) "hermes-agent" else "hermes-agent==$targetVersion"
-                    log("[*] [步骤 2/3] 执行 pip 安装: $pkg...")
+                    log("[*] [Bước 2/3] Cài đặt bằng pip: $pkg...")
                     """
                     export PATH="/opt/tianxuan/bin:/usr/local/bin:/root/.local/bin:${'$'}PATH"
                     pip install --break-system-packages $pkg -i https://pypi.tuna.tsinghua.edu.cn/simple || pip install --break-system-packages $pkg
@@ -776,13 +776,13 @@ export PATH="/opt/tianxuan/bin:/usr/local/bin:/root/.local/bin:${'$'}PATH"
 EOF
                         printf 'exec "%s" "${'$'}@"\n' "${'$'}real_bin" >> "/opt/tianxuan/bin/hermes"
                         chmod 755 "/opt/tianxuan/bin/hermes" 2>/dev/null || true
-                        echo "[+] 已建立可执行包装器: /opt/tianxuan/bin/hermes -> ${'$'}real_bin"
+                        echo "[+] Đã tạo trình bao bọc thực thi: /opt/tianxuan/bin/hermes -> ${'$'}real_bin"
                     fi
                     """.trimIndent()
                 } else {
                     val verSuffix = if (targetVersion.isNullOrBlank()) "" else "@$targetVersion"
-                    log("[*] [步骤 2/3] 执行 npm 全局安装: $npmPackage$verSuffix...")
-                    log("[*] 正在从国内加速镜像 (https://registry.npmmirror.com) 下载与构建...")
+                    log("[*] [Bước 2/3] Cài đặt npm toàn cục: $npmPackage$verSuffix...")
+                    log("[*] Đang tải và build từ mirror tăng tốc tại Trung Quốc (https://registry.npmmirror.com)...")
                     """
                     export PATH="/opt/tianxuan/bin:/usr/local/bin:/root/.local/bin:${'$'}PATH"
                     NPM_PREFIX="${'$'}(npm config get prefix 2>/dev/null || true)"
@@ -848,7 +848,7 @@ export PATH="/opt/tianxuan/bin:/usr/local/bin:/root/.local/bin:${'$'}PATH"
 EOF
                         printf 'exec node "%s" "$@"\n' "${'$'}entry_file" >> "/usr/local/bin/${agent.type.defaultExecutable}"
                         chmod 755 "/usr/local/bin/${agent.type.defaultExecutable}" 2>/dev/null || true
-                        echo "[+] 确认主入口包装器: /opt/tianxuan/bin/${agent.type.defaultExecutable} -> ${'$'}entry_file"
+                        echo "[+] Đã xác nhận trình bao bọc điểm vào chính: /opt/tianxuan/bin/${agent.type.defaultExecutable} -> ${'$'}entry_file"
                     fi
                     """.trimIndent()
                 }
@@ -866,7 +866,7 @@ EOF
                 )
 
                 // 3. 严格在沙箱内校验可执行文件是否生成
-                log("[*] [步骤 3/3] 验证沙箱可执行文件路径与版本...")
+                log("[*] [Bước 3/3] Xác minh đường dẫn và phiên bản tệp thực thi trong sandbox...")
                 val verifyScript = """
                     export PATH="/opt/tianxuan/bin:/usr/local/bin:/root/.local/bin:${'$'}PATH"
                     NPM_PREFIX="${'$'}(npm config get prefix 2>/dev/null || true)"
@@ -949,7 +949,7 @@ EOF
 
                 if (verifyRes.isSuccess && verifyRes.stdout.isNotBlank()) {
                     val binPath = verifyRes.stdout.trim().lines().firstOrNull { it.isNotBlank() } ?: verifyRes.stdout.trim()
-                    log("[+] 检测到可执行命令路径: $binPath")
+                    log("[+] Đường dẫn lệnh thực thi tìm thấy: $binPath")
                     val verRes = linuxRuntime.execute(
                         ShellCommand(
                             commandLine = """
@@ -972,23 +972,23 @@ EOF
                         ),
                     )
                     val rawVer = verRes.stdout.trim().lines().firstOrNull { it.isNotBlank() }
-                    val cleanVer = rawVer?.let { Regex("""[0-9]+(\.[0-9]+)+""").find(it)?.value } ?: rawVer ?: targetVersion ?: "已安装"
-                    log("[+] 版本检测结果: $cleanVer")
-                    log("[+] [SUCCESS] ${agent.type.displayName} 安装成功！可随时在终端中运行 '${agent.type.defaultExecutable}'")
+                    val cleanVer = rawVer?.let { Regex("""[0-9]+(\.[0-9]+)+""").find(it)?.value } ?: rawVer ?: targetVersion ?: "Đã cài"
+                    log("[+] Phiên bản phát hiện được: $cleanVer")
+                    log("[+] [SUCCESS] Đã cài đặt ${agent.type.displayName}! Bạn có thể chạy '${agent.type.defaultExecutable}' trong terminal")
                     withContext(Dispatchers.Main.immediate) {
-                        _successMessage.value = "${agent.type.displayName} 安装成功！当前版本：$cleanVer"
+                        _successMessage.value = "Đã cài đặt ${agent.type.displayName}! Phiên bản hiện tại: $cleanVer"
                     }
                 } else {
-                    log("[-] 验证失败：沙箱中未找到可执行命令 '${agent.type.defaultExecutable}'")
+                    log("[-] Xác minh thất bại: không tìm thấy lệnh thực thi '${agent.type.defaultExecutable}' trong sandbox")
                     if (cmdRes.stderr.isNotBlank()) {
-                        log("[-] 进程错误输出 (stderr):\n${cmdRes.stderr.trim()}")
+                        log("[-] Đầu ra lỗi của tiến trình (stderr):\n${cmdRes.stderr.trim()}")
                     }
                     val lastErr = cmdRes.stderr.ifBlank { cmdRes.stdout }.lines()
                         .filter { it.isNotBlank() }
                         .takeLast(3)
                         .joinToString("; ")
                     withContext(Dispatchers.Main.immediate) {
-                        _errorMessage.value = "安装未完成：${lastErr.ifBlank { "未在沙箱中生成 ${agent.type.defaultExecutable} 命令，请点击下方查看日志排查" }}"
+                        _errorMessage.value = "Cài đặt chưa hoàn tất: ${lastErr.ifBlank { "Chưa tạo được lệnh ${agent.type.defaultExecutable} trong sandbox, hãy nhấn bên dưới để xem nhật ký và tìm lỗi" }}"
                     }
                 }
 
@@ -998,10 +998,10 @@ EOF
                 throw e // 取消必须透传
             } catch (e: Exception) {
                 logger.w("Install agent failed: ${e.message}", e)
-                log("[-] 安装过程发生异常: ${e.message}")
+                log("[-] Có lỗi trong quá trình cài đặt: ${e.message}")
                 log(e.stackTraceToString())
                 withContext(Dispatchers.Main.immediate) {
-                    _errorMessage.value = "操作失败：${e.message}"
+                    _errorMessage.value = "Thao tác thất bại: ${e.message}"
                 }
             } finally {
                 _installingAgentType.value = null

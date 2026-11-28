@@ -100,13 +100,13 @@ fun ModelProfilesScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RuntimeTopBar(
-                title = "模型档案",
+                title = "Hồ sơ mô hình",
                 onBack = onBack,
                 actions = {
                     // 📥 导入按钮
                     RuntimeIconButton(
                         onClick = { showImportDialog = true },
-                        contentDescription = "导入模型配置",
+                        contentDescription = "Nhập cấu hình mô hình",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Download,
@@ -118,12 +118,12 @@ fun ModelProfilesScreen(
                     RuntimeIconButton(
                         onClick = {
                             if (models.isEmpty()) {
-                                Toast.makeText(context, "暂无模型档案可导出", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Chưa có hồ sơ mô hình để xuất", Toast.LENGTH_SHORT).show()
                             } else {
                                 showExportAllDialog = true
                             }
                         },
-                        contentDescription = "导出全部模型配置",
+                        contentDescription = "Xuất toàn bộ cấu hình mô hình",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.OpenInNew,
@@ -159,12 +159,12 @@ fun ModelProfilesScreen(
                     importing = false
                     result.fold(
                         onSuccess = { count ->
-                            Toast.makeText(context, "成功导入 $count 个模型档案", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Đã nhập thành công $count hồ sơ mô hình", Toast.LENGTH_SHORT).show()
                             showImportDialog = false
                         },
                         onFailure = { err ->
                             android.util.Log.e("ModelProfiles", "Profile import failed: ${err.message}", err)
-                            Toast.makeText(context, "导入失败：JSON 无法解析或配置无效，请检查后重试", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Nhập thất bại: không thể phân tích JSON hoặc cấu hình không hợp lệ. Hãy kiểm tra rồi thử lại", Toast.LENGTH_LONG).show()
                         }
                     )
                 }
@@ -175,8 +175,8 @@ fun ModelProfilesScreen(
     // 批量导出弹窗
     if (showExportAllDialog) {
         ModelExportDialog(
-            title = "批量导出模型档案",
-            subtitle = "准备导出 ${models.size} 个模型档案配置",
+            title = "Xuất hàng loạt hồ sơ mô hình",
+            subtitle = "Chuẩn bị xuất ${models.size} cấu hình hồ sơ mô hình",
             onDismiss = { showExportAllDialog = false },
             onGenerateJson = { includeKeys ->
                 viewModel.exportAllProfilesJson(includeKeys)
@@ -187,8 +187,8 @@ fun ModelProfilesScreen(
     // 单项导出弹窗
     singleExportModel?.let { targetModel ->
         ModelExportDialog(
-            title = "导出模型档案配置",
-            subtitle = "模型: ${targetModel.name} (${targetModel.provider})",
+            title = "Xuất cấu hình hồ sơ mô hình",
+            subtitle = "Mô hình: ${targetModel.name} (${targetModel.provider})",
             defaultFileName = "tianxuan_model_${targetModel.name.replace(" ", "_")}.json",
             onDismiss = { singleExportModel = null },
             onGenerateJson = { includeKeys ->
@@ -204,10 +204,10 @@ fun ModelProfilesScreen(
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     RuntimeIcon(RuntimeIconName.Alert, Modifier.size(20.dp), MaterialTheme.colorScheme.error)
-                    Text("删除模型档案", fontWeight = FontWeight.Bold)
+                    Text("Xóa hồ sơ mô hình", fontWeight = FontWeight.Bold)
                 }
             },
-            text = { Text("确定要删除模型档案「${target.name}」吗？此操作将同时清理该模型保存的 API Key。") },
+            text = { Text("Bạn có chắc muốn xóa hồ sơ mô hình ‘${target.name}’? Thao tác này cũng xóa API Key đã lưu của mô hình.") },
             confirmButton = {
                 RuntimeButton(
                     onClick = {
@@ -215,12 +215,12 @@ fun ModelProfilesScreen(
                         modelPendingDelete = null
                     },
                 ) {
-                    Text("确认删除")
+                    Text("Xác nhận xóa")
                 }
             },
             dismissButton = {
                 RuntimeTextButton(onClick = { modelPendingDelete = null }) {
-                    Text("取消")
+                    Text("Hủy")
                 }
             },
         )
@@ -251,7 +251,7 @@ private fun ModelProfilesContent(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     RuntimeIcon(RuntimeIconName.Plus, Modifier.size(16.dp), MaterialTheme.colorScheme.onPrimary)
-                    Text("新增模型档案", fontWeight = FontWeight.Bold)
+                    Text("Thêm hồ sơ mô hình", fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -264,9 +264,9 @@ private fun ModelProfilesContent(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     IconTile(RuntimeIconName.Model, color = MaterialTheme.colorScheme.primary, size = 42.dp)
-                    Text("暂无模型档案", style = MaterialTheme.typography.titleMedium)
+                    Text("Chưa có hồ sơ mô hình", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "点击上方新增或从右上角导入 OpenAI / DeepSeek / Claude / 本地模型配置",
+                        "Nhấn nút phía trên để thêm hoặc nhập cấu hình OpenAI / DeepSeek / Claude / mô hình cục bộ từ góc trên bên phải",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -340,7 +340,7 @@ private fun ModelProfileCard(
                     shape = RoundedCornerShape(6.dp),
                 ) {
                     Text(
-                        text = "当前激活",
+                        text = "Đang hoạt động",
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -351,7 +351,7 @@ private fun ModelProfileCard(
                     onClick = onActivate,
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                 ) {
-                    Text("设为激活", style = MaterialTheme.typography.labelMedium)
+                    Text("Kích hoạt", style = MaterialTheme.typography.labelMedium)
                 }
             }
 
@@ -362,7 +362,7 @@ private fun ModelProfileCard(
                     modifier = Modifier
                         .minimumInteractiveComponentSize()
                         .size(32.dp),
-                    contentDescription = "更多操作",
+                    contentDescription = "Thao tác khác",
                 ) {
                     RuntimeIcon(
                         name = RuntimeIconName.More,
@@ -379,7 +379,7 @@ private fun ModelProfileCard(
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 RuntimeIcon(RuntimeIconName.Edit, Modifier.size(16.dp))
-                                Text("编辑档案")
+                                Text("Sửa hồ sơ")
                             }
                         },
                         onClick = {
@@ -391,7 +391,7 @@ private fun ModelProfileCard(
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 RuntimeIcon(RuntimeIconName.OpenInNew, Modifier.size(16.dp))
-                                Text("导出为 JSON")
+                                Text("Xuất thành JSON")
                             }
                         },
                         onClick = {
@@ -404,7 +404,7 @@ private fun ModelProfileCard(
                             text = {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     RuntimeIcon(RuntimeIconName.Check, Modifier.size(16.dp))
-                                    Text("设为激活")
+                                    Text("Kích hoạt")
                                 }
                             },
                             onClick = {
@@ -418,7 +418,7 @@ private fun ModelProfileCard(
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 RuntimeIcon(RuntimeIconName.Trash, Modifier.size(16.dp), MaterialTheme.colorScheme.error)
-                                Text("删除档案", color = MaterialTheme.colorScheme.error)
+                                Text("Xóa hồ sơ", color = MaterialTheme.colorScheme.error)
                             }
                         },
                         onClick = {
@@ -458,7 +458,7 @@ private fun ModelProfileCard(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
                     ) {
                         Text(
-                            text = "+${modelList.size - 3} 更多",
+                            text = "+${modelList.size - 3} mô hình khác",
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -478,8 +478,8 @@ private fun ModelProfileCard(
             if (model.baseUrl.isNotBlank()) add(model.baseUrl)
             if (model.apiKeyCount > 0) add("${model.apiKeyCount} Key")
             if (model.requestsPerMinutePerKey > 0) add("${model.requestsPerMinutePerKey} RPM/Key")
-            explicitCtxTokens?.let { add("${formatProfileContextWindow(it)} 上下文") }
-            autoCtxTokens?.let { add("自动 ${formatProfileContextWindow(it)} 上下文") }
+            explicitCtxTokens?.let { add("Ngữ cảnh ${formatProfileContextWindow(it)}") }
+            autoCtxTokens?.let { add("Ngữ cảnh tự động ${formatProfileContextWindow(it)}") }
         }.joinToString(" • ")
 
         if (metadataSummary.isNotBlank()) {
@@ -521,10 +521,10 @@ fun ModelImportDialog(
                 if (!fileContent.isNullOrBlank()) {
                     jsonText = fileContent
                     selectedTab = 0
-                    Toast.makeText(context, "已载入文件内容", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Đã tải nội dung tệp", Toast.LENGTH_SHORT).show()
                 }
             }.onFailure {
-                Toast.makeText(context, "读取文件失败: ${it.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Đọc tệp thất bại: ${it.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -534,7 +534,7 @@ fun ModelImportDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RuntimeIcon(RuntimeIconName.Download, Modifier.size(20.dp), MaterialTheme.colorScheme.primary)
-                Text("导入模型档案", fontWeight = FontWeight.Bold)
+                Text("Nhập hồ sơ mô hình", fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -546,7 +546,7 @@ fun ModelImportDialog(
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        text = { Text("剪贴板粘贴") },
+                        text = { Text("Dán từ bộ nhớ tạm") },
                     )
                     Tab(
                         selected = selectedTab == 1,
@@ -554,7 +554,7 @@ fun ModelImportDialog(
                             selectedTab = 1
                             filePickerLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
                         },
-                        text = { Text("选择文件 (.json)") },
+                        text = { Text("Chọn tệp (.json)") },
                     )
                 }
 
@@ -563,7 +563,7 @@ fun ModelImportDialog(
                         value = jsonText,
                         onValueChange = { jsonText = it },
                         modifier = Modifier.fillMaxWidth().height(170.dp),
-                        placeholder = { Text("粘贴导出的 JSON 模型配置（支持单个或批量 bundle）") },
+                        placeholder = { Text("Dán cấu hình mô hình JSON đã xuất (hỗ trợ từng hồ sơ hoặc bundle hàng loạt)") },
                         textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                         shape = RoundedCornerShape(10.dp),
                     )
@@ -575,13 +575,13 @@ fun ModelImportDialog(
                             if (clipText.isNotBlank()) {
                                 jsonText = clipText
                             } else {
-                                Toast.makeText(context, "剪贴板为空", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Bộ nhớ tạm trống", Toast.LENGTH_SHORT).show()
                             }
                         },
                         modifier = Modifier.fillMaxWidth().height(36.dp),
                         shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text("一键粘贴剪贴板内容")
+                        Text("Dán nội dung bộ nhớ tạm")
                     }
                 } else {
                     Column(
@@ -596,12 +596,12 @@ fun ModelImportDialog(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 RuntimeIcon(RuntimeIconName.File, Modifier.size(16.dp))
-                                Text("选择本地 JSON 文件")
+                                Text("Chọn tệp JSON trên thiết bị")
                             }
                         }
                         if (jsonText.isNotBlank()) {
                             Text(
-                                text = "已载入 ${jsonText.length} 字符",
+                                text = "Đã tải ${jsonText.length} ký tự",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -619,12 +619,12 @@ fun ModelImportDialog(
                     RuntimeCircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.width(6.dp))
                 }
-                Text(if (importing) "正在导入…" else "开始导入")
+                Text(if (importing) "Đang nhập…" else "Bắt đầu nhập")
             }
         },
         dismissButton = {
             RuntimeTextButton(onClick = onDismiss) {
-                Text("取消")
+                Text("Hủy")
             }
         },
     )
@@ -657,10 +657,10 @@ fun ModelExportDialog(
                         stream.bufferedWriter().use { it.write(jsonContent) }
                     }
                 }.onSuccess {
-                    Toast.makeText(context, "导出文件保存成功", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Đã lưu tệp xuất thành công", Toast.LENGTH_SHORT).show()
                     onDismiss()
                 }.onFailure {
-                    Toast.makeText(context, "保存失败: ${it.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Lưu thất bại: ${it.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -699,11 +699,11 @@ fun ModelExportDialog(
                         )
                         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
-                                text = "包含 API Key",
+                                text = "Kèm API Key",
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                             )
                             Text(
-                                text = if (includeKeys) "⚠️ 包含敏感凭据，请妥善保管，切勿公开发送" else "推荐：脱敏导出（不含 Key），适合安全分享",
+                                text = if (includeKeys) "⚠️ Có thông tin xác thực nhạy cảm; hãy bảo quản cẩn thận, không chia sẻ công khai" else "Khuyên dùng: xuất không kèm Key để chia sẻ an toàn",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                 color = if (includeKeys) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -718,7 +718,7 @@ fun ModelExportDialog(
                         onClick = {
                             coroutineScope.launch {
                                 val jsonStr = onGenerateJson(includeKeys)
-                                copyToClipboard(context, jsonStr, "TianXuan Model Config", "已复制 JSON 配置到剪贴板")
+                                copyToClipboard(context, jsonStr, "CTHarness Model Config", "Đã sao chép cấu hình JSON vào bộ nhớ tạm")
                                 onDismiss()
                             }
                         },
@@ -727,7 +727,7 @@ fun ModelExportDialog(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             RuntimeIcon(RuntimeIconName.Copy, Modifier.size(16.dp))
-                            Text("复制 JSON 到剪贴板")
+                            Text("Sao chép JSON vào bộ nhớ tạm")
                         }
                     }
 
@@ -741,7 +741,7 @@ fun ModelExportDialog(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             RuntimeIcon(RuntimeIconName.Save, Modifier.size(16.dp))
-                            Text("保存为 .json 文件")
+                            Text("Lưu thành tệp .json")
                         }
                     }
 
@@ -752,10 +752,10 @@ fun ModelExportDialog(
                                 val jsonStr = onGenerateJson(includeKeys)
                                 val sendIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_SUBJECT, "TianXuan Model Profiles")
+                                    putExtra(Intent.EXTRA_SUBJECT, "CTHarness Model Profiles")
                                     putExtra(Intent.EXTRA_TEXT, jsonStr)
                                 }
-                                context.startActivity(Intent.createChooser(sendIntent, "分享模型配置"))
+                                context.startActivity(Intent.createChooser(sendIntent, "Chia sẻ cấu hình mô hình"))
                                 onDismiss()
                             }
                         },
@@ -764,7 +764,7 @@ fun ModelExportDialog(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             RuntimeIcon(RuntimeIconName.OpenInNew, Modifier.size(16.dp))
-                            Text("系统分享 (Share Sheet)")
+                            Text("Chia sẻ qua hệ thống")
                         }
                     }
                 }
@@ -773,7 +773,7 @@ fun ModelExportDialog(
         confirmButton = {},
         dismissButton = {
             RuntimeTextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text("Đóng")
             }
         },
     )

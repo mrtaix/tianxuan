@@ -108,8 +108,8 @@ fun DistroManagementScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             RuntimeTopBar(
-                title = "Linux 发行版管理",
-                statusText = "多沙箱并存与动态切换",
+                title = "Quản lý bản phân phối Linux",
+                statusText = "Sử dụng đồng thời và chuyển đổi linh hoạt giữa nhiều sandbox",
                 onBack = onBack,
             )
         },
@@ -123,7 +123,7 @@ fun DistroManagementScreen(
         ) {
             item {
                 NoticeBanner(
-                    text = "天玄支持多套 Linux 系统并存。所有系统均自动挂载 /workspace 代码工程，/sdcard 外部存储按「存储挂载与共享」页的开关注入，各发行版软件生态与包管理器完全独立隔离。",
+                    text = "Trí Phường hỗ trợ nhiều hệ thống Linux hoạt động đồng thời. Tất cả hệ thống tự động gắn kết dự án mã nguồn tại /workspace; bộ nhớ ngoài /sdcard được gắn kết theo tùy chọn trong trang “Gắn kết và chia sẻ bộ nhớ”. Hệ sinh thái phần mềm và trình quản lý gói của mỗi bản phân phối hoàn toàn độc lập.",
                 )
             }
 
@@ -135,7 +135,7 @@ fun DistroManagementScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "已安装沙箱 (${installedDistros.size})",
+                        text = "Sandbox đã cài đặt (${installedDistros.size})",
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -151,7 +151,7 @@ fun DistroManagementScreen(
                             tint = MaterialTheme.colorScheme.onPrimary,
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "安装新系统", style = MaterialTheme.typography.labelMedium)
+                        Text(text = "Cài hệ thống mới", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -181,7 +181,7 @@ fun DistroManagementScreen(
         }
     }
 
-    // 安装新系统对话框（旋转后只要安装仍在进行就会重新显示进度）
+    // Cài hệ thống mới对话框（旋转后只要安装仍在进行就会重新显示进度）
     if (showInstallDialog || installState.isInstalling) {
         InstallDistroDialog(
             installedIds = installedDistros.map { it.id }.toSet(),
@@ -206,7 +206,7 @@ fun DistroManagementScreen(
         )
     }
 
-    // 重置沙箱确认对话框（带 3 秒倒计时锁）
+    // Đặt lại sandbox确认对话框（带 3 秒倒计时锁）
     distroToReset?.let { target ->
         ResetDistroConfirmDialog(
             distro = target,
@@ -223,7 +223,7 @@ fun DistroManagementScreen(
         )
     }
 
-    // 删除系统确认对话框（带 3 秒倒计时锁）
+    // Xóa hệ thống确认对话框（带 3 秒倒计时锁）
     distroToUninstall?.let { target ->
         DeleteDistroConfirmDialog(
             distro = target,
@@ -260,19 +260,19 @@ private fun ResetDistroConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "重置 ${distro.displayName} 沙箱？",
+                text = "Đặt lại sandbox ${distro.displayName}?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "• 将清除自行安装的软件包与系统修改",
+                    text = "• Các gói tự cài đặt và thay đổi hệ thống sẽ bị xóa",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "• 不会删除 /workspace 中的项目代码",
+                    text = "• Không xóa mã nguồn dự án trong /workspace",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -288,14 +288,14 @@ private fun ResetDistroConfirmDialog(
                 ),
             ) {
                 Text(
-                    text = if (countdown > 0) "确认重置 (${countdown}s)" else "确认重置",
+                    text = if (countdown > 0) "Xác nhận đặt lại (${countdown}s)" else "Xác nhận đặt lại",
                     color = if (countdown == 0) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onError.copy(alpha = 0.6f),
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "取消")
+                Text(text = "Hủy")
             }
         },
     )
@@ -320,19 +320,19 @@ private fun DeleteDistroConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "删除 ${distro.displayName} 系统？",
+                text = "Xóa hệ thống ${distro.displayName}?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "• 将彻底清除该 Linux 发行版与已安装软件",
+                    text = "• Bản phân phối Linux này và phần mềm đã cài sẽ bị xóa hoàn toàn",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "• 不会删除 /workspace 中的项目代码",
+                    text = "• Không xóa mã nguồn dự án trong /workspace",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -348,14 +348,14 @@ private fun DeleteDistroConfirmDialog(
                 ),
             ) {
                 Text(
-                    text = if (countdown > 0) "确认删除 (${countdown}s)" else "确认删除",
+                    text = if (countdown > 0) "Xác nhận xóa (${countdown}s)" else "Xác nhận xóa",
                     color = if (countdown == 0) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onError.copy(alpha = 0.6f),
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "取消")
+                Text(text = "Hủy")
             }
         },
     )
@@ -413,7 +413,7 @@ private fun DistroItemCard(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = "标识: ${distro.id} · 包管理: ${distro.packageManager} · 占用: ${formatSize(distro.sizeBytes)}",
+                            text = "Mã định danh: ${distro.id} · Trình quản lý gói: ${distro.packageManager} · Dung lượng: ${formatSize(distro.sizeBytes)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -423,7 +423,7 @@ private fun DistroItemCard(
                 }
 
                 if (isActive) {
-                    StatusBadge(text = "主系统", color = successStatusColor())
+                    StatusBadge(text = "Hệ thống chính", color = successStatusColor())
                 }
             }
 
@@ -436,7 +436,7 @@ private fun DistroItemCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // 按钮 1: 设为主系统 (当前为主系统或仅有 1 个系统时置灰禁用)
+                // 按钮 1: Đặt làm hệ thống chính (当前为Hệ thống chính或仅有 1 个系统时置灰禁用)
                 OutlinedButton(
                     onClick = onSwitchActive,
                     enabled = !isActive && canOperateMulti && !isRestoring && !isDeleting,
@@ -445,13 +445,13 @@ private fun DistroItemCard(
                     modifier = Modifier.weight(1f),
                 ) {
                     Text(
-                        text = "设为主系统",
+                        text = "Đặt làm hệ thống chính",
                         style = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
                     )
                 }
 
-                // 按钮 2: 重置沙箱 (执行中显示正在还原...并锁死)
+                // 按钮 2: Đặt lại sandbox (执行中显示Đang khôi phục...并锁死)
                 OutlinedButton(
                     onClick = onReset,
                     enabled = !isRestoring && !isDeleting,
@@ -466,13 +466,13 @@ private fun DistroItemCard(
                             color = MaterialTheme.colorScheme.primary,
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "正在还原...", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Text(text = "Đang khôi phục...", style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     } else {
-                        Text(text = "重置沙箱", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Text(text = "Đặt lại sandbox", style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     }
                 }
 
-                // 按钮 3: 删除系统 (仅有 1 个系统时置灰禁用，执行中显示正在删除...并锁死)
+                // 按钮 3: Xóa hệ thống (仅有 1 个系统时置灰禁用，执行中显示Đang xóa...并锁死)
                 OutlinedButton(
                     onClick = onUninstall,
                     enabled = canOperateMulti && !isRestoring && !isDeleting,
@@ -496,10 +496,10 @@ private fun DistroItemCard(
                             color = MaterialTheme.colorScheme.error,
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "正在删除...", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Text(text = "Đang xóa...", style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     } else {
                         Text(
-                            text = "删除系统",
+                            text = "Xóa hệ thống",
                             style = MaterialTheme.typography.labelSmall,
                             maxLines = 1,
                         )
@@ -507,10 +507,10 @@ private fun DistroItemCard(
                 }
             }
 
-            // 单系统时「设为主系统」按钮会置灰，补充解释避免用户困惑
+            // 单系统时「Đặt làm hệ thống chính」按钮会置灰，补充解释避免用户困惑
             if (!isActive && !canOperateMulti) {
                 Text(
-                    text = "当前仅有一套系统，无需切换主系统",
+                    text = "Hiện chỉ có một hệ thống, không cần đổi hệ thống chính",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -541,7 +541,7 @@ private fun InstallDistroDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = if (isInstalling) "正在安装 Linux 沙箱..." else "安装新 Linux 发行版",
+                text = if (isInstalling) "Đang cài sandbox Linux..." else "Cài bản phân phối Linux mới",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             )
         },
@@ -563,17 +563,17 @@ private fun InstallDistroDialog(
                             modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
                         )
                         Text(
-                            text = progressText ?: "正在下载并配置 RootFS...",
+                            text = progressText ?: "Đang tải xuống và cấu hình RootFS...",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 } else {
                     if (availableDistros.isEmpty()) {
-                        Text(text = "所有预置 Linux 发行版均已安装完毕！")
+                        Text(text = "Đã cài đặt tất cả bản phân phối Linux có sẵn!")
                     } else {
                         Text(
-                            text = "选择要下载并安装的 Linux 系统：",
+                            text = "Chọn hệ thống Linux để tải xuống và cài đặt:",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -614,7 +614,7 @@ private fun InstallDistroDialog(
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "下载线路与镜像加速：",
+                            text = "Nguồn tải xuống và tăng tốc mirror:",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -631,7 +631,7 @@ private fun InstallDistroDialog(
                                     ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                                 } else ButtonDefaults.outlinedButtonColors(),
                             ) {
-                                Text("自动加速", style = MaterialTheme.typography.labelSmall)
+                                Text("Tự động tăng tốc", style = MaterialTheme.typography.labelSmall)
                             }
                             OutlinedButton(
                                 onClick = { selectedRoute = RegistryRoute.CHINA_ACCELERATED },
@@ -641,7 +641,7 @@ private fun InstallDistroDialog(
                                     ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                                 } else ButtonDefaults.outlinedButtonColors(),
                             ) {
-                                Text("国内镜像", style = MaterialTheme.typography.labelSmall)
+                                Text("Mirror trong nước", style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
@@ -662,14 +662,14 @@ private fun InstallDistroDialog(
                     onClick = { onConfirmInstall(selectedSpec, selectedRoute) },
                     shape = RoundedCornerShape(8.dp),
                 ) {
-                    Text(text = "开始安装")
+                    Text(text = "Bắt đầu cài đặt")
                 }
             }
         },
         dismissButton = {
             if (!isInstalling) {
                 TextButton(onClick = onDismiss) {
-                    Text(text = "取消")
+                    Text(text = "Hủy")
                 }
             }
         },

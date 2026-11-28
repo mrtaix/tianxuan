@@ -70,7 +70,7 @@ fun StorageMountSettingsScreen(
     val customBindings by viewModel.customMountBindings.collectAsStateWithLifecycle()
 
     var showAddDialog by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    // 待确认删除的挂载点 id（破坏性操作二次确认）
+    // 待Xác nhận xóa的挂载点 id（破坏性操作二次确认）
     var pendingDeleteBindingId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     val pendingDeleteBinding = pendingDeleteBindingId?.let { id -> customBindings.firstOrNull { it.id == id } }
 
@@ -78,8 +78,8 @@ fun StorageMountSettingsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RuntimeTopBar(
-                title = "存储挂载与共享",
-                statusText = "PRoot 宿主存储映射 (-b)",
+                title = "Gắn kết và chia sẻ bộ nhớ",
+                statusText = "Ánh xạ bộ nhớ máy chủ PRoot (-b)",
                 onBack = onBack,
             )
         },
@@ -93,14 +93,14 @@ fun StorageMountSettingsScreen(
         ) {
             item {
                 NoticeBanner(
-                    text = "挂载仅作用于 Linux 沙箱内的进程（终端、智枢 Agent、构建任务与后台服务），不影响文件浏览器——文件浏览器始终直接访问宿主存储。挂载在会话启动时注入，修改后新建的终端 / 构建任务才会应用。完整读写还需在系统设置中授予「所有文件访问」权限。",
+                    text = "Điểm gắn kết chỉ áp dụng cho các tiến trình trong sandbox Linux (terminal, Agent Trí Phường, tác vụ build và dịch vụ nền), không ảnh hưởng đến trình duyệt tệp — trình duyệt luôn truy cập trực tiếp bộ nhớ máy chủ. Điểm gắn kết được áp dụng khi khởi chạy phiên; thay đổi chỉ có hiệu lực với terminal/tác vụ build tạo mới. Để đọc ghi đầy đủ, hãy cấp quyền “Truy cập tất cả tệp” trong cài đặt hệ thống.",
                 )
             }
 
             // 1. 系统预置快捷挂载
             item {
                 Text(
-                    text = "系统预设快捷挂载",
+                    text = "Điểm gắn kết nhanh có sẵn của hệ thống",
                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -114,7 +114,7 @@ fun StorageMountSettingsScreen(
                     Column {
                         MountToggleRow(
                             icon = RuntimeIconName.FolderDownload,
-                            title = "下载目录 (Download)",
+                            title = "Thư mục tải xuống (Download)",
                             hostPath = "/storage/emulated/0/Download",
                             guestPath = "/sdcard/Download",
                             checked = downloadEnabled,
@@ -123,7 +123,7 @@ fun StorageMountSettingsScreen(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                         MountToggleRow(
                             icon = RuntimeIconName.Document,
-                            title = "文档目录 (Documents)",
+                            title = "Thư mục tài liệu (Documents)",
                             hostPath = "/storage/emulated/0/Documents",
                             guestPath = "/sdcard/Documents",
                             checked = documentsEnabled,
@@ -132,7 +132,7 @@ fun StorageMountSettingsScreen(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                         MountToggleRow(
                             icon = RuntimeIconName.SdCard,
-                            title = "完整共享存储 (/sdcard)",
+                            title = "Chia sẻ toàn bộ bộ nhớ (/sdcard)",
                             hostPath = "/storage/emulated/0",
                             guestPath = "/sdcard",
                             checked = sharedStorageEnabled,
@@ -142,7 +142,7 @@ fun StorageMountSettingsScreen(
                 }
             }
 
-            // 2. 自定义映射绑定
+            // 2. Ánh xạ tùy chỉnh
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -150,7 +150,7 @@ fun StorageMountSettingsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "自定义映射绑定",
+                        text = "Ánh xạ tùy chỉnh",
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 4.dp),
@@ -162,7 +162,7 @@ fun StorageMountSettingsScreen(
                     ) {
                         RuntimeIcon(RuntimeIconName.Plus, Modifier.size(14.dp))
                         Spacer(Modifier.size(4.dp))
-                        Text("新增挂载", style = MaterialTheme.typography.labelSmall)
+                        Text("Thêm điểm gắn kết", style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -181,12 +181,12 @@ fun StorageMountSettingsScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
-                                "暂无自定义挂载点",
+                                "Chưa có điểm gắn kết tùy chỉnh",
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                "点击上方“新增挂载”将 Android 目录映射进 Linux 沙箱（仅终端 / 智枢 / 构建可见）",
+                                "Nhấn “Thêm điểm gắn kết” ở trên để ánh xạ thư mục Android vào sandbox Linux (chỉ terminal / Trí Phường / build mới thấy)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -228,7 +228,7 @@ fun StorageMountSettingsScreen(
                                 val bindingError = remember(binding) { StorageMountBinding.validationError(binding) }
                                 if (bindingError != null) {
                                     Text(
-                                        text = "无效挂载：$bindingError（删除后重新添加）",
+                                        text = "Điểm gắn kết không hợp lệ: $bindingError (xóa rồi thêm lại)",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.error,
                                     )
@@ -251,7 +251,7 @@ fun StorageMountSettingsScreen(
                                 modifier = Modifier
                                     .minimumInteractiveComponentSize()
                                     .size(32.dp),
-                                contentDescription = "删除挂载点 ${binding.name}",
+                                contentDescription = "Xóa điểm gắn kết ${binding.name}",
                             ) {
                                 RuntimeIcon(
                                     name = RuntimeIconName.Trash,
@@ -269,9 +269,9 @@ fun StorageMountSettingsScreen(
     pendingDeleteBinding?.let { binding ->
         RuntimeAlertDialog(
             onDismissRequest = { pendingDeleteBindingId = null },
-            title = { Text("删除挂载点", fontWeight = FontWeight.Bold) },
+            title = { Text("Xóa điểm gắn kết", fontWeight = FontWeight.Bold) },
             text = {
-                Text("确定要删除挂载点「${binding.name}」（${binding.hostPath} ➔ ${binding.guestPath}）吗？删除后新建的终端 / 构建任务将不再映射该目录。")
+                Text("Bạn có chắc muốn xóa điểm gắn kết「${binding.name}」（${binding.hostPath} ➔ ${binding.guestPath}）không? Terminal/tác vụ build tạo mới sẽ không còn ánh xạ thư mục này.")
             },
             confirmButton = {
                 Button(
@@ -283,11 +283,11 @@ fun StorageMountSettingsScreen(
                         containerColor = MaterialTheme.colorScheme.error,
                     ),
                 ) {
-                    Text("确认删除")
+                    Text("Xác nhận xóa")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDeleteBindingId = null }) { Text("取消") }
+                TextButton(onClick = { pendingDeleteBindingId = null }) { Text("Hủy") }
             },
         )
     }
@@ -381,30 +381,30 @@ private fun AddMountDialog(
 
     RuntimeAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("新增存储挂载点", fontWeight = FontWeight.Bold) },
+        title = { Text("Thêm điểm gắn kết bộ nhớ", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("挂载点名称") },
-                    placeholder = { Text("例如：相册照片、项目源码") },
+                    label = { Text("Tên điểm gắn kết") },
+                    placeholder = { Text("Ví dụ: ảnh trong album, mã nguồn dự án") },
                     isError = !nameValid,
-                    supportingText = { if (!nameValid) Text("请输入挂载点名称") },
+                    supportingText = { if (!nameValid) Text("Vui lòng nhập tên điểm gắn kết") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = hostPath,
                     onValueChange = { hostPath = it },
-                    label = { Text("宿主路径 (Android)") },
+                    label = { Text("Đường dẫn máy chủ (Android)") },
                     placeholder = { Text("/storage/emulated/0/...") },
                     isError = hostPath.isNotBlank() && !hostPathValid,
                     supportingText = {
                         when {
-                            hostPath.isNotBlank() && hostCharInvalid -> Text("宿主路径不能包含冒号等非法字符")
+                            hostPath.isNotBlank() && hostCharInvalid -> Text("Đường dẫn máy chủ không được chứa dấu hai chấm hoặc ký tự không hợp lệ khác")
                             hostPath.isNotBlank() && !hostRootAllowed ->
-                                Text("宿主路径必须位于 /storage/emulated/0 内")
+                                Text("Đường dẫn máy chủ phải nằm trong /storage/emulated/0")
                             else -> {}
                         }
                     },
@@ -414,17 +414,17 @@ private fun AddMountDialog(
                 OutlinedTextField(
                     value = guestPath,
                     onValueChange = { guestPath = it },
-                    label = { Text("容器挂载路径 (Linux)") },
+                    label = { Text("Đường dẫn gắn kết trong container (Linux)") },
                     placeholder = { Text("/mnt/my_folder") },
                     isError = guestPath.isNotBlank() && !guestPathValid,
                     supportingText = {
                         when {
-                            guestPath.isNotBlank() && !guestPath.trim().startsWith("/") -> Text("路径必须以 / 开头")
-                            guestPath.isNotBlank() && guestNormalized == null -> Text("容器路径不允许包含 ..")
-                            guestPath.isNotBlank() && guestCharInvalid -> Text("容器路径不能包含冒号等非法字符")
+                            guestPath.isNotBlank() && !guestPath.trim().startsWith("/") -> Text("Đường dẫn phải bắt đầu bằng /")
+                            guestPath.isNotBlank() && guestNormalized == null -> Text("Đường dẫn container không được chứa ..")
+                            guestPath.isNotBlank() && guestCharInvalid -> Text("Đường dẫn container không được chứa dấu hai chấm hoặc ký tự không hợp lệ khác")
                             guestPath.isNotBlank() && !guestRootAllowed ->
-                                Text("容器路径必须位于 /mnt 或 /sdcard 内")
-                            guestDuplicate -> Text("该容器路径已被其他挂载点使用")
+                                Text("Đường dẫn container phải nằm trong /mnt hoặc /sdcard")
+                            guestDuplicate -> Text("Đường dẫn container này đang được điểm gắn kết khác sử dụng")
                             else -> {}
                         }
                     },
@@ -438,11 +438,11 @@ private fun AddMountDialog(
                 onClick = { onConfirm(name, hostPath, guestPath) },
                 enabled = nameValid && hostPathValid && guestPathValid,
             ) {
-                Text("添加挂载")
+                Text("Thêm điểm gắn kết")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text("Hủy") }
         },
     )
 }

@@ -23,13 +23,13 @@ data class PermissionStep(
  * 品牌定义与识别模型
  */
 enum class OemBrand(val id: String, val label: String, val osName: String) {
-    XIAOMI("xiaomi", "小米 / Redmi", "HyperOS / MIUI"),
-    HUAWEI("huawei", "华为 / 荣耀", "HarmonyOS / MagicOS"),
+    XIAOMI("xiaomi", "Xiaomi / Redmi", "HyperOS / MIUI"),
+    HUAWEI("huawei", "Huawei / Honor", "HarmonyOS / MagicOS"),
     VIVO("vivo", "vivo / iQOO", "OriginOS / Funtouch"),
-    OPPO("oppo", "OPPO / 一加 / realme", "ColorOS / RealmeUI"),
-    MEIZU("meizu", "魅族", "Flyme"),
-    SAMSUNG("samsung", "三星", "One UI"),
-    GENERIC("generic", "原生 / 其他品牌", "AOSP / Android");
+    OPPO("oppo", "OPPO / OnePlus / realme", "ColorOS / RealmeUI"),
+    MEIZU("meizu", "Meizu", "Flyme"),
+    SAMSUNG("samsung", "Samsung", "One UI"),
+    GENERIC("generic", "Android gốc / Hãng khác", "AOSP / Android");
 
     companion object {
         fun detect(): OemBrand {
@@ -67,32 +67,32 @@ enum class KeepaliveTopic(
 ) {
     AUTOSTART(
         id = "autostart",
-        title = "自启动与后台唤醒",
-        subtitle = "允许系统在开机或后台需要时自动拉起沙箱与 Agent 服务",
+        title = "Tự khởi động và đánh thức chạy nền",
+        subtitle = "Cho phép hệ thống tự khởi chạy dịch vụ sandbox và agent khi bật máy hoặc khi cần chạy nền",
         icon = RuntimeIconName.Cpu,
     ),
     BATTERY_UNRESTRICTED(
         id = "battery_unrestricted",
-        title = "电池优化无限制",
-        subtitle = "豁免系统省电策略与 Doze 模式，防止息屏后 PRoot 进程被冻结",
+        title = "Không hạn chế sử dụng pin",
+        subtitle = "Miễn chính sách tiết kiệm pin và chế độ Doze để tiến trình PRoot không bị đóng băng khi tắt màn hình",
         icon = RuntimeIconName.Battery,
     ),
     LOCK_RECENTS(
         id = "lock_recents",
-        title = "多任务卡片加锁",
-        subtitle = "在最近任务列表中锁定天玄，防止一键清理时杀死前台服务",
+        title = "Khóa thẻ ứng dụng gần đây",
+        subtitle = "Khóa CTHarness trong danh sách ứng dụng gần đây để thao tác dọn tất cả không dừng dịch vụ tiền cảnh",
         icon = RuntimeIconName.Shield,
     ),
     FLOATING_OVERLAY(
         id = "floating_overlay",
-        title = "悬浮窗与后台弹出",
-        subtitle = "允许在后台运行时弹出构建完成或 Agent 交互通知与窗口",
+        title = "Cửa sổ nổi và hiển thị từ nền",
+        subtitle = "Cho phép hiện thông báo và cửa sổ khi dựng xong ứng dụng hoặc khi agent cần tương tác trong lúc chạy nền",
         icon = RuntimeIconName.Terminal,
     ),
     NOTIFICATION(
         id = "notification",
-        title = "通知与前台常驻",
-        subtitle = "保持前台保活服务通知栏显示，确保 Linux 运行时最高优先级存活",
+        title = "Thông báo và dịch vụ tiền cảnh thường trực",
+        subtitle = "Duy trì thông báo dịch vụ tiền cảnh để môi trường Linux tiếp tục chạy với độ ưu tiên cao nhất",
         icon = RuntimeIconName.Chat,
     ),
 }
@@ -106,70 +106,70 @@ object PermissionGuideRepository {
         return when (topic) {
             KeepaliveTopic.AUTOSTART -> when (brand) {
                 OemBrand.XIAOMI -> listOf(
-                    PermissionStep("进入「应用设置」", "打开系统【设置】 ➔ 【应用设置】 ➔ 【授权管理】 ➔ 【自启动管理】。"),
-                    PermissionStep("开启「天玄」自启动", "在应用列表中找到【天玄 (TianXuan)】，将自启动开关切换为【开启】。"),
-                    PermissionStep("允许应用间互相唤醒", "点击进入天玄详情，开启【允许关联启动 / 被其他应用唤醒】（HyperOS 推荐）。"),
+                    PermissionStep("Mở cài đặt ứng dụng", "Mở Cài đặt ➔ Cài đặt ứng dụng ➔ Quản lý quyền ➔ Quản lý tự khởi động."),
+                    PermissionStep("Bật tự khởi động cho CTHarness", "Tìm CTHarness trong danh sách ứng dụng và bật công tắc tự khởi động."),
+                    PermissionStep("Cho phép ứng dụng đánh thức lẫn nhau", "Mở thông tin CTHarness và bật Cho phép khởi động liên kết / Được ứng dụng khác đánh thức (khuyến nghị trên HyperOS)."),
                 )
                 OemBrand.HUAWEI -> listOf(
-                    PermissionStep("打开「应用启动管理」", "进入【手机管家】 ➔ 【应用启动管理】。"),
-                    PermissionStep("切换为手动管理", "找到【天玄】，关闭「自动管理」开关，在弹出的窗口中开启全部三项：【允许自启动】、【允许关联启动】和【允许后台活动】。"),
+                    PermissionStep("Mở quản lý khởi chạy ứng dụng", "Vào Trình quản lý điện thoại ➔ Quản lý khởi chạy ứng dụng."),
+                    PermissionStep("Chuyển sang quản lý thủ công", "Tìm CTHarness, tắt Quản lý tự động rồi bật cả ba tùy chọn trong hộp thoại: Cho phép tự khởi động, Cho phép khởi động liên kết và Cho phép hoạt động nền."),
                 )
                 OemBrand.VIVO -> listOf(
-                    PermissionStep("打开「自启动权限」", "进入系统【设置】 ➔ 【应用与权限】 ➔ 【权限管理】 ➔ 【权限】标签页 ➔ 【自启动】。"),
-                    PermissionStep("开启天玄自启动", "找到【天玄】并开启自启动允许。"),
-                    PermissionStep("开启高耗电后台运行", "在【设置】 ➔ 【电池】 ➔ 【后台高耗电】中，勾选允许天玄继续在后台运行。"),
+                    PermissionStep("Mở quyền tự khởi động", "Vào Cài đặt ➔ Ứng dụng và quyền ➔ Quản lý quyền ➔ thẻ Quyền ➔ Tự khởi động."),
+                    PermissionStep("Bật tự khởi động CTHarness", "Tìm CTHarness và cho phép tự khởi động."),
+                    PermissionStep("Cho phép chạy nền tiêu thụ nhiều pin", "Trong Cài đặt ➔ Pin ➔ Tiêu thụ pin cao khi chạy nền, cho phép CTHarness tiếp tục chạy nền."),
                 )
                 OemBrand.OPPO -> listOf(
-                    PermissionStep("进入「自启动管理」", "进入系统【设置】 ➔ 【应用】 ➔ 【自启动管理】。"),
-                    PermissionStep("允许自启动与关联启动", "找到【天玄】，打开【允许自启动】与【允许关联启动】开关。"),
+                    PermissionStep("Mở quản lý tự khởi động", "Vào Cài đặt ➔ Ứng dụng ➔ Quản lý tự khởi động."),
+                    PermissionStep("Cho phép tự khởi động và khởi động liên kết", "Tìm CTHarness, bật Cho phép tự khởi động và Cho phép khởi động liên kết."),
                 )
                 OemBrand.MEIZU -> listOf(
-                    PermissionStep("打开「后台管理」", "进入【手机管家】 ➔ 【权限管理】 ➔ 【后台管理】。"),
-                    PermissionStep("保持后台运行", "将【天玄】设置为【允许后台运行】或【保持后台唤醒】。"),
+                    PermissionStep("Mở quản lý chạy nền", "Vào Trình quản lý điện thoại ➔ Quản lý quyền ➔ Quản lý chạy nền."),
+                    PermissionStep("Duy trì chạy nền", "Đặt CTHarness thành Cho phép chạy nền hoặc Duy trì hoạt động nền."),
                 )
                 OemBrand.SAMSUNG -> listOf(
-                    PermissionStep("检查「自动运行应用程序」", "进入【设置】 ➔ 【电池】 ➔ 【后台使用限制】。"),
-                    PermissionStep("移出休眠列表", "确保天玄没有在「深度休眠应用程序」中，并加入【从不休眠的应用程序】列表。"),
+                    PermissionStep("Kiểm tra ứng dụng chạy tự động", "Vào Cài đặt ➔ Pin ➔ Giới hạn sử dụng nền."),
+                    PermissionStep("Đưa ứng dụng ra khỏi danh sách ngủ", "Đảm bảo CTHarness không nằm trong Ứng dụng ngủ sâu và thêm vào danh sách Ứng dụng không bao giờ ngủ."),
                 )
                 OemBrand.GENERIC -> listOf(
-                    PermissionStep("检查系统启动项", "在系统设置应用详情中，检查是否有「自启动」或「开机启动」权限并予以放行。"),
+                    PermissionStep("Kiểm tra quyền khởi động", "Trong thông tin ứng dụng của cài đặt hệ thống, tìm quyền Tự khởi động hoặc Khởi động cùng thiết bị và cho phép nếu có."),
                 )
             }
             KeepaliveTopic.BATTERY_UNRESTRICTED -> when (brand) {
                 OemBrand.XIAOMI -> listOf(
-                    PermissionStep("应用详情省电策略", "长按天玄桌面图标 ➔ 【应用信息】 ➔ 下滑找到【省电策略】。"),
-                    PermissionStep("设为「无限制」", "选择【无限制】（不限制后台活动，最利于 PRoot 编译与 Agent 长思考）。"),
+                    PermissionStep("Mở chính sách tiết kiệm pin của ứng dụng", "Nhấn giữ biểu tượng CTHarness ➔ Thông tin ứng dụng ➔ kéo xuống Chính sách tiết kiệm pin."),
+                    PermissionStep("Chọn Không hạn chế", "Chọn Không hạn chế để không giới hạn hoạt động nền, phù hợp với biên dịch PRoot và tác vụ suy luận dài của agent."),
                 )
                 OemBrand.HUAWEI -> listOf(
-                    PermissionStep("忽略电池优化", "进入【设置】 ➔ 【应用】 ➔ 【权限管理】 ➔ 右上角菜单【特殊访问权限】 ➔ 【电池优化】。"),
-                    PermissionStep("设为「不允许优化」", "下拉筛选「所有应用」，找到【天玄】，设为【不允许】。"),
+                    PermissionStep("Bỏ qua tối ưu pin", "Vào Cài đặt ➔ Ứng dụng ➔ Quản lý quyền ➔ menu góc trên bên phải Quyền truy cập đặc biệt ➔ Tối ưu pin."),
+                    PermissionStep("Không cho phép tối ưu", "Chọn bộ lọc Tất cả ứng dụng, tìm CTHarness và đặt thành Không cho phép tối ưu."),
                 )
                 OemBrand.VIVO -> listOf(
-                    PermissionStep("后台高耗电允许", "进入【设置】 ➔ 【电池】 ➔ 【后台耗电管理】。"),
-                    PermissionStep("开启高耗电运行", "找到【天玄】，选择【允许高耗电后台运行】。"),
+                    PermissionStep("Cho phép tiêu thụ pin nền", "Vào Cài đặt ➔ Pin ➔ Quản lý tiêu thụ pin nền."),
+                    PermissionStep("Cho phép chạy nền tiêu thụ nhiều pin", "Tìm CTHarness và chọn Cho phép chạy nền tiêu thụ nhiều pin."),
                 )
                 OemBrand.OPPO -> listOf(
-                    PermissionStep("电池耗电管理", "长按天玄图标 ➔ 【应用详情】 ➔ 【耗电管理】。"),
-                    PermissionStep("开启所有后台选项", "勾选【允许完全后台行为】、【允许唤醒前台】并关闭「深度省电优化」。"),
+                    PermissionStep("Quản lý tiêu thụ pin", "Nhấn giữ biểu tượng CTHarness ➔ Thông tin ứng dụng ➔ Quản lý tiêu thụ pin."),
+                    PermissionStep("Bật các tùy chọn hoạt động nền", "Bật Cho phép mọi hoạt động nền, Cho phép đánh thức tiền cảnh và tắt Tối ưu tiết kiệm pin sâu."),
                 )
                 OemBrand.SAMSUNG -> listOf(
-                    PermissionStep("电池使用模式", "进入系统【设置】 ➔ 【应用程序】 ➔ 【天玄】 ➔ 【电池】。"),
-                    PermissionStep("设为「不受限制」", "由默认的「已优化」切换为【不受限制】（Unrestricted）。"),
+                    PermissionStep("Chế độ sử dụng pin", "Vào Cài đặt ➔ Ứng dụng ➔ CTHarness ➔ Pin."),
+                    PermissionStep("Chọn Không hạn chế", "Chuyển từ chế độ mặc định Đã tối ưu sang Không hạn chế (Unrestricted)."),
                 )
                 else -> listOf(
-                    PermissionStep("忽略电池优化", "进入应用信息 ➔ 【电池】 ➔ 设为【无限制】或申请忽略系统电池优化。"),
+                    PermissionStep("Bỏ qua tối ưu pin", "Vào Thông tin ứng dụng ➔ Pin ➔ chọn Không hạn chế hoặc yêu cầu bỏ qua tối ưu pin của hệ thống."),
                 )
             }
             KeepaliveTopic.LOCK_RECENTS -> listOf(
-                PermissionStep("进入多任务后台", "从屏幕底部上滑悬停（或点击多任务导航键），进入多任务卡片视图。"),
-                PermissionStep("锁定天玄卡片", "长按天玄任务卡片（或向下拉动卡片），点击出现的小锁 🔒 图标进行锁定，防止一键清理后台时被系统杀死。"),
+                PermissionStep("Mở ứng dụng gần đây", "Vuốt lên từ đáy màn hình rồi giữ (hoặc nhấn phím đa nhiệm) để xem các thẻ ứng dụng gần đây."),
+                PermissionStep("Khóa thẻ CTHarness", "Nhấn giữ thẻ CTHarness (hoặc kéo thẻ xuống), rồi nhấn biểu tượng khóa 🔒 để hệ thống không dừng ứng dụng khi dọn tất cả tác vụ nền."),
             )
             KeepaliveTopic.FLOATING_OVERLAY -> listOf(
-                PermissionStep("开启悬浮窗 / 显示在其他应用上层", "进入【应用信息】 ➔ 【高级】 ➔ 【显示在其他应用上层 / 悬浮窗】，切换为【允许】。"),
-                PermissionStep("后台弹出界面权限", "对于小米/vivo等系统，在【权限管理】中开启【后台弹出界面】或【桌面快捷方式】权限。"),
+                PermissionStep("Cho phép cửa sổ nổi / Hiển thị trên ứng dụng khác", "Vào Thông tin ứng dụng ➔ Nâng cao ➔ Hiển thị trên ứng dụng khác / Cửa sổ nổi, rồi chọn Cho phép."),
+                PermissionStep("Cho phép mở giao diện từ nền", "Trên Xiaomi, vivo và các hệ thống tương tự, vào Quản lý quyền để bật Mở giao diện từ nền hoặc Lối tắt màn hình chính."),
             )
             KeepaliveTopic.NOTIFICATION -> listOf(
-                PermissionStep("允许通知与前台服务常驻", "确保天玄拥有通知权限，天玄会在启动 PRoot 沙箱与 Agent 循环时启动前台常驻服务，保障系统进程优先级。"),
+                PermissionStep("Cho phép thông báo và dịch vụ tiền cảnh", "Đảm bảo CTHarness có quyền thông báo. Khi khởi động sandbox PRoot và vòng lặp agent, CTHarness chạy dịch vụ tiền cảnh thường trực để duy trì độ ưu tiên tiến trình."),
             )
         }
     }

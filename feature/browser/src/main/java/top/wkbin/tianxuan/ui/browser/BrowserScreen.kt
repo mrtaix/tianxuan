@@ -65,7 +65,7 @@ fun BrowserScreen(
     BackHandler(enabled = state.canGoBack) { viewModel.onBack(onExhausted = onBack) }
     Column(modifier = Modifier.fillMaxSize()) {
         RuntimeTopBar(
-            title = "内置浏览器",
+            title = "Trình duyệt tích hợp",
             statusText = state.title.takeIf { it.isNotBlank() } ?: state.url.takeIf { it.isNotBlank() } ?: "—",
             onBack = onBack,
         )
@@ -207,7 +207,7 @@ private fun BrowserStatusBar(
             val coTint = if (coBrowsingEnabled) Color(0xFF3F8FFF) else Color(0xFFFF8F3F)
             BrowserStatusItem(
                 icon = if (coBrowsingEnabled) RuntimeIconName.Visibility else RuntimeIconName.VisibilityOff,
-                label = if (coBrowsingEnabled) "共浏览中" else "已暂停",
+                label = if (coBrowsingEnabled) "Đang duyệt chung" else "Đã tạm dừng",
                 tint = coTint,
                 highlight = coBrowsingEnabled,
                 onClick = onCoBrowsingToggle,
@@ -216,7 +216,7 @@ private fun BrowserStatusBar(
             // 2. 页面快照入口（Agent 视角的元素树）
             BrowserStatusItem(
                 icon = RuntimeIconName.Search,
-                label = "快照",
+                label = "Ảnh chụp trang",
                 tint = MaterialTheme.colorScheme.tertiary,
                 onClick = onShowSnapshot,
             )
@@ -224,7 +224,7 @@ private fun BrowserStatusBar(
             // 3. 网络时间线入口（请求流 + Hook 命中，agent 操作可视化）
             BrowserStatusItem(
                 icon = RuntimeIconName.Network,
-                label = "网络 $networkCount",
+                label = "Mạng $networkCount",
                 tint = MaterialTheme.colorScheme.tertiary,
                 onClick = onShowNetwork,
             )
@@ -233,7 +233,7 @@ private fun BrowserStatusBar(
             if (tabs.isEmpty()) {
                 BrowserStatusItem(
                     icon = RuntimeIconName.Globe,
-                    label = "尚无标签页",
+                    label = "Chưa có thẻ",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     onClick = {},
                 )
@@ -251,7 +251,7 @@ private fun BrowserStatusBar(
                 StatusDivider()
                 BrowserStatusItem(
                     icon = RuntimeIconName.Back,
-                    label = "返回对话",
+                    label = "Về cuộc trò chuyện",
                     tint = MaterialTheme.colorScheme.primary,
                     highlight = true,
                     onClick = onExit,
@@ -322,7 +322,7 @@ private fun DebugPausedBanner(
     val frame = paused.callFrames.firstOrNull()
     val location = frame?.let {
         "${it.functionName.ifEmpty { "<anonymous>" }} @ ${it.url.substringAfterLast('/')}:${it.lineNumber + 1}"
-    } ?: "无调用栈"
+    } ?: "Không có ngăn xếp lời gọi"
     Surface(
         color = Color(0xCCB45309),
         shape = RoundedCornerShape(10.dp),
@@ -338,7 +338,7 @@ private fun DebugPausedBanner(
             RuntimeIcon(RuntimeIconName.Alert, Modifier.size(16.dp), tint = Color.White)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "已暂停 · ${paused.reason}",
+                    "Đã tạm dừng · ${paused.reason}",
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.White,
                     maxLines = 1,
@@ -364,7 +364,7 @@ private fun DebugPausedBanner(
                 ) {
                     RuntimeIcon(RuntimeIconName.Play, Modifier.size(12.dp), tint = Color(0xFFB45309))
                     Text(
-                        "继续",
+                        "Tiếp tục",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = Color(0xFFB45309),
                     )
@@ -439,13 +439,13 @@ private fun BrowserUrlBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            RuntimeIconButton(onClick = onBack, enabled = canGoBack, contentDescription = "后退") {
+            RuntimeIconButton(onClick = onBack, enabled = canGoBack, contentDescription = "Quay lại") {
                 RuntimeIcon(RuntimeIconName.Back, Modifier.size(17.dp))
             }
-            RuntimeIconButton(onClick = onForward, enabled = canGoForward, contentDescription = "前进") {
+            RuntimeIconButton(onClick = onForward, enabled = canGoForward, contentDescription = "Tiến tới") {
                 RuntimeIcon(RuntimeIconName.ChevronRight, Modifier.size(17.dp))
             }
-            RuntimeIconButton(onClick = onRefresh, contentDescription = "刷新") {
+            RuntimeIconButton(onClick = onRefresh, contentDescription = "Tải lại") {
                 RuntimeIcon(RuntimeIconName.Refresh, Modifier.size(17.dp))
             }
             // URL 输入胶囊：占满剩余宽度，右侧内嵌跳转圆钮

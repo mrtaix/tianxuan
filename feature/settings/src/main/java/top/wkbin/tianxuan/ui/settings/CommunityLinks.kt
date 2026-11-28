@@ -5,7 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import top.wkbin.tianxuan.core.model.Community
 
-/** 打开外部链接；无可用浏览器时复制到剪贴板，别让入口变成死路。 */
+/** Mở liên kết ngoài; nếu không có trình duyệt, sao chép liên kết vào bộ nhớ tạm. */
 internal fun openBrowser(context: Context, url: String) {
     runCatching {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
@@ -13,15 +13,13 @@ internal fun openBrowser(context: Context, url: String) {
         }
         context.startActivity(intent)
     }.onFailure {
-        // 走 ClipboardSupport 的统一实现（含「剪贴板不可用」兜底）。
-        // 本文件原有一个同名私有 `Context.copyToClipboard(label, text)` 重载，
-        // 与公共函数同名不同签名且静默吞掉失败——同一仓库出现两套行为不一致的
-        // 同名实现，正是 ClipboardSupport 注释里要消除的重复。
-        copyToClipboard(context, url, "URL", "已复制链接：$url")
+        // Dùng ClipboardSupport chung, bao gồm xử lý khi bộ nhớ tạm không khả dụng.
+        // Không khôi phục hàm mở rộng riêng từng bỏ qua lỗi mà không báo cho người dùng.
+        copyToClipboard(context, url, "URL", "Đã sao chép liên kết: $url")
     }
 }
 
-/** 一键加群；未装 QQ 时兜底复制群号。群号来自 [Community]，不在此处另写常量。 */
+/** Tham gia nhóm QQ; nếu chưa cài QQ, sao chép mã nhóm từ [Community]. */
 internal fun joinQqGroup(context: Context) {
     val uri = Uri.parse(Community.QQ_GROUP_URI)
     val intent = Intent(Intent.ACTION_VIEW, uri).apply {
@@ -33,8 +31,8 @@ internal fun joinQqGroup(context: Context) {
         copyToClipboard(
             context,
             Community.QQ_GROUP_ID,
-            "天玄官方交流群",
-            "已复制 QQ 群号：${Community.QQ_GROUP_ID}，可打开 QQ 搜索加入",
+            "Nhóm cộng đồng chính thức CTHarness",
+            "Đã sao chép mã nhóm QQ: ${Community.QQ_GROUP_ID}. Mở QQ và tìm mã này để tham gia.",
         )
     }
 }

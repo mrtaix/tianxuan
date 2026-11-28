@@ -1204,11 +1204,11 @@ private fun ChangeRow(
     onDiscard: () -> Unit,
 ) {
     val (typeLabel, typeTint) = when (change.changeType) {
-        GitManager.ChangeType.ADDED -> "新增" to gitSuccessColor()
-        GitManager.ChangeType.MODIFIED -> "修改" to gitInfoColor()
-        GitManager.ChangeType.DELETED -> "删除" to MaterialTheme.colorScheme.error
-        GitManager.ChangeType.UNTRACKED -> "未跟踪" to gitWarningColor()
-        GitManager.ChangeType.CONFLICT -> "冲突" to MaterialTheme.colorScheme.error
+        GitManager.ChangeType.ADDED -> "Đã thêm" to gitSuccessColor()
+            GitManager.ChangeType.MODIFIED -> "Đã sửa" to gitInfoColor()
+            GitManager.ChangeType.DELETED -> "Đã xóa" to MaterialTheme.colorScheme.error
+            GitManager.ChangeType.UNTRACKED -> "Chưa theo dõi" to gitWarningColor()
+            GitManager.ChangeType.CONFLICT -> "Xung đột" to MaterialTheme.colorScheme.error
     }
     RuntimeCard(
         containerColor = if (change.staged) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceContainerLow,

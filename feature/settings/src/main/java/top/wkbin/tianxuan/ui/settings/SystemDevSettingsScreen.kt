@@ -107,7 +107,7 @@ fun SystemDevSettingsScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { RuntimeTopBar("保活与诊断", onBack) },
+        topBar = { RuntimeTopBar("Duy trì hoạt động và chẩn đoán", onBack) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -116,7 +116,7 @@ fun SystemDevSettingsScreen(
         ) {
             item {
                 Text(
-                    text = "进程保活与唤醒",
+                    text = "Duy trì và đánh thức tiến trình",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -124,29 +124,29 @@ fun SystemDevSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Shield,
-                        title = "厂商后台防杀与权限向导",
-                        subtitle = "自启动、电池无限制、多任务加锁等 OEM 专属配置指引",
-                        value = "查看向导",
+                        title = "Hướng dẫn quyền và chống dừng ứng dụng nền",
+                        subtitle = "Hướng dẫn cấu hình riêng của OEM: tự khởi động, pin không hạn chế, khóa trong đa nhiệm…",
+                        value = "Xem hướng dẫn",
                         onClick = onOpenPermissionGuide,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Battery,
-                        title = "电池优化与后台保活",
-                        subtitle = "豁免系统电池限制，防止 Agent 息屏被冻结",
-                        value = if (batteryExempted) "已豁免" else "未豁免",
+                        title = "Tối ưu hóa pin và duy trì chạy nền",
+                        subtitle = "Miễn hạn chế pin của hệ thống để tránh agent bị đóng băng khi tắt màn hình",
+                        value = if (batteryExempted) "Đã miễn" else "Chưa miễn",
                         onClick = { showBatteryDialog = true },
                     )
                     if (isRestrictiveRom) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         SettingsRow(
                             icon = RuntimeIconName.Cpu,
-                            title = "$romLabel 快捷自启动跳转",
-                            subtitle = "一键直达厂商系统自启动管理设置项",
-                            value = "前往开启",
+                            title = "Mở nhanh cài đặt tự khởi động $romLabel",
+                            subtitle = "Mở trực tiếp mục quản lý tự khởi động của nhà sản xuất",
+                            value = "Mở để bật",
                             onClick = {
                                 runCatching { RomAutostartHelper.openAutostartSettings(context) }.onFailure {
-                                    Toast.makeText(context, "无法跳转厂商设置，请在系统设置的应用管理中手动配置", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "Không thể mở cài đặt của nhà sản xuất. Hãy cấu hình thủ công trong mục quản lý ứng dụng của hệ thống.", Toast.LENGTH_LONG).show()
                                 }
                             },
                         )
@@ -154,14 +154,14 @@ fun SystemDevSettingsScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     SettingsRow(
                         icon = RuntimeIconName.Speed,
-                        title = "Android 12 子进程限制",
-                        subtitle = "解除 Phantom Process 最多 32 个的后台限制",
+                        title = "Giới hạn tiến trình con Android 12",
+                        subtitle = "Gỡ giới hạn tối đa 32 tiến trình nền Phantom Process",
                         value = when {
-                            phantomBusy && phantomStatus == null -> "检测中"
-                            phantomStatus?.state == PhantomProcessLimitState.REMOVED -> "已解除"
-                            phantomStatus?.state == PhantomProcessLimitState.ACTIVE -> "未解除"
-                            phantomStatus?.state == PhantomProcessLimitState.UNSUPPORTED -> "无需处理"
-                            else -> "待检测"
+                            phantomBusy && phantomStatus == null -> "Đang kiểm tra"
+                            phantomStatus?.state == PhantomProcessLimitState.REMOVED -> "Đã gỡ"
+                            phantomStatus?.state == PhantomProcessLimitState.ACTIVE -> "Chưa gỡ"
+                            phantomStatus?.state == PhantomProcessLimitState.UNSUPPORTED -> "Không cần xử lý"
+                            else -> "Chờ kiểm tra"
                         },
                         onClick = {
                             showPhantomProcessDialog = true
@@ -173,7 +173,7 @@ fun SystemDevSettingsScreen(
 
             item {
                 Text(
-                    text = "Android 系统调试与日志",
+                    text = "Gỡ lỗi và nhật ký hệ thống Android",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -181,9 +181,9 @@ fun SystemDevSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Terminal,
-                        title = "无线 ADB 与日志抓取",
-                        subtitle = "mDNS 自动配对发现、免配对自动重连与 Logcat 实时工作台",
-                        value = "进入工作台",
+                        title = "ADB không dây và thu thập nhật ký",
+                        subtitle = "Tự tìm ghép nối qua mDNS, tự kết nối lại không cần ghép nối và bảng Logcat thời gian thực",
+                        value = "Mở bảng điều khiển",
                         onClick = onOpenAdbLogcat,
                     )
                 }
@@ -191,7 +191,7 @@ fun SystemDevSettingsScreen(
 
             item {
                 Text(
-                    text = "天玄自定义迭代与共建",
+                    text = "Tùy chỉnh và cùng phát triển CTHarness",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -199,8 +199,8 @@ fun SystemDevSettingsScreen(
                 SettingsGroup {
                     SettingsRow(
                         icon = RuntimeIconName.Code,
-                        title = "自定义迭代（TianXuanDev）",
-                        subtitle = "在手机沙盒中调用 AI 开发天玄自身并云端构建 APK",
+                        title = "Phát triển tùy chỉnh (TianXuanDev)",
+                        subtitle = "Dùng AI trong sandbox trên điện thoại để phát triển chính CTHarness và build APK trên đám mây",
                         onClick = onOpenCustomIteration,
                     )
                 }
@@ -208,7 +208,7 @@ fun SystemDevSettingsScreen(
 
             item {
                 Text(
-                    text = "开发者调试与控制台",
+                    text = "Gỡ lỗi và bảng điều khiển cho nhà phát triển",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
@@ -216,8 +216,8 @@ fun SystemDevSettingsScreen(
                 SettingsGroup {
                     ToggleRow(
                         icon = RuntimeIconName.Bug,
-                        title = "开发者诊断模式",
-                        subtitle = "开启底层健康监控与调试控制台",
+                        title = "Chế độ chẩn đoán cho nhà phát triển",
+                        subtitle = "Bật giám sát tình trạng hệ thống và bảng điều khiển gỡ lỗi",
                         checked = developer,
                         change = viewModel::setDeveloperMode,
                     )
@@ -225,19 +225,19 @@ fun SystemDevSettingsScreen(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         SettingsRow(
                             icon = RuntimeIconName.Terminal,
-                            title = "开发者控制台",
-                            subtitle = "实时查看 PRoot 进程与命令追踪",
+                            title = "Bảng điều khiển nhà phát triển",
+                            subtitle = "Xem tiến trình PRoot và dấu vết lệnh theo thời gian thực",
                             onClick = onOpenDeveloper,
                         )
                     }
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     ToggleRow(
                         icon = RuntimeIconName.Cpu,
-                        title = "QEMU x86_64 兼容模式",
+                        title = "Chế độ tương thích QEMU x86_64",
                         subtitle = if (qemuCompatibilityReady) {
-                            "允许明确请求的会话使用 QEMU x86_64 user-mode；ARM64 会话不受影响"
+                            "Cho phép phiên yêu cầu rõ ràng sử dụng QEMU x86_64 user-mode; phiên ARM64 không bị ảnh hưởng"
                         } else {
-                            "未检测到 QEMU x86_64 兼容环境，请先在插件中心安装 qemu-x86-64-compat 插件"
+                            "Không tìm thấy môi trường tương thích QEMU x86_64. Hãy cài plugin qemu-x86-64-compat trong trung tâm plugin trước."
                         },
                         checked = qemuCompatibilityEnabled && qemuCompatibilityReady,
                         enabled = qemuCompatibilityReady,
@@ -245,9 +245,9 @@ fun SystemDevSettingsScreen(
                     )
                     Text(
                         text = qemuCompatibilityMessage ?: if (qemuCompatibilityEnabled) {
-                            "已开启。兼容插件只提供 ARM64 QEMU user-mode 与最小 x86_64 RootFS。"
+                            "Đã bật. Plugin tương thích chỉ cung cấp ARM64 QEMU user-mode và RootFS x86_64 tối thiểu."
                         } else {
-                            "默认关闭，不会下载或使用 x86_64 工具。开启后仅对明确选择兼容环境的第三方项目生效，不会改变 APK 的 arm64-v8a 默认 ABI。"
+                            "Mặc định tắt, không tải hoặc dùng công cụ x86_64. Khi bật, chỉ áp dụng cho dự án bên thứ ba chọn rõ môi trường tương thích, không thay đổi ABI mặc định arm64-v8a của APK."
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = if (qemuCompatibilityReady) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
@@ -274,7 +274,7 @@ private fun BatteryOptimizationDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 RuntimeIcon(RuntimeIconName.Shield, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
-                Text("电池优化与后台运行", fontWeight = FontWeight.Bold)
+                Text("Tối ưu hóa pin và chạy nền", fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -292,7 +292,7 @@ private fun BatteryOptimizationDialog(
                         },
                     ) {
                         Text(
-                            if (exempted) "已豁免电池优化" else "未豁免 · 后台可能被冻结",
+                            if (exempted) "Đã miễn tối ưu hóa pin" else "Chưa miễn · Có thể bị đóng băng khi chạy nền",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = if (exempted) {
                                 MaterialTheme.colorScheme.onPrimaryContainer
@@ -304,8 +304,8 @@ private fun BatteryOptimizationDialog(
                     }
                 }
                 Text(
-                    "天玄在 Agent 执行期间会启动前台服务并持有 CPU 进程锁，但系统电池优化仍可能在息屏后" +
-                        "冻结进程，表现为 Agent 推理或命令执行中途停住。建议开启以下两项：",
+                    "CTHarness khởi chạy dịch vụ tiền cảnh và giữ khóa đánh thức CPU khi agent thực thi, nhưng tối ưu hóa pin của hệ thống vẫn có thể " +
+                        "đóng băng tiến trình khi tắt màn hình, khiến suy luận của agent hoặc lệnh đang chạy bị dừng giữa chừng. Nên bật hai mục sau:",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -319,13 +319,13 @@ private fun BatteryOptimizationDialog(
                                 ),
                             )
                         }.onFailure {
-                            Toast.makeText(context, "无法打开系统设置，请手动进入设置授予电池优化豁免", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Không thể mở cài đặt hệ thống. Hãy vào cài đặt để cấp quyền miễn tối ưu hóa pin theo cách thủ công.", Toast.LENGTH_LONG).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                 ) {
-                    Text("申请豁免电池优化")
+                    Text("Yêu cầu miễn tối ưu hóa pin")
                 }
                 OutlinedButton(
                     onClick = {
@@ -337,24 +337,24 @@ private fun BatteryOptimizationDialog(
                                 ),
                             )
                         }.onFailure {
-                            Toast.makeText(context, "无法打开应用详情，请手动进入系统设置", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Không thể mở thông tin ứng dụng. Hãy vào cài đặt hệ thống theo cách thủ công.", Toast.LENGTH_LONG).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                 ) {
-                    Text("打开应用详情（自启动/后台运行）")
+                    Text("Mở thông tin ứng dụng (tự khởi động/chạy nền)")
                 }
                 Text(
-                    "提示：小米/华为/OPPO 等厂商系统还需在应用详情中手动允许「自启动」与「后台运行」，" +
-                        "否则厂商省电策略仍会终止进程。",
+                    "Lưu ý: Trên hệ thống Xiaomi, Huawei, OPPO…, cần cho phép Tự khởi động và Chạy nền thủ công trong thông tin ứng dụng, " +
+                        "nếu không chính sách tiết kiệm pin của nhà sản xuất vẫn sẽ dừng tiến trình.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.secondary,
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("关闭") }
+            TextButton(onClick = onDismiss) { Text("Đóng") }
         },
     )
 }
@@ -374,11 +374,11 @@ private fun PhantomProcessLimitDialog(
 
     val state = status?.state
     val statusText = when (state) {
-        PhantomProcessLimitState.REMOVED -> "已解除限制"
-        PhantomProcessLimitState.ACTIVE -> "限制仍生效"
-        PhantomProcessLimitState.UNSUPPORTED -> "当前系统无需处理"
-        PhantomProcessLimitState.UNAVAILABLE -> "暂时无法检测"
-        null -> if (busy) "正在检测" else "尚未检测"
+        PhantomProcessLimitState.REMOVED -> "Đã gỡ giới hạn"
+        PhantomProcessLimitState.ACTIVE -> "Giới hạn vẫn có hiệu lực"
+        PhantomProcessLimitState.UNSUPPORTED -> "Hệ thống hiện tại không cần xử lý"
+        PhantomProcessLimitState.UNAVAILABLE -> "Tạm thời không thể kiểm tra"
+        null -> if (busy) "Đang kiểm tra" else "Chưa kiểm tra"
     }
     val healthy = state == PhantomProcessLimitState.REMOVED || state == PhantomProcessLimitState.UNSUPPORTED
     val statusContainer = if (healthy) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
@@ -389,7 +389,7 @@ private fun PhantomProcessLimitDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 RuntimeIcon(RuntimeIconName.Speed, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
-                Text("Android 12 子进程限制", fontWeight = FontWeight.Bold)
+                Text("Giới hạn tiến trình con Android 12", fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -416,7 +416,7 @@ private fun PhantomProcessLimitDialog(
                 }
 
                 Text(
-                    status?.details ?: "读取系统实际配置，确认幽灵进程限制是否仍在生效。",
+                    status?.details ?: "Đọc cấu hình thực tế của hệ thống để xác nhận giới hạn tiến trình ảo có còn hiệu lực hay không.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -432,11 +432,11 @@ private fun PhantomProcessLimitDialog(
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Text(
-                                "最大幽灵进程数：${status.maxPhantomProcesses ?: "系统默认（通常为 32）"}",
+                                "Số tiến trình ảo tối đa: ${status.maxPhantomProcesses ?: "Mặc định hệ thống (thường là 32)"}",
                                 style = MaterialTheme.typography.labelSmall,
                             )
                             Text(
-                                "幽灵进程监控：${when (status.monitoringEnabled) { true -> "开启"; false -> "关闭"; null -> "系统默认（开启）" }}",
+                                "Giám sát tiến trình ảo: ${when (status.monitoringEnabled) { true -> "Bật"; false -> "Tắt"; null -> "Mặc định hệ thống (bật)" }}",
                                 style = MaterialTheme.typography.labelSmall,
                             )
                         }
@@ -444,7 +444,7 @@ private fun PhantomProcessLimitDialog(
                 }
 
                 Text(
-                    "Android 12+ 会监控应用派生的子进程，超过系统上限后可能终止 PRoot、编译器或 Agent 任务。这里解除的是子进程限制，不是 Java/Kotlin 线程数。",
+                    "Android 12+ giám sát tiến trình con do ứng dụng tạo và có thể dừng PRoot, trình biên dịch hoặc tác vụ agent khi vượt giới hạn hệ thống. Mục này gỡ giới hạn tiến trình con, không phải số luồng Java/Kotlin.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -458,14 +458,14 @@ private fun PhantomProcessLimitDialog(
                     if (busy) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.width(8.dp))
-                        Text("正在处理")
+                        Text("Đang xử lý")
                     } else {
-                        Text("使用 Shizuku / Root 一键解除")
+                        Text("Gỡ bằng Shizuku / Root với một lần nhấn")
                     }
                 }
 
                 Text(
-                    "也可以在已连接手机的电脑终端执行：",
+                    "Bạn cũng có thể chạy lệnh sau trong terminal máy tính đã kết nối điện thoại:",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -482,14 +482,14 @@ private fun PhantomProcessLimitDialog(
                         )
                         OutlinedButton(
                             onClick = {
-                                copyToClipboard(context, adbCommand, "Android 12 子进程限制命令", "命令已复制")
+                                copyToClipboard(context, adbCommand, "Lệnh giới hạn tiến trình con Android 12", "Đã sao chép lệnh")
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp),
                         ) {
                             RuntimeIcon(RuntimeIconName.Copy, Modifier.size(15.dp))
                             Spacer(Modifier.width(7.dp))
-                            Text("复制命令")
+                            Text("Sao chép lệnh")
                         }
                     }
                 }
@@ -508,7 +508,7 @@ private fun PhantomProcessLimitDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("关闭") }
+            TextButton(onClick = onDismiss) { Text("Đóng") }
         },
     )
 }

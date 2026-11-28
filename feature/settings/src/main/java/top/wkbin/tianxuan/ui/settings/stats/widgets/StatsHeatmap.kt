@@ -90,7 +90,7 @@ fun StatsHeatmap(
                             ) {
                                 if (firstOfMonth != null) {
                                     Text(
-                                        text = "${firstOfMonth.date.monthValue}月",
+                                        text = "${firstOfMonth.date.monthValue} / tháng",
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Medium,
@@ -130,7 +130,7 @@ fun StatsHeatmap(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "少",
+                text = "Ít",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
@@ -142,7 +142,7 @@ fun StatsHeatmap(
                 Spacer(modifier = Modifier.width(3.dp))
             }
             Text(
-                text = "多",
+                text = "Nhiều",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
@@ -159,7 +159,7 @@ private fun WeekdayLabels() {
             .width(WeekdayLabelWidth)
             .padding(top = MonthLabelHeight + 2.dp),
     ) {
-        val days = listOf("日", "一", "二", "三", "四", "五", "六")
+        val days = listOf("CN", "T2", "T3", "T4", "T5", "T6", "T7")
         for (i in 0..6) {
             Box(
                 modifier = Modifier

@@ -87,7 +87,7 @@ fun TranslationModelCard(
                         color = Color(0xFF10B981).copy(alpha = 0.15f),
                     ) {
                         Text(
-                            text = "已就绪 (离线)",
+                            text = "Sẵn sàng (ngoại tuyến)",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                             color = Color(0xFF10B981),
@@ -110,7 +110,7 @@ fun TranslationModelCard(
                                 strokeWidth = 1.5.dp,
                             )
                             Text(
-                                text = "下载中 $percent%",
+                                text = "Đang tải $percent%",
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -119,7 +119,7 @@ fun TranslationModelCard(
                 }
                 is TranslationModelStatus.Checking -> {
                     Text(
-                        text = "检测中...",
+                        text = "Đang kiểm tra...",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -130,7 +130,7 @@ fun TranslationModelCard(
                         color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
                     ) {
                         Text(
-                            text = "下载失败",
+                            text = "Tải thất bại",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                             color = MaterialTheme.colorScheme.error,
@@ -143,7 +143,7 @@ fun TranslationModelCard(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ) {
                         Text(
-                            text = "未下载",
+                            text = "Chưa tải",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -218,7 +218,7 @@ fun TranslationModelCard(
                     ) {
                         RuntimeIcon(RuntimeIconName.Trash, Modifier.size(14.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("删除模型释放空间", style = MaterialTheme.typography.labelMedium)
+                        Text("Xóa mô hình để giải phóng dung lượng", style = MaterialTheme.typography.labelMedium)
                     }
                 }
                 is TranslationModelStatus.Downloading -> {
@@ -234,7 +234,7 @@ fun TranslationModelCard(
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                         Spacer(Modifier.width(6.dp))
-                        Text("正在下载 ($percent%)", style = MaterialTheme.typography.labelMedium)
+                        Text("Đang tải ($percent%)", style = MaterialTheme.typography.labelMedium)
                     }
                 }
                 is TranslationModelStatus.Error -> {
@@ -244,7 +244,7 @@ fun TranslationModelCard(
                     ) {
                         RuntimeIcon(RuntimeIconName.Refresh, Modifier.size(14.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("重试下载 (~60MB)", style = MaterialTheme.typography.labelMedium)
+                        Text("Tải lại (~60MB)", style = MaterialTheme.typography.labelMedium)
                     }
                 }
                 else -> {
@@ -254,7 +254,7 @@ fun TranslationModelCard(
                     ) {
                         RuntimeIcon(RuntimeIconName.Download, Modifier.size(14.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("下载离线模型 (~60MB)", style = MaterialTheme.typography.labelMedium)
+                        Text("Tải mô hình ngoại tuyến (~60MB)", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }

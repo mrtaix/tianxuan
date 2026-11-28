@@ -16,7 +16,7 @@ class RuntimeServiceController(
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) {
-            Log.w(TAG, "通知权限未授权，跳过 Runtime 前台保活服务")
+            Log.w(TAG, "Chưa cấp quyền thông báo; bỏ qua dịch vụ giữ Runtime chạy nền")
             return false
         }
         return runCatching {
@@ -25,7 +25,7 @@ class RuntimeServiceController(
                 Intent(context, RuntimeForegroundService::class.java),
             )
             true
-        }.onFailure { Log.w(TAG, "启动 Runtime 前台服务失败", it) }
+        }.onFailure { Log.w(TAG, "Khởi động dịch vụ nền Runtime thất bại", it) }
             .getOrDefault(false)
     }
 
@@ -36,7 +36,7 @@ class RuntimeServiceController(
             .onFailure {
                 // 后台态禁止 startService（Android 8+ 起会抛 IllegalStateException）。退化为
                 // stopService，至少不让调用方崩溃；能被正常解除前台/清理的路径仍走 ACTION_STOP。
-                Log.w(TAG, "发送 ACTION_STOP 失败，退化为 stopService", it)
+                Log.w(TAG, "Gửi ACTION_STOP thất bại, chuyển sang stopService", it)
                 runCatching { context.stopService(Intent(context, RuntimeForegroundService::class.java)) }
             }
     }

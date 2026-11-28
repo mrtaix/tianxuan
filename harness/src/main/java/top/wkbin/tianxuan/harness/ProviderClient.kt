@@ -32,14 +32,14 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import top.wkbin.tianxuan.harness.mcp.McpToolApiName
 import top.wkbin.tianxuan.harness.prompt.PromptRouter
 
-/** HTTP 429 的结构化错误，供 Harness 区分临时限流与账户额度耗尽。 */
+/** Lỗi có cấu trúc của HTTP 429, giúp Harness phân biệt rate-limit tạm thời với việc tài khoản hết hạn mức. */
 class LlmRateLimitException(
     message: String,
     val retryAfterSeconds: Long? = null,
     val quotaExhausted: Boolean = false,
 ) : IOException(message)
 
-/** 上游临时故障（5xx，如 Cloudflare 524 origin timeout）：可退避重试，由网络重试路径统一处理。 */
+/** Sự cố tạm thời phía upstream (5xx, ví dụ Cloudflare 524 origin timeout): có thể thử lại sau khi chờ, do luồng retry mạng xử lý thống nhất. */
 class TransientHttpException(
     message: String,
     val httpCode: Int,
@@ -47,9 +47,9 @@ class TransientHttpException(
 ) : IOException(message)
 
 /**
- * 上下文超限（HTTP 400 家族与 413 Payload Too Large）：与其他 4xx 的本质区别是可自愈——
- * 引擎捕获后执行紧急机械压缩并重试同一请求（对齐 opencode 的 overflow → compact → replay 闭环），
- * 而不是直接把失败抛给用户。HTTP 413 常见于 Nginx/中转拒绝过大 JSON，body 往往是 HTML。
+ * Vượt giới hạn ngữ cảnh (họ HTTP 400 và 413 Payload Too Large): khác biệt cốt lõi so với các 4xx khác là có thể tự phục hồi —
+ * engine bắt lỗi rồi nén khẩn cấp theo cách thủ công và thử lại đúng yêu cầu đó (theo vòng overflow → compact → replay của opencode),
+ * thay vì ném lỗi thẳng cho người dùng. HTTP 413 thường gặp khi Nginx/proxy từ chối JSON quá lớn, body thường là HTML.
  */
 class LlmContextOverflowException(message: String) : IOException(message)
 
@@ -57,10 +57,10 @@ class LlmContextOverflowException(message: String) : IOException(message)
 class LlmInvalidOutputTokensException(message: String) : IOException(message)
 
 /**
- * 上游以 HTTP 200 返回了"什么都没有"的一轮（无正文、无推理、无工具调用）。
+ * Upstream trả về HTTP 200 nhưng cả lượt "không có gì" (không nội dung, không suy luận, không gọi công cụ).
  *
- * 这类响应若不显式识别，会被上层当成"模型答完了"正常收尾，前台表现为
- * 「消息发出去没有任何回复」——既不报错也没有内容，正是最无从定位的一种形态。
+ * Nếu không nhận diện tường minh, tầng trên sẽ coi đây là "mô hình đã trả lời xong" và kết thúc bình thường; giao diện
+ * biểu hiện thành "gửi tin nhắn mà không có phản hồi nào" — vừa không báo lỗi vừa không có nội dung, đúng kiểu khó lần ra nguyên nhân nhất.
  */
 class LlmEmptyResponseException(message: String) : IOException(message)
 
@@ -73,8 +73,8 @@ internal class ChatApi(
     suspend fun chat(model: ModelConfig, messages: List<ApiMessage>): ChatResult =
         withContext(Dispatchers.IO) {
             val call = okHttpClient.newCall(buildRequest(model, messages, stream = false))
-            // 与流式路径一致：取消时立即关闭 socket，否则阻塞的 execute()/body.string()
-            // 不感知协程取消，用户点"停止"后最长要等满 callTimeout。
+            // Nhất quán với luồng streaming: đóng socket ngay khi bị huỷ, nếu không execute()/body.string() đang chặn
+            // sẽ không nhận biết việc huỷ coroutine, người dùng bấm "dừng" phải chờ tới hết callTimeout.
             val cancelHandle = coroutineContext[Job]?.invokeOnCompletion(onCancelling = true) { call.cancel() }
             try {
                 call.execute().use { response ->
@@ -103,12 +103,12 @@ internal class ChatApi(
         }
 
     /**
-     * 流式调用：逐行读取 SSE（data: ...），每个内容增量立即通过 [onDelta] 回调
-     * 交给 UI；工具调用参数按 index 分片累积。推理增量通过 [onReasoning] 回调。
+     * Gọi streaming: đọc SSE theo từng dòng (data: ...), mỗi phần nội dung tăng dần được trả về ngay qua callback [onDelta]
+     * cho giao diện; tham số gọi công cụ được tích luỹ theo từng mảnh index. Phần suy luận tăng dần đi qua callback [onReasoning].
      *
-     * 默认携带 stream_options.include_usage 请求最终 usage 块；个别严格校验的
-     * Provider 会因此 400，此时自动降级为不带该参数重试一次（请求在流开始前
-     * 即失败，不会有增量重复发送的风险）。
+     * Mặc định gửi kèm stream_options.include_usage để yêu cầu khối usage cuối cùng; một số Provider kiểm tra nghiêm ngặt
+     * sẽ trả 400 vì tham số này, khi đó tự động hạ cấp thử lại một lần không kèm tham số đó (yêu cầu hỏng ngay trước khi
+     * luồng bắt đầu nên không có rủi ro gửi lặp phần tăng dần).
      */
     @OptIn(InternalCoroutinesApi::class)
     suspend fun chatStream(

@@ -23,31 +23,30 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * 天玄 · 宽屏常驻导航侧栏。
+ * CTHarness · Thanh điều hướng thường trực cho màn hình rộng.
  *
- * 手机形态用底部栏（见 [RuntimeBottomBar]），平板横屏下换成常驻侧栏：
- * 拇指够不到底栏、键盘弹出后底栏被顶掉、且侧栏能一直显示当前门的位置——
- * 这三点是平板端的核心痛点。
+ * Điện thoại dùng thanh dưới cùng (xem [RuntimeBottomBar]); máy tính bảng ngang dùng thanh bên:
+ * thanh dưới khó với tới, bị bàn phím đẩy lên và khó giữ dấu vị trí hiện tại.
  *
- * 宽度取自 [LocalConfiguration] 而非 Activity 的 windowMetrics：Compose 侧
- * 拿到的 configuration 已扣除系统栏，且在折叠/分屏时会随窗口变化重组，
- * 不需要额外注册监听。用 remember 缓存避免每次重组重复计算。
+ * Lấy chiều rộng từ [LocalConfiguration], không dùng windowMetrics của Activity:
+ * configuration của Compose đã trừ thanh hệ thống và tự tái tổ hợp khi gập máy hoặc chia màn hình.
+ * Không cần đăng ký bộ lắng nghe; dùng remember để tránh tính lại ở mỗi lần tái tổ hợp.
  */
 @Composable
 fun rememberWidthClass(): TianXuanWidthClass {
     val configuration = LocalConfiguration.current
     val widthDp = configuration.screenWidthDp
-    // 屏幕宽度只在配置变化时才变，按它做 key 记住结果，避免无关重组重复判定
+    // Chiều rộng chỉ đổi khi cấu hình đổi; dùng làm key để tránh tính lại khi tái tổ hợp không liên quan.
     return remember(widthDp) { widthClassOf(widthDp) }
 }
 
 /**
- * 常驻导航侧栏。
+ * Thanh điều hướng bên thường trực.
  *
- * @param selected 当前选中的门
- * @param onNavigate 点击导航
- * @param widthClass 宽度分型，由调用方决定（便于在测试中固定注入）
- * @param modifier 布局修饰
+ * @param selected cửa chức năng đang chọn
+ * @param onNavigate xử lý thao tác điều hướng
+ * @param widthClass nhóm chiều rộng do bên gọi quyết định, có thể cố định trong kiểm thử
+ * @param modifier bộ điều chỉnh bố cục
  */
 @Composable
 fun RuntimeNavRail(
@@ -81,10 +80,10 @@ fun RuntimeNavRail(
 }
 
 /**
- * 单个导航项。
+ * Một mục điều hướng.
  *
- * 选中态用容器底色 + 文字加粗，而非只靠图标颜色变化：
- * 平板上导航项距拇指远，需要更明确的选中提示。
+ * Trạng thái chọn dùng cả màu nền và chữ đậm, không chỉ đổi màu biểu tượng:
+ * mục điều hướng trên máy tính bảng xa ngón tay hơn nên cần dấu hiệu rõ ràng.
  */
 @Composable
 private fun NavRailItem(
@@ -108,11 +107,11 @@ private fun NavRailItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            // testTag 供自适应外壳的渲染测试定位。
-            // 不用中文文案做断言：星象体系改名会让测试因无关原因失败。
+            // testTag giúp kiểm thử kết xuất tìm mục trong bố cục thích ứng.
+            // Không dùng nội dung bản dịch để khẳng định: đổi tên tinh tượng không nên làm hỏng kiểm thử.
             .testTag(NAV_ITEM_TEST_TAG)
-            // 容器底色承担「选中」的可视提示：平板上导航项离拇指远，
-            // 只靠图标颜色变化不足以让人一眼看出当前在哪一门。
+            // Màu nền thể hiện trạng thái chọn: trên máy tính bảng, mục điều hướng xa ngón tay;
+            // chỉ đổi màu biểu tượng chưa đủ để nhận ra ngay cửa chức năng hiện tại.
             .background(container, MaterialTheme.shapes.large)
             .padding(vertical = 10.dp, horizontal = if (showLabel) 12.dp else 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -138,5 +137,5 @@ private fun NavRailItem(
     }
 }
 
-/** 导航项的语义标记，供自适应外壳渲染测试定位节点。 */
+/** Dấu ngữ nghĩa của mục điều hướng để kiểm thử kết xuất tìm nút trong bố cục thích ứng. */
 const val NAV_ITEM_TEST_TAG: String = "adaptive-nav-item"

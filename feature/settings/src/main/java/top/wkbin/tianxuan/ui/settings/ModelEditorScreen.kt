@@ -135,12 +135,12 @@ fun ModelEditorScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RuntimeTopBar(
-                title = if (existing == null) "新增模型档案" else "编辑模型档案",
+                title = if (existing == null) "Thêm hồ sơ mô hình" else "Sửa hồ sơ mô hình",
                 onBack = onBack,
                 actions = {
                     RuntimeIconButton(
                         onClick = { showImportJsonDialog = true },
-                        contentDescription = "从 JSON 填入",
+                        contentDescription = "Điền từ JSON",
                     ) {
                         RuntimeIcon(
                             name = RuntimeIconName.Code,
@@ -199,15 +199,15 @@ fun ModelEditorScreen(
                     onSuccess = { list ->
                         val item = list.firstOrNull()
                         if (item != null) {
-                            Toast.makeText(context, "已成功从 JSON 载入配置", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Đã tải cấu hình từ JSON", Toast.LENGTH_SHORT).show()
                             item
                         } else {
-                            Toast.makeText(context, "未找到模型配置", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Không tìm thấy cấu hình mô hình", Toast.LENGTH_SHORT).show()
                             null
                         }
                     },
                     onFailure = { err ->
-                        Toast.makeText(context, "解析失败: ${err.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Phân tích thất bại: ${err.message}", Toast.LENGTH_SHORT).show()
                         null
                     }
                 )
@@ -422,11 +422,11 @@ private fun ModelEditorContent(
                     .filter { it !in existingKeys }
                     .toList()
                 if (importedKeys.isEmpty()) {
-                    Toast.makeText(context, "没有解析到新的密钥", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Không tìm thấy khóa mới", Toast.LENGTH_SHORT).show()
                 } else {
                     keyList = (existingKeys + importedKeys).ifEmpty { listOf("") }
                     revealedKeyIndices = emptySet()
-                    Toast.makeText(context, "已导入 ${importedKeys.size} 个密钥", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Đã nhập ${importedKeys.size} khóa", Toast.LENGTH_SHORT).show()
                     showBatchImportKeysDialog = false
                 }
             },
@@ -512,11 +512,11 @@ private fun ModelEditorContent(
                             ) {
                                 Text(
                                     text = when (provider.group) {
-                                        ProviderGroup.OFFICIAL -> "官方"
-                                        ProviderGroup.CHINA -> "国内"
-                                        ProviderGroup.AGGREGATOR -> "聚合"
-                                        ProviderGroup.LOCAL -> "本地"
-                                        ProviderGroup.CUSTOM -> "自定义"
+                                        ProviderGroup.OFFICIAL -> "Chính thức"
+                                        ProviderGroup.CHINA -> "Trung Quốc"
+                                        ProviderGroup.AGGREGATOR -> "Tổng hợp"
+                                        ProviderGroup.LOCAL -> "Cục bộ"
+                                        ProviderGroup.CUSTOM -> "Tùy chỉnh"
                                     },
                                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -525,7 +525,7 @@ private fun ModelEditorContent(
                             }
                         }
                         Text(
-                            text = if (provider.group == ProviderGroup.LOCAL) "本地沙箱轻量模型端点" else "OpenAI / Claude 兼容 API",
+                            text = if (provider.group == ProviderGroup.LOCAL) "Điểm cuối mô hình gọn nhẹ trong sandbox cục bộ" else "API tương thích OpenAI / Claude",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -536,7 +536,7 @@ private fun ModelEditorContent(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("切换预设", style = MaterialTheme.typography.labelMedium)
+                            Text("Đổi cấu hình có sẵn", style = MaterialTheme.typography.labelMedium)
                             RuntimeIcon(RuntimeIconName.ChevronDown, Modifier.size(14.dp))
                         }
                     }
@@ -559,7 +559,7 @@ private fun ModelEditorContent(
                     ) {
                         RuntimeIcon(RuntimeIconName.Globe, Modifier.size(18.dp), MaterialTheme.colorScheme.primary)
                         Text(
-                            text = "接口与基础连接",
+                            text = "API và kết nối cơ bản",
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface,
                         )
@@ -570,7 +570,7 @@ private fun ModelEditorContent(
                         value = name,
                         onValueChange = { name = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("档案名称（可选，留空按模型命名）") },
+                        label = { Text("Tên hồ sơ (tùy chọn, để trống để dùng tên mô hình)") },
                         placeholder = { Text(if (selectedModels.isNotEmpty()) selectedModels.first() else provider.name) },
                         singleLine = true,
                         shape = compactFieldShape,
@@ -585,11 +585,11 @@ private fun ModelEditorContent(
                         value = url,
                         onValueChange = { url = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Base URL（接口端点）") },
+                        label = { Text("Base URL (điểm cuối API)") },
                         placeholder = {
                             Text(
                                 if (provider.protocol == top.wkbin.tianxuan.core.tools.ProviderProtocol.ANTHROPIC) {
-                                    "https://api.anthropic.com/v1 或中转站地址"
+                                    "https://api.anthropic.com/v1 hoặc địa chỉ trung gian"
                                 } else {
                                     "https://api.openai.com/v1"
                                 }
@@ -598,7 +598,7 @@ private fun ModelEditorContent(
                         isError = url.isNotBlank() && !urlValid,
                         supportingText = {
                             if (url.isNotBlank() && !urlValid) {
-                                Text("接口地址需以 http:// 或 https:// 开头")
+                                Text("Địa chỉ API phải bắt đầu bằng http:// hoặc https://")
                             }
                         },
                         singleLine = true,
@@ -647,7 +647,7 @@ private fun ModelEditorContent(
                         ) {
                             RuntimeIcon(RuntimeIconName.Key, Modifier.size(18.dp), MaterialTheme.colorScheme.primary)
                             Text(
-                                text = "API 密钥池",
+                                text = "Danh sách API Key",
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
@@ -658,7 +658,7 @@ private fun ModelEditorContent(
                             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                         ) {
                             Text(
-                                text = "${keyList.count { it.isNotBlank() }} 个已配置",
+                                text = "Đã cấu hình ${keyList.count { it.isNotBlank() }} khóa",
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -695,7 +695,7 @@ private fun ModelEditorContent(
                                             modifier = Modifier
                                                 .minimumInteractiveComponentSize()
                                                 .size(28.dp),
-                                            contentDescription = if (isRevealed) "隐藏密钥" else "显示密钥",
+                                            contentDescription = if (isRevealed) "Ẩn khóa" else "Hiện khóa",
                                         ) {
                                             RuntimeIcon(
                                                 name = if (isRevealed) RuntimeIconName.VisibilityOff else RuntimeIconName.Visibility,
@@ -722,7 +722,7 @@ private fun ModelEditorContent(
                                     modifier = Modifier
                                         .minimumInteractiveComponentSize()
                                         .size(36.dp),
-                                    contentDescription = "移除该密钥",
+                                    contentDescription = "Xóa khóa này",
                                 ) {
                                     RuntimeIcon(
                                         name = RuntimeIconName.Close,
@@ -747,7 +747,7 @@ private fun ModelEditorContent(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 RuntimeIcon(RuntimeIconName.Plus, Modifier.size(14.dp), MaterialTheme.colorScheme.primary)
-                                Text("+ 备用 Key", style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("+ Key dự phòng", style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
                         RuntimeOutlinedButton(
@@ -758,13 +758,13 @@ private fun ModelEditorContent(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 RuntimeIcon(RuntimeIconName.Download, Modifier.size(14.dp), MaterialTheme.colorScheme.primary)
-                                Text("批量导入", style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("Nhập hàng loạt", style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
                     }
 
                     Text(
-                        text = "密钥将加密保存在本地 Android Keystore 中，明文不落库。",
+                        text = "Khóa được mã hóa và lưu cục bộ trong Android Keystore, không lưu văn bản thuần vào cơ sở dữ liệu.",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -792,7 +792,7 @@ private fun ModelEditorContent(
                         ) {
                             RuntimeIcon(RuntimeIconName.Brain, Modifier.size(18.dp), MaterialTheme.colorScheme.primary)
                             Text(
-                                text = "模型选择与定制",
+                                text = "Chọn và tùy chỉnh mô hình",
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
@@ -804,7 +804,7 @@ private fun ModelEditorContent(
                                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                             ) {
                                 Text(
-                                    text = "已选 $totalSelectedCount 个模型",
+                                    text = "Đã chọn $totalSelectedCount mô hình",
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -822,13 +822,13 @@ private fun ModelEditorContent(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "候选模型（点击勾选，支持多选）",
+                                text = "Mô hình khả dụng (nhấn để chọn, hỗ trợ chọn nhiều)",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             if (candidateCount > 20) {
                                 Text(
-                                    text = "共 $candidateCount 个",
+                                    text = "Tổng cộng $candidateCount mô hình",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -839,7 +839,7 @@ private fun ModelEditorContent(
                             value = modelSearchQuery,
                             onValueChange = { modelSearchQuery = it },
                             modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("搜索模型名称或 ID") },
+                            placeholder = { Text("Tìm tên hoặc ID mô hình") },
                             singleLine = true,
                             shape = compactFieldShape,
                             colors = fieldColors,
@@ -855,7 +855,7 @@ private fun ModelEditorContent(
                                 if (modelSearchQuery.isNotEmpty()) {
                                     RuntimeIconButton(
                                         onClick = { modelSearchQuery = "" },
-                                        contentDescription = "清空模型搜索",
+                                        contentDescription = "Xóa tìm kiếm mô hình",
                                     ) {
                                         RuntimeIcon(
                                             name = RuntimeIconName.Close,
@@ -867,7 +867,7 @@ private fun ModelEditorContent(
                             },
                             supportingText = {
                                 if (modelSearchQuery.isNotBlank()) {
-                                    Text("找到 ${filteredCandidateModels.size} / $candidateCount 个模型")
+                                    Text("Tìm thấy ${filteredCandidateModels.size} / $candidateCount mô hình")
                                 }
                             },
                         )
@@ -875,7 +875,7 @@ private fun ModelEditorContent(
                         // 流式布局自动横向换行；限制最大高度，模型过多时区域内部滚动，避免撑爆单 item 导致底部黑屏
                         if (filteredCandidateModels.isEmpty()) {
                             Text(
-                                text = "没有匹配的模型，可清空搜索或在下方手动填写模型 ID",
+                                text = "Không có mô hình phù hợp; hãy xóa tìm kiếm hoặc nhập ID mô hình thủ công bên dưới",
                                 modifier = Modifier.padding(vertical = 8.dp),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -934,8 +934,8 @@ private fun ModelEditorContent(
                         value = customModelInput,
                         onValueChange = { customModelInput = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("自定义模型 ID（可选，逗号分隔额外模型）") },
-                        placeholder = { Text("例如：gpt-4.5-preview, claude-3-7-sonnet") },
+                        label = { Text("ID mô hình tùy chỉnh (tùy chọn, phân cách mô hình bổ sung bằng dấu phẩy)") },
+                        placeholder = { Text("Ví dụ: gpt-4.5-preview, claude-3-7-sonnet") },
                         singleLine = true,
                         shape = compactFieldShape,
                         colors = fieldColors,
@@ -961,11 +961,11 @@ private fun ModelEditorContent(
                         RuntimeIcon(RuntimeIconName.Speed, Modifier.size(18.dp), MaterialTheme.colorScheme.primary)
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "推理与上下文调优",
+                                "Tinh chỉnh suy luận và ngữ cảnh",
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             )
                             Text(
-                                "Temperature、Max Tokens、上下文容量与思考模式",
+                                "Temperature, Max Tokens, dung lượng ngữ cảnh và chế độ suy nghĩ",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -991,7 +991,7 @@ private fun ModelEditorContent(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text("Temperature (随机性)", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                                    Text("Temperature (độ ngẫu nhiên)", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
                                     Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)) {
                                         Text(
                                             text = String.format("%.2f", temperature),
@@ -1009,9 +1009,9 @@ private fun ModelEditorContent(
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    PresetChip("0.2 精准", temperature == 0.2f) { temperature = 0.2f }
-                                    PresetChip("0.7 平衡", temperature == 0.7f) { temperature = 0.7f }
-                                    PresetChip("1.2 创意", temperature == 1.2f) { temperature = 1.2f }
+                                    PresetChip("0.2 Chính xác", temperature == 0.2f) { temperature = 0.2f }
+                                    PresetChip("0.7 Cân bằng", temperature == 0.7f) { temperature = 0.7f }
+                                    PresetChip("1.2 Sáng tạo", temperature == 1.2f) { temperature = 1.2f }
                                 }
                             }
 
@@ -1029,9 +1029,9 @@ private fun ModelEditorContent(
                                     singleLine = true,
                                     isError = maxTokensInvalid || tokenWindowInvalid,
                                     supportingText = if (maxTokensInvalid) {
-                                        { Text("请输入大于 0 的整数，或留空使用默认值") }
+                                        { Text("Nhập số nguyên lớn hơn 0 hoặc để trống để dùng mặc định") }
                                     } else if (tokenWindowInvalid) {
-                                        { Text("不能大于上下文上限") }
+                                        { Text("Không được vượt quá giới hạn ngữ cảnh") }
                                     } else null,
                                     shape = compactFieldShape,
                                     colors = fieldColors,
@@ -1041,18 +1041,18 @@ private fun ModelEditorContent(
                                     value = contextTokensText,
                                     onValueChange = { contextTokensText = it.filter(Char::isDigit) },
                                     modifier = Modifier.weight(1f),
-                                    label = { Text("上下文上限") },
-                                    placeholder = { Text(autoContextTokens?.let(::formatContextWindow) ?: "留空自动") },
+                                    label = { Text("Giới hạn ngữ cảnh") },
+                                    placeholder = { Text(autoContextTokens?.let(::formatContextWindow) ?: "Để trống: tự động") },
                                     singleLine = true,
                                     isError = contextTokensInvalid || tokenWindowInvalid,
                                     supportingText = if (contextTokensInvalid) {
-                                        { Text("请输入大于 0 的整数，或留空自动适配") }
+                                        { Text("Nhập số nguyên lớn hơn 0 hoặc để trống để tự điều chỉnh") }
                                     } else if (tokenWindowInvalid) {
-                                        { Text("不能大于当前上下文上限（自动 ${autoContextTokens?.let(::formatContextWindow) ?: "全局预算"}）") }
+                                        { Text("Không được vượt giới hạn ngữ cảnh hiện tại (tự động: ${autoContextTokens?.let(::formatContextWindow) ?: "ngân sách chung"})") }
                                     } else if (contextTokensText.isBlank() && autoContextTokens != null) {
-                                        { Text("留空自动适配：${formatContextWindow(autoContextTokens)}") }
+                                        { Text("Để trống để tự điều chỉnh: ${formatContextWindow(autoContextTokens)}") }
                                     } else if (contextTokensText.isBlank()) {
-                                        { Text("留空使用全局兜底预算") }
+                                        { Text("Để trống để dùng ngân sách dự phòng chung") }
                                     } else null,
                                     shape = compactFieldShape,
                                     colors = fieldColors,
@@ -1067,7 +1067,7 @@ private fun ModelEditorContent(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text("Top P (核采样)", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                                    Text("Top P (lấy mẫu hạt nhân)", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
                                     Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)) {
                                         Text(
                                             text = String.format("%.2f", topP),
@@ -1093,13 +1093,13 @@ private fun ModelEditorContent(
                             ) {
                                 OutlinedTextField(
                                     value = when (reasoningModeText) {
-                                        "enabled" -> "开启深度推理（模型深入思考）"
-                                        else -> "跟随模型默认"
+                                        "enabled" -> "Bật suy luận sâu (mô hình suy nghĩ chuyên sâu)"
+                                        else -> "Theo mặc định của mô hình"
                                     },
                                     onValueChange = {},
                                     modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                                     readOnly = true,
-                                    label = { Text("推理思考模式") },
+                                    label = { Text("Chế độ suy luận") },
                                     shape = compactFieldShape,
                                     colors = fieldColors,
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(reasoningModeMenu) },
@@ -1108,11 +1108,11 @@ private fun ModelEditorContent(
                                     expanded = reasoningModeMenu,
                                     onDismissRequest = { reasoningModeMenu = false },
                                 ) {
-                                    DropdownMenuItem(text = { Text("跟随模型默认") }, onClick = {
+                                    DropdownMenuItem(text = { Text("Theo mặc định của mô hình") }, onClick = {
                                         reasoningModeText = "auto"
                                         reasoningModeMenu = false
                                     })
-                                    DropdownMenuItem(text = { Text("开启深度推理（模型深入思考）") }, onClick = {
+                                    DropdownMenuItem(text = { Text("Bật suy luận sâu (mô hình suy nghĩ chuyên sâu)") }, onClick = {
                                         reasoningModeText = "enabled"
                                         reasoningModeMenu = false
                                     })
@@ -1141,11 +1141,11 @@ private fun ModelEditorContent(
                         RuntimeIcon(RuntimeIconName.Shield, Modifier.size(18.dp), MaterialTheme.colorScheme.primary)
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "高级特性与网络配置",
+                                "Tính năng nâng cao và cấu hình mạng",
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             )
                             Text(
-                                "Tool Call、识图、Responses API、RPM 限速与请求头",
+                                "Tool Call, nhận dạng ảnh, Responses API, giới hạn RPM và tiêu đề yêu cầu",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -1169,8 +1169,8 @@ private fun ModelEditorContent(
                                 value = rpmLimitText,
                                 onValueChange = { rpmLimitText = it.filter(Char::isDigit) },
                                 modifier = Modifier.fillMaxWidth(),
-                                label = { Text("单 Key 每分钟请求上限 (RPM)") },
-                                placeholder = { Text("0 表示不限制") },
+                                label = { Text("Giới hạn yêu cầu mỗi phút cho một khóa (RPM)") },
+                                placeholder = { Text("0 nghĩa là không giới hạn") },
                                 singleLine = true,
                                 shape = compactFieldShape,
                                 colors = fieldColors,
@@ -1186,7 +1186,7 @@ private fun ModelEditorContent(
                                     value = compactionKeepRecentText,
                                     onValueChange = { compactionKeepRecentText = it.filter(Char::isDigit) },
                                     modifier = Modifier.weight(1f),
-                                    label = { Text("压缩保留上限") },
+                                    label = { Text("Giới hạn giữ lại khi nén") },
                                     placeholder = { Text("20000") },
                                     singleLine = true,
                                     shape = compactFieldShape,
@@ -1197,7 +1197,7 @@ private fun ModelEditorContent(
                                     value = compactionReserveText,
                                     onValueChange = { compactionReserveText = it.filter(Char::isDigit) },
                                     modifier = Modifier.weight(1f),
-                                    label = { Text("响应预留 Token") },
+                                    label = { Text("Token dự phòng cho phản hồi") },
                                     placeholder = { Text("16384") },
                                     singleLine = true,
                                     shape = compactFieldShape,
@@ -1206,57 +1206,57 @@ private fun ModelEditorContent(
                                 )
                             }
                             Text(
-                                "仅本模型的压缩预算覆盖：触发压缩时保留最近 N token 进上下文、为回复预留 N token；留空使用全局默认。",
+                                "Ghi đè ngân sách nén riêng cho mô hình này: khi nén, giữ N token gần nhất trong ngữ cảnh và dành N token cho phản hồi; để trống để dùng mặc định chung.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
 
                             // 特性开关列表
                             EditorToggleRow(
-                                title = "支持函数调用 (Tool Call)",
-                                subtitle = "支持沙箱命令与工具调用闭环",
+                                title = "Hỗ trợ gọi hàm (Tool Call)",
+                                subtitle = "Hỗ trợ lệnh sandbox và chu trình gọi công cụ",
                                 checked = toolCallEnabled,
                                 onCheckedChange = { toolCallEnabled = it },
                             )
 
                             EditorToggleRow(
-                                title = "支持多模态识图 (Vision)",
-                                subtitle = "向模型直接发送图片",
+                                title = "Hỗ trợ nhận dạng ảnh đa phương thức (Vision)",
+                                subtitle = "Gửi ảnh trực tiếp đến mô hình",
                                 checked = visionEnabled,
                                 onCheckedChange = { visionEnabled = it },
                             )
 
                             EditorToggleRow(
-                                title = "支持图片生成 (Image Generation)",
-                                subtitle = "模型响应可直接返回生成图片；仅确认支持时开启",
+                                title = "Hỗ trợ tạo ảnh (Image Generation)",
+                                subtitle = "Phản hồi của mô hình có thể trả ảnh được tạo; chỉ bật khi chắc chắn được hỗ trợ",
                                 checked = imageGenerationEnabled,
                                 onCheckedChange = { imageGenerationEnabled = it },
                             )
 
                             EditorToggleRow(
-                                title = "使用 Responses API",
-                                subtitle = "使用 /v1/responses 替代 completions",
+                                title = "Dùng Responses API",
+                                subtitle = "Dùng /v1/responses thay cho completions",
                                 checked = responseApiEnabled,
                                 onCheckedChange = { responseApiEnabled = it },
                             )
 
                             EditorToggleRow(
                                 title = "Claude Prompt Caching",
-                                subtitle = "Anthropic 协议注入缓存断点，长会话最高省 90% 输入 Token",
+                                subtitle = "Chèn điểm ngắt bộ nhớ đệm theo giao thức Anthropic, tiết kiệm đến 90% token đầu vào cho hội thoại dài",
                                 checked = promptCachingEnabled,
                                 onCheckedChange = { promptCachingEnabled = it },
                             )
 
                             EditorToggleRow(
-                                title = "Prompt Cache 1 小时 TTL",
-                                subtitle = "扩大缓存有效期（需服务端支持扩展 TTL）",
+                                title = "TTL bộ nhớ đệm lời nhắc: 1 giờ",
+                                subtitle = "Kéo dài thời gian hiệu lực bộ nhớ đệm (máy chủ phải hỗ trợ TTL mở rộng)",
                                 checked = promptCacheTtl1h,
                                 onCheckedChange = { promptCacheTtl1h = it },
                             )
 
                             EditorToggleRow(
-                                title = "纯净排查模式",
-                                subtitle = "不注入系统提示词与工具定义",
+                                title = "Chế độ chẩn đoán tối giản",
+                                subtitle = "Không chèn lời nhắc hệ thống và định nghĩa công cụ",
                                 checked = pureChatMode,
                                 onCheckedChange = { pureChatMode = it },
                             )
@@ -1266,7 +1266,7 @@ private fun ModelEditorContent(
                                 value = customHeaders,
                                 onValueChange = { customHeaders = it },
                                 modifier = Modifier.fillMaxWidth(),
-                                label = { Text("自定义 HTTP 请求头（多行 Key: Value）") },
+                                label = { Text("Tiêu đề HTTP tùy chỉnh (nhiều dòng Key: Value)") },
                                 placeholder = { Text("X-Custom-Header: value\nHTTP-Referer: https://tianxuan.app") },
                                 minLines = 2,
                                 maxLines = 4,
@@ -1297,12 +1297,12 @@ private fun ModelEditorContent(
                     if (testing) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             RuntimeCircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                            Text("正在测试…")
+                            Text("Đang kiểm tra…")
                         }
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             RuntimeIcon(RuntimeIconName.Play, Modifier.size(16.dp), MaterialTheme.colorScheme.primary)
-                            Text("测试连接")
+                            Text("Kiểm tra kết nối")
                         }
                     }
                 }
@@ -1348,7 +1348,7 @@ private fun ModelEditorContent(
                                 tint = if (isSuccess) successStatusColor() else MaterialTheme.colorScheme.error,
                             )
                             Text(
-                                text = resultMsg,
+                                text = if (isSuccess) "Kết nối thành công" else resultMsg,
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                 color = if (isSuccess) successStatusColor() else MaterialTheme.colorScheme.error,
                                 maxLines = 2,
@@ -1371,9 +1371,9 @@ private fun ModelEditorContent(
             val parsedRpmLimit = rpmLimitText.trim().toIntOrNull() ?: 0
 
             val buttonText = if (effectiveModels.size > 1) {
-                "保存已勾选的 ${effectiveModels.size} 个模型"
+                "Lưu ${effectiveModels.size} mô hình đã chọn"
             } else {
-                "保存模型档案配置"
+                "Lưu cấu hình hồ sơ mô hình"
             }
 
             RuntimeButton(
@@ -1511,7 +1511,7 @@ private fun BatchImportKeysDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RuntimeIcon(RuntimeIconName.Key, Modifier.size(20.dp), MaterialTheme.colorScheme.primary)
-                Text("批量导入密钥", fontWeight = FontWeight.Bold)
+                Text("Nhập hàng loạt khóa", fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -1522,7 +1522,7 @@ private fun BatchImportKeysDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    "粘贴多个 API 密钥，一行一个，遇到换行即为下一个 Key：",
+                    "Dán nhiều khóa API, mỗi dòng một khóa; xuống dòng để nhập khóa tiếp theo:",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1546,14 +1546,14 @@ private fun BatchImportKeysDialog(
                             if (clipText.isNotBlank()) {
                                 text = clipText
                             } else {
-                                Toast.makeText(context, "剪贴板为空", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Bộ nhớ tạm trống", Toast.LENGTH_SHORT).show()
                             }
                         },
                         modifier = Modifier.weight(1f).height(36.dp),
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp),
                     ) {
-                        Text("从剪贴板粘贴", style = MaterialTheme.typography.labelMedium)
+                        Text("Dán từ bộ nhớ tạm", style = MaterialTheme.typography.labelMedium)
                     }
                     if (parsedCount > 0) {
                         Surface(
@@ -1561,7 +1561,7 @@ private fun BatchImportKeysDialog(
                             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                         ) {
                             Text(
-                                text = "已识别 $parsedCount 个",
+                                text = "Đã nhận diện $parsedCount khóa",
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -1576,12 +1576,12 @@ private fun BatchImportKeysDialog(
                 onClick = { onConfirm(text) },
                 enabled = parsedCount > 0,
             ) {
-                Text("导入")
+                Text("Nhập")
             }
         },
         dismissButton = {
             RuntimeTextButton(onClick = onDismiss) {
-                Text("取消")
+                Text("Hủy")
             }
         },
     )
@@ -1600,7 +1600,7 @@ private fun QuickImportJsonDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RuntimeIcon(RuntimeIconName.Code, Modifier.size(20.dp), MaterialTheme.colorScheme.primary)
-                Text("从 JSON 填入模型配置", fontWeight = FontWeight.Bold)
+                Text("Điền cấu hình mô hình từ JSON", fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -1611,7 +1611,7 @@ private fun QuickImportJsonDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    "粘贴天玄导出的模型配置或 OpenAI 兼容 JSON，将自动解析并填入当前表单：",
+                    "Dán cấu hình mô hình xuất từ CTHarness hoặc JSON tương thích OpenAI để tự động phân tích và điền vào biểu mẫu hiện tại:",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1630,13 +1630,13 @@ private fun QuickImportJsonDialog(
                         if (clipText.isNotBlank()) {
                             text = clipText
                         } else {
-                            Toast.makeText(context, "剪贴板为空", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Bộ nhớ tạm trống", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(36.dp),
                     shape = RoundedCornerShape(8.dp),
                 ) {
-                    Text("从剪贴板粘贴")
+                    Text("Dán từ bộ nhớ tạm")
                 }
             }
         },
@@ -1645,12 +1645,12 @@ private fun QuickImportJsonDialog(
                 onClick = { onConfirm(text) },
                 enabled = text.isNotBlank(),
             ) {
-                Text("解析并填入")
+                Text("Phân tích và điền")
             }
         },
         dismissButton = {
             RuntimeTextButton(onClick = onDismiss) {
-                Text("取消")
+                Text("Hủy")
             }
         },
     )
@@ -1682,7 +1682,7 @@ private fun ProviderPickerDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RuntimeIcon(RuntimeIconName.Sparkles, Modifier.size(20.dp), MaterialTheme.colorScheme.primary)
-                Text("选择服务商预设", fontWeight = FontWeight.Bold)
+                Text("Chọn cấu hình sẵn của nhà cung cấp", fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -1694,7 +1694,7 @@ private fun ProviderPickerDialog(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("搜索服务商名称或端点...", style = MaterialTheme.typography.bodySmall) },
+                    placeholder = { Text("Tìm tên nhà cung cấp hoặc điểm cuối...", style = MaterialTheme.typography.bodySmall) },
                     leadingIcon = {
                         RuntimeIcon(RuntimeIconName.Search, Modifier.size(16.dp), MaterialTheme.colorScheme.onSurfaceVariant)
                     },
@@ -1723,32 +1723,32 @@ private fun ProviderPickerDialog(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     ProviderFilterChip(
-                        label = "全部",
+                        label = "Tất cả",
                         selected = selectedGroup == null,
                         onClick = { selectedGroup = null },
                     )
                     ProviderFilterChip(
-                        label = "官方",
+                        label = "Chính thức",
                         selected = selectedGroup == ProviderGroup.OFFICIAL,
                         onClick = { selectedGroup = ProviderGroup.OFFICIAL },
                     )
                     ProviderFilterChip(
-                        label = "国内",
+                        label = "Trung Quốc",
                         selected = selectedGroup == ProviderGroup.CHINA,
                         onClick = { selectedGroup = ProviderGroup.CHINA },
                     )
                     ProviderFilterChip(
-                        label = "聚合",
+                        label = "Tổng hợp",
                         selected = selectedGroup == ProviderGroup.AGGREGATOR,
                         onClick = { selectedGroup = ProviderGroup.AGGREGATOR },
                     )
                     ProviderFilterChip(
-                        label = "本地",
+                        label = "Cục bộ",
                         selected = selectedGroup == ProviderGroup.LOCAL,
                         onClick = { selectedGroup = ProviderGroup.LOCAL },
                     )
                     ProviderFilterChip(
-                        label = "自定义",
+                        label = "Tùy chỉnh",
                         selected = selectedGroup == ProviderGroup.CUSTOM,
                         onClick = { selectedGroup = ProviderGroup.CUSTOM },
                     )
@@ -1770,7 +1770,7 @@ private fun ProviderPickerDialog(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
-                                    text = "未找到匹配的服务商",
+                                    text = "Không tìm thấy nhà cung cấp phù hợp",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -1837,11 +1837,11 @@ private fun ProviderPickerDialog(
                                             ) {
                                                 Text(
                                                     text = when (option.group) {
-                                                        ProviderGroup.OFFICIAL -> "官方"
-                                                        ProviderGroup.CHINA -> "国内"
-                                                        ProviderGroup.AGGREGATOR -> "聚合"
-                                                        ProviderGroup.LOCAL -> "本地"
-                                                        ProviderGroup.CUSTOM -> "自定义"
+                                                        ProviderGroup.OFFICIAL -> "Chính thức"
+                                                        ProviderGroup.CHINA -> "Trung Quốc"
+                                                        ProviderGroup.AGGREGATOR -> "Tổng hợp"
+                                                        ProviderGroup.LOCAL -> "Cục bộ"
+                                                        ProviderGroup.CUSTOM -> "Tùy chỉnh"
                                                     },
                                                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -1850,7 +1850,7 @@ private fun ProviderPickerDialog(
                                             }
                                         }
                                         Text(
-                                            text = option.baseUrl.ifBlank { "需自定义 Base URL" },
+                                            text = option.baseUrl.ifBlank { "Cần tùy chỉnh Base URL" },
                                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1,
@@ -1875,7 +1875,7 @@ private fun ProviderPickerDialog(
         confirmButton = {},
         dismissButton = {
             RuntimeTextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text("Đóng")
             }
         },
     )

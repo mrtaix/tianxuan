@@ -62,16 +62,16 @@ fun NetworkTimelineSheet(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     RuntimeTextButton(onClick = { detailId = null }) {
-                        Text("← 返回", color = MaterialTheme.colorScheme.primary)
+                        Text("← Quay lại", color = MaterialTheme.colorScheme.primary)
                     }
                     Text(
-                        "请求详情",
+                        "Chi tiết yêu cầu",
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
             } else {
                 Text(
-                    "网络时间线",
+                    "Dòng thời gian mạng",
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -94,12 +94,12 @@ fun NetworkTimelineSheet(
                         Tab(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
-                            text = { Text("请求 (${requests.size})", style = MaterialTheme.typography.labelMedium) },
+                            text = { Text("Yêu cầu (${requests.size})", style = MaterialTheme.typography.labelMedium) },
                         )
                         Tab(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
-                            text = { Text("Hook 命中 (${hookHits.size})", style = MaterialTheme.typography.labelMedium) },
+                            text = { Text("Lượt kích hoạt hook (${hookHits.size})", style = MaterialTheme.typography.labelMedium) },
                         )
                     }
                     if (selectedTab == 0) {
@@ -115,7 +115,7 @@ fun NetworkTimelineSheet(
         },
         confirmButton = {
             RuntimeTextButton(onClick = onDismiss) {
-                Text("关闭", color = MaterialTheme.colorScheme.primary)
+                Text("Đóng", color = MaterialTheme.colorScheme.primary)
             }
         },
     )
@@ -126,7 +126,7 @@ fun NetworkTimelineSheet(
 private fun RequestList(requests: List<CapturedRequest>, onClick: (String) -> Unit) {
     if (requests.isEmpty()) {
         Text(
-            "暂无捕获记录。\n导航页面后这里会显示资源请求；安装 hook 规则（browser.hook_create）可捕获 fetch/XHR 的状态码与 body。",
+            "Chưa có bản ghi.\nSau khi mở trang, các yêu cầu tài nguyên sẽ xuất hiện ở đây. Cài quy tắc hook (browser.hook_create) để thu thập mã trạng thái và body của fetch/XHR.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -209,7 +209,7 @@ private fun NetworkDetailBody(detail: String?) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
-            text = detail ?: "加载中…",
+            text = detail ?: "Đang tải…",
             style = MaterialTheme.typography.bodySmall.copy(
                 fontFamily = FontFamily.Monospace,
                 fontSize = 11.sp,
@@ -229,7 +229,7 @@ private fun NetworkDetailBody(detail: String?) {
 private fun HookHitList(hits: List<HookHitRecord>) {
     if (hits.isEmpty()) {
         Text(
-            "暂无 hook 命中。\n安装 hook 规则（browser.hook_create）后，函数调用、属性访问、WebSocket 与网络规则命中会实时出现在这里。",
+            "Chưa có lượt kích hoạt hook.\nSau khi cài quy tắc hook (browser.hook_create), các lời gọi hàm, truy cập thuộc tính, WebSocket và lượt khớp quy tắc mạng sẽ xuất hiện ở đây theo thời gian thực.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

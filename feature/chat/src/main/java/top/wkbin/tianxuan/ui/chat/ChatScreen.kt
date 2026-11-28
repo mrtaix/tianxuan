@@ -583,7 +583,7 @@ fun ChatScreen(
                                 ) {
                                     TextButton(onClick = { rightPaneBrowser = false }) {
                                         Text(
-                                            "终端",
+                                            stringResource(R.string.chat_terminal),
                                             fontWeight = if (rightPaneBrowser) FontWeight.Normal else FontWeight.Bold,
                                             color = if (rightPaneBrowser) {
                                                 MaterialTheme.colorScheme.onSurfaceVariant
@@ -594,7 +594,7 @@ fun ChatScreen(
                                     }
                                     TextButton(onClick = { rightPaneBrowser = true }) {
                                         Text(
-                                            "浏览器",
+                                            stringResource(R.string.chat_browser),
                                             fontWeight = if (rightPaneBrowser) FontWeight.Bold else FontWeight.Normal,
                                             color = if (rightPaneBrowser) {
                                                 MaterialTheme.colorScheme.primary
@@ -1208,7 +1208,7 @@ private fun ProactiveWorkflowBanner(
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier.height(28.dp),
                     ) {
-                        Text("运行", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.chat_run_action), style = MaterialTheme.typography.labelSmall)
                     }
                     IconButton(
                         onClick = { onDismiss(suggestion.workflowId) },

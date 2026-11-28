@@ -1,142 +1,142 @@
 package top.wkbin.tianxuan.core.common.astronomy
 
 /**
- * 北斗七星 —— 天玄的七曜「门」。
+ * Bắc Đẩu thất tinh — bảy cửa chức năng của CTHarness.
  *
- * 《史记·天官书》："斗为帝车，运于中央，临制四乡。分阴阳，建四时，均五行，
- * 移节度，定诸纪，皆系于斗。"
+ * Theo Sử ký · Thiên quan thư, Đẩu là xe của đế vương, vận hành ở trung tâm,
+ * phân âm dương, lập bốn mùa, điều hòa ngũ hành và định các chu kỳ.
  *
- * 七星对应应用的七条主干能力：这一层是**用户看得见的门**，
- * 门背后的实现构件由二十八宿承载（见 [Mansion]），两层不重复、不串位。
- *
- * 前四星（天枢→天权）为**魁**（斗勺），主承；后三星（玉衡→摇光）为**杓**（斗柄），主施。
+ * Bảy sao ứng với bảy năng lực chính mà người dùng nhìn thấy. Các thành phần
+ * triển khai phía sau thuộc nhị thập bát tú (xem [Mansion]); hai tầng không trùng vai trò.
+ * Bốn sao đầu (Thiên Khu → Thiên Quyền) là Khôi, phần gáo, chủ tiếp nhận;
+ * ba sao sau (Ngọc Hành → Dao Quang) là Tiêu, phần cán, chủ thi hành.
  */
 enum class BeiDou(
-    /** 星名，如「天枢」。 */
+    /** Tên sao, ví dụ Thiên Khu. */
     val starName: String,
-    /** 拜耳编号与西名，如「α Dubhe」。 */
+    /** Ký hiệu Bayer và tên phương Tây, ví dụ α Dubhe. */
     val bayer: String,
-    /** 道门别称（贪狼、巨门……破军）。 */
+    /** Tên gọi trong Đạo giáo, từ Tham Lang đến Phá Quân. */
     val alias: String,
-    /** 自斗口起算的序次，1..7。 */
+    /** Thứ tự tính từ miệng gáo, 1..7. */
     val order: Int,
-    /** 所属部位：魁或杓。 */
+    /** Bộ phận: Khôi hoặc Tiêu. */
     val part: DipperPart,
-    /** 能力门名，如「智枢」「智坊」。 */
+    /** Tên cửa chức năng, ví dụ Trí Khu hoặc Trí Phường. */
     val gateName: String,
-    /** 门的英文标识，用于路由与日志 tag 的稳定 ID。 */
+    /** ID tiếng Anh ổn định dùng cho điều hướng và log tag. */
     val gateKey: String,
-    /** 取义，一句话说明为何以此星配此门。 */
+    /** Ý nghĩa liên hệ giữa sao và cửa chức năng. */
     val rationale: String,
 ) {
-    /** 天枢：众机之枢，星纪由此推排。 */
+    /** Thiên Khu: đầu mối điều phối mọi hoạt động. */
     TIAN_SHU(
-        starName = "天枢",
+        starName = "Thiên Khu",
         bayer = "α Dubhe",
-        alias = "贪狼",
+        alias = "Tham Lang",
         order = 1,
         part = DipperPart.KUI,
-        gateName = "智枢",
+        gateName = "Trí Khu",
         gateKey = "agent",
-        rationale = "众机之枢，星纪由此推排",
+        rationale = "Đầu mối của mọi hoạt động, nơi suy tính vận hành của các sao",
     ),
 
-    /** 天璇：攻玉成器，造作之所。 */
+    /** Thiên Tuyền: nơi chế tác, mài ngọc thành khí. */
     TIAN_XUAN(
-        starName = "天璇",
+        starName = "Thiên Tuyền",
         bayer = "β Merak",
-        alias = "巨门",
+        alias = "Cự Môn",
         order = 2,
         part = DipperPart.KUI,
-        gateName = "智坊",
+        gateName = "Trí Phường",
         gateKey = "workspace",
-        rationale = "攻玉成器，造作之所",
+        rationale = "Mài ngọc thành khí, nơi kiến tạo và chế tác",
     ),
 
-    /** 天玑：直面天机，亲执枢要。 */
+    /** Thiên Cơ: trực tiếp nắm giữ cơ chế vận hành. */
     TIAN_JI(
-        starName = "天玑",
+        starName = "Thiên Cơ",
         bayer = "γ Phecda",
-        alias = "禄存",
+        alias = "Lộc Tồn",
         order = 3,
         part = DipperPart.KUI,
-        gateName = "终端",
+        gateName = "Terminal",
         gateKey = "terminal",
-        rationale = "直面天机，亲执枢要",
+        rationale = "Đối diện thiên cơ, trực tiếp nắm giữ đầu mối",
     ),
 
-    /** 天权：权衡缓急，分派调度。 */
+    /** Thiên Quyền: cân nhắc ưu tiên và phân công điều phối. */
     TIAN_QUAN(
-        starName = "天权",
+        starName = "Thiên Quyền",
         bayer = "δ Megrez",
-        alias = "文曲",
+        alias = "Văn Khúc",
         order = 4,
         part = DipperPart.KUI,
-        gateName = "工作流",
+        gateName = "Luồng công việc",
         gateKey = "workflow",
-        rationale = "权衡缓急，分派调度",
+        rationale = "Cân nhắc việc gấp việc hoãn, phân công và điều phối",
     ),
 
-    /** 玉衡：北斗最亮之星，平准得失。 */
+    /** Ngọc Hành: sao sáng nhất Bắc Đẩu, cân bằng được mất. */
     YU_HENG(
-        starName = "玉衡",
+        starName = "Ngọc Hành",
         bayer = "ε Alioth",
-        alias = "廉贞",
+        alias = "Liêm Trinh",
         order = 5,
         part = DipperPart.BIAO,
-        gateName = "版本",
+        gateName = "Phiên bản",
         gateKey = "git",
-        rationale = "平准得失，铢两悉称",
+        rationale = "Cân bằng được mất, đo lường chính xác từng phần",
     ),
 
-    /** 开阳：开牖见天，纳四境之光。 */
+    /** Khai Dương: mở cửa đón ánh sáng bốn phương. */
     KAI_YANG(
-        starName = "开阳",
+        starName = "Khai Dương",
         bayer = "ζ Mizar",
-        alias = "武曲",
+        alias = "Vũ Khúc",
         order = 6,
         part = DipperPart.BIAO,
-        gateName = "浏览器",
+        gateName = "Trình duyệt",
         gateKey = "browser",
-        rationale = "开牖见天，纳四境之光",
+        rationale = "Mở cửa thấy trời, đón ánh sáng từ bốn phương",
     ),
 
-    /** 摇光：摇动枢机，光被全域。 */
+    /** Dao Quang: vận chuyển đầu mối, soi sáng toàn cục. */
     YAO_GUANG(
-        starName = "摇光",
+        starName = "Dao Quang",
         bayer = "η Alkaid",
-        alias = "破军",
+        alias = "Phá Quân",
         order = 7,
         part = DipperPart.BIAO,
-        gateName = "设置",
+        gateName = "Cài đặt",
         gateKey = "settings",
-        rationale = "摇动枢机，光被全域",
+        rationale = "Vận chuyển đầu mối, ánh sáng phủ khắp toàn cục",
     ),
     ;
 
-    /** UI 主标题：星名，如「天枢」。 */
+    /** Tiêu đề chính trên UI: tên sao. */
     val title: String get() = starName
 
-    /** UI 副题：星名 · 门名，如「天枢 · 智枢」。 */
+    /** Tiêu đề phụ trên UI: tên sao · tên cửa chức năng. */
     val subtitle: String get() = "$starName · $gateName"
 
     companion object {
-        /** 按序次取星（1..7），越界返回 null。 */
+        /** Tra sao theo thứ tự 1..7; ngoài phạm vi trả về null. */
         fun ofOrder(order: Int): BeiDou? = entries.firstOrNull { it.order == order }
 
-        /** 按门标识取星，用于路由反查。 */
+        /** Tra sao theo ID cửa chức năng để đối chiếu điều hướng. */
         fun ofGateKey(gateKey: String): BeiDou? = entries.firstOrNull { it.gateKey == gateKey }
 
-        /** 按星名取星，用于文案解析。 */
+        /** Tra sao theo tên hiển thị để phân tích nội dung. */
         fun ofStarName(starName: String): BeiDou? = entries.firstOrNull { it.starName == starName }
     }
 }
 
-/** 北斗的部位：魁为斗勺（前四星），杓为斗柄（后三星）。 */
+/** Các bộ phận của Bắc Đẩu: Khôi là bốn sao phần gáo, Tiêu là ba sao phần cán. */
 enum class DipperPart(val label: String, val gloss: String) {
-    /** 魁：斗勺四星，主承。 */
-    KUI(label = "魁", gloss = "斗勺四星，主承"),
+    /** Khôi: bốn sao phần gáo, chủ tiếp nhận. */
+    KUI(label = "Khôi", gloss = "Bốn sao phần gáo, chủ tiếp nhận"),
 
-    /** 杓：斗柄三星，主施。 */
-    BIAO(label = "杓", gloss = "斗柄三星，主施"),
+    /** Tiêu: ba sao phần cán, chủ thi hành. */
+    BIAO(label = "Tiêu", gloss = "Ba sao phần cán, chủ thi hành"),
 }

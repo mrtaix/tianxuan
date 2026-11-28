@@ -66,7 +66,7 @@ import top.wkbin.tianxuan.ui.components.RuntimeIconName
 import top.wkbin.tianxuan.ui.components.RuntimeTopBar
 
 /**
- * 天玄 · 外观、字号与终端深度定制页面 (Appearance & Terminal Settings)
+ * CTHarness · Tùy chỉnh giao diện, cỡ chữ và terminal.
  */
 @Composable
 fun AppearanceSettingsScreen(
@@ -115,7 +115,7 @@ fun AppearanceSettingsScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // 1. 终端实时效果预览卡片
+            // 1. Thẻ xem trước terminal theo thời gian thực.
             item {
                 Text(
                     text = stringResource(R.string.settings_terminal_preview),
@@ -129,7 +129,7 @@ fun AppearanceSettingsScreen(
                 )
             }
 
-            // 2. 终端外观与控制台偏好
+            // 2. Giao diện terminal và tùy chọn bảng điều khiển.
             item {
                 Text(
                     text = stringResource(R.string.settings_terminal_appearance),
@@ -138,7 +138,7 @@ fun AppearanceSettingsScreen(
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
                 )
                 SettingsGroup {
-                    // 终端配色方案
+                    // Bảng màu terminal.
                     Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
                             text = stringResource(R.string.settings_terminal_color_scheme),
@@ -186,7 +186,7 @@ fun AppearanceSettingsScreen(
 
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-                    // 终端字体大小
+                    // Cỡ chữ terminal.
                     Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(
                             Modifier.fillMaxWidth(),
@@ -233,7 +233,7 @@ fun AppearanceSettingsScreen(
 
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-                    // 终端触觉震动反馈
+                    // Phản hồi rung khi dùng terminal.
                     ToggleRow(
                         icon = RuntimeIconName.Vibrate,
                         title = stringResource(R.string.settings_terminal_haptics),
@@ -244,7 +244,7 @@ fun AppearanceSettingsScreen(
                 }
             }
 
-            // 3. 应用视觉与主题
+            // 3. Giao diện và chủ đề ứng dụng.
             val isMaterialYou = themeStyle == "material_you" || themeStyle == "xuantong"
             val isLiquidGlass = themeStyle == "liquid_glass" || themeStyle == "chengming"
             val isDynamicColorSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -325,7 +325,7 @@ fun AppearanceSettingsScreen(
                 }
             }
 
-            // 3.5 深浅色模式
+            // 3.5 Chế độ sáng/tối.
             item {
                 Text(
                     text = stringResource(R.string.settings_color_mode),
@@ -357,7 +357,7 @@ fun AppearanceSettingsScreen(
                 }
             }
 
-            // 4. 页面缩放
+            // 4. Ngôn ngữ giao diện.
             item {
                 Text(
                     text = stringResource(R.string.settings_language_title),
@@ -389,7 +389,7 @@ fun AppearanceSettingsScreen(
                 }
             }
 
-            // 5. 页面缩放
+            // 5. Tỷ lệ giao diện.
             item {
                 Text(
                     text = stringResource(R.string.settings_interface_scale),
