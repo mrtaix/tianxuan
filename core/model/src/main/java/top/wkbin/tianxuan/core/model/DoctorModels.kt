@@ -7,19 +7,19 @@ enum class DoctorStatus {
     WARNING,
     ERROR,
     /**
-     * 沙箱探测不可达（超时/异常/沙箱正忙）。
-     * 探测不到结果 ≠ 配置异常：显示灰牌「暂时无法确认」，不计入待修复项，
-     * 避免把「沙箱正忙导致的探测超时」误报成 WARNING/ERROR。
+     * Không dò được sandbox (timeout/lỗi/sandbox đang bận).
+     * Không có kết quả dò ≠ lỗi cấu hình: hiển thị thẻ xám "Tạm thời chưa xác nhận được", không tính vào mục cần sửa;
+     * tránh báo nhầm timeout do sandbox bận thành WARNING/ERROR.
      */
     UNKNOWN,
     CHECKING,
 }
 
 enum class DoctorCategory(val displayName: String) {
-    SANDBOX("沙箱与存储"),
-    NETWORK_SSL("网络与安全"),
-    PACKAGE_MANAGER("包管理与源"),
-    DEV_RUNTIMES("核心开发环境"),
+    SANDBOX("Sandbox và bộ nhớ"),
+    NETWORK_SSL("Mạng và bảo mật"),
+    PACKAGE_MANAGER("Quản lý gói và nguồn"),
+    DEV_RUNTIMES("Môi trường phát triển cốt lõi"),
 }
 
 @Serializable
@@ -41,7 +41,7 @@ data class DoctorReport(
     val healthyCount: Int = 0,
     val warningCount: Int = 0,
     val errorCount: Int = 0,
-    /** 探测不可达（沙箱正忙）的条目数；不参与 needsFix 判定。 */
+    /** Số mục không dò được (sandbox bận); không tính vào kết luận needsFix. */
     val unknownCount: Int = 0,
 ) {
     val isAllHealthy: Boolean get() = overallStatus == DoctorStatus.HEALTHY && items.isNotEmpty()

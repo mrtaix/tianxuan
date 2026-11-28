@@ -173,7 +173,7 @@ class EnvironmentDoctorTest {
 
         val aptItem = report.items.first { it.id == "apt_mirrors" }
         assertEquals(DoctorStatus.UNKNOWN, aptItem.status)
-        assertFalse(aptItem.summary.contains("官方默认源"))
+        assertFalse(aptItem.summary.contains("nguồn mặc định chính thức"))
     }
 
     @Test
@@ -222,6 +222,6 @@ class EnvironmentDoctorTest {
 
         val androidItem = report.items.first { it.id == "android_environment" }
         assertEquals(DoctorStatus.HEALTHY, androidItem.status)
-        assertTrue(androidItem.summary.contains("JDK 17 / Android SDK / Gradle / NDK 已就绪"))
+        assertTrue(androidItem.summary.contains("JDK 17 / Android SDK / Gradle / NDK đã sẵn sàng"))
     }
 }

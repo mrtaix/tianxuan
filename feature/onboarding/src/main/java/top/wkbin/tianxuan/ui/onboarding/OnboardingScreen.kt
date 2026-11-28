@@ -90,7 +90,7 @@ private data class SetupOption(val id: String, val label: String)
 private val distributionOptions = DistributionCatalog.supported.map { SetupOption(it.id, it.displayWithVersion) }
 
 /**
- * 天玄 · 启程配置向导 (Onboarding Wizard)
+ * CTHarness - Trợ lý cấu hình ban đầu (Onboarding Wizard)
  */
 @Composable
 fun OnboardingScreen(viewModel: OnboardingViewModel = koinViewModel()) {
@@ -297,7 +297,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // 顶部 Hero 与快速导入入口
+        // Hero ở đầu trang và lối nhập nhanh
         item {
             Column(
                 Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
@@ -336,7 +336,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
             }
         }
 
-        // 1. 服务商 Hero 预设卡片
+        // 1. Thẻ cấu hình sẵn của nhà cung cấp
         item {
             RuntimeCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -400,7 +400,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
             }
         }
 
-        // 2. 接口 Base URL
+        // 2. Base URL của API
         item {
             RuntimeCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -495,7 +495,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
             }
         }
 
-        // 4. 模型选择与候选 FlowRow Chip
+        // 4. Chọn mô hình và các chip gợi ý dạng FlowRow
         item {
             RuntimeCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -571,7 +571,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
             }
         }
 
-        // 错误提示
+        // Hiện lỗi
         discoveryError?.let { err ->
             item {
                 Text(
@@ -582,7 +582,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
             }
         }
 
-        // 底部操作栏
+        // Thanh thao tác dưới cùng
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 RuntimeButton(
@@ -610,7 +610,7 @@ private fun ModelSetupPage(viewModel: OnboardingViewModel, modifier: Modifier) {
         }
     }
 
-    // JSON 导入对话框
+    // Hộp thoại nhập JSON
     if (showImportDialog) {
         OnboardingModelImportDialog(
             onDismiss = { showImportDialog = false },
@@ -691,7 +691,7 @@ private fun SetupDropdown(
 }
 
 /**
- * 引导页专属 JSON 模型导入弹窗
+ * Hộp thoại nhập cấu hình mô hình JSON riêng của trang hướng dẫn
  */
 @Composable
 private fun OnboardingModelImportDialog(

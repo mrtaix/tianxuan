@@ -68,14 +68,14 @@ class EnvironmentRepairer(
         if (linuxRuntime.state.value !is RuntimeState.Ready) {
             emit(
                 RepairProgress(
-                    stepTitle = "Linux 沙箱未就绪",
+                    stepTitle = "Sandbox Linux chưa sẵn sàng",
                     stepIndex = 0,
                     totalSteps = totalSteps,
                     progress = 0.0f,
-                    logs = listOf("错误: Linux 沙箱未初始化或处于异常状态，无法执行自愈修复"),
+                    logs = listOf("Lỗi: Sandbox Linux chưa khởi tạo hoặc đang bất thường, không thể tự phục hồi"),
                     isCompleted = false,
                     isFailed = true,
-                    errorMessage = "Linux 沙箱未就绪，请先初始化沙箱",
+                    errorMessage = "Sandbox Linux chưa sẵn sàng, vui lòng khởi tạo trước",
                 ),
             )
             return@flow
@@ -83,42 +83,42 @@ class EnvironmentRepairer(
 
         try {
             // ==========================================
-            // Step 1: 修复 DNS 与证书
+            // Bước 1: Sửa DNS và chứng chỉ
             // ==========================================
             emit(
                 RepairProgress(
-                    stepTitle = "正在配置高可用 DNS 与 SSL 根证书...",
+                    stepTitle = "Đang cấu hình DNS dự phòng và chứng chỉ gốc SSL...",
                     stepIndex = 1,
                     totalSteps = totalSteps,
                     progress = 0.15f,
                     logs = logs.toList(),
                 ),
             )
-            addLog("[Step 1/5] 写入公共 DNS (114.114.114.114, 223.5.5.5, 8.8.8.8)")
+            addLog("[Bước 1/5] Ghi DNS công cộng (114.114.114.114, 223.5.5.5, 8.8.8.8)")
             val dnsCmd = "mkdir -p /etc && printf 'nameserver 114.114.114.114\\nnameserver 223.5.5.5\\nnameserver 8.8.8.8\\n' > /etc/resolv.conf"
             val dnsRes = executeCommand(dnsCmd, logs)
             if (!dnsRes.isSuccess) {
-                addLog("警告: 写入 /etc/resolv.conf 失败: ${dnsRes.stderr}")
+                addLog("Cảnh báo: ghi /etc/resolv.conf thất bại: ${dnsRes.stderr}")
             }
 
             // ==========================================
-            // Step 2: 清理残留锁并切换国内镜像加速源
+            // Bước 2: Dọn khóa tồn dư và chuyển sang mirror trong nước
             // ==========================================
             emit(
                 RepairProgress(
-                    stepTitle = "正在配置清华大学国内镜像加速源...",
+                    stepTitle = "Đang cấu hình mirror tăng tốc Tsinghua...",
                     stepIndex = 2,
                     totalSteps = totalSteps,
                     progress = 0.35f,
                     logs = logs.toList(),
                 ),
             )
-            addLog("[Step 2/5] 清理 dpkg/apt 事务锁并替换国内源")
+            addLog("[Bước 2/5] Dọn khóa giao dịch dpkg/apt và thay bằng nguồn trong nước")
             val mirrorScript = """
                 rm -rf /var/lib/dpkg/updates/* /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock* 2>/dev/null || true
                 DEBIAN_FRONTEND=noninteractive dpkg --configure -a 2>/dev/null || true
                 mkdir -p /etc/apt/sources.list.d
-                # 停用所有自带官方源与旧源，避免与新源冲突或引发 404
+                # Vô hiệu hóa mọi nguồn chính thức và nguồn cũ để tránh xung đột hoặc lỗi 404
                 for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
                     if [ -f "${'$'}f" ] && [ "${'$'}(basename "${'$'}f")" != "tianxuan-mirrors.list" ]; then
                         mv "${'$'}f" "${'$'}f.tianxuan-disabled" 2>/dev/null || true
@@ -136,81 +136,81 @@ class EnvironmentRepairer(
                         printf "deb https://mirrors.tuna.tsinghua.edu.cn/kali kali-rolling main contrib non-free\n" > /etc/apt/sources.list.d/tianxuan-mirrors.list
                     fi
                 fi
-                # 清理旧的 apt lists 缓存，确保重新从镜像拉取完整的 index
+                # Dọn bộ đệm apt lists cũ để bảo đảm lấy lại chỉ số đầy đủ từ mirror
                 rm -rf /var/lib/apt/lists/* 2>/dev/null || true
             """.trimIndent()
             executeCommand(mirrorScript, logs)
 
             // ==========================================
-            // Step 3: 更新 APT 软件包索引
+            // Bước 3: Cập nhật chỉ số gói APT
             // ==========================================
             emit(
                 RepairProgress(
-                    stepTitle = "正在更新 APT 软件包索引...",
+                    stepTitle = "Đang cập nhật chỉ số gói APT...",
                     stepIndex = 3,
                     totalSteps = totalSteps,
                     progress = 0.55f,
                     logs = logs.toList(),
                 ),
             )
-            addLog("[Step 3/5] 执行 apt-get update 刷新索引")
+            addLog("[Bước 3/5] Chạy apt-get update để làm mới chỉ số")
             val updateRes = executeCommand("rm -rf /var/lib/dpkg/updates/* /var/lib/dpkg/lock* 2>/dev/null || true; DEBIAN_FRONTEND=noninteractive dpkg --configure -a 2>/dev/null || true; DEBIAN_FRONTEND=noninteractive apt-get update -y", logs, timeoutMs = 120_000L)
             if (!updateRes.isSuccess) {
-                addLog("提示: apt-get update 产生部分非致命提示")
+                addLog("Ghi chú: apt-get update có một số cảnh báo không nghiêm trọng")
             }
 
             // ==========================================
-            // Step 4: 安装核心工具链 (curl, git, tar, xz-utils)
+            // Bước 4: Cài bộ công cụ cốt lõi (curl, git, tar, xz-utils)
             // ==========================================
             emit(
                 RepairProgress(
-                    stepTitle = "正在安装核心工具链 (Git / Curl / Tar / XZ)...",
+                    stepTitle = "Đang cài bộ công cụ cốt lõi (Git / Curl / Tar / XZ)...",
                     stepIndex = 4,
                     totalSteps = totalSteps,
                     progress = 0.75f,
                     logs = logs.toList(),
                 ),
             )
-            addLog("[Step 4/5] 安装 ca-certificates, curl, git, tar, xz-utils, procps, file")
+            addLog("[Bước 4/5] Cài ca-certificates, curl, git, tar, xz-utils, procps, file")
             val installToolsCmd = "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl git tar xz-utils procps file"
             val installToolsRes = executeCommand(installToolsCmd, logs, timeoutMs = 180_000L)
             if (!installToolsRes.isSuccess) {
-                addLog("警告: 基础工具链安装异常: ${installToolsRes.stderr.ifBlank { installToolsRes.stdout }}")
+                addLog("Cảnh báo: cài bộ công cụ cơ bản bất thường: ${installToolsRes.stderr.ifBlank { installToolsRes.stdout }}")
             }
 
             // ==========================================
-            // Step 5: 配置并准备/升级 Node.js 与国内包镜像
+            // Bước 5: Cấu hình/chuẩn bị/nâng cấp Node.js và mirror gói trong nước
             // ==========================================
             emit(
                 RepairProgress(
-                    stepTitle = "正在就绪/升级 Node.js 运行时与 NPM/PIP 国内镜像...",
+                    stepTitle = "Đang chuẩn bị/nâng cấp runtime Node.js và mirror NPM/PIP trong nước...",
                     stepIndex = 5,
                     totalSteps = totalSteps,
                     progress = 0.90f,
                     logs = logs.toList(),
                 ),
             )
-            addLog("[Step 5/5] 检查并自动升级 Node.js (>= v20 LTS) 及配置镜像加速")
+            addLog("[Bước 5/5] Kiểm tra và tự nâng cấp Node.js (>= v20 LTS), cấu hình mirror tăng tốc")
             val setupNodeAndMirrors = """
                 NODE_VER=${'$'}(node -v 2>/dev/null | tr -d 'v' | cut -d. -f1)
                 if [ -z "${'$'}NODE_VER" ] || [ "${'$'}NODE_VER" -lt 20 ]; then
-                    echo "检测到 Node.js 缺失或版本较低 (当前: ${'$'}{NODE_VER:-未安装})，正在下载安装 Node.js v22 (LTS ARM64)..."
+                    echo "Phát hiện Node.js thiếu hoặc phiên bản cũ (hiện tại: ${'$'}{NODE_VER:-chưa cài}), đang tải và cài Node.js v22 (LTS ARM64)..."
                     mkdir -p /tmp/node_setup
                     curl -fsSL --connect-timeout 10 --max-time 180 https://npmmirror.com/mirrors/node/v22.14.0/node-v22.14.0-linux-arm64.tar.xz -o /tmp/node_setup/node.tar.xz || \
                     curl -fsSL --connect-timeout 10 --max-time 180 https://nodejs.org/dist/v22.14.0/node-v22.14.0-linux-arm64.tar.xz -o /tmp/node_setup/node.tar.xz || true
                     if [ -f /tmp/node_setup/node.tar.xz ]; then
                         tar -xJf /tmp/node_setup/node.tar.xz -C /usr/local --strip-components=1
                         rm -rf /tmp/node_setup
-                        echo "Node.js v22 升级完成: ${'$'}(node -v 2>/dev/null)"
+                        echo "Nâng cấp Node.js v22 hoàn tất: ${'$'}(node -v 2>/dev/null)"
                     else
-                        echo "预编译包拉取受限，尝试通过系统包管理器就绪基础 Node..."
+                        echo "Không tải được gói biên dịch sẵn, thử chuẩn bị Node cơ bản qua trình quản lý gói..."
                         DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends nodejs npm || true
                     fi
                 fi
                 which npm >/dev/null 2>&1 && npm config set registry https://registry.npmmirror.com || true
                 mkdir -p ${'$'}HOME/.pip
                 printf '[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple\n' > ${'$'}HOME/.pip/pip.conf 2>/dev/null || true
-                echo "运行时就绪状态: Node ${'$'}(node -v 2>/dev/null || echo '未就绪'), NPM ${'$'}(npm -v 2>/dev/null || echo '未就绪')"
+                echo "Trạng thái sẵn sàng: Node ${'$'}(node -v 2>/dev/null || echo 'chưa sẵn sàng'), NPM ${'$'}(npm -v 2>/dev/null || echo 'chưa sẵn sàng')"
                 if [ -d /opt/android-sdk ] || [ -d /opt/tianxuan/toolchains/android ]; then
                     if [ ! -f /etc/profile.d/tianxuan-android.sh ]; then
                         mkdir -p /etc/profile.d
@@ -239,13 +239,13 @@ EOF
             """.trimIndent()
             executeCommand(setupNodeAndMirrors, logs, timeoutMs = 240_000L)
 
-            // 触发重新体检
-            addLog("自愈修复已全部执行完成，正在刷新环境体检报告...")
+            // Kích hoạt kiểm tra lại môi trường
+            addLog("Đã hoàn tất tự phục hồi, đang làm mới báo cáo kiểm tra môi trường...")
             environmentDoctor.check()
 
             emit(
                 RepairProgress(
-                    stepTitle = "环境自愈与加速配置完成！",
+                    stepTitle = "Tự phục hồi và cấu hình tăng tốc hoàn tất!",
                     stepIndex = 5,
                     totalSteps = totalSteps,
                     progress = 1.0f,
@@ -255,32 +255,32 @@ EOF
                 ),
             )
         } catch (cancellation: CancellationException) {
-            addLog("修复流程被用户取消")
+            addLog("Người dùng đã hủy quy trình sửa chữa")
             emit(
                 RepairProgress(
-                    stepTitle = "修复已取消",
+                    stepTitle = "Đã hủy sửa chữa",
                     stepIndex = 0,
                     totalSteps = totalSteps,
                     progress = 0.0f,
                     logs = logs.toList(),
                     isCompleted = false,
                     isFailed = true,
-                    errorMessage = "修复任务已被手动取消",
+                    errorMessage = "Tác vụ sửa chữa đã bị hủy bởi người dùng",
                 ),
             )
             throw cancellation
         } catch (throwable: Throwable) {
-            addLog("修复异常: ${throwable.message}")
+            addLog("Lỗi khi sửa chữa: ${throwable.message}")
             emit(
                 RepairProgress(
-                    stepTitle = "自愈修复失败",
+                    stepTitle = "Tự phục hồi thất bại",
                     stepIndex = 0,
                     totalSteps = totalSteps,
                     progress = 0.0f,
                     logs = logs.toList(),
                     isCompleted = false,
                     isFailed = true,
-                    errorMessage = throwable.message ?: "环境自愈修复发生未知异常",
+                    errorMessage = throwable.message ?: "Đã xảy ra lỗi không xác định trong quá trình tự phục hồi",
                 ),
             )
         }
@@ -297,7 +297,7 @@ EOF
             CommandResult(
                 exitCode = 1,
                 stdout = "",
-                stderr = it.message ?: "执行命令出错",
+                stderr = it.message ?: "Thực thi lệnh thất bại",
                 durationMs = 0L,
             )
         }

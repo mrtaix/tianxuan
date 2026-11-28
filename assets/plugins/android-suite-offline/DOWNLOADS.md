@@ -15,7 +15,7 @@
 | `cmake-linux-aarch64.tar.gz` | https://github.com/Kitware/CMake/releases/download/v3.31.7/cmake-3.31.7-linux-aarch64.tar.gz | CMake Linux AArch64 |
 | `ninja-linux-aarch64.zip` | https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-linux-aarch64.zip | Ninja Linux AArch64 |
 | `flutter-linux-arm64-android-only-slim.tar.gz` | https://github.com/MohamedAlkindi/flutter-native-arm64/releases/download/flutter-3.47.1-87-linux/flutter_v3.47.1_linux_arm64_android_web_sdk.tar.gz | 已从 ARM64 Flutter 包中移除 Android x86/x64、iOS、桌面、示例和源码目录，只保留 Android ARM/ARM64 与 Linux ARM64 编译所需缓存；最终约 848 MB |
-| `android-tools_aarch64.deb` | https://packages.termux.dev/apt/termux-main/pool/main/a/android-tools/android-tools_36.0.1%2Breally35.0.2_aarch64.deb | Termux AArch64 `adb`；SHA-256 `82e48bf8038250fb0997b1f2cf5f780730104f2544a5532298c453d94cfe1537` |
+| `android-tools_aarch64.deb` | https://packages.termux.dev/apt/termux-main/pool/main/a/android-tools/android-tools_37.0.0p1-3_aarch64.deb | Termux AArch64 `adb`（URL cũ 36.0.1 đã trả 404）；SHA-256 `534e90d338bd432c06677cb402d0e9ed98a82a74de4bf5f90e643f15d8fc4274` |
 | `jadx-1.5.0.zip` | https://github.com/skylot/jadx/releases/download/v1.5.0/jadx-1.5.0.zip | Skylot JADX-CLI Java 反编译引擎与启动器 |
 | `apktool_2.10.0.jar` | https://github.com/iBotPeaches/Apktool/releases/download/v2.10.0/apktool_2.10.0.jar | Apktool APK 资源与 Smali 处理套件 |
 | `dex-tools-v2.4.zip` | https://github.com/pxb1988/dex2jar/releases/download/v2.4/dex-tools-v2.4.zip | pxb1988 dex2jar、smali/baksmali 转换工具集 |
@@ -23,8 +23,8 @@
 | `rust-1.85.0-aarch64-unknown-linux-gnu.tar.gz` | https://static.rust-lang.org/dist/rust-1.85.0-aarch64-unknown-linux-gnu.tar.gz | Rust 1.85.0 ARM64 独立工具链（含 rustc、cargo、宿主标准库） |
 | `rust-std-1.85.0-aarch64-linux-android.tar.gz` | https://static.rust-lang.org/dist/rust-std-1.85.0-aarch64-linux-android.tar.gz | Rust aarch64-linux-android 交叉编译目标库 |
 | `uber-apk-signer-1.3.0.jar` | https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/uber-apk-signer-1.3.0.jar | 独立一键 APK 对齐与 v1/v2/v3/v4 签名工具（可选） |
-| `baksmali-3.0.8.jar` | https://github.com/google/smali/releases/download/v3.0.8/baksmali-3.0.8.jar | Google 官方原版 baksmali 反汇编独立 JAR（可选备用） |
-| `smali-3.0.8.jar` | https://github.com/google/smali/releases/download/v3.0.8/smali-3.0.8.jar | Google 官方原版 smali 汇编独立 JAR（可选备用） |
+| `baksmali-2.5.2.jar` | https://repo1.maven.org/maven2/org/smali/baksmali/2.5.2/baksmali-2.5.2.jar | Maven Central 官方 baksmali 独立 JAR（旧 GitHub 3.0.8 链接已 404）；SHA-256 `1ed236266d7dc4907aade0b19a34f77efac25342b63c8ace52e579039941b389` |
+| `smali-2.5.2.jar` | https://repo1.maven.org/maven2/org/smali/smali/2.5.2/smali-2.5.2.jar | Maven Central 官方 smali 独立 JAR（旧 GitHub 3.0.8 链接已 404）；SHA-256 `136c5c4653d6531bd7b6f10f35f8691cb96432e727d30b4d5579826ee01e9419` |
 
 ## 放置位置
 

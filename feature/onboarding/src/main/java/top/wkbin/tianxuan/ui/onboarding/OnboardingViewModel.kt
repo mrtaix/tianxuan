@@ -43,14 +43,14 @@ class OnboardingViewModel(
 ) : ViewModel() {
     val providerCatalog = providerCatalogRepository.providers
 
-    /** DataStore 偏好读盘完成信号：Splash 退场只等这里（毫秒级），不等 Linux Runtime 恢复。 */
+    /** Tín hiệu đọc xong tùy chọn DataStore: màn hìnhSplash chỉ chờ ở đây (mili-giây), không chờ khôi phục Linux Runtime. */
     private val prefsLoaded = MutableStateFlow(false)
     val status: StateFlow<OnboardingStatus> = combine(
         prefsLoaded,
         settings.onboardingCompleted,
     ) { loaded, completed ->
-        // completed 不再依赖 RuntimeState.Ready：已完成引导的用户直接进主界面，
-        // 沙箱恢复在后台继续；首页/向导各自已有初始化进度与错误态展示。
+        // completed không còn phụ thuộc RuntimeState.Ready: người dùng đã hoàn tất hướng dẫn vào thẳng giao diện chính,
+        // khôi phục sandbox tiếp tục trong nền; trang chủ/trợ lý đều đã có tiến độ khởi tạo và trạng thái lỗi riêng.
         OnboardingStatus(loaded = loaded, completed = completed)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, OnboardingStatus())
     val runtimeState: StateFlow<RuntimeState> = linuxRuntime.state
@@ -235,7 +235,7 @@ class OnboardingViewModel(
 
     fun restoreInstalledState() {
         viewModelScope.launch {
-            // 后台恢复已安装的 Linux 环境：PRoot 健康探针、镜像配置等重活不再阻塞首帧。
+            // Khôi phục môi trường Linux đã cài trong nền: các việc nặng như dò sức khỏe PRoot, cấu hình mirror không chặn khung hình đầu.
             linuxRuntime.restoreInstalledState()
             if (!settings.onboardingCompleted.first() && linuxRuntime.state.value is RuntimeState.Ready) {
                 _page.value = 1
@@ -271,9 +271,9 @@ class OnboardingViewModel(
                     }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e // 取消必须透传
+                throw e // phải truyền tiếp ngoại lệ hủy
             } catch (e: Exception) {
-                // 忽略异常保证流程顺畅
+                // Bỏ qua lỗi để luồng chạy mượt
             } finally {
                 _isInstallingPlugins.value = false
                 _pluginInstallProgress.value = null
@@ -348,7 +348,7 @@ class OnboardingViewModel(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                // 写入失败时留在引导页并提示，不再静默标记 onboarding 完成
+                // Nếu ghi thất bại thì ở lại trang hướng dẫn và hiện thông báo, không âm thầm đánh dẫn đã hoàn tất onboarding
                 _importError.value = "Lưu cấu hình mô hình thất bại: ${e.message ?: e::class.simpleName}"
             }
         }
