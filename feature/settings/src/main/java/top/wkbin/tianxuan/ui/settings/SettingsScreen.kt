@@ -58,6 +58,7 @@ fun SettingsScreen(
     onOpenSearch: () -> Unit = {},
     onOpenA2uiPoc: () -> Unit = {},
     onOpenKnowledge: () -> Unit = {},
+    onOpenNewFeatures: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val models by viewModel.models.collectAsStateWithLifecycle()
@@ -77,8 +78,7 @@ fun SettingsScreen(
 
     val context = androidx.compose.ui.platform.LocalContext.current
     val appVersionName = rememberAppVersion()
-    var showRoadmap by remember { mutableStateOf(false) }
-    val queueSendAfterToolBatch by viewModel.queueSendAfterToolBatch.collectAsStateWithLifecycle()
+
 
     val glassBackdrop = LocalLiquidGlassBackdrop.current
     Scaffold(
@@ -228,7 +228,7 @@ fun SettingsScreen(
                     title = "Tính năng mới",
                     subtitle = "Chế độ gửi hàng đợi đã dùng được · kèm danh sách tính năng sẽ bổ sung sau",
                     badge = "Mới",
-                    onClick = { showRoadmap = true },
+                    onClick = onOpenNewFeatures,
                 )
             }
 
@@ -244,13 +244,6 @@ fun SettingsScreen(
                 )
             }
         }
-    }
-    if (showRoadmap) {
-        RoadmapSettingsDialog(
-            queueSendAfterToolBatch = queueSendAfterToolBatch,
-            onQueueSendAfterToolBatchChange = viewModel::setQueueSendAfterToolBatch,
-            onDismiss = { showRoadmap = false },
-        )
     }
 }
 

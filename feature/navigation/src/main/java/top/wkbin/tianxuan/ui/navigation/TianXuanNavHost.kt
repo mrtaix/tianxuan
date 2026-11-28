@@ -104,6 +104,7 @@ sealed interface AppDestination : NavKey
 @Serializable data object AdbLogcatDestination : AppDestination
 @Serializable data object A2uiPocDestination : AppDestination
 @Serializable data object KnowledgeDestination : AppDestination
+@Serializable data object NewFeaturesDestination : AppDestination
 @Serializable data object CustomIterationDestination : AppDestination
 @Serializable data class TerminalDestination(val toolId: String = "", val project: String = "") : AppDestination
 @Serializable data object BrowserDestination : AppDestination
@@ -112,24 +113,22 @@ sealed interface AppDestination : NavKey
     val projectName: String = "",
     val workflowId: String? = null,
     val initialVariables: Map<String, String> = emptyMap(),
-    // 通知栏深链：进入工作流页后直接定位到该执行的运行视图
+    // Deep link từ thông báo: vào trang workflow và mở đúng lượt chạy
     val executionId: String? = null,
 ) : AppDestination
 
 /**
- * 天玄核心导航分发系统
- * 采用 Navigation 3，为每个 Tab 独立维护持久回退栈与状态生命周期
+ * Hệ điều hướng lõi của CTHarness: Navigation 3, mỗi tab giữ ngăn xếp quay lại và vòng đời riêng.
  */
 @Composable
 fun TianXuanNavHost(
     globalNavigationBus: top.wkbin.tianxuan.core.common.navigation.GlobalNavigationBus? = null,
 ) {
     // Root tab entries are removed from composition when another tab becomes active. Keep the
-    // conversation owner at the Activity scope so switching back to 智枢 does not rebuild Koin's
+    // giữ owner ở phạm vi Activity để quay lại ngăn chat không dựng lại Koin's
     // graph, restore the latest session, and restart its initialization skeleton on every visit.
     val chatViewModel: ChatViewModel = koinViewModel()
-    // 浏览器引擎是全局单例：BrowserViewModel 同样挂到 Activity 作用域，
-    // 使智枢内嵌浏览器面板与独立浏览器页共享同一份 tab/URL/共浏览状态。
+    // BrowserViewModel gắn phạm vi Activity để panel nhúng và trang trình duyệt riêng dùng chung trạng thái.
     val browserViewModel: top.wkbin.tianxuan.ui.browser.BrowserViewModel = koinViewModel()
     val browserUiState by browserViewModel.uiState.collectAsStateWithLifecycle()
     // SettingsViewModel owns dozens of eagerly shared DataStore/database streams and performs
@@ -173,7 +172,7 @@ fun TianXuanNavHost(
                     globalNavigationBus.clearLatest(target)
                 }
                 is top.wkbin.tianxuan.core.common.navigation.AppNavigationTarget.WorkflowRun -> {
-                    // 工作流通知点入：切到智枢栈并打开运行页
+                    // Bấm thông báo workflow: chuyển sang ngăn workflow và mở trang chạy
                     selectedMain = MainDestination.Agent
                     agentStack.pushRaw(WorkflowDestination(executionId = target.executionId))
                     globalNavigationBus.clearLatest(target)
@@ -258,11 +257,8 @@ fun TianXuanNavHost(
                     ChatScreen(
                         viewModel = chatViewModel,
                         onNavigate = ::navigateMain,
-                        // 内嵌终端面板非独立导航节点，无返回目标：隐藏顶栏返回箭头，避免点击无反馈
-                        terminalPane = { project -> TerminalScreen(onBack = {}, project = project, showBackButton = false) },
-                        // 内嵌浏览器面板：与独立浏览器页共享 Activity 级 BrowserViewModel，
-                        // 手机端左右滑动切换对话/浏览器，宽屏双栏可切"终端/浏览器"
-                        browserPane = { onExit ->
+                                                terminalPane = { project -> TerminalScreen(onBack = {}, project = project, showBackButton = false) },
+                                                browserPane = { onExit ->
                             top.wkbin.tianxuan.ui.browser.BrowserPane(
                                 viewModel = browserViewModel,
                                 onExit = onExit,
@@ -366,6 +362,7 @@ fun TianXuanNavHost(
                         onOpenSearch = { settingsStack.push(SettingsDestination, SettingsSearchDestination) },
                         onOpenA2uiPoc = { settingsStack.push(SettingsDestination, A2uiPocDestination) },
                         onOpenKnowledge = { settingsStack.push(SettingsDestination, KnowledgeDestination) },
+                        onOpenNewFeatures = { settingsStack.push(SettingsDestination, NewFeaturesDestination) },
                         viewModel = settingsViewModel,
                     )
                 }
@@ -742,6 +739,11 @@ fun TianXuanNavHost(
                     top.wkbin.tianxuan.ui.knowledge.KnowledgeScreen(onBack = ::popBack)
                 }
             }
+            entry<NewFeaturesDestination> {
+                GuardedEntry(NewFeaturesDestination) {
+                    top.wkbin.tianxuan.ui.settings.NewFeaturesScreen(onBack = ::popBack)
+                }
+            }
             entry<CustomIterationDestination> {
                 val iterationChatTitle = stringResource(IterationR.string.iteration_chat_title)
                 GuardedEntry(CustomIterationDestination) {
@@ -776,10 +778,8 @@ fun TianXuanNavHost(
 
     val density = LocalDensity.current
     val liquidGlassBackdrop = LocalLiquidGlassBackdrop.current
-    // 宽屏（平板横屏）常驻侧栏，窄屏用底部栏。分支与叠放都在外壳里。
-    val widthClass = rememberWidthClass()
-    // 键盘弹出的判定只对底部栏有意义——侧栏不受 IME 影响。
-    val showLiquidBottomBar = !widthClass.usesPermanentNav &&
+        val widthClass = rememberWidthClass()
+        val showLiquidBottomBar = !widthClass.usesPermanentNav &&
         liquidGlassBackdrop != null &&
         activeStack.size == 1 &&
         WindowInsets.ime.getBottom(density) == 0
