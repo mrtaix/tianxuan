@@ -78,6 +78,7 @@ fun SettingsScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val appVersionName = rememberAppVersion()
     var showRoadmap by remember { mutableStateOf(false) }
+    val queueSendAfterToolBatch by viewModel.queueSendAfterToolBatch.collectAsStateWithLifecycle()
 
     val glassBackdrop = LocalLiquidGlassBackdrop.current
     Scaffold(
@@ -224,9 +225,9 @@ fun SettingsScreen(
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Update,
                     accent = MaterialTheme.colorScheme.tertiary,
-                    title = "Tính năng sẽ thêm",
-                    subtitle = "Hàng đợi tin nhắn · Fork · Đăng nhập · Plugin · /btw · Subagent · RAG · Sao lưu",
-                    badge = "Roadmap",
+                    title = "Tính năng mới",
+                    subtitle = "Chế độ gửi hàng đợi đã dùng được · kèm danh sách tính năng sẽ bổ sung sau",
+                    badge = "Mới",
                     onClick = { showRoadmap = true },
                 )
             }
@@ -245,7 +246,11 @@ fun SettingsScreen(
         }
     }
     if (showRoadmap) {
-        RoadmapSettingsDialog(onDismiss = { showRoadmap = false })
+        RoadmapSettingsDialog(
+            queueSendAfterToolBatch = queueSendAfterToolBatch,
+            onQueueSendAfterToolBatchChange = viewModel::setQueueSendAfterToolBatch,
+            onDismiss = { showRoadmap = false },
+        )
     }
 }
 

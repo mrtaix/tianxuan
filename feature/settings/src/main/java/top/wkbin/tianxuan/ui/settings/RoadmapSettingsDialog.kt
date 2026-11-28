@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,8 +24,8 @@ import top.wkbin.tianxuan.ui.components.RuntimeIcon
 import top.wkbin.tianxuan.ui.components.RuntimeIconName
 
 /**
- * Danh sách các tính năng sẽ thêm trong tương lai. Chỉ mang tính thông báo (read-only),
- * không thay đổi điều hướng hay trạng thái ứng dụng.
+ * Mục "Tính năng mới": gồm các công tắc của tính năng đã dùng được ngay,
+ * và danh sách tính năng sẽ bổ sung sau này.
  */
 private data class RoadmapItem(
     val icon: RuntimeIconName,
@@ -31,12 +33,7 @@ private data class RoadmapItem(
     val description: String,
 )
 
-private val roadmapItems = listOf(
-    RoadmapItem(
-        icon = RuntimeIconName.Chat,
-        title = "Gửi tin nhắn hàng đợi ngay sau khi lệnh thực thi xong",
-        description = "Thêm tùy chọn chọn chế độ: gửi ngay khi lệnh kết thúc hoặc giữ đến khi chạy hết tất cả; bạn có thể chuyển đổi giữa hai chế độ.",
-    ),
+private val upcomingFeatures = listOf(
     RoadmapItem(
         icon = RuntimeIconName.Github,
         title = "Sửa tính năng tạo nhánh (fork)",
@@ -75,7 +72,11 @@ private val roadmapItems = listOf(
 )
 
 @Composable
-fun RoadmapSettingsDialog(onDismiss: () -> Unit) {
+fun RoadmapSettingsDialog(
+    queueSendAfterToolBatch: Boolean,
+    onQueueSendAfterToolBatchChange: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
+) {
     RuntimeAlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -88,18 +89,63 @@ fun RoadmapSettingsDialog(onDismiss: () -> Unit) {
                     Modifier.size(22.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
-                Text("Tính năng sẽ thêm", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Tính năng mới", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 420.dp)
+                    .heightIn(max = 440.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                roadmapItems.forEachIndexed { index, item ->
+                Text(
+                    "Đã dùng được ngay",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    RuntimeIcon(
+                        RuntimeIconName.Chat,
+                        Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Gửi tin nhắn hàng đợi ngay khi lệnh xong",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            if (queueSendAfterToolBatch) {
+                                "Đang bật: tin nhắn xếp hàng được nạp ngay sau mỗi loạt lệnh, không phải đợi toàn bộ tác vụ kết thúc."
+                            } else {
+                                "Đang tắt: chỉ nạp tin nhắn chờ khi agent trả lời xong toàn bộ lượt (chế độ mặc định)."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = queueSendAfterToolBatch,
+                        onCheckedChange = onQueueSendAfterToolBatchChange,
+                    )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Text(
+                    "Sẽ bổ sung sau",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                upcomingFeatures.forEachIndexed { index, item ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.Top,
@@ -108,7 +154,7 @@ fun RoadmapSettingsDialog(onDismiss: () -> Unit) {
                         RuntimeIcon(
                             item.icon,
                             Modifier.size(20.dp).padding(top = 2.dp),
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
