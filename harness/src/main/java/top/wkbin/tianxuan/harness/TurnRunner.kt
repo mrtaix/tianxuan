@@ -61,6 +61,7 @@ class TurnRunner(
         enforceToolLimit: suspend (List<ApiToolCallSpec>, ChatResult) -> List<ApiToolCallSpec>,
         executeTools: suspend (List<ApiToolCallSpec>, ChatResult) -> Boolean,
         remainingRounds: Int = Int.MAX_VALUE,
+        sendQueuedAfterToolBatch: Boolean = false,
     ): TurnOutcome {
         if (remainingRounds <= 0) return TurnOutcome.RoundLimit()
         val provider = callProvider()
@@ -99,6 +100,9 @@ class TurnRunner(
 
         val effectiveCalls = enforceToolLimit(normalized.toolCalls, normalized.result)
         val toolsHadSuccess = executeTools(effectiveCalls, normalized.result)
+        // Chế độ "gửi ngay sau khi lệnh xong": nạp tin chờ ngay sau loạt tool vừa thực thi,
+        // thay vì đợi tới khi model trả lời xong toàn bộ lượt như hành vi mặc định.
+        if (sendQueuedAfterToolBatch) consumeFollowUps()
         if (remainingRounds == 1) {
             return TurnOutcome.RoundLimit(
                 effectiveToolCallCount = effectiveCalls.size,

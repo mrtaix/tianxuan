@@ -161,7 +161,9 @@ class AgentPreferences(private val store: SettingsDataStore) {
     val thinkingExpanded get() = store.thinkingExpanded
     val thinkingAutoTranslate get() = store.thinkingAutoTranslate
     val chatRoundCollapse get() = store.chatRoundCollapse
+    val queueSendAfterToolBatch get() = store.queueSendAfterToolBatch
     suspend fun setChatRoundCollapse(value: Boolean) = store.setChatRoundCollapse(value)
+    suspend fun setQueueSendAfterToolBatch(value: Boolean) = store.setQueueSendAfterToolBatch(value)
     val defaultReasoningDepth get() = store.defaultReasoningDepth
     val contextCompactionEnabled get() = store.contextCompactionEnabled
     val maxToolRounds get() = store.maxToolRounds

@@ -1254,10 +1254,10 @@ class HarnessLoop(
         val autoCwd = runCatching { settingsDataStore.autoWorkspaceCwd.first() }.getOrDefault(true)
         val sessionEntity = sessionDao.findById(sessId)
         val sessionWorkspace = sessionEntity?.workspace.orEmpty()
-        // 悬空调用修复须带 workspace：SAFE 工具在此重放，读操作需要正确的工作目录
-        repairDanglingToolCalls(sessId, interrupted = false, workspace = sessionWorkspace)
+        repairDanglingToolCalls(sessId, interrupted = false, workspace = sessionWorkspace) // cần workspace để phát lại SAFE tool
 
         val maxToolsPerRound = runCatching { settingsDataStore.maxToolsPerRound.first() }.getOrDefault(12)
+        val sendQueuedAfterToolBatch = runCatching { settingsDataStore.queueSendAfterToolBatch.first() }.getOrDefault(false)
         val maxConsecutiveFailures = runCatching { settingsDataStore.maxConsecutiveFailures.first() }.getOrDefault(8)
         val retryPolicy = RetryPolicy.NETWORK_DEFAULT
         var consecutiveFailures = 0
@@ -1373,8 +1373,9 @@ class HarnessLoop(
                         metrics = metrics,
                     )
                 },
+                sendQueuedAfterToolBatch = sendQueuedAfterToolBatch,
             )
-            // 连续失败熔断：当一轮内所有工具调用均失败时计数。
+            // Cầu chì lỗi liên tiếp: đếm khi mọi tool call trong một vòng đều thất bại.
             suspend fun tripCircuitBreaker(toolCallCount: Int, toolsHadSuccess: Boolean): RunResult? {
                 if (toolCallCount <= 0 || toolsHadSuccess) {
                     consecutiveFailures = 0

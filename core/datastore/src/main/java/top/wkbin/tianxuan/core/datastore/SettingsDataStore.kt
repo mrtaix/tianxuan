@@ -635,11 +635,11 @@ class SettingsDataStore(
 
     suspend fun setThinkingAutoTranslate(value: Boolean) { context.settingsDataStore.edit { it[thinkingAutoTranslateKey] = value } }
 
-    /** 历史轮次中间过程自动折叠（默认关闭）。实现见 ChatRoundCollapsePreferences.kt。 */
     val chatRoundCollapse: Flow<Boolean> = context.chatRoundCollapsePreference
     suspend fun setChatRoundCollapse(value: Boolean) { context.setChatRoundCollapsePreference(value) }
+    val queueSendAfterToolBatch: Flow<Boolean> = context.queueSendAfterToolBatchPreference
+    suspend fun setQueueSendAfterToolBatch(value: Boolean) { context.setQueueSendAfterToolBatchPreference(value) }
 
-    /** 全局推理深度：auto / disabled / low / medium / high（作用于未单独设置强度的模型）。 */
     val defaultReasoningDepth: Flow<String> = context.settingsDataStore.data.map { it[defaultReasoningDepthKey] ?: "auto" }
     suspend fun setDefaultReasoningDepth(value: String) {
         context.settingsDataStore.edit { it[defaultReasoningDepthKey] = value }

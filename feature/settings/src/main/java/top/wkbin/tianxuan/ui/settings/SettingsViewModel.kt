@@ -258,7 +258,6 @@ class SettingsViewModel(
         viewModelScope.launch { appearancePreferences.setAutoCheckUpdates(enabled) }
     }
 
-    /** 清空全部首次使用引导标记，下次进入相应页面会重新展示引导遮罩。 */
     fun replayFirstUseGuides() {
         viewModelScope.launch { firstUseGuidePreferences.clearFirstUseGuides() }
     }
@@ -330,7 +329,6 @@ class SettingsViewModel(
         }
     }
 
-    /** 发行版安装进度（保存在 VM 内，旋转后进度界面可恢复；安装在后台继续进行）。 */
     data class DistroInstallUiState(
         val isInstalling: Boolean = false,
         val progressText: String? = null,
@@ -428,7 +426,6 @@ class SettingsViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, top.wkbin.tianxuan.core.model.BuiltinMcpPresets.presets)
 
-    /** 各 MCP 服务的实时连通性状态（与 McpManager 共享，设置页与聊天页联动）。 */
     val mcpConnectionStates: StateFlow<Map<String, McpConnectionState>> = mcpManager.connectionStates
 
     private val _mcpAuthOverrides = MutableStateFlow<Map<String, McpAuthState>>(emptyMap())
@@ -491,7 +488,6 @@ class SettingsViewModel(
         }
     }
 
-    /** 浏览器 MCP 安全门禁快照（allowRemoteConnect / allowEvalJs / allowHooks / allowCdp / allowVConsole）。 */
     val browserGates: StateFlow<BrowserGateState> = combine(
         browserPrefs.allowRemoteConnect(),
         browserPrefs.allowEvalJs(),
@@ -522,7 +518,7 @@ class SettingsViewModel(
         viewModelScope.launch { browserPrefs.setAllowVConsole(enabled) }
     }
 
-    /** MCP 被控端（服务端）配置快照：开关 / 端口 / 局域网 / 写入层 / 持久化令牌。 */
+    /** Ảnh chụp cấu hình MCP server: bật/tắt, cổng, LAN, lớp ghi, token lưu bền. */
     val agentServerState: StateFlow<AgentServerState> = combine(
         agentServerPreferences.enabled,
         agentServerPreferences.port,
@@ -762,6 +758,10 @@ class SettingsViewModel(
     val chatRoundCollapse: StateFlow<Boolean> = agentPreferences.chatRoundCollapse
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
     fun setChatRoundCollapse(value: Boolean) { viewModelScope.launch { agentPreferences.setChatRoundCollapse(value) } }
+
+    val queueSendAfterToolBatch: StateFlow<Boolean> = agentPreferences.queueSendAfterToolBatch
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    fun setQueueSendAfterToolBatch(value: Boolean) { viewModelScope.launch { agentPreferences.setQueueSendAfterToolBatch(value) } }
 
     val customSystemPromptEnabled: StateFlow<Boolean> = agentPreferences.customSystemPromptEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)

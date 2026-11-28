@@ -93,6 +93,7 @@ fun AgentSettingsScreen(
     val translationModelStatus by viewModel.translationModelStatus.collectAsStateWithLifecycle()
     val thinkingAutoTranslate by viewModel.thinkingAutoTranslate.collectAsStateWithLifecycle()
     val chatRoundCollapse by viewModel.chatRoundCollapse.collectAsStateWithLifecycle()
+    val queueSendAfterToolBatch by viewModel.queueSendAfterToolBatch.collectAsStateWithLifecycle()
     val customSystemPromptEnabled by viewModel.customSystemPromptEnabled.collectAsStateWithLifecycle()
     val customSystemPrompt by viewModel.customSystemPrompt.collectAsStateWithLifecycle()
     val agentCharName by viewModel.agentCharName.collectAsStateWithLifecycle()
@@ -188,8 +189,7 @@ fun AgentSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (category == AgentSettingsCategory.EXECUTION) {
-            // ---- 模块 1：模型思考与交互表现 ----
-            item {
+                        item {
                 SectionHeader(
                     title = "Luồng suy nghĩ và thực thi",
                     subtitle = "Điều chỉnh cách hiển thị suy nghĩ của mô hình suy luận như DeepSeek và giới hạn thực thi công cụ",
@@ -211,15 +211,23 @@ fun AgentSettingsScreen(
                     AgentToggleRow(
                         icon = RuntimeIconName.Globe,
                         title = "Tự động dịch suy nghĩ tiếng Anh sang tiếng Trung khi mở rộng",
-                        subtitle = if (thinkingAutoTranslate) "Khi mở rộng suy nghĩ bằng tiếng Anh, tự động dùng mô hình ngoại tuyến cục bộ để dịch" else "Chỉ dịch khi nhấn nút dịch trên khối suy nghĩ",
+                        subtitle = if (thinkingAutoTranslate) "Tự dịch suy nghĩ tiếng Anh bằng mô hình ngoại tuyến cục bộ" else "Chỉ dịch khi nhấn nút dịch trên khối suy nghĩ",
                         checked = thinkingAutoTranslate,
                         onCheckedChange = viewModel::setThinkingAutoTranslate,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     AgentToggleRow(
+                        icon = RuntimeIconName.Package,
+                        title = "Gửi tin nhắn đang chờ ngay khi lệnh thực thi xong",
+                        subtitle = if (queueSendAfterToolBatch) "Tin nhắn xếp hàng được nạp ngay sau mỗi loạt lệnh, không phải đợi toàn bộ tác vụ kết thúc" else "Mặc định: chỉ nạp tin nhắn chờ khi agent đã trả lời xong toàn bộ lượt",
+                        checked = queueSendAfterToolBatch,
+                        onCheckedChange = viewModel::setQueueSendAfterToolBatch,
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    AgentToggleRow(
                         icon = RuntimeIconName.Compress,
                         title = "Tự động thu gọn suy nghĩ và công cụ ở các lượt trước",
-                        subtitle = if (chatRoundCollapse) "Ở các lượt đã kết thúc, suy nghĩ và lời gọi công cụ vượt quá 2 bước được thu gọn thành phần tóm tắt ‘Mở rộng thêm’; nhấn để xem. Lượt đang chạy luôn hiển thị đầy đủ" else "Khi tắt, hiển thị lần lượt toàn bộ suy nghĩ và lời gọi công cụ",
+                        subtitle = if (chatRoundCollapse) "Lượt đã kết thúc: gộp suy nghĩ và lệnh quá 2 bước thành tóm tắt; lượt đang chạy luôn hiện đầy đủ" else "Khi tắt, hiện lần lượt toàn bộ suy nghĩ và lời gọi công cụ",
                         checked = chatRoundCollapse,
                         onCheckedChange = viewModel::setChatRoundCollapse,
                     )
@@ -303,8 +311,7 @@ fun AgentSettingsScreen(
                 }
             }
 
-            // ---- 模块 2：系统提示词与人设自定义 ----
-            item {
+                        item {
                 SectionHeader(
                     title = "Tùy chỉnh prompt hệ thống và nhân vật",
                     subtitle = "Tùy chỉnh nhân vật ban đầu của agent, mô tả môi trường và chèn biến macro động",
@@ -326,8 +333,7 @@ fun AgentSettingsScreen(
                 )
             }
 
-            // ---- 模块 2：上下文记忆与智能压缩 ----
-            item {
+                        item {
                 SectionHeader(
                     title = "Bộ nhớ ngữ cảnh và nén thông minh",
                     subtitle = "Tối ưu token cho tác vụ dài, tránh vượt giới hạn cửa sổ ngữ cảnh của mô hình",
@@ -366,8 +372,7 @@ fun AgentSettingsScreen(
             }
 
             if (category == AgentSettingsCategory.SUBAGENTS) {
-            // ---- 模块 3：内置子智能体 ----
-            item {
+                        item {
                 SectionHeader(
                     title = "Agent phát triển phần mềm (${subagents.count { it.isEnabled }}/${subagents.size} đã bật)",
                     subtitle = "Agency Agents · 9 bộ phận R&D · Giấy phép MIT · Tích hợp đầy đủ prompt ngoại tuyến",
@@ -463,8 +468,7 @@ fun AgentSettingsScreen(
             }
 
             if (category == AgentSettingsCategory.SKILLS) {
-            // ---- 模块 4：Skill 专精技能库 ----
-            item {
+                        item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -579,7 +583,7 @@ fun AgentSettingsScreen(
                 }
             }
 
-            // ---- 模块 4.5：ClawHub 技能生态市场 ----
+            // ---- Mục 4.5: chợ hệ sinh thái kỹ năng ClawHub ----
             item {
                 SectionHeader(
                     title = "Chợ kỹ năng ClawHub",
@@ -610,7 +614,7 @@ fun AgentSettingsScreen(
                 }
             }
 
-            // ---- 模块 5：Plugin 插件生态管理 ----
+            // ---- Mục 5: quản lý hệ sinh thái plugin ----
             item {
                 SectionHeader(
                     title = "Quản lý hệ sinh thái plugin (${plugins.count { it.isEnabled }}/${plugins.size} đang chạy)",
@@ -651,7 +655,7 @@ fun AgentSettingsScreen(
         )
     }
 
-    // 查看 Skill 完整提示词弹窗
+    // Hộp thoại xem toàn văn prompt của Skill
     viewingSkillPrompt?.let { skill ->
         RuntimeAlertDialog(
             onDismissRequest = { viewingSkillPrompt = null },
@@ -692,7 +696,7 @@ fun AgentSettingsScreen(
         )
     }
 
-    // 新增自定义 Skill 弹窗
+    // Hộp thoại thêm Skill tùy chỉnh
     if (showAddSkillDialog) {
         AddSkillDialog(
             onDismiss = { showAddSkillDialog = false },
@@ -1235,10 +1239,9 @@ private fun ContextBudgetSliderRow(
 }
 
 /**
- * 「历史折叠线比例」滑块。
+ * Thanh trượt tỉ lệ ngưỡng gấp lịch sử.
  *
- * 让历史在预算的一部分处就开始折叠，而不是等到预算减预留的硬线才动手——
- * 长会话可借此显著降低单次请求的 input token 量（省费用、降首字延迟）。
+ * Cho phép gấp lịch sử sớm hơn ngưỡng cứng, giảm input token và độ trễ chữ đầu ở phiên dài.
  */
 @Composable
 private fun ContextFoldingRatioSliderRow(
@@ -1248,9 +1251,7 @@ private fun ContextFoldingRatioSliderRow(
     onValueChange: (Int) -> Unit,
 ) {
     var sliderVal by remember(currentValue) { mutableFloatStateOf(currentValue.toFloat()) }
-    // 实时预览：按当前比例算出的折叠线，让用户直观看到「拖到多少就按多少折叠」。
-    // 关键：budget 必须是**实际生效预算**（模型档案 contextTokens 优先，再钳到 MAX_CONTEXT_BUDGET），
-    // 并且扣减引擎同款 system/输出/工具 schema 预留，否则设置页会高于真实折叠触发线。
+    // Xem trước ngưỡng gấp theo tỉ lệ hiện tại; budget phải là ngân sách thực tế và trừ đúng khoản dự phòng như engine.
     val previewSystemTokens = ContextWindowPolicy.estimateReservedPromptTokens(
         pureChat = false,
         toolDisabled = false,
@@ -1293,7 +1294,7 @@ private fun ContextFoldingRatioSliderRow(
             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
             color = MaterialTheme.colorScheme.primary,
         )
-        // 说明这个预览数按什么预算折算，避免用户误以为它基于「上下文预算上限」滑块。
+        // Ghi rõ con số xem trước tính theo ngân sách nào để không nhầm với thanh trượt ngân sách ngữ cảnh.
         Text(
             if (declaredTokens != null) {
                 "Tính theo cửa sổ mô hình đang có hiệu lực ${budget / 1000}K " +
@@ -1314,8 +1315,8 @@ private fun ContextFoldingRatioSliderRow(
         Slider(
             value = sliderVal,
             onValueChange = { sliderVal = it },
+            // khớp coerceIn(10, 100) của SettingsDataStore.setContextFoldingRatioPercent
             onValueChangeFinished = { onValueChange(sliderVal.toInt()) },
-            // 与 SettingsDataStore.setContextFoldingRatioPercent 的 coerceIn(10, 100) 对齐
             valueRange = 10f..100f,
             steps = 8, // 步长 10%
         )
@@ -1933,8 +1934,7 @@ private fun SystemPromptCustomCard(
     userName: String,
     onUserNameChange: (String) -> Unit,
 ) {
-    // 仅在首次进入时以持久化值初始化缓冲，避免 remember(prompt) 键在每次 Datastore 回写时重置输入；
-    // 输入经 400ms 防抖后再写入 Datastore，避免每次按键都落盘
+    // Chỉ nạp giá trị đã lưu ở lần đầu vào màn hình; nhập liệu ghi sau 400ms để không ghi mỗi phím.
     var textBuffer by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(prompt) }
     androidx.compose.runtime.LaunchedEffect(textBuffer) {
         if (textBuffer != prompt) {
@@ -1943,7 +1943,7 @@ private fun SystemPromptCustomCard(
         }
     }
 
-    // 称呼输入同样走 400ms 防抖落盘；留空即回退默认值
+    // Tên gọi cũng ghi sau 400ms; để trống thì quay về mặc định
     var charNameBuffer by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(charName) }
     androidx.compose.runtime.LaunchedEffect(charNameBuffer) {
         if (charNameBuffer != charName) {
@@ -2054,7 +2054,7 @@ You are a helpful and expert AI assistant called {{char}}, based on model {{mode
                 )
             }
 
-            // 称呼配置独立于自定义提示词开关：默认提示词同样生效
+            // Cấu hình tên gọi độc lập với công tắc prompt tùy chỉnh: prompt mặc định vẫn áp dụng
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
