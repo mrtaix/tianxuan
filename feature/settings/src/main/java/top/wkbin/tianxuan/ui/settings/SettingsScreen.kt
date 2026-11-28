@@ -22,7 +22,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +45,7 @@ import top.wkbin.tianxuan.ui.components.liquidGlassContent
 import top.wkbin.tianxuan.ui.theme.LocalLiquidGlassBackdrop
 
 /**
- * 天玄 · 摇光配置 (TianXuan Settings & Models)
+ * CTHarness - Cài đặt và cấu hình mô hình.
  */
 @Composable
 fun SettingsScreen(
@@ -75,6 +77,7 @@ fun SettingsScreen(
 
     val context = androidx.compose.ui.platform.LocalContext.current
     val appVersionName = rememberAppVersion()
+    var showRoadmap by remember { mutableStateOf(false) }
 
     val glassBackdrop = LocalLiquidGlassBackdrop.current
     Scaffold(
@@ -99,7 +102,7 @@ fun SettingsScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 104.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // 全局功能搜索快捷入口卡片
+            // Lối tắt tìm kiếm chức năng và tùy chọn
             item {
                 RuntimeCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -142,7 +145,7 @@ fun SettingsScreen(
                 )
             }
 
-            // 1. 智能体与 AI 模型生态
+            // 1. Hệ sinh thái agent và mô hình AI
             item {
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Brain,
@@ -154,7 +157,7 @@ fun SettingsScreen(
                 )
             }
 
-            // 2. Linux 容器沙箱与存储
+            // 2. Sandbox Linux và bộ nhớ
             item {
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Server,
@@ -166,7 +169,7 @@ fun SettingsScreen(
                 )
             }
 
-            // 3. 外观、字号与终端定制
+            // 3. Giao diện, cỡ chữ và tùy biến terminal
             item {
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Palette,
@@ -178,7 +181,7 @@ fun SettingsScreen(
                 )
             }
 
-            // 4. 系统保活与开发者诊断
+            // 4. Giữ hệ thống chạy nền và chẩn đoán nhà phát triển
             item {
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Admin,
@@ -190,21 +193,21 @@ fun SettingsScreen(
                 )
             }
 
-            // 4.5 开发者实验功能：A2UI 渲染器 PoC（仅诊断模式可见）
+            // 4.5 Tính năng thử nghiệm: PoC trình render A2UI (chỉ hiện ở chế độ chẩn đoán)
             if (developer) {
                 item {
-                SettingsCategoryCard(
-                    icon = RuntimeIconName.Sparkles,
-                    accent = MaterialTheme.colorScheme.tertiary,
-                    title = "Trình kết xuất A2UI thử nghiệm",
-                    subtitle = "Agent trình bày câu trả lời bằng thẻ giao diện native · Nhấn để xem ví dụ",
-                    badge = "Tính năng thử nghiệm",
-                    onClick = onOpenA2uiPoc,
-                )
-            }
+                    SettingsCategoryCard(
+                        icon = RuntimeIconName.Sparkles,
+                        accent = MaterialTheme.colorScheme.tertiary,
+                        title = "Trình kết xuất A2UI thử nghiệm",
+                        subtitle = "Agent trình bày câu trả lời bằng thẻ giao diện native · Nhấn để xem ví dụ",
+                        badge = "Tính năng thử nghiệm",
+                        onClick = onOpenA2uiPoc,
+                    )
+                }
             }
 
-            // 4.6 RAG 知识库：对全部用户可见（非诊断功能）
+            // 4.6 Kho tri thức RAG: hiển thị cho mọi người dùng (không phải tính năng chẩn đoán)
             item {
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Document,
@@ -216,7 +219,19 @@ fun SettingsScreen(
                 )
             }
 
-            // 5. 关于、更新与官方社区
+            // 6. Các tính năng sẽ thêm (roadmap)
+            item {
+                SettingsCategoryCard(
+                    icon = RuntimeIconName.Update,
+                    accent = MaterialTheme.colorScheme.tertiary,
+                    title = "Tính năng sẽ thêm",
+                    subtitle = "Hàng đợi tin nhắn · Fork · Đăng nhập · Plugin · /btw · Subagent · RAG · Sao lưu",
+                    badge = "Roadmap",
+                    onClick = { showRoadmap = true },
+                )
+            }
+
+            // 7. Giới thiệu, cập nhật và cộng đồng
             item {
                 SettingsCategoryCard(
                     icon = RuntimeIconName.Community,
@@ -229,10 +244,13 @@ fun SettingsScreen(
             }
         }
     }
+    if (showRoadmap) {
+        RoadmapSettingsDialog(onDismiss = { showRoadmap = false })
+    }
 }
 
 /**
- * 现代高质感大类导航卡片（紧凑精致）
+ * Thẻ điều hướng nhóm cài đặt hiện đại, gọn và tinh tế.
  */
 @Composable
 private fun SettingsCategoryCard(
