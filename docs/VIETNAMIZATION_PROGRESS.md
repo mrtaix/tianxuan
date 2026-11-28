@@ -71,3 +71,13 @@ Kiểm tra: `tools/check-ctharness.py` **16/16 đạt**, `tools/test-queue-lifec
 - APK `CTHarnessDev-arm64-debug.apk` sha256 `7cd92fa620578568dc7b78cc13ed51cfa6d07a775364aa33e11b6396b5fb3378` (khớp file `.sha256` đi kèm), kích thước 48.099.112 bytes.
 - Cài lên thiết bị thành công: gỡ riêng `com.ctharness.app` (bắt buộc do đổi chữ ký → mất dữ liệu của app này), `pm install` → Success. Xác minh versionCode 52 / versionName `0.36.4-dev`, chữ ký v3 `a42edf44`. App cũ `top.wkbin.tianxuan` vẫn còn nguyên, không đụng vào.
 - Keystore lưu ngoài repo tại `/workspace/signing/ctharness-release.jks` và trong GitHub Secrets (không commit private key). Các build sau dùng chung chữ ký này.
+
+### Đợt onboarding + chuẩn đoán môi trường + link tải (commit d98219e)
+
+- Đã Việt hóa toàn bộ chuỗi/comment tiếng Trung trong `OnboardingScreen.kt`, `OnboardingViewModel.kt`, `EnvironmentDoctor.kt`, `EnvironmentRepairer.kt`, `DoctorModels.kt`; đọc lại bằng regex Unicode xác nhận sạch. Giữ nguyên ID/category/enum và command lệnh (không đổi logic体检/自愈), cập nhật 2 assertion trong `EnvironmentDoctorTest.kt` theo chuỗi tiếng Việt mới.
+- Kiểm tra 27 URL trong `assets/plugins/*/DOWNLOADS.md` và mã nguồn: phát hiện **3 link 404** và đã sửa trong `assets/plugins/android-suite-offline/DOWNLOADS.md`:
+  - `smali-3.0.8.jar` / `baksmali-3.0.8.jar` (google/smali không phát hành JAR) → Maven Central `org.smali:{smali,baksmali}:2.5.2`, kèm SHA-256 đã xác minh.
+  - `android-tools_36.0.1..._aarch64.deb` → bản `37.0.0p1-3_aarch64.deb`, cập nhật SHA-256 `534e90d338bd432c06677cb402d0e9ed98a82a74de4bf5f90e643f15d8fc4274`.
+  - Cả 3 URL thay thế đều trả HTTP 200. Các URL tải trong mã nguồn (Node.js, codex install.sh, npmmirror, pypi) cũng trả 200.
+- Kiểm tra: `check-ctharness.py` 16/16, `test-queue-lifecycle.py` 3/3, `git diff --check` sạch, 151 dòng thêm / 151 dòng xóa (không đổi tổng số dòng → không vi phạm ratchet).
+- Build CI run `46135345707` **success**. APK sha256 `73ddfe42b0eb9214ad4a269688e4d4b692d41dae24a14ab808d2f40a5ce33020` (khớp file `.sha256`), đã `pm install -r` **thành công mà không cần gỡ app** nhờ chữ ký cố định → dữ liệu người dùng được giữ. Xác minh versionCode 52 / `0.36.4-dev`, chữ ký v3 `a42edf44` (không đổi), `top.wkbin.tianxuan` vẫn còn nguyên.
