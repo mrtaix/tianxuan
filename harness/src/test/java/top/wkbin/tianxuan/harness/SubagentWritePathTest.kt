@@ -127,4 +127,17 @@ class SubagentWritePathTest {
         assertEquals("secret.txt", normalizeWritePath("docs/../secret.txt"))
         assertEquals("../secret.txt", normalizeWritePath("../secret.txt"))
     }
+
+    @Test
+    fun `absolute path inside workspace is accepted by write lease`() {
+        val workspace = "/workspace/tianxuan"
+        assertEquals(
+            "feature/app/src/main/Main.kt",
+            normalizeWriteTarget("$workspace/feature/app/src/main/Main.kt", workspace),
+        )
+        // Đường dẫn tương đối vẫn giữ nguyên hành vi cũ.
+        assertEquals("feature/app/src/main/Main.kt", normalizeWriteTarget("feature/app/src/main/Main.kt", workspace))
+        // Ngoài workspace thì không bị cắt tiền tố.
+        assertEquals("etc/hosts", normalizeWriteTarget("/etc/hosts", workspace))
+    }
 }

@@ -7,17 +7,12 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /**
- * 文件快照的按会话存储与重放规划。不触碰 git：
- * - 每个用户轮次 [beginTurn] 开启一个 checkpoint，仅记录该轮被 write/edit 触碰文件在触碰前的轮初内容；
- * - 同一轮同一路径去重（只保留第一次触碰的轮初内容）；
- * - [beginTurn] 切换时关闭上一轮 checkpoint，并保留最近 [MAX_KEPT] 轮；
- * - [planCodeRewind] 生成从目标轮起逐 path 取最早快照的恢复方案，供 RewindController 落盘。
- *
- * 落盘布局（[Persistence] 配置了根目录时启用）：
- * `<root>/<sessionId>/<turn>.index.json` + `<turn>/<seq>-<safeName>`（内容文件，null 快照无内容文件）。
- * 关轮时异步写入（失败仅放弃持久化，不影响内存态；进程在写入前被杀会丢最近一轮的持久化——
- * 安全网特性可接受，且该轮大概率会被重做）；启动后首次访问该会话时从磁盘恢复。
- * 未配置根目录时退化为纯内存（进程被杀后 rewind 丢失），行为与旧版一致。
+ * Lưu snapshot tệp theo phiên và lập kế hoạch phát lại, không đụng tới git:
+ * - [beginTurn] mở checkpoint mỗi lượt người dùng, chỉ ghi nội dung đầu lượt của tệp bị write/edit;
+ * - cùng lượt cùng đường dẫn thì khử trùng lặp; chuyển lượt thì đóng checkpoint và giữ [MAX_KEPT] lượt gần nhất;
+ * - [planCodeRewind] lập kế hoạch khôi phục lấy snapshot sớm nhất theo từng path cho RewindController.
+ * Anchor tin nhắn được lưu riêng theo lượt (kể cả lượt không ghi tệp) để fork/rewind luôn định vị được.
+ * Khi cấu hình [Persistence] thì ghi đĩa bất đồng bộ lúc đóng lượt; không cấu hình thì chỉ giữ trong bộ nhớ.
  */
 class CheckpointStore() {
 
@@ -60,6 +55,7 @@ class CheckpointStore() {
 
     private class SessionState {
         val checkpoints = mutableListOf<Checkpoint>()
+        val turnAnchors = mutableMapOf<Int, String>() // anchor theo lượt, gồm cả lượt không ghi tệp
         var active: MutableMap<String, FileSnap>? = null
         var activeTurn = 0
         var activePrompt = ""
@@ -87,6 +83,10 @@ class CheckpointStore() {
         state.lastTurn = state.activeTurn
         state.activePrompt = prompt.ifBlank { "（空白输入）" }
         state.activeAnchorMessageId = anchorMessageId
+        anchorMessageId?.let {
+            state.turnAnchors[state.activeTurn] = it
+            if (state.turnAnchors.size > MAX_KEPT) state.turnAnchors.remove(state.turnAnchors.keys.minOrNull())
+        }
         state.active = LinkedHashMap()
         state.open = true
     }
@@ -162,7 +162,7 @@ class CheckpointStore() {
     /** 查询某轮 checkpoint 的用户消息锚点（供对话 fork 定位）。 */
     @Synchronized
     fun anchorMessageIdOf(sessionId: String, turn: Int): String? =
-        stateOf(sessionId).checkpoints.firstOrNull { it.turn == turn }?.anchorMessageId
+        stateOf(sessionId).let { it.turnAnchors[turn] ?: it.checkpoints.firstOrNull { c -> c.turn == turn }?.anchorMessageId }
 
     /**
      * 规划"代码回滚"：撤回到 [turn]，即撤销该轮及之后的所有写改动。

@@ -185,6 +185,7 @@ internal fun subagentWriteScopeRejection(
     tool: HarnessTool,
     args: JsonObject,
     writePaths: List<String>,
+    workspace: String = "",
 ): String? {
     val action = args.stringOrNull("action")?.lowercase()
     if (tool == HarnessTool.MCP && args.stringOrNull("action")?.lowercase() == "call") {
@@ -208,11 +209,10 @@ internal fun subagentWriteScopeRejection(
             "或让主智能体在重新派发时声明 write_paths。"
     }
     val scopes = writePaths.map(::normalizeWritePath)
-    // 归一化后的空串等价于工作区根（`.` 的消解结果），与 `*` 一样是整工作区租约，
-    // 不能当作"未声明"而降级为只读。
+    // Chuỗi rỗng sau chuẩn hóa là gốc workspace (kết quả của `.`), giống `*` — không được coi là "chưa khai báo".
     if (scopes.any { it == "*" || it.isBlank() }) return null
     val rawTarget = args.stringOrNull(pathKey).orEmpty()
-    val target = normalizeWritePath(rawTarget)
+    val target = normalizeWriteTarget(rawTarget, workspace)
     // 参数缺失或为空交由执行层按 schema 报错，这里不抢先拦截。
     if (target.isBlank()) return null
     if (target.startsWith("../")) {

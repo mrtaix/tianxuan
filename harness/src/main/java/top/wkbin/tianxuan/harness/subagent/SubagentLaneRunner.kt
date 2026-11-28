@@ -234,7 +234,7 @@ class SubagentLaneRunner(
                     }
                     operations.toolIntent(operationId, call, spec.argumentsJson, ToolReplayPolicy.forTool(tool, rawName), round)
                     loopDetector.recordIntent(rawName, args)
-                    val writeRejection = writePaths?.let { subagentWriteScopeRejection(tool, args, it) }
+                    val writeRejection = writePaths?.let { subagentWriteScopeRejection(tool, args, it, workspace) }
                     val outcome = when {
                         tool == HarnessTool.SUBAGENT ->
                             ToolResult(UUID.randomUUID().toString(), now(), call.id, false, "子智能体 Lane 禁止再次派发子智能体")

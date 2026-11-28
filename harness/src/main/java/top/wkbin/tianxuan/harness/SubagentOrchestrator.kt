@@ -711,6 +711,22 @@ internal fun buildWriteCleanWaves(specs: List<SubagentTaskSpec>): List<List<Suba
  * （真正写文件时 [WorkspaceFileAccess] 还会拒绝含 `..` 的路径，这里是让租约层自身即可判定。）
  * 逃逸出顶层的 `..` 原样保留，由调用方按越界处理。
  */
+/**
+ * Như [normalizeWritePath] nhưng chấp nhận cả đường dẫn tuyệt đối nằm trong workspace.
+ * Agent con thường ghi `/workspace/<dự án>/feature/a.kt` trong khi lease khai báo tương đối
+ * `feature/a.kt`; nếu không quy đổi thì mọi lần ghi đúng vẫn bị chặn oan.
+ */
+internal fun normalizeWriteTarget(path: String, workspace: String): String {
+    val normalized = normalizeWritePath(path)
+    val base = normalizeWritePath(workspace)
+    if (base.isBlank()) return normalized
+    return when {
+        normalized == base -> ""
+        normalized.startsWith("$base/") -> normalized.removePrefix("$base/")
+        else -> normalized
+    }
+}
+
 internal fun normalizeWritePath(path: String): String {
     val segments = ArrayDeque<String>()
     var escaped = 0
