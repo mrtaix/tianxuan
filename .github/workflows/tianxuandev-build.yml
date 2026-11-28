@@ -51,9 +51,22 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
+      # Chữ ký cố định: decode keystore từ Secrets để mọi build cùng chữ ký,
+      # tránh INSTALL_FAILED_UPDATE_INCOMPATIBLE khi cài đè bản cũ.
+      - name: Prepare release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.TIANXUAN_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ctharness-release.jks"
+          test -s "$RUNNER_TEMP/ctharness-release.jks"
+
       - name: Build CTHarnessDev APK
         env:
           TIANXUAN_DEV_BUILD: "1"
+          TIANXUAN_RELEASE_STORE_FILE: ${{ runner.temp }}/ctharness-release.jks
+          TIANXUAN_RELEASE_STORE_PASSWORD: ${{ secrets.TIANXUAN_RELEASE_STORE_PASSWORD }}
+          TIANXUAN_RELEASE_KEY_ALIAS: ${{ secrets.TIANXUAN_RELEASE_KEY_ALIAS }}
+          TIANXUAN_RELEASE_KEY_PASSWORD: ${{ secrets.TIANXUAN_RELEASE_KEY_PASSWORD }}
         run: |
           ./gradlew assembleDebug --no-daemon --stacktrace \
             -Porg.gradle.java.installations.paths="$JAVA_HOME_17_X64,$JAVA_HOME_25_X64" \
