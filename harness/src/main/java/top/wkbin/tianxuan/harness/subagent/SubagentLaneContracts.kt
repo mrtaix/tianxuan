@@ -15,6 +15,7 @@ import top.wkbin.tianxuan.harness.ToolResult
 import top.wkbin.tianxuan.harness.UserMessage
 import top.wkbin.tianxuan.harness.isWholeWorkspaceWritePath
 import top.wkbin.tianxuan.harness.normalizeWritePath
+import top.wkbin.tianxuan.harness.normalizeWriteTarget
 
 /**
  * 子智能体 Lane 的终止原因。
@@ -209,8 +210,7 @@ internal fun subagentWriteScopeRejection(
             "或让主智能体在重新派发时声明 write_paths。"
     }
     val scopes = writePaths.map(::normalizeWritePath)
-    // Chuỗi rỗng sau chuẩn hóa là gốc workspace (kết quả của `.`), giống `*` — không được coi là "chưa khai báo".
-    if (scopes.any { it == "*" || it.isBlank() }) return null
+    if (scopes.any { it == "*" || it.isBlank() }) return null // rỗng = gốc workspace, giống `*`, không phải "chưa khai báo"
     val rawTarget = args.stringOrNull(pathKey).orEmpty()
     val target = normalizeWriteTarget(rawTarget, workspace)
     // 参数缺失或为空交由执行层按 schema 报错，这里不抢先拦截。
