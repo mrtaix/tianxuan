@@ -80,6 +80,7 @@ val featureSettingsModule = module {
             mcpOAuthCredentials = get(),
             storageMountBindingRepository = get(),
             approvalRepository = get(),
+            backupService = get(),
             sessionDao = get(),
             toolManager = get(),
             quickPhraseRepository = get(),

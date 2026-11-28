@@ -986,7 +986,7 @@ class ChatViewModel(
             setInput("")
             viewModelScope.launch {
                 _btwAnswer.value = "Đang trả lời câu hỏi phụ…"
-                val reply = btwQuestionService.ask(sessionId.value, question)
+                val reply = btwQuestionService.ask(currentSessionId.value, question)
                 _btwAnswer.value = reply.getOrElse { "Không trả lời được câu hỏi phụ: ${it.message}" }
             }
             return
