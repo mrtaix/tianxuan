@@ -542,4 +542,6 @@
     <string name="chat_event_status">Trạng thái: %1$s</string>
     <string name="chat_event_approval_decision">Kết quả phê duyệt</string>
     <string name="chat_floating_capsule">Thu gọn thành bong bóng nổi</string>
+    <string name="chat_command_btw">Hỏi nhanh (/btw)</string>
+    <string name="chat_command_btw_description">Đặt câu hỏi phụ về hội thoại hiện tại: trả lời riêng, không ghi vào lịch sử và không ngắt agent đang chạy</string>
 </resources>

@@ -72,6 +72,13 @@ object SlashCommands {
             icon = RuntimeIconName.Trash,
         ),
         Preset(
+            command = "/btw",
+            labelRes = R.string.chat_command_btw,
+            descriptionRes = R.string.chat_command_btw_description,
+            template = "/btw ",
+            icon = RuntimeIconName.Info,
+        ),
+        Preset(
             command = "/help",
             labelRes = R.string.chat_command_help,
             descriptionRes = R.string.chat_command_help_description,

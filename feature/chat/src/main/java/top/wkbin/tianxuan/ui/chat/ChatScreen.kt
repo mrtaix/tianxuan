@@ -313,9 +313,7 @@ fun ChatScreen(
         }
     }
 
-    // 🌟 2. 软键盘弹起时自动平滑滚动定位到最后一条消息。
-    // delay 之后必须重新读 totalItemsCount：IME insets 会触发 relayout，
-    // 未测量完成时 count 为 0，animateScrollToItem(-1) 会直接崩。
+    // Bàn phím bật thì cuộn tới tin cuối; phải đọc lại totalItemsCount sau delay để tránh chỉ số -1.
     LaunchedEffect(isImeVisible) {
         if (!isImeVisible) return@LaunchedEffect
         delay(80)
@@ -378,10 +376,7 @@ fun ChatScreen(
         if (opened != null && opened.sessionId != currentSessionId) viewModel.closeSubagentResult()
     }
 
-    // 模型·权限·主线·轮次 工具条：单栏浏览器分页模式下随对话页一起滑走（浏览器页全屏），
-    // 双栏/纯对话模式固定在顶部。提出为局部 lambda 避免三处重复传参。
-    // onOpenBrowser 非空时工具条末尾追加"浏览器"入口（agent 有新动态时高亮）。
-    // onOpenRepository 非空即追加"仓库"入口（Git 分支管理）；未绑定项目时点击给提示而非隐藏。
+    // Thanh công cụ mô hình/quyền/luồng/vòng: cuộn cùng trang chat ở chế độ một cột, ghim ở chế độ hai cột.
     val noProjectHint = stringResource(R.string.chat_repository_no_project)
     val chatTopBar: @Composable (onOpenBrowser: (() -> Unit)?, browserHighlight: Boolean) -> Unit =
         { onOpenBrowser, browserHighlight ->
@@ -836,9 +831,7 @@ fun ChatScreen(
             onNavigateToMessage = { messageId ->
                 showRuntimeTimeline = false
                 coroutineScope.launch {
-                    // 关键修复：旧实现用过滤后的 messages.indexOfFirst，缺少 LazyColumn 头部偏移补偿
-                    // 与上界保护，sheet 打开后消息变化时可能传入越界索引（LazyListState 抛
-                    // IllegalArgumentException）。此处改用与 ChatMessageList 完全一致的投影（含折叠开关）。
+                    // Dùng đúng phép chiếu như ChatMessageList (kể cả cờ gấp) để không truyền chỉ số vượt biên.
                     val renderItems = projectChatMessages(messages, toolResults, collapseEnabled = chatRoundCollapse)
                     val targetIndex = renderItems.indexOfFirst { item ->
                         item is ChatRenderItem.MessageItem && item.message.id == messageId
@@ -854,6 +847,12 @@ fun ChatScreen(
             },
             onDismiss = { showRuntimeTimeline = false },
         )
+    }
+
+    val btwAnswer by viewModel.btwAnswer.collectAsStateWithLifecycle()
+    val btwLoading by viewModel.btwLoading.collectAsStateWithLifecycle()
+    if (btwAnswer != null) {
+        BtwAnswerDialog(answer = btwAnswer.orEmpty(), isLoading = btwLoading, onDismiss = viewModel::clearBtwAnswer)
     }
 
     if (showApprovalModes) {

@@ -131,7 +131,9 @@ class ChatViewModel(
     /** Kết quả câu hỏi phụ /btw; không nằm trong lịch sử hội thoại. */
     private val _btwAnswer = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     val btwAnswer: kotlinx.coroutines.flow.StateFlow<String?> = _btwAnswer
-    fun clearBtwAnswer() { _btwAnswer.value = null }
+    private val _btwLoading = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val btwLoading: kotlinx.coroutines.flow.StateFlow<Boolean> = _btwLoading
+    fun clearBtwAnswer() { _btwAnswer.value = null; _btwLoading.value = false }
 
     private val _workflowLaunchRequests = kotlinx.coroutines.flow.MutableSharedFlow<WorkflowLaunchRequest>(extraBufferCapacity = 2)
     val workflowLaunchRequests: kotlinx.coroutines.flow.SharedFlow<WorkflowLaunchRequest> = _workflowLaunchRequests
@@ -985,8 +987,10 @@ class ChatViewModel(
         btwQuestionService?.parseQuestion(rawText)?.let { question ->
             setInput("")
             viewModelScope.launch {
-                _btwAnswer.value = "Đang trả lời câu hỏi phụ…"
+                _btwAnswer.value = ""
+                _btwLoading.value = true
                 val reply = btwQuestionService.ask(currentSessionId.value, question)
+                _btwLoading.value = false
                 _btwAnswer.value = reply.getOrElse { "Không trả lời được câu hỏi phụ: ${it.message}" }
             }
             return
