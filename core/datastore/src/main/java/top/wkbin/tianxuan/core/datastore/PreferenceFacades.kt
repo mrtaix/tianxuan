@@ -162,8 +162,10 @@ class AgentPreferences(private val store: SettingsDataStore) {
     val thinkingAutoTranslate get() = store.thinkingAutoTranslate
     val chatRoundCollapse get() = store.chatRoundCollapse
     val queueSendAfterToolBatch get() = store.queueSendAfterToolBatch
+    val composerSendMode get() = store.composerSendMode
     suspend fun setChatRoundCollapse(value: Boolean) = store.setChatRoundCollapse(value)
     suspend fun setQueueSendAfterToolBatch(value: Boolean) = store.setQueueSendAfterToolBatch(value)
+    suspend fun setComposerSendMode(value: String) = store.setComposerSendMode(value)
     val defaultReasoningDepth get() = store.defaultReasoningDepth
     val contextCompactionEnabled get() = store.contextCompactionEnabled
     val maxToolRounds get() = store.maxToolRounds

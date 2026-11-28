@@ -20,8 +20,7 @@ class SettingsDataStore(
     private val context: Context,
     private val secretManager: SecretManager,
 ) {
-    // 智坊 Android/Flutter 工具链覆盖配置。空值表示使用当前套件的标准路径。
-    private val workshopAndroidSdkPathKey = stringPreferencesKey("workshop_android_sdk_path")
+        private val workshopAndroidSdkPathKey = stringPreferencesKey("workshop_android_sdk_path")
     private val workshopNdkPathKey = stringPreferencesKey("workshop_ndk_path")
     private val workshopFlutterSdkPathKey = stringPreferencesKey("workshop_flutter_sdk_path")
     private val workshopJavaPathKey = stringPreferencesKey("workshop_java_path")
@@ -34,8 +33,7 @@ class SettingsDataStore(
     private val workshopToolDirKey = stringPreferencesKey("workshop_tool_dir")
     private val workshopAndroidScriptKey = stringPreferencesKey("workshop_android_script")
     private val workshopFlutterScriptKey = stringPreferencesKey("workshop_flutter_script")
-    // 智坊 Android 签名（keystore）注册表；整表 JSON 密文存储，口令不落明文。
-    private val workshopKeystoresKey = stringPreferencesKey("workshop_keystores_ciphertext")
+        private val workshopKeystoresKey = stringPreferencesKey("workshop_keystores_ciphertext")
     // ===== 内置浏览器偏好：数据源（datastore key 集中放在 BrowserPreferencesKeys） =====
     private val browserDefaultFamilyKey = BrowserPreferencesKeys.DefaultFamily
     private val browserHomeUrlKey = BrowserPreferencesKeys.HomeUrl
@@ -639,6 +637,8 @@ class SettingsDataStore(
     suspend fun setChatRoundCollapse(value: Boolean) { context.setChatRoundCollapsePreference(value) }
     val queueSendAfterToolBatch: Flow<Boolean> = context.queueSendAfterToolBatchPreference
     suspend fun setQueueSendAfterToolBatch(value: Boolean) { context.setQueueSendAfterToolBatchPreference(value) }
+    val composerSendMode: Flow<String> = context.composerSendModePreference
+    suspend fun setComposerSendMode(value: String) { context.setComposerSendModePreference(value) }
 
     val defaultReasoningDepth: Flow<String> = context.settingsDataStore.data.map { it[defaultReasoningDepthKey] ?: "auto" }
     suspend fun setDefaultReasoningDepth(value: String) {

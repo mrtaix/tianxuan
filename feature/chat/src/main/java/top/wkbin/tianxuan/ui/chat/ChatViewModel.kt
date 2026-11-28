@@ -133,8 +133,7 @@ class ChatViewModel(
     val workflowSuggestions: StateFlow<List<ProactiveWorkflowSuggestion>> = _workflowSuggestions.asStateFlow()
 
     /**
-     * 模型回复里引用的沙箱绝对路径（如 /workspace/xxx.jpg）到宿主真实目录的映射，
-     * 供聊天媒体渲染把 PRoot 内路径翻译成 Android 可读文件。
+     * Ánh xạ đường dẫn tuyệt đối trong sandbox (vd /workspace/xxx.jpg) sang thư mục thật trên host để hiển thị media.
      */
     val sandboxHostRoots: Map<String, java.io.File> = mapOf(
         "workspace" to pathManager.workspaceDir,
@@ -242,8 +241,7 @@ class ChatViewModel(
     }
 
     /**
-     * 应用技能进化建议：创建新技能或更新既有自定义技能（内置技能不可覆盖，降级为新建）。
-     * [createNew] 为 true 时始终新建（对应卡片「创建技能 / 另存为新技能」）。
+     * Áp dụng gợi ý tiến hóa kỹ năng; [createNew] = true thì luôn tạo mới thay vì ghi đè kỹ năng có sẵn.
      */
     fun applySkillSuggestion(suggestion: SkillSuggestion, createNew: Boolean) {
         val trimmedName = suggestion.skillName.trim()
@@ -289,28 +287,31 @@ class ChatViewModel(
     private val _sendMode = MutableStateFlow(ComposerSendMode.NEXT_RUN)
     val sendMode: StateFlow<ComposerSendMode> = _sendMode.asStateFlow()
 
+    init {
+        // Khôi phục chế độ gửi đã chọn ở phiên trước để không phải bật lại mỗi lần mở app.
+        viewModelScope.launch {
+            val saved = runCatching { settingsDataStore.composerSendMode.first() }.getOrNull()
+            ComposerSendMode.entries.firstOrNull { it.name == saved }?.let { _sendMode.value = it }
+        }
+    }
+
     val runtimeEvents: StateFlow<List<HarnessEvent>> = combine(
         harnessLoop.currentSessionId,
         _eventHistory,
-        // 把「消息列表」打包成 (revision, list) 再 distinctUntilChanged by revision：
-        // revision = 数量 + 末条 id，流式 token 增量不会改变它，因此上游发射被压缩为
-        // 「真正新增/替换了一条消息」才触发，避免每帧全量重合成上千条事件（聊久了变卡的主因）。
-        // 用 Pair 一起传下去，避免在 lambda 里读 messages.value 拿到过期值的时序问题。
+        // Đóng gói (revision, list) rồi distinctUntilChanged theo revision để chỉ phát khi thật sự thêm/thay một tin.
         messages.map { list -> (list.size to list.lastOrNull()?.id) to list }
             .distinctUntilChanged { a, b -> a.first == b.first },
     ) { sessionId, history, revisionAndList ->
         val live = history[sessionId].orEmpty()
         mergeHistoricalAndLiveEvents(sessionId, revisionAndList.second, live)
     }
-        // 首屏卡顿修复（P1）：合成历史事件（synthesizeHistoricalEvents）是 O(n) 遍历，
-        // stateIn 默认在 Main 上跑，首订阅时会整段压在主线程。移到 Default 执行。
+        // synthesizeHistoricalEvents là O(n); chuyển khỏi Main để lần đăng ký đầu không chặn khung hình.
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _branchRefresh = MutableStateFlow(0)
     private val branchMessageRevision = messages.map { list -> list.size to list.lastOrNull()?.id }.distinctUntilChanged()
-    // 子智能体在独立 lane 中执行时主会话消息不变，用运行事件驱动分支重投影，
-    // 这样运行中也能在协同卡片里点进子 lane 看实时进展。
+    // Agent con chạy ở lane riêng nên tin nhắn phiên chính không đổi; dùng sự kiện chạy để chiếu lại nhánh.
     private val branchEventRevision = runtimeEvents.map { events ->
         events.size to (events.lastOrNull()?.hashCode() ?: 0)
     }.distinctUntilChanged()
@@ -321,11 +322,7 @@ class ChatViewModel(
         _branchRefresh,
         branchEventRevision,
     ) { sessionId, messageRevision, refresh, eventRevision ->
-        // 关键：把四个流压缩成一个「可比较的重投影信号」，而不是丢弃后三个。
-        // 此前写法为 `{ sessionId, _, _, _ -> sessionId }`，后三个流的变化被完全吞掉，
-        // 导致 _branchRefresh++ 与运行事件（子智能体进展）都无法触发重投影——
-        // 注释声称「用运行事件驱动分支重投影」，实现却做不到（注释与实现两张皮）。
-        // 这里显式纳入 messageRevision / refresh / eventRevision，任一变化都会重新拉取分支。
+        // Gộp bốn luồng thành một tín hiệu so sánh được; trước đây chỉ giữ sessionId nên mất tín hiệu của ba luồng còn lại.
         ProjectionKey(
             sessionId = sessionId,
             messageRevision = messageRevision,
@@ -336,11 +333,7 @@ class ChatViewModel(
         val sessionId = key.sessionId
         if (sessionId.isBlank()) emptyList() else runCatching { laneManager.branches(sessionId) }.getOrDefault(emptyList())
     }
-        // 首屏卡顿修复（P0）：laneManager.branches() 内部会读取该会话**全部** entry
-        // （HarnessRuntimeDao.listEntries 无 LIMIT）并逐个 leaf 做路径回溯 + payload 解码，
-        // 属 O(entries) 的重活。stateIn(viewModelScope) 默认跑在 Dispatchers.Main，
-        // 而这条链此前没有任何 flowOn —— 于是「刚进入聊天界面」首次订阅时，
-        // 全量投影直接压在主线程上，与首帧布局争抢，表现为进入即卡。
+        // laneManager.branches() đọc toàn bộ entry (O(n)) nên phải chạy ngoài Main, tránh chặn khung hình đầu.
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -929,6 +922,7 @@ class ChatViewModel(
 
     fun setSendMode(mode: ComposerSendMode) {
         _sendMode.value = mode
+        viewModelScope.launch { runCatching { settingsDataStore.setComposerSendMode(mode.name) } }
     }
 
     private val _pendingAttachments = MutableStateFlow<List<ChatAttachment>>(emptyList())
